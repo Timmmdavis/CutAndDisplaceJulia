@@ -13,4 +13,12 @@ include("LDdispHS.jl")
 include("LDFSInfMat.jl")
 include("LDHSInfMat.jl")
 
+#Normal tri dislocation funcs
+include("TDdispFS.jl")
+
+using LinearAlgebra
+
+#include("cross.jl")
+
+
 end
