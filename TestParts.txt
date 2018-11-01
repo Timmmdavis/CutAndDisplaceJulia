@@ -1,0 +1,20 @@
+# Comment - start some vectors (spaced points)
+x = [-2:0.5:2;];
+y = [-4:0.5:0;];
+x,y=MyModule.meshgrid(x,y);
+#Get lengths (for reshapes later)
+dimx,dimy = size(x);
+#Turn to col vectors
+x=reshape(x,length(x),1);
+y=reshape(y,length(y),1);
+
+#Init array (stress at each point) (Only needed for loops). 
+Sxx= Array{Float64}(undef, 1,length(x));
+Syy= Array{Float64}(undef, 1,length(x));
+Sxy= Array{Float64}(undef, 1,length(x));
+
+
+DispFlag=0;
+(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn)=MyModule.LDHSInfMat(x,y,x,y,ones(size(x))*0.01,zeros(size(x)),0.25,1,DispFlag);
+
+xe,ye,a,Beta,nu,Mu,DispFlag

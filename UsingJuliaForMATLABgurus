@@ -1,0 +1,48 @@
+%Using Julia for MATLAB gurus
+
+#Install Julia, PyPlot, PyCall, Python and Madplotlib
+
+#if ~ is you home dir
+#Create folder
+#"~.julia\\MyPackage\\src
+#Put func inside called MyModule.jl (as an example) with the following lines
+##module MyModule
+##include("FuncName.jl")
+##end
+#Where FuncName is the func you will call in your scripts. 
+
+## New bit: ALL of this now in: "C:\Users\timmm\.julia\config"
+#Starting a new sesh (speeds stuff up)
+]
+precompile
+#Start Revise module
+using Revise
+#Call 
+push!(LOAD_PATH, "C:\\Users\\tim_davis\\.julia\\MyPackage\\src")
+#then in there have your package i.e. "TestPackage.jl"
+#Call
+using MyModule
+#Go to dir
+cd("C:\\Users\\tim_davis\\Desktop\\JuliaTest")
+#Call script
+include("RunScript.jl")
+
+using Coverage
+analyze_malloc("C:\\Users\\tim_davis\\Desktop\\JuliaTest") 
+
+#In Enviroment var
+Name:JULIA_NUM_THREADS
+Value:'how many you have'
+Threads.nthreads() #- reports number you have
+in loop add - 
+
+
+replace all % for #
+use repeat not repmat
+strings use "" not ''
+remove all clear statements (julia doest use them). simply null excess vars in func
+remove 1.* etc, if using integer just * not .*
+remove all multiline statements  (with .../r). Or just remove "..." as this works anyway
+replace logical statements like A>0 with A.>0 if its matrix
+make sure all function names at top of FILE are different!!!! How its saved is useless (file name)
+
