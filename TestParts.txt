@@ -18,3 +18,18 @@ DispFlag=0;
 (SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn)=MyModule.LDHSInfMat(x,y,x,y,ones(size(x))*0.01,zeros(size(x)),0.25,1,DispFlag);
 
 xe,ye,a,Beta,nu,Mu,DispFlag
+
+
+
+X=1;
+Y=1;
+Z=1;
+P1=[0.5,0.5,0.5];
+P2=[0,0.5,0.5];
+P3=[0,0,0];
+Ss=1;
+Ds=0;
+Ts=0;
+nu=0.25;
+
+TDdispFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)

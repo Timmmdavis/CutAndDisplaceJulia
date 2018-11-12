@@ -21,6 +21,10 @@ Beta=deg2rad(0);
 nu=0.25;
 E=1;
 
+#Just calling by self
+#(Sxx,Syy,Sxy)=MyModule.LDstressHS(x,y,xe,ye,a,Beta,Ds,Dn,nu,E);
+#println(Sxx)
+
 println("Vars created -> to func")
 #Init array (stress at each point) (Only needed for loops). 
 Sxx= Array{Float64}(undef, 1,length(x));

@@ -15,8 +15,12 @@ include("LDHSInfMat.jl")
 
 #Normal tri dislocation funcs
 include("TDdispFS.jl")
+#include("CoordTrans.jl")
+#include("trimodefinder.jl")
+#include("TDSetupD.jl")
+#include("AngDisDisp.jl")
 
-using LinearAlgebra
+using LinearAlgebra: cross,norm
 
 #include("cross.jl")
 

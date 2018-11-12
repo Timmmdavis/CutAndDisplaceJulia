@@ -85,152 +85,134 @@ bx = Ts; # Tensile-slip
 by = Ss; # Strike-slip
 bz = Ds; # Dip-slip
 
-#X=reshape(X,length(X),1);
-#Y=reshape(Y,length(Y),1);
-#Z=reshape(Z,length(Z),1);
-#P1=reshape(P1,length(P1),1);
-#P2=reshape(P2,length(P2),1);
-#P3=reshape(P3,length(P3),1);
-
 #Init some vars
 p1 = zeros(3,1);
 p2 = zeros(3,1);
 p3 = zeros(3,1);
-eY = [0,1,0]';
-eZ = [0,0,1]';
-P1_1=P1[1];
-P1_2=P1[2];
-P1_3=P1[3];
-P2_1=P2[1];
-P2_2=P2[2];
-P2_3=P2[3];
-P3_1=P3[1];
-P3_2=P3[2];
-P3_3=P3[3];
+eY = [0;1;0];
+eZ = [0;0;1];
+P1_1=P1[1];P1_2=P1[2];P1_3=P1[3];
+P2_1=P2[1];P2_2=P2[2];P2_3=P2[3];
+P3_1=P3[1];P3_2=P3[2];P3_3=P3[3];
 
+
+# Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
+# as an exception, if the normal vector points upward, the strike and dip 
+# vectors point Northward and Westward, whereas if the normal vector points
+# downward, the strike and dip vectors point Southward and Westward, 
+# respectively.
+Vnorm = cross(P2-P1,P3-P1);
+Vnorm = Vnorm/norm(Vnorm);
+Vstrike = cross(eZ,Vnorm);
+if norm(Vstrike)==0
+	Vstrike = eY*Vnorm[3];
+end
+Vstrike = Vstrike/norm(Vstrike);
+Vdip = cross(Vnorm,Vstrike);
+
+# Transform coordinates from EFCS into TDCS
+At = [Vnorm';Vstrike';Vdip'];
+(X1,X2,X3) = CoordTrans(P1_1-P2_1,P1_2-P2_2,P1_3-P2_3,At);
+p1=[X1;X2;X3];
+(X1,X2,X3) = CoordTrans(P3_1-P2_1,P3_2-P2_2,P3_3-P2_3,At);
+p3=[X1;X2;X3]
+p2=zeros(size(p1));
+p1_2=p1[2];p1_3=p1[3];
+p3_2=p3[2];p3_3=p3[3];
+
+
+	
+# Calculate the unit vectors along TD sides in TDCS
+e12 = (p2-p1)/norm(p2-p1);
+e13 = (p3-p1)/norm(p3-p1);
+e23 = (p3-p2)/norm(p3-p2);
+
+# Calculate the TD angles
+A = acos(e12'*e13);
+B = acos(-e12'*e23);
+C = acos(e23'*e13);
+
+#Some elastic constants
+con1=8/pi/(1-nu);
+con2=(1-2*nu);
+
+uelp = Array{Float64}(undef, 1,length(X)); 
+unlp = Array{Float64}(undef, 1,length(X)); 
+uvlp = Array{Float64}(undef, 1,length(X)); 
 
 for i=1:length(X) #For every point in space
 
 
-
-	# Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
-	# as an exception, if the normal vector points upward, the strike and dip 
-	# vectors point Northward and Westward, whereas if the normal vector points
-	# downward, the strike and dip vectors point Southward and Westward, 
-	# respectively.
-	Vnorm = cross(P2-P1,P3-P1);
-	Vnorm = Vnorm/norm(Vnorm);
-
-	Vstrike = cross(eZ,Vnorm);
-
-	if norm(Vstrike)==0
-		Vstrike = eY*Vnorm(3);
-	end
-	Vstrike = Vstrike/norm(Vstrike);
-	Vdip = cross(Vnorm,Vstrike);
-
-	
 	# Transform coordinates from EFCS into TDCS
-
-	At = (Vnorm,Vstrike,Vdip)';
 	(x,y,z) = CoordTrans(X[i]'-P2_1,Y[i]'-P2_2,Z[i]'-P2_3,At);
-	(p1) = CoordTrans(P1_1-P2_1,P1_2-P2_2,P1_3-P2_3,At);
-	(p3) = CoordTrans(P3_1-P2_1,P3_2-P2_2,P3_3-P2_3,At);
-
-	# Calculate the unit vectors along TD sides in TDCS
-	e12 = (p2-p1)/norm(p2-p1);
-	e13 = (p3-p1)/norm(p3-p1);
-	e23 = (p3-p2)/norm(p3-p2);
-
-	# Calculate the TD angles
-	A = acos(e12'*e13);
-	B = acos(-e12'*e23);
-	C = acos(e23'*e13);
 
 	# Determine the best arteact-free configuration for each calculation point
 	Trimode = trimodefinder(y,z,x,p1[2:3],p2[2:3],p3[2:3]);
 	casepLog = Trimode==1;
 	casenLog = Trimode==-1;
 	casezLog = Trimode==0;
-	xp = x(casepLog);
-	yp = y(casepLog);
-	zp = z(casepLog);
-	xn = x(casenLog);
-	yn = y(casenLog);
-	zn = z(casenLog);
 	
-
-
-
-	# Configuration I
-	if nnz(casepLog)!=0
+	if casepLog
 		# Calculate first angular dislocation contribution
-		(u1Tp,v1Tp,w1Tp) = TDSetupD(xp,yp,zp,A,bx,by,bz,nu,p1,-e13);
+		(u1T,v1T,w1T) = TDSetupD(x,y,z,A,bx,by,bz,nu,p1,-e13);
 		# Calculate second angular dislocation contribution
-		(u2Tp,v2Tp,w2Tp) = TDSetupD(xp,yp,zp,B,bx,by,bz,nu,p2,e12);
+		(u2T,v2T,w2T) = TDSetupD(x,y,z,B,bx,by,bz,nu,p2,e12);
 		# Calculate third angular dislocation contribution
-		(u3Tp,v3Tp,w3Tp) = TDSetupD(xp,yp,zp,C,bx,by,bz,nu,p3,e23);
-	end
-
-	# Configuration II
-	if nnz(casenLog)!=0
+		(u3T,v3T,w3T) = TDSetupD(x,y,z,C,bx,by,bz,nu,p3,e23);		
+	elseif casenLog
 		# Calculate first angular dislocation contribution
-		(u1Tn,v1Tn,w1Tn) = TDSetupD(xn,yn,zn,A,bx,by,bz,nu,p1,e13);
+		(u1T,v1T,w1T) = TDSetupD(x,y,z,A,bx,by,bz,nu,p1,e13);
 		# Calculate second angular dislocation contribution
-		(u2Tn,v2Tn,w2Tn) = TDSetupD(xn,yn,zn,B,bx,by,bz,nu,p2,-e12);
+		(u2T,v2T,w2T) = TDSetupD(x,y,z,B,bx,by,bz,nu,p2,-e12);
 		# Calculate third angular dislocation contribution
-		(u3Tn,v3Tn,w3Tn) = TDSetupD(xn,yn,zn,C,bx,by,bz,nu,p3,-e23);
+		(u3T,v3T,w3T) = TDSetupD(x,y,z,C,bx,by,bz,nu,p3,-e23);	
 	end
 	
-	
-	
-#################LOOP THIS!
-	# Calculate the "incomplete" displacement vector components in TDCS
-	if nnz[casepLog]!=0
-		u[casepLog,1] = u1Tp+u2Tp+u3Tp;
-		v[casepLog,1] = v1Tp+v2Tp+v3Tp;
-		w[casepLog,1] = w1Tp+w2Tp+w3Tp;
+	if casepLog || casenLog
+		# Calculate the "incomplete" displacement vector components in TDCS
+		u = u1T+u2T+u3T;
+		v = v1T+v2T+v3T;
+		w = w1T+w2T+w3T;		
+	elseif casezLog	
+		# Calculate the "incomplete" displacement vector components in TDCS
+		u = NaN;
+		v = NaN;
+		w = NaN;
 	end
-	if nnz[casenLog]!=0
-		u[casenLog,1] = u1Tn+u2Tn+u3Tn;
-		v[casenLog,1] = v1Tn+v2Tn+v3Tn;
-		w[casenLog,1] = w1Tn+w2Tn+w3Tn;
-	end
-	if nnz[casezLog]!=0
-		u[casezLog,1] = nan;
-		v[casezLog,1] = nan;
-		w[casezLog,1] = nan;
-	end
-
-
 	
 	# Calculate the Burgers' function contribution corresponding to the TD
-	a = (-x,p1[2]-y,p1[3]-z);
-	b = (-x,-y,-z);
-	c = (-x,p3[2]-y,p3[3]-z);
-	na = sqrt(sum(a.^2,dims=2));
-	nb = sqrt(sum(b.^2,dims=2));
-	nc = sqrt(sum(c.^2,dims=2));
+	#Remove indexing
 
-	Fi = -2*atan((a[:,1]*(b[:,2]*c[:,3]-b[:,3]*c[:,2])-
-		a[:,2]*(b[:,1]*c[:,3]-b[:,3]*c[:,1])+
-		a[:,3]*(b[:,1]*c[:,2]-b[:,2]*c[:,1])),
-		(na*nb*nc+sum(a*b,dims=2)*nc+sum(a*c,dims=2)*nb+sum(b*c,dims=2)*na))/4/pi;
+	a = (-x,p1_2-y,p1_3-z);
+	b = (-x,-y,-z);
+	c = (-x,p3_2-y,p3_3-z);
+
+	na = sqrt(sum(a.^2));
+	nb = sqrt(sum(b.^2));
+	nc = sqrt(sum(c.^2));
+		
+	Fi = -2*atan((a[1]*(b[2]*c[3]-b[3]*c[2])-
+		a[2]*(b[1]*c[3]-b[3]*c[1])+
+		a[3]*(b[1]*c[2]-b[2]*c[1])),
+		(na*nb*nc+sum(a.*b)*nc+sum(a.*c)*nb+sum(b.*c)*na))/4/pi;
 		
 	# Calculate the complete displacement vector components in TDCS
 	u = bx*Fi+u;
 	v = by*Fi+v;
 	w = bz*Fi+w;
-
-	# Transform the complete displacement vector components from TDCS into EFCS
-	(ue,un,uv) = CoordTrans(u,v,w,(Vnorm,Vstrike,Vdip));
-
-end	
 	
-return(ue,un,uv)
+	# Transform the complete displacement vector components from TDCS into EFCS
+	(ue,un,uv) = CoordTrans(u,v,w,At');
+	
+	uelp[i]=ue;
+	unlp[i]=un;
+	uvlp[i]=uv;
+	
+end	
+
+return(uelp,unlp,uvlp)
 
 end
-
 
 
 function CoordTrans(x1,x2,x3,A)
@@ -241,15 +223,9 @@ function CoordTrans(x1,x2,x3,A)
 # in X1X2X3. The transpose of A (i.e.., A') will transform the coordinates 
 # from X1X2X3 into x1x2x3.
 
-x1 = x1(:);
-x2 = x2(:);
-x3 = x3(:);
-r = A*(x1';x2';x3');
-X1 = r(1,:)';
-X2 = r(2,:)';
-X3 = r(3,:)';
+r = A*[x1;x2;x3];
 
-return([X1,X2,X3])
+return(r[1],r[2],r[3])
 end
 
 
@@ -265,34 +241,38 @@ function trimodefinder(x,y,z,p1,p2,p3)
 # points, are 1 for the first configuration, -1 for the second 
 # configuration and 0 for the calculation point that lie on the TD sides.
 
-x = x(:);
-y = y(:);
-z = z(:);
+#Remove indexing
+p1_1=p1[1];
+p2_1=p2[1];
+p3_1=p3[1];
+p1_2=p1[2];
+p2_2=p2[2];
+p3_2=p3[2];
 
-a = ((p2[2]-p3[2])*(x-p3[1])+(p3[1]-p2[1])*(y-p3[2]))/
-    ((p2[2]-p3[2])*(p1[1]-p3[1])+(p3[1]-p2[1])*(p1[2]-p3[2]));
-b = ((p3[2]-p1[2])*(x-p3[1])+(p1[1]-p3[1])*(y-p3[2]))/
-    ((p2[2]-p3[2])*(p1[1]-p3[1])+(p3[1]-p2[1])*(p1[2]-p3[2]));
+a = ((p2_2-p3_2)*(x-p3_1)   +(p3_1-p2_1)*(y-p3_2))/
+    ((p2_2-p3_2)*(p1_1-p3_1)+(p3_1-p2_1)*(p1_2-p3_2));
+b = ((p3_2-p1_2)*(x-p3_1)+(p1_1-p3_1)*(y-p3_2))/
+    ((p2_2-p3_2)*(p1_1-p3_1)+(p3_1-p2_1)*(p1_2-p3_2));
 c = 1-a-b;
 
-trimode = ones(length(x),1);
-for i=1:length(a)
-	if a[i]<=0 && b[i]>c[i] && c[i]>a[i]
-		trimode[i] = -1;
-	elseif b[i]<=0 && c[i]>a[i] && a[i]>b[i]
-		trimode[i] = -1;
-	elseif c[i]<=0 && a[i]>b[i] && b[i]>c[i]	
-		trimode[i] = -1;
-	elseif a[i]==0 && b[i]>=0 && c[i]>=0		
-		trimode[i] = 0;
-	elseif a[i]>=0 && b[i]==0 && c[i]>=0
-		trimode[i] = 0;
-	elseif a[i]>=0 && b[i]>=0 && c[i]==0
-		trimode[i] = 0;	
-	elseif trimode==0 & z!=0
-		trimode[i] = 1;
-	end
+trimode=0;
+
+if a<=0 && b>c && c>a
+	trimode = -1;
+elseif b<=0 && c>a && a>b
+	trimode = -1;
+elseif c<=0 && a>b && b>c	
+	trimode = -1;
+elseif a==0 && b>=0 && c>=0		
+	trimode = 0;
+elseif a>=0 && b==0 && c>=0
+	trimode = 0;
+elseif a>=0 && b>=0 && c==0
+	trimode = 0;	
+elseif trimode==0 && z!=0
+	trimode = 1;
 end
+
 
 return(trimode)
 end
@@ -304,25 +284,25 @@ function TDSetupD(x,y,z,alpha,bx,by,bz,nu,TriVertex,SideVec)
 # displacements in ADCS and transforms them into TDCS.
 
 # Transformation matrix
-A = ((SideVec(3);-SideVec(2)),SideVec(2:3))';
+A = [SideVec[3] -SideVec[2];SideVec[2] SideVec[3]];
 
 # Transform coordinates of the calculation points from TDCS into ADCS
-r1 = A*(y'-TriVertex(2);z'-TriVertex(3));
-y1 = r1(1,:)';
-z1 = r1(2,:)';
+r1 = A*[y-TriVertex[2];z-TriVertex[3]];
+y1 = r1[1];
+z1 = r1[2];
 
 # Transform the in-plane slip vector components from TDCS into ADCS
-r2 = A*(by;bz);
-by1 = r2(1,:)';
-bz1 = r2(2,:)';
+r2 = A*[by;bz];
+by1 = r2[1];
+bz1 = r2[2];
 
 # Calculate displacements associated with an angular dislocation in ADCS
 (u,v0,w0) = AngDisDisp(x,y1,z1,-pi+alpha,bx,by1,bz1,nu);
 
 # Transform displacements from ADCS into TDCS
-r3 = A'*(v0';w0');
-v = r3(1,:)';
-w = r3(2,:)';
+r3 = A'*[v0;w0];
+v = r3[1];
+w = r3[2];
 
 return(u,v,w)
 end
@@ -337,13 +317,15 @@ cosA = cos(alpha);
 sinA = sin(alpha);
 eta = y*cosA-z*sinA;
 zeta = y*sinA+z*cosA;
-r = sqrt(x.^2+y.^2+z.^2);
+r = sqrt(x^2+y^2+z^2);
 
-
-#################################LOOP!
 # Avoid complex results for the logarithmic terms
-zeta[zeta>r] = r[zeta>r];
-z[z>r] = r[z>r];
+if zeta>r
+	zeta=r;
+end
+if z>r
+	z = r;
+end
 
 ux = bx/8/pi/(1-nu)*(x*y/r/(r-z)-x*eta/r/(r-zeta));
 vx = bx/8/pi/(1-nu)*(eta*sinA/(r-zeta)-y*eta/r/(r-zeta)+
@@ -368,4 +350,3 @@ w = wx+wy+wz;
 
 return(u,v,w)
 end
-
