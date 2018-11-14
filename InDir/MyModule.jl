@@ -14,7 +14,7 @@ include("LDFSInfMat.jl")
 include("LDHSInfMat.jl")
 
 #Normal tri dislocation funcs
-include("TDdispFS.jl")
+include("TDdispFSLooped.jl")
 #include("CoordTrans.jl")
 #include("trimodefinder.jl")
 #include("TDSetupD.jl")
@@ -22,7 +22,9 @@ include("TDdispFS.jl")
 
 using LinearAlgebra: cross,norm
 
-#include("cross.jl")
-
+##Testing vectorised vs loops in julia 1.02
+#include("DotLoopTest.jl")
+#include("DotLoopTestVect.jl")
+#include("DotLoopTest2.jl")
 
 end

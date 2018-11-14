@@ -1,9 +1,9 @@
 %Comment - start some vectors (spaced points)
 
 [X,Y,Z] = meshgrid(-3:.02:3,-3:.002:3,2);
-%X=1;
+#X=1;
 %Y=1;
-%Z=1;
+Z=1;
 
 P1=[-1 0 0];
 P2=[1 -1 -1];

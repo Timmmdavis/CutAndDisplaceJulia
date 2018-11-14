@@ -1,4 +1,4 @@
-function TDdispFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)
+function TDdispFSLooped(X,Y,Z,P1,P2,P3,by,bz,bx,nu)
 # TDdispFS 
 # Calculates displacements associated with a triangular dislocation in an 
 # elastic full-space.
@@ -81,9 +81,11 @@ function TDdispFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)
 # mehdi.nikkhoo@gfz-potsdam.de 
 # mehdi.nikkhoo@gmail.com
 
-bx = Ts; # Tensile-slip
-by = Ss; # Strike-slip
-bz = Ds; # Dip-slip
+
+#bx = Ts; # Tensile-slip
+#by = Ss; # Strike-slip
+#bz = Ds; # Dip-slip
+
 
 #Init some vars
 p1 = zeros(3,1);
@@ -91,9 +93,12 @@ p2 = zeros(3,1);
 p3 = zeros(3,1);
 eY = [0;1;0];
 eZ = [0;0;1];
+
+
 P1_1=P1[1];P1_2=P1[2];P1_3=P1[3];
 P2_1=P2[1];P2_2=P2[2];P2_3=P2[3];
 P3_1=P3[1];P3_2=P3[2];P3_3=P3[3];
+
 
 
 # Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
@@ -112,6 +117,9 @@ Vdip = cross(Vnorm,Vstrike);
 
 # Transform coordinates from EFCS into TDCS
 At = [Vnorm';Vstrike';Vdip'];
+(x,y,z)=CoordTrans2(X,Y,Z,P2_1,P2_2,P2_3,At)
+
+#=
 (X1,X2,X3) = CoordTrans(P1_1-P2_1,P1_2-P2_2,P1_3-P2_3,At);
 p1=[X1;X2;X3];
 (X1,X2,X3) = CoordTrans(P3_1-P2_1,P3_2-P2_2,P3_3-P2_3,At);
@@ -121,7 +129,6 @@ p1_2=p1[2];p1_3=p1[3];
 p3_2=p3[2];p3_3=p3[3];
 
 
-	
 # Calculate the unit vectors along TD sides in TDCS
 e12 = (p2-p1)/norm(p2-p1);
 e13 = (p3-p1)/norm(p3-p1);
@@ -132,24 +139,34 @@ A = acos(e12'*e13);
 B = acos(-e12'*e23);
 C = acos(e23'*e13);
 
-##Some elastic constants
-#con1=8/pi/(1-nu);
-#con2=(1-2*nu);
+uelp = AllocSpace(X)
+unlp = uelp;
+uvlp = uelp;
 
-xV = Array{Float64}(undef, 1,length(X)); 
-yV = Array{Float64}(undef, 1,length(X)); 
-zV = Array{Float64}(undef, 1,length(X)); 
 
+
+
+
+x=uelp;y=x;z=x;
+Fill1 = zeros(3,1);
+Fill2=Fill1';
 for i=1:length(X) #For every point in space
-
-	# Transform coordinates from EFCS into TDCS
-	(xV[i],yV[i],zV[i]) = CoordTrans(X[i]-P2_1,Y[i]-P2_2,Z[i]-P2_3,At);
-
+	Fill1[1] =  X[i]-P2_1;
+	Fill1[2] =  Y[i]-P2_2;
+	Fill1[3] =  Z[i]-P2_3;
+	Fill2=At*Fill1;
+	x[i] =  Fill2[1];
+	y[i] =  Fill2[2];
+	z[i] =  Fill2[3];
 end
+
+
+uV = Array{Float64}(undef, 1,length(X)); 
+vV = Array{Float64}(undef, 1,length(X)); 
+wV = Array{Float64}(undef, 1,length(X)); 	
 	
-uelp = Array{Float64}(undef, 1,length(X)); 
-unlp = Array{Float64}(undef, 1,length(X)); 
-uvlp = Array{Float64}(undef, 1,length(X)); 	
+
+
 	
 for i=1:length(X) #For every point in space
 
@@ -181,15 +198,29 @@ for i=1:length(X) #For every point in space
 	
 	if casepLog || casenLog
 		# Calculate the "incomplete" displacement vector components in TDCS
-		u = u1T+u2T+u3T;
-		v = v1T+v2T+v3T;
-		w = w1T+w2T+w3T;		
+		uV[i] = u1T+u2T+u3T;
+		vV[i] = v1T+v2T+v3T;
+		wV[i] = w1T+w2T+w3T;		
 	elseif casezLog	
 		# Calculate the "incomplete" displacement vector components in TDCS
-		u = NaN;
-		v = NaN;
-		w = NaN;
+		uV[i] = NaN;
+		vV[i] = NaN;
+		wV[i] = NaN;
 	end
+	
+end
+
+
+
+
+for i=1:length(X) #For every point in space	
+
+	x=xV[i];
+	y=yV[i];
+	z=zV[i];
+	u=uV[i];
+	v=vV[i];
+	w=wV[i];
 	
 	# Calculate the Burgers' function contribution corresponding to the TD
 	#Remove indexing
@@ -221,8 +252,16 @@ for i=1:length(X) #For every point in space
 	
 end	
 
-return(uelp,unlp,uvlp)
+=#
 
+return(X,X,X)
+
+end
+
+
+function AllocSpace(X)
+Vect = Array{Float64}(undef, length(X),1);
+return Vect
 end
 
 
@@ -234,10 +273,43 @@ function CoordTrans(x1,x2,x3,A)
 # in X1X2X3. The transpose of A (i.e.., A') will transform the coordinates 
 # from X1X2X3 into x1x2x3.
 
-r = A*[x1;x2;x3];
+r =  A*[x1;x2;x3];
 
 return(r[1],r[2],r[3])
 end
+
+function CoordTrans2(X,Y,Z,Pa,Pb,Pc,A)
+# CoordTrans transforms the coordinates of the vectors, from
+# x1x2x3 coordinate system to X1X2X3 coordinate system. "A" is the
+# transformation matrix, whose columns e1,e2 and e3 are the unit base 
+# vectors of the x1x2x3. The coordinates of e1,e2 and e3 in A must be given 
+# in X1X2X3. The transpose of A (i.e.., A') will transform the coordinates 
+# from X1X2X3 into x1x2x3.
+
+x = AllocSpace(X)
+y=x;z=x;
+Col = Array{Float64}(undef, 3,1);
+Row=Col';
+
+for i=1:length(X) #For every point in space
+	Col[1] =  X[i]-Pa;
+	Col[2] =  Y[i]-Pb;
+	Col[3] =  Z[i]-Pc;
+	#(x[i],y[i],z[i])=Col;
+	#println(A)
+	#println(typeof(A))
+	#println(size(A))
+	#poop
+	
+	A*Col;
+	#(x[i],y[i],z[i])=Col;
+	
+end
+
+return(x,y,z)
+
+end
+
 
 
 function trimodefinder(x,y,z,p1,p2,p3)
