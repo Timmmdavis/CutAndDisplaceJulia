@@ -15,10 +15,15 @@ include("LDHSInfMat.jl")
 
 #Normal tri dislocation funcs
 include("TDdispFSLooped.jl")
+include("RotateObject3DNewCoords.jl") #Mehdis 'CoordTrans'
+include("RotateObject2D.jl")
+
 #include("CoordTrans.jl")
 #include("trimodefinder.jl")
 #include("TDSetupD.jl")
 #include("AngDisDisp.jl")
+
+
 
 using LinearAlgebra: cross,norm
 
