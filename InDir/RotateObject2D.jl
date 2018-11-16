@@ -40,8 +40,8 @@ for i=1:length(X) #For every point in space
 	Col[2] =  Y[i]-Pb;
 	
 	#Rotate to new axes Ax Ay Az
-	x[i]=(Ct*Col[1])+(-St*Col[2]);
-	y[i]=(St*Col[1])+( Ct*Col[2]);
+	x[i]=(Ct[1]*Col[1])+(-St[1]*Col[2]);
+	y[i]=(St[1]*Col[1])+( Ct[1]*Col[2]);
 	
 	#Vectorised form of: Eq 2.23, Pollard, arranging cosines of new directions in table
 	#http://continuummechanics.org/stressxforms.html

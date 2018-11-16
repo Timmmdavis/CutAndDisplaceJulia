@@ -45,13 +45,10 @@ for i=1:length(X) #For every point in space
 	x[i]=(Ax1[1]*Col[1])+(Ax2[1]*Col[2])+(Ax3[1]*Col[3]);
 	y[i]=(Ax1[2]*Col[1])+(Ax2[2]*Col[2])+(Ax3[2]*Col[3]);
 	z[i]=(Ax1[3]*Col[1])+(Ax2[3]*Col[2])+(Ax3[3]*Col[3]);
-	
-	#x[i]=(A[1,1]*Col[1])+(A[2,1]*Col[2])+(A[3,1]*Col[3]);
-	#y[i]=(A[1,2]*Col[1])+(A[2,2]*Col[2])+(A[3,2]*Col[3]);
-	#z[i]=(A[1,3]*Col[1])+(A[2,3]*Col[2])+(A[3,3]*Col[3]);	
 
 	
 end
+
 
 return(x,y,z)
 

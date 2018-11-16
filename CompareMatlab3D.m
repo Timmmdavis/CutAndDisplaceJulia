@@ -1,6 +1,9 @@
 %Comment - start some vectors (spaced points)
 
-[X,Y,Z] = meshgrid(-3:.02:3,-3:.002:3,2);
+[X,Y,Z] = meshgrid(-3:.02:3,-3:.02:3,2);
+
+X=X(:);Y=Y(:);Z=Z(:);
+
 %X=1;
 %Y=1;
 %Z=1;
@@ -14,7 +17,11 @@ Ds=2;
 Ts=3;
 nu=0.25;
 
+U=zeros(size(X,1),3);
 tic
-[U]=TDdispFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
+for i=1:100
+    i
+    U(:,:)=TDdispFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
+end
 toc
 %disp(U)
