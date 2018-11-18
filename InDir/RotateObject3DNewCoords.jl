@@ -34,19 +34,27 @@ y = Array{Float64}(undef, length(X),1);
 z = Array{Float64}(undef, length(X),1);
 Col = Array{Float64}(undef, 3,1);
 
-for i=1:length(X) #For every point in space
+#Only move coords if needed
+if Pa!=0 && Pb!=0 && Pc!=0
+	if length(X)==1 #Catch error if X is not an array
+		X =  X-Pa;
+		Y =  Y-Pb;
+		Z =  Z-Pc;	
+	else
+		for i=1:length(X) #And if it is an array do for every point 
+			#Centre object 'XYZ' relative to point PaPbPc
+			X[i] =  X[i]-Pa;
+			Y[i] =  Y[i]-Pb;
+			Z[i] =  Z[i]-Pc;
+		end
+	end
+end
 
-	#Centre object 'XYZ' relative to point PaPbPc
-	Col[1] =  X[i]-Pa;
-	Col[2] =  Y[i]-Pb;
-	Col[3] =  Z[i]-Pc;
-
+for i=1:length(X) #For every point 
 	#Rotate to new axes Ax Ay Az
-	x[i]=(Ax1[1]*Col[1])+(Ax2[1]*Col[2])+(Ax3[1]*Col[3]);
-	y[i]=(Ax1[2]*Col[1])+(Ax2[2]*Col[2])+(Ax3[2]*Col[3]);
-	z[i]=(Ax1[3]*Col[1])+(Ax2[3]*Col[2])+(Ax3[3]*Col[3]);
-
-	
+	x[i]=(Ax1[1]*X[i])+(Ax2[1]*Y[i])+(Ax3[1]*Z[i]);
+	y[i]=(Ax1[2]*X[i])+(Ax2[2]*Y[i])+(Ax3[2]*Z[i]);
+	z[i]=(Ax1[3]*X[i])+(Ax2[3]*Y[i])+(Ax3[3]*Z[i]);	
 end
 
 
