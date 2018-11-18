@@ -32,7 +32,6 @@ function RotateObject3DNewCoords(X,Y,Z,Pa,Pb,Pc,Ax1,Ax2,Ax3)
 x = Array{Float64}(undef, length(X),1);
 y = Array{Float64}(undef, length(X),1);
 z = Array{Float64}(undef, length(X),1);
-Col = Array{Float64}(undef, 3,1);
 
 #Only move coords if needed
 if Pa!=0 && Pb!=0 && Pc!=0

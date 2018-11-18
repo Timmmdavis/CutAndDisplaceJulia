@@ -31,17 +31,25 @@ function RotateObject2D(X,Y,Pa,Pb,Ct,St)
 
 x = Array{Float64}(undef, length(X),1);
 y = Array{Float64}(undef, length(X),1);
-Col = Array{Float64}(undef, 2,1);
+#Only move coords if needed
+if Pa!=0 && Pb!=0 
+	if length(X)==1 #Catch error if X is not an array
+		X =  X-Pa;
+		Y =  Y-Pb;
+	else
+		for i=1:length(X) #And if it is an array do for every point 
+			#Centre object 'XYZ' relative to point PaPbPc
+			X[i] =  X[i]-Pa;
+			Y[i] =  Y[i]-Pb;
+		end
+	end
+end
 
 for i=1:length(X) #For every point in space
-
-	#Centre object 'XYZ' relative to point PaPbPc
-	Col[1] =  X[i]-Pa;
-	Col[2] =  Y[i]-Pb;
 	
 	#Rotate to new axes Ax Ay Az
-	x[i]=(Ct[1]*Col[1])+(-St[1]*Col[2]);
-	y[i]=(St[1]*Col[1])+( Ct[1]*Col[2]);
+	x[i]=(Ct[1]*X[i])+(-St[1]*Y[i]);
+	y[i]=(St[1]*X[i])+( Ct[1]*Y[i]);
 	
 	#Vectorised form of: Eq 2.23, Pollard, arranging cosines of new directions in table
 	#http://continuummechanics.org/stressxforms.html
