@@ -1,7 +1,7 @@
 %Comment - start some vectors (spaced points)
 
 [X,Y,Z] = meshgrid(-3:.02:3,-3:.02:3,2);
-[dimx,dimy] = size(X);
+
 X=X(:);Y=Y(:);Z=Z(:);
 
 %X=1;
@@ -26,5 +26,5 @@ end
 toc
 %disp(U)
 
-[X,Y,Un ]=ReshapeData2d( dimx,dimy,X,Y,U(:,1) );
-contourf(X,Y,Un)
+[dimx,dimy] = size(X);
+contour(X,Y,U(:,2))

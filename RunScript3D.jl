@@ -2,16 +2,16 @@
 println("creating func vars")
 
 # Comment - start some vectors (spaced points)
-X = [-3:0.02:3;];
-Y = [-3:0.02:3;];
-X,Y=MyModule.meshgrid(X,Y);
-Z=ones(size(X))*2;
+x = [-3:0.02:3;];
+y = [-3:0.02:3;];
+x,y=MyModule.meshgrid(x,y);
+z=ones(size(x))*2;
 #Get lengths (for reshapes later)
-dimx,dimy = size(X);
+dimx,dimy = size(x);
 #Turn to col vectors
-X=reshape(X,length(X),1);
-Y=reshape(Y,length(Y),1);
-Z=reshape(Z,length(Z),1);
+x=reshape(x,length(x),1);
+y=reshape(y,length(y),1);
+z=reshape(z,length(z),1);
 #Points
 P1=[-1.,0.,0.];
 P2=[1.,-1.,-1.];
@@ -32,29 +32,46 @@ nu=0.25;
 
 println("Vars created -> to func")
 
-ue=zeros(size(X));
-un=zeros(size(X));
-uv=zeros(size(X));
+ue=zeros(size(x));
+un=zeros(size(x));
+uv=zeros(size(x));
 
 
 #Timing
-# @time (ue,un,uv)=MyModule.TDdispFSLooped(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
+@time (ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 
 #using Profile
-#@profile  (ue,un,uv)=MyModule.TDdispFSLooped(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
+#@profile  (ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 #Profile.print(format=:filefuncline )
 #Profile.print(format=:flat)
 #Profile.print(sortedby=:count)
 
 #using MyModule
 #using Traceur
-#@trace MyModule.TDdispFSLooped(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
+#@trace MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 
+#=
 tic=time()
 Threads.@threads for i=1:100 #
-	(ue,un,uv)=MyModule.TDdispFSLooped(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
+	(ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 	#println(i)
 end
 toc=time()
 println("Elapsed time")
 println(toc-tic)
+
+=#
+####Some reshaping for drawing:
+#Was one func that reshaped stuff
+x=reshape(x,dimx,dimy);
+y=reshape(y,dimx,dimy);
+ue=reshape(ue,dimx,dimy);
+
+#Draw
+using NaNMath
+Top=maximum([NaNMath.maximum(ue),abs(NaNMath.minimum(ue))])
+steps=10; #Steps from centre to top. 
+levels = [-Top:Top/steps:Top;]
+using PyPlot
+contourf(x,y,ue, levels=levels);
+cbar = colorbar()

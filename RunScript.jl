@@ -2,7 +2,7 @@
 println("creating func vars")
 
 # Comment - start some vectors (spaced points)
-x = [-2:0.05:2;];
+x = [-2:0.005:2;];
 y = [-4:0.05:0;];
 x,y=MyModule.meshgrid(x,y);
 #Get lengths (for reshapes later)
@@ -43,7 +43,7 @@ using Profile
  @profile Sxx[1,:],Syy[1,:],Sxy[1,:]=MyModule.LDstressHS(x,y,xe,ye,a,Beta,Ds,Dn,nu,E)
 Profile.print()
 Profile.print(format=:flat)
-=#
+
 
 ####Start loop
 tic=time()
@@ -78,3 +78,4 @@ levels = [-Top:Top/steps:Top;]
 using PyPlot
 contourf(x, y,Sxx, levels=levels);
 cbar = colorbar()
+=#
