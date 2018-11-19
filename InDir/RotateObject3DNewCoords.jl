@@ -17,14 +17,27 @@ function RotateObject3DNewCoords(X,Y,Z,Pa,Pb,Pc,Ax1,Ax2,Ax3)
 #
 # Ax3           - The new orientation of the z-axis  (direction cosine 1*3)
 #
-# Pa            - Centre object 'XYZ' relative to point PaPbPc
+# Pa            - Centre object 'XYZ' relative to point PaPbPc (Defined as single numbers)
 #
-# Pb            - Centre object 'XYZ' relative to point PaPbPc
+# Pb            - Centre object 'XYZ' relative to point PaPbPc (Defined as single numbers)
 #
-# Pc            - Centre object 'XYZ' relative to point PaPbPc
+# Pc            - Centre object 'XYZ' relative to point PaPbPc (Defined as single numbers)
 #
 # Arguments: (output)
 # x,y,z   - the new X,Y and Z point values. 
+#
+#
+# X=[0 0 1 1 0 0 0 0 0 1 1 0 1 1 1 1];
+# Y=[0 0 0 0 0 1 1 0 1 1 1 1 1 0 0 1];
+# Z=[0 1 1 0 0 0 1 1 1 1 0 0 0 0 1 1];
+# X=convert(Array{Float64,2},X)
+# Y=convert(Array{Float64,2},Y)
+# Z=convert(Array{Float64,2},Z)
+# using PyPlot
+# plot_wireframe(X,Y,Z, color="red")
+# #flip Y and Z axes
+# (x,y,z)=MyModule.RotateObject3DNewCoords(X,Y,Z,0,0,0,[1;0;0],[0;-1;0],[0;0;1])
+# plot_wireframe(x,y,z, color="blue")
 #
 #  Author: Tim Davis
 #  Copyright 2018, Tim Davis, Potsdam University
@@ -34,8 +47,8 @@ y = Array{Float64}(undef, length(X),1);
 z = Array{Float64}(undef, length(X),1);
 
 #Only move coords if needed
-if Pa!=0 && Pb!=0 && Pc!=0
-	if length(X)==1 #Catch error if X is not an array
+if Pa!=0 || Pb!=0 || Pc!=0
+	if  !isa(X, Array) #Catch error if X is not an array
 		X =  X-Pa;
 		Y =  Y-Pb;
 		Z =  Z-Pc;	

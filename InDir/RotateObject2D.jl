@@ -18,9 +18,9 @@ function RotateObject2D(X,Y,Pa,Pb,Ct,St)
 #
 # Ax2           - The new orientation of the y-axis  (direction cosine 1*3)
 #
-# Pa            - Centre object 'XY' relative to point PaPbPc
+# Pa            - Centre object 'XY' relative to point PaPbPc (Defined as single numbers)
 #
-# Pb            - Centre object 'XY' relative to point PaPbPc
+# Pb            - Centre object 'XY' relative to point PaPbPc (Defined as single numbers)
 #
 # Arguments: (output)
 # x,y   - the new X,Y point values. 
@@ -32,8 +32,8 @@ function RotateObject2D(X,Y,Pa,Pb,Ct,St)
 x = Array{Float64}(undef, length(X),1);
 y = Array{Float64}(undef, length(X),1);
 #Only move coords if needed
-if Pa!=0 && Pb!=0 
-	if length(X)==1 #Catch error if X is not an array
+if Pa!=0 || Pb!=0 
+	if !isa(X, Array) #Catch error if X is not an array
 		X =  X-Pa;
 		Y =  Y-Pb;
 	else
