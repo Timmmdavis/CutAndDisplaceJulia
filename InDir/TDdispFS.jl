@@ -111,67 +111,51 @@ p3=[X1;X2;X3]
 p1_2=p1[2];p1_3=p1[3];
 p3_2=p3[2];p3_3=p3[3];
 
-
-# Calculate the unit vectors along TD sides in TDCS
-e12=p2-p1;
-e12=e12/norm(e12);
-e13=p3-p1;
-e13=e13/norm(e13);
-e23=p3-p2;
-e23=e23/norm(e23);
-
-# Calculate the TD angles
-A=e12'*e13;
-A=acos(A[1]);
-B=-e12'*e23;
-B=acos(B[1]);
-C=e23'*e13;
-C=acos(C[1]);
+#Get interior angles and vectors along the triangle edges. 
+(e12,e13,e23,A,B,C)=CalcTDVectsAndAngles(p1,p2,p3)
 	
 # Determine the best arteact-free configuration for each calculation point
-Trimode = trimodefinder(y,z,x,p1[2:3],p2[2:3],p3[2:3]);
-casepLog=falses(length(X),1);
-casenLog=falses(length(X),1);
-casezLog=falses(length(X),1);
-for i=1:length(Trimode)
-	if Trimode[i]==1
-		casepLog[i] = 1; 
-	end
-	if Trimode[i]==-1
-		casenLog[i] = 1; 
-	end	
-	if Trimode[i]==0;
-		casezLog[i] = 1;
-	end
-end
+(casepLog,casenLog,casezLog) = trimodefinder(y,z,x,p1[2:3],p2[2:3],p3[2:3]);
 
-#Assuming Configuration I
-me13=-e13;
-# Calculate first angular dislocation contribution
-(u1T,v1T,w1T) = TDSetupD(x,y,z,A,bx,by,bz,nu,p1,me13,casenLog);
+xn=x[casenLog];
+yn=y[casenLog];
+zn=z[casenLog];
+xp=x[casepLog];
+yp=y[casepLog];
+zp=z[casepLog];
+
+# Calculate first angular dislocation contribution NEG
+(u1Tn,v1Tn,w1Tn) = TDSetupD(xn,yn,zn,A,bx,by,bz,nu,p1,e13);
 # Calculate second angular dislocation contribution
-(u2T,v2T,w2T) = TDSetupD(x,y,z,B,bx,by,bz,nu,p2,e12 ,casenLog);
+(u2Tn,v2Tn,w2Tn) = TDSetupD(xn,yn,zn,B,bx,by,bz,nu,p2,-e12 );
 # Calculate third angular dislocation contribution
-(u3T,v3T,w3T) = TDSetupD(x,y,z,C,bx,by,bz,nu,p3,e23 ,casenLog);		
+(u3Tn,v3Tn,w3Tn) = TDSetupD(xn,yn,zn,C,bx,by,bz,nu,p3,-e23 );		
+
+# Calculate first angular dislocation contribution POS
+(u1Tp,v1Tp,w1Tp) = TDSetupD(xp,yp,zp,A,bx,by,bz,nu,p1,-e13);
+# Calculate second angular dislocation contribution
+(u2Tp,v2Tp,w2Tp) = TDSetupD(xp,yp,zp,B,bx,by,bz,nu,p2,e12);
+# Calculate third angular dislocation contribution
+(u3Tp,v3Tp,w3Tp) = TDSetupD(xp,yp,zp,C,bx,by,bz,nu,p3,e23);	
 
 #Do some allocation before loop
-#a1=-x;	a2=p1_2.-y;	a3=p1_3.-z;
-#b1=-x;	b2=-y;		b3=-z;
-#c1=-x;	c2=p3_2.-y;	c3=p3_3.-z;
-uV = Array{Float64}(undef, length(X),1); 
-vV = Array{Float64}(undef, length(X),1); 
-wV = Array{Float64}(undef, length(X),1); 
+uV = Array{Float64}(undef, length(x),1); 
+vV = Array{Float64}(undef, length(x),1); 
+wV = Array{Float64}(undef, length(x),1);
+uV[casenLog]=u1Tn.+u2Tn.+u3Tn;
+vV[casenLog]=v1Tn.+v2Tn.+v3Tn;
+wV[casenLog]=w1Tn.+w2Tn.+w3Tn;
+uV[casepLog]=u1Tp.+u2Tp.+u3Tp;
+vV[casepLog]=v1Tp.+v2Tp.+v3Tp;
+wV[casepLog]=w1Tp.+w2Tp.+w3Tp;
 
 # Calculate the "incomplete" displacement vector components in TDCS
 for i=1:length(x)
+
 	if casezLog[i] == 1; 
 		uV[i] = NaN;
 		vV[i] = NaN;
 		wV[i] = NaN;
-	else
-		uV[i] = u1T[i]+u2T[i]+u3T[i];
-		vV[i] = v1T[i]+v2T[i]+v3T[i];
-		wV[i] = w1T[i]+w2T[i]+w3T[i];
 	end
 
 	a1=-x[i];	a2=p1_2[1]-y[i];	a3=p1_3[1]-z[i];

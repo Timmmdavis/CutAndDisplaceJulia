@@ -17,11 +17,11 @@ function RotateObject3DNewCoords(X,Y,Z,Pa,Pb,Pc,Ax1,Ax2,Ax3)
 #
 # Ax3           - The new orientation of the z-axis  (direction cosine 1*3)
 #
-# Pa            - Centre object 'XYZ' relative to point PaPbPc (Defined as single numbers)
+# Pa            - Current centre of object at 'X'. Used to centre object at origin before rotation. Use single number
 #
-# Pb            - Centre object 'XYZ' relative to point PaPbPc (Defined as single numbers)
+# Pb            - Current centre of object at 'Y'. Used to centre object at origin before rotation. Use single number
 #
-# Pc            - Centre object 'XYZ' relative to point PaPbPc (Defined as single numbers)
+# Pc            - Current centre of object at 'Z'. Used to centre object at origin before rotation. Use single number
 #
 # Arguments: (output)
 # x,y,z   - the new X,Y and Z point values. 
@@ -44,9 +44,9 @@ function RotateObject3DNewCoords(X,Y,Z,Pa,Pb,Pc,Ax1,Ax2,Ax3)
 
 #Only move coords if needed
 if Pa!=0 || Pb!=0 || Pc!=0
-X =  X.-Pa;
-Y =  Y.-Pb;
-Z =  Z.-Pc;	
+	X =  X.-Pa;
+	Y =  Y.-Pb;
+	Z =  Z.-Pc;	
 end
 
 #Rotate to new axes Ax Ay Az

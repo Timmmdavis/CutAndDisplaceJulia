@@ -31,7 +31,7 @@ for i=1:length(x)
 	a = (p2_2_m_p3_2*(x[i]-p3_1)+p3_1_m_p2_1*(y[i]-p3_2))/Base;
 	b = (p3_2_m_p1_2*(x[i]-p3_1)+p1_1_m_p3_1*(y[i]-p3_2))/Base;
 	c = 1-a-b;
-
+		
 	if a<=0 && b>c && c>a
 		trimode[i] = -1;
 	elseif b<=0 && c>a && a>b
@@ -52,5 +52,21 @@ for i=1:length(x)
 
 end
 
-return(trimode)
+casepLog=falses(length(trimode),1);
+casenLog=falses(length(trimode),1);
+casezLog=falses(length(trimode),1);
+for i=1:length(trimode)
+	if trimode[i]==1
+		casepLog[i] = true; 
+	end
+	if trimode[i]==-1
+		casenLog[i] = true; 
+	end	
+	if trimode[i]==0;
+		casezLog[i] = true;
+	end
+end
+
+
+return(casepLog,casenLog,casezLog)
 end

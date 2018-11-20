@@ -76,6 +76,7 @@ Top=maximum([NaNMath.maximum(Sxx),abs(NaNMath.minimum(Sxx))])
 steps=10; #Steps from centre to top. 
 levels = [-Top:Top/steps:Top;]
 using PyPlot
+close()
 contourf(x, y,Sxx, levels=levels);
 cbar = colorbar()
 =#

@@ -14,13 +14,13 @@ function RotateObject2D(X,Y,Pa,Pb,Ct,St)
 #
 # Y             - list of y points (mat or vect)
 #
-# Ax1           - The new orientation of the x-axis  (direction cosine 1*3)
+# Ct            - Rotation (defined away from X axis). Direction cosine (CosAx)
 #
-# Ax2           - The new orientation of the y-axis  (direction cosine 1*3)
+# St            - (SinAx). Direction cosine (CosAy)
 #
-# Pa            - Centre object 'XY' relative to point PaPbPc (Defined as single numbers)
+# Pa            - Current centre of object at 'X'. Used to centre object at origin before rotation. Use single number
 #
-# Pb            - Centre object 'XY' relative to point PaPbPc (Defined as single numbers)
+# Pb            - Current centre of object at 'Y'. Used to centre object at origin before rotation. Use single number
 #
 # Arguments: (output)
 # x,y   - the new X,Y point values. 
@@ -28,13 +28,11 @@ function RotateObject2D(X,Y,Pa,Pb,Ct,St)
 #  Author: Tim Davis
 #  Copyright 2018, Tim Davis, Potsdam University
 
-
 #Only move coords if needed
 if Pa!=0 || Pb!=0 
 	X =  X.-Pa;
 	Y =  Y.-Pb;
 end
-
 
 #Rotate to new axes Ax Ay Az
 x=(Ct[1].*X).+(-St[1].*Y);

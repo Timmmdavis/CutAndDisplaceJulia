@@ -9,9 +9,9 @@ z=ones(size(x))*2;
 #Get lengths (for reshapes later)
 dimx,dimy = size(x);
 #Turn to col vectors
-x=reshape(x,length(x),1);
-y=reshape(y,length(y),1);
-z=reshape(z,length(z),1);
+x=reshape(x,1,length(x));
+y=reshape(y,1,length(y));
+z=reshape(z,1,length(z));
 #Points
 P1=[-1.,0.,0.];
 P2=[1.,-1.,-1.];
@@ -25,6 +25,8 @@ Ss=-1;
 Ds=2;
 Ts=3;
 nu=0.25;
+mu=6;
+lambda=(2*mu*nu)/(1-(2*nu));
 
 #X=1;
 #Y=1;
@@ -38,7 +40,9 @@ uv=zeros(size(x));
 
 
 #Timing
-@time (ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+#@time (ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+@time (Exx,Eyy,Ezz,Exy,Exz,Eyz)=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
+un=Exx;
 
 #using Profile
 #@profile  (ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
@@ -53,25 +57,26 @@ uv=zeros(size(x));
 #=
 tic=time()
 Threads.@threads for i=1:100 #
-	(ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+	(ue[:,1],un[:,1],uv[:,1])=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 	#println(i)
 end
 toc=time()
 println("Elapsed time")
 println(toc-tic)
-
 =#
+
 ####Some reshaping for drawing:
 #Was one func that reshaped stuff
 x=reshape(x,dimx,dimy);
 y=reshape(y,dimx,dimy);
-ue=reshape(ue,dimx,dimy);
+un=reshape(un,dimx,dimy);
 
 #Draw
 using NaNMath
-Top=maximum([NaNMath.maximum(ue),abs(NaNMath.minimum(ue))])
+Top=maximum([NaNMath.maximum(un),abs(NaNMath.minimum(un))])
 steps=10; #Steps from centre to top. 
 levels = [-Top:Top/steps:Top;]
 using PyPlot
-contourf(x,y,ue, levels=levels);
+close()
+contourf(x,y,un, levels=levels);
 cbar = colorbar()

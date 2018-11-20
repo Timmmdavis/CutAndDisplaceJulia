@@ -1,4 +1,4 @@
-function TDstrainFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda)
+function TDstrainFS(X,Y,Z,P1,P2,P3,by,bz,bx,mu,lambda)
 # TDstressFS 
 # Calculates stresses and strains associated with a triangular dislocation 
 # in an elastic full-space.
@@ -125,109 +125,76 @@ p3=[X1;X2;X3]
 p1_2=p1[2];p1_3=p1[3];
 p3_2=p3[2];p3_3=p3[3];
 
-# Calculate the unit vectors along TD sides in TDCS
-e12=p2-p1;
-e12=e12/norm(e12);
-e13=p3-p1;
-e13=e13/norm(e13);
-e23=p3-p2;
-e23=e23/norm(e23);
-
-# Calculate the TD angles
-A=e12'*e13;
-A=acos(A[1]);
-B=-e12'*e23;
-B=acos(B[1]);
-C=e23'*e13;
-C=acos(C[1]);
+#Get interior angles and vectors along the triangle edges. 
+(e12,e13,e23,A,B,C)=CalcTDVectsAndAngles(p1,p2,p3)
 
 # Determine the best arteact-free configuration for each calculation point
-Trimode = trimodefinder(y,z,x,p1[2:3],p2[2:3],p3[2:3]);
-casepLog=falses(length(X),1);
-casenLog=falses(length(X),1);
-casezLog=falses(length(X),1);
-for i=1:length(Trimode)
-	if Trimode[i]==1
-		casepLog[i] = 1; 
-	end
-	if Trimode[i]==-1
-		casenLog[i] = 1; 
-	end	
-	if Trimode[i]==0;
-		casezLog[i] = 1;
-	end
-end
+@info "Some variables" X[90],Y[90]
+poop
+(casepLog,casenLog,casezLog) = trimodefinder(y,z,x,p1[2:3],p2[2:3],p3[2:3]);
 
-############################
-#GOT TO HERE! (Lots above can be put into mini funcs)
-###########################
+xp=x[casepLog];
+yp=y[casepLog];
+zp=z[casepLog];
+xn=x[casenLog];
+yn=y[casenLog];
+zn=z[casenLog];
 
-# Configuration I
-if nnz(casepLog)~=0
-    # Calculate first angular dislocation contribution
-    [Exx1Tp,Eyy1Tp,Ezz1Tp,Exy1Tp,Exz1Tp,Eyz1Tp] = TDSetupS(xp,yp,zp,A,...
-        bx,by,bz,nu,p1,-e13);
-    # Calculate second angular dislocation contribution
-    [Exx2Tp,Eyy2Tp,Ezz2Tp,Exy2Tp,Exz2Tp,Eyz2Tp] = TDSetupS(xp,yp,zp,B,...
-        bx,by,bz,nu,p2,e12);
-    # Calculate third angular dislocation contribution
-    [Exx3Tp,Eyy3Tp,Ezz3Tp,Exy3Tp,Exz3Tp,Eyz3Tp] = TDSetupS(xp,yp,zp,C,...
-        bx,by,bz,nu,p3,e23);
-end
 
-# Configuration II
-if nnz(casenLog)~=0
-    # Calculate first angular dislocation contribution
-    [Exx1Tn,Eyy1Tn,Ezz1Tn,Exy1Tn,Exz1Tn,Eyz1Tn] = TDSetupS(xn,yn,zn,A,...
-        bx,by,bz,nu,p1,e13);
-    # Calculate second angular dislocation contribution
-    [Exx2Tn,Eyy2Tn,Ezz2Tn,Exy2Tn,Exz2Tn,Eyz2Tn] = TDSetupS(xn,yn,zn,B,...
-        bx,by,bz,nu,p2,-e12);
-    # Calculate third angular dislocation contribution
-    [Exx3Tn,Eyy3Tn,Ezz3Tn,Exy3Tn,Exz3Tn,Eyz3Tn] = TDSetupS(xn,yn,zn,C,...
-        bx,by,bz,nu,p3,-e23);
-end
 
+
+# Calculate first angular dislocation contribution POS
+(Exx1Tp,Eyy1Tp,Ezz1Tp,Exy1Tp,Exz1Tp,Eyz1Tp) = TDSetupS(xp,yp,zp,A,bx,by,bz,nu,p1,-e13);
+# Calculate second angular dislocation contribution
+(Exx2Tp,Eyy2Tp,Ezz2Tp,Exy2Tp,Exz2Tp,Eyz2Tp) = TDSetupS(xp,yp,zp,B,bx,by,bz,nu,p2,e12);
+# Calculate third angular dislocation contribution
+(Exx3Tp,Eyy3Tp,Ezz3Tp,Exy3Tp,Exz3Tp,Eyz3Tp) = TDSetupS(xp,yp,zp,C,bx,by,bz,nu,p3,e23);
+
+# Calculate first angular dislocation contribution NEG
+(Exx1Tn,Eyy1Tn,Ezz1Tn,Exy1Tn,Exz1Tn,Eyz1Tn) = TDSetupS(xn,yn,zn,A,bx,by,bz,nu,p1,e13);
+# Calculate second angular dislocation contribution
+(Exx2Tn,Eyy2Tn,Ezz2Tn,Exy2Tn,Exz2Tn,Eyz2Tn) = TDSetupS(xn,yn,zn,B,bx,by,bz,nu,p2,-e12);
+# Calculate third angular dislocation contribution
+(Exx3Tn,Eyy3Tn,Ezz3Tn,Exy3Tn,Exz3Tn,Eyz3Tn) = TDSetupS(xn,yn,zn,C,bx,by,bz,nu,p3,-e23);	
+
+#Do some allocation before loop
+exx = Array{Float64}(undef, length(X),1); 
+eyy = Array{Float64}(undef, length(X),1); 
+ezz = Array{Float64}(undef, length(X),1); 
+exy = Array{Float64}(undef, length(X),1); 
+exz = Array{Float64}(undef, length(X),1); 
+eyz = Array{Float64}(undef, length(X),1); 
+		
+exx[casenLog]=Exx1Tn.+Exx2Tn.+Exx3Tn;
+eyy[casenLog]=Eyy1Tn.+Eyy2Tn.+Eyy3Tn;
+ezz[casenLog]=Ezz1Tn.+Ezz2Tn.+Ezz3Tn;
+exy[casenLog]=Exy1Tn.+Exy2Tn.+Exy3Tn;
+exz[casenLog]=Exz1Tn.+Exz2Tn.+Exz3Tn;
+eyz[casenLog]=Eyz1Tn.+Eyz2Tn.+Eyz3Tn;
+
+exx[casepLog]=Exx1Tp.+Exx2Tp.+Exx3Tp;
+eyy[casepLog]=Eyy1Tp.+Eyy2Tp.+Eyy3Tp;
+ezz[casepLog]=Ezz1Tp.+Ezz2Tp.+Ezz3Tp;
+exy[casepLog]=Exy1Tp.+Exy2Tp.+Exy3Tp;
+exz[casepLog]=Exz1Tp.+Exz2Tp.+Exz3Tp;
+eyz[casepLog]=Eyz1Tp.+Eyz2Tp.+Eyz3Tp;	
+		
 # Calculate the strain tensor components in TDCS
-if nnz(casepLog)~=0
-    exx(casepLog,1) = Exx1Tp+Exx2Tp+Exx3Tp;
-    eyy(casepLog,1) = Eyy1Tp+Eyy2Tp+Eyy3Tp;
-    ezz(casepLog,1) = Ezz1Tp+Ezz2Tp+Ezz3Tp;
-    exy(casepLog,1) = Exy1Tp+Exy2Tp+Exy3Tp;
-    exz(casepLog,1) = Exz1Tp+Exz2Tp+Exz3Tp;
-    eyz(casepLog,1) = Eyz1Tp+Eyz2Tp+Eyz3Tp;
-end
-if nnz(casenLog)~=0
-    exx(casenLog,1) = Exx1Tn+Exx2Tn+Exx3Tn;
-    eyy(casenLog,1) = Eyy1Tn+Eyy2Tn+Eyy3Tn;
-    ezz(casenLog,1) = Ezz1Tn+Ezz2Tn+Ezz3Tn;
-    exy(casenLog,1) = Exy1Tn+Exy2Tn+Exy3Tn;
-    exz(casenLog,1) = Exz1Tn+Exz2Tn+Exz3Tn;
-    eyz(casenLog,1) = Eyz1Tn+Eyz2Tn+Eyz3Tn;
-end
-if nnz(casezLog)~=0
-    exx(casezLog,1) = nan;
-    eyy(casezLog,1) = nan;
-    ezz(casezLog,1) = nan;
-    exy(casezLog,1) = nan;
-    exz(casezLog,1) = nan;
-    eyz(casezLog,1) = nan;
+for i=1:length(x)
+	if casezLog[i] == 1; 
+		exx[i] = NaN;
+		eyy[i] = NaN;
+		ezz[i] = NaN;
+		exy[i] = NaN;
+		exz[i] = NaN;
+		eyz[i] = NaN;
+	end
 end
 
 # Transform the strain tensor components from TDCS into EFCS
-[Exx,Eyy,Ezz,Exy,Exz,Eyz] = TensTrans(exx,eyy,ezz,exy,exz,eyz,...
-    [Vnorm,Vstrike,Vdip]);
+(Exx,Eyy,Ezz,Exy,Exz,Eyz) = TensorTransformation3D(exx,eyy,ezz,exy,exz,eyz,[Vnorm Vstrike Vdip]);
 
-## Calculate the stress tensor components in EFCS
-#Sxx = 2*mu*Exx+lambda*(Exx+Eyy+Ezz);
-#Syy = 2*mu*Eyy+lambda*(Exx+Eyy+Ezz);
-#Szz = 2*mu*Ezz+lambda*(Exx+Eyy+Ezz);
-#Sxy = 2*mu*Exy;
-#Sxz = 2*mu*Exz;
-#Syz = 2*mu*Eyz;
 
-Strain = [Exx,Eyy,Ezz,Exy,Exz,Eyz];
-#Stress = [Sxx,Syy,Szz,Sxy,Sxz,Syz];
-#Strain_Stress=[Strain,Stress];
-#A2 = [Vnorm Vstrike Vdip]';
-#A2 = A2';
+return(Exx,Eyy,Ezz,Exy,Exz,Eyz)
+
+end

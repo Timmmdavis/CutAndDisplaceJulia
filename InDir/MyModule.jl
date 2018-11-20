@@ -14,20 +14,26 @@ include("LDFSInfMat.jl")
 include("LDHSInfMat.jl")
 
 #Normal tri dislocation funcs
+#Displacement
 include("TDdispFS.jl")
-include("RotateObject3DNewCoords.jl") #Mehdis 'CoordTrans'
-include("RotateObject2D.jl")
-include("trimodefinder.jl")
 include("TDSetupD.jl")
 include("AngDisDisp.jl")
+#Strain
+include("TDstrainFS.jl")
+include("TDSetupS.jl")
+include("AngDisStrain.jl")
+include("TensorTransformation3D.jl")
+#Rotation in Mehdis funcs
+include("RotateObject3DNewCoords.jl") #Mehdis 'CoordTrans'
+include("RotateObject2D.jl")
+#Good for both
+include("trimodefinder.jl")
 include("CalculateLocalTriCoords.jl")
+include("CalcTDVectsAndAngles.jl")
+include("TransformToADCS.jl")
 
 
 using LinearAlgebra: cross,norm
 
-##Testing vectorised vs loops in julia 1.02
-#include("DotLoopTest.jl")
-#include("DotLoopTestVect.jl")
-#include("DotLoopTest2.jl")
 
 end
