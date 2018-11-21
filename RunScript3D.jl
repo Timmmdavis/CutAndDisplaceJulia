@@ -9,9 +9,9 @@ z=ones(size(x))*2;
 #Get lengths (for reshapes later)
 dimx,dimy = size(x);
 #Turn to col vectors
-x=reshape(x,1,length(x));
-y=reshape(y,1,length(y));
-z=reshape(z,1,length(z));
+x=reshape(x,length(x),1);
+y=reshape(y,length(y),1);
+z=reshape(z,length(z),1);
 #Points
 P1=[-1.,0.,0.];
 P2=[1.,-1.,-1.];
@@ -38,14 +38,19 @@ ue=zeros(size(x));
 un=zeros(size(x));
 uv=zeros(size(x));
 
+Exx=zeros(size(x));
+Eyy=zeros(size(x));
+Ezz=zeros(size(x));
+Exy=zeros(size(x));
+Exz=zeros(size(x));
+Eyz=zeros(size(x));
 
 #Timing
 #@time (ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
-@time (Exx,Eyy,Ezz,Exy,Exz,Eyz)=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
-un=Exx;
+#@time (Exx,Eyy,Ezz,Exy,Exz,Eyz)=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);un=Exx;
 
 #using Profile
-#@profile  (ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+#@profile  (Exx,Eyy,Ezz,Exy,Exz,Eyz)=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
 #Profile.print(format=:filefuncline )
 #Profile.print(format=:flat)
 #Profile.print(sortedby=:count)
@@ -54,29 +59,31 @@ un=Exx;
 #using Traceur
 #@trace MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 
-#=
+
 tic=time()
 Threads.@threads for i=1:100 #
-	(ue[:,1],un[:,1],uv[:,1])=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+	#(ue[:,1],un[:,1],uv[:,1])=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+	(Exx[:,1],Eyy[:,1],Ezz[:,1],Exy[:,1],Exz[:,1],Eyz[:,1])=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
 	#println(i)
 end
 toc=time()
 println("Elapsed time")
 println(toc-tic)
-=#
+
+Val=Exx;
 
 ####Some reshaping for drawing:
 #Was one func that reshaped stuff
 x=reshape(x,dimx,dimy);
 y=reshape(y,dimx,dimy);
-un=reshape(un,dimx,dimy);
+Val=reshape(Val,dimx,dimy);
 
 #Draw
 using NaNMath
-Top=maximum([NaNMath.maximum(un),abs(NaNMath.minimum(un))])
+Top=maximum([NaNMath.maximum(Val),abs(NaNMath.minimum(Val))])
 steps=10; #Steps from centre to top. 
 levels = [-Top:Top/steps:Top;]
 using PyPlot
 close()
-contourf(x,y,un, levels=levels);
+contourf(x,y,Val, levels=levels);
 cbar = colorbar()

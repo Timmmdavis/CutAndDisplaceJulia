@@ -23,7 +23,7 @@ U=zeros(size(X,1),3);
 D=zeros(size(X,1),6);
 
 tic
-for i=1:2
+for i=1:100
     i
     %U(:,:)=TDdispFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
     D(:,:)=TDstrainFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);

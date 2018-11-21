@@ -1,12 +1,12 @@
 function meshgrid(x,y)
 #Assuming vectors are both cols. Similar to MATLABS meshgrid func. 
 
-dimx=length(x);
-y=y';
+dimy=length(y);
+x=x';
 
 #Like repmat
-x=repeat(x, 1,length(y));
-y=repeat(y,dimx,1);
+y=repeat(y, 1,length(x));
+x=repeat(x,dimy,1);
 
 return(x,y)
 

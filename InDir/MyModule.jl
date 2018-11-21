@@ -23,6 +23,8 @@ include("TDstrainFS.jl")
 include("TDSetupS.jl")
 include("AngDisStrain.jl")
 include("TensorTransformation3D.jl")
+include("TensorTransformation2D.jl")
+
 #Rotation in Mehdis funcs
 include("RotateObject3DNewCoords.jl") #Mehdis 'CoordTrans'
 include("RotateObject2D.jl")

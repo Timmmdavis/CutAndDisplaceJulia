@@ -129,8 +129,6 @@ p3_2=p3[2];p3_3=p3[3];
 (e12,e13,e23,A,B,C)=CalcTDVectsAndAngles(p1,p2,p3)
 
 # Determine the best arteact-free configuration for each calculation point
-@info "Some variables" X[90],Y[90]
-poop
 (casepLog,casenLog,casezLog) = trimodefinder(y,z,x,p1[2:3],p2[2:3],p3[2:3]);
 
 xp=x[casepLog];
@@ -139,9 +137,6 @@ zp=z[casepLog];
 xn=x[casenLog];
 yn=y[casenLog];
 zn=z[casenLog];
-
-
-
 
 # Calculate first angular dislocation contribution POS
 (Exx1Tp,Eyy1Tp,Ezz1Tp,Exy1Tp,Exz1Tp,Eyz1Tp) = TDSetupS(xp,yp,zp,A,bx,by,bz,nu,p1,-e13);
