@@ -1,0 +1,137 @@
+HangingOnTheServerWithJulia
+
+Useful terminal commands I keep forgetting:
+ls -ld .?*   	#Show all hidden folders
+cp a b 	 		#Copy a to a new file called b
+mkdir a 		#Make directory called a
+mv a b 			#Renames a to b
+in vim  dd dG   #Delete all lines
+qsub qstat		#Submitting the PBS scripts
+
+
+https://docs.julialang.org/en/v1/stdlib/Distributed/
+In the Repl:
+-------------------------------------------
+#add package first
+using Distributed
+
+#Add some processes
+addprocs(3)
+
+#Show we are one some workers
+@everywhere println("process: $(myid()) on host $(gethostname())")
+
+#Talking to a particular node
+remotecall_fetch(() -> myid(), 4)
+
+
+####PART 2
+#add package first
+using Distributed
+addprocs(3)
+@everywhere using DistributedArrays
+x = @DArray [@show x^2 for x = 1:10];
+#Resulting in (printed in REPL)
+      From worker 2:    x ^ 2 = 1
+      From worker 2:    x ^ 2 = 4
+      From worker 2:    x ^ 2 = 9
+      From worker 4:    x ^ 2 = 64
+      From worker 4:    x ^ 2 = 81
+      From worker 4:    x ^ 2 = 100
+      From worker 3:    x ^ 2 = 16
+      From worker 3:    x ^ 2 = 25
+      From worker 3:    x ^ 2 = 36
+      From worker 3:    x ^ 2 = 49
+#Show the resulting vector is correct
+println(x)
+
+#Def Func (saved jl file)
+function MrFunc(x) 		#Can add @everywhere to this part also
+	x=x.^2; return(x)
+end
+@everywhere include("MrFunc.jl") #Add to all nodes, if defining in repl add @everywhere before word 'function'
+x = @DArray [MrFunc(x) for x = 1:10]; #Could add @show to get info here too.
+#Show the resulting vector is correct
+println(x)
+
+
+
+
+-------------------------------------------
+
+
+
+
+MY PBS script (submitted with: $ qsub X.pbs):
+-------------------------------------------
+-bash-4.1$ vi jobscript2.pbs 
+#!/bin/sh
+#PBS -l nodes=4:ppn=12,walltime=00:05:00
+#PBS -N JuliaTest
+#PBS -q sec21-long
+#PBS -M davis@gfz-potsdam.de
+###PBS -j oe
+###PBS -o PBSoutput
+
+pwd
+module load openmpi
+./julia-1.0.2/bin/julia test_julia.jl
+
+#mpirun -np 10 /home/davis/julia_test.jl
+
+exit
+-------------------------------------------
+
+
+
+test_julia.jl (that the pbs script calls. )
+-------------------------------------------
+println("HelloREPL")
+
+#Saves all the repl remarks to info.log
+using Logging, IOLogging
+logger = FileLogger(Dict(Logging.Info => "info.log", Logging.Error => "error.log"))
+oldGlobal = global_logger(logger)
+
+using Distributed
+#Add some processes
+addprocs(3)
+
+#Start producing results
+@info "Hello World!"
+#Print some host names
+for i=1:100
+        @info gethostname()
+end
+
+-------------------------------------------
+
+
+
+
+A test PBS script (submitted with: $ qsub X.pbs):
+-------------------------------------------
+#!/bin/sh
+#PBS -l nodes=4:ppn=12,walltime=00:05:00
+#PBS -N test_julia
+#PBS -q sec21-long
+#PBS -M davis@gfz-potsdam.de
+#PBS -j oe
+
+echo ------------------------------------------------------
+echo -n 'Job is running on node '; cat $PBS_NODEFILE
+echo ------------------------------------------------------
+echo PBS: qsub is running on $PBS_O_HOST
+echo PBS: originating queue is $PBS_O_QUEUE
+echo PBS: executing queue is $PBS_QUEUE
+echo PBS: working directory is $PBS_O_WORKDIR
+echo PBS: execution mode is $PBS_ENVIRONMENT
+echo PBS: job identifier is $PBS_JOBID
+echo PBS: job name is $PBS_JOBNAME
+echo PBS: node file is $PBS_NODEFILE
+echo PBS: current home directory is $PBS_O_HOME
+echo PBS: PATH = $PBS_O_PATH
+echo ------------------------------------------------------
+
+exit
+-------------------------------------------
