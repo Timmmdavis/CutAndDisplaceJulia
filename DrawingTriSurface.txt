@@ -1,0 +1,77 @@
+#More complex
+square=[0 1 0 1]
+x0 = square[1]; x1= square[2]
+y0 = square[3]; y1= square[4]
+h=0.5
+(x,y) = MyModule.meshgrid(x0:h:x1,y0:h:y1)
+node = [x[:] y[:]];
+ni = size(x,1); # number of rows
+N = size(node,1);
+t2nidxMap = 1:N-ni;
+topNode = ni:ni:N-ni;
+t2nidxMap = deleteat!(collect(t2nidxMap),collect(topNode))
+k = t2nidxMap;
+elem = [k.+ni k.+ni.+1 k ; k.+1 k k.+ni.+1]
+plot_trisurf(node[:,1],node[:,2],zeros(size(node,1)),cmap=get_cmap("ocean"))
+
+
+###Other way
+x=[0;0;0;0.5;0.5;0.5;1;1;1.5]
+y=[0;0.5;1;0;0.5;1;0;0.5;1]
+plot_trisurf(x,y,zeros(size(x)));
+
+##With my MATLAB vars
+P1=[2.59258869000000	0.509504670000000	-5.69846310000000; -2.59258869000000	-0.509504670000000	-1]
+P2=[1.73753833000000	1.99049533000000	-1; -1.73753833000000	-1.99049533000000	-5.69846310000000]
+P3=[-1.73753833000000	-1.99049533000000	-5.69846310000000; 1.73753833000000	1.99049533000000	-1]
+
+X=[P1[:,1];
+
+
+##Properly with pyplot https://matplotlib.org/api/_as_gen/mpl_toolkits.mplot3d.axes3d.Axes3D.html?highlight=trisurf#mpl_toolkits.mplot3d.axes3d.Axes3D.plot_trisurf
+using PyPlot
+#fig  = figure()
+#ax   = Axes3D(fig)
+x    = [0., 1., 1., 0.]
+y    = [0., 0.5, 1., 1.]
+z    = [0., 0., 1., 0.2]
+t    = [1 2 4; 2 3 4].-1 # Zero-based indexing required (?)
+fclr = [1. 0. 0.; 0. 0. 1.];
+fclr=x;
+
+#alpha=0.8, linewidth=3.,facecolors =fclr
+collec = plot_trisurf(x,y,z,triangles=t,cmap=cmap,facecolors =fclr)
+
+##Mesh
+square=[0 1 0 1];
+x0 = square[1]; x1= square[2];
+y0 = square[3]; y1= square[4];
+h=0.1;
+(x,y) = MyModule.meshgrid(x0:h:x1,y0:h:y1)
+z = sin(-x.*y)
+x=x[:];y=y[:];z=z[:];
+collec = plot_trisurf(x,y,z,cmap=cmap)
+fclr=[1. 0. 0.].*x;
+collec = plot_trisurf(x,y,z,facecolors =fclr)
+
+
+
+##PlotJs
+using Printf
+using PlotlyJS
+import PyPlot.triplot
+function triplot(vertices,faces,facecolor;opacity=0.5,cameraEye=[-1 -1 1])
+    fcStr = [@sprintf("rgb(%5.2f,%5.2f,%5.2f)",255*facecolor[k,1],255*facecolor[k,2],255*facecolor[k,3]) for k = 1:size(facecolor,1) ]
+    t = mesh3d(
+        x = vertices[k,1], y = vertices[k,2], z = vertices[k,3],
+        i = faces[k,1]-1,  j = faces[k,2]-1,  w = faces[k,3]-1, # Zero-based indexing in plotly
+        facecolor=fcStr,opacity=opacity)
+        layout = Layout(;title="Basic Triangle Plot",
+                        scene=attr(;camera=attr(eye=attr(x=cameraEye[1],y=cameraEye[2],z=cameraEye[3]))))
+    plot(t, layout)
+end
+
+verts = [0. 0. 0.;  1. 0.5 0.; 1. 1. 1.; 0. 1. 0.2]
+faces = [1 2 4; 2 3 4]
+fclr  = [1. 0. 0.; 0. 0. 1.]
+triplot(verts,faces,fclr)
