@@ -45,5 +45,4 @@ remove 1.* etc, if using integer just * not .*
 remove all multiline statements  (with .../r). Or just remove "..." as this works anyway
 replace logical statements like A>0 with A.>0 if its matrix
 make sure all function names at top of FILE are different!!!! How its saved is useless (file name)
-
-#Terminal stuff:
+find is findall https://github.com/JuliaLang/julia/issues/10593

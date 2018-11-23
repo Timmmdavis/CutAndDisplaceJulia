@@ -34,6 +34,8 @@ include("CalculateLocalTriCoords.jl")
 include("CalcTDVectsAndAngles.jl")
 include("TransformToADCS.jl")
 
+include("Okada1985RectangularDislocation.jl")
+
 
 using LinearAlgebra: cross,norm
 

@@ -70,20 +70,20 @@ toc=time()
 println("Elapsed time")
 println(toc-tic)
 
-Val=Exx;
+Value=Exx;
 
 ####Some reshaping for drawing:
 #Was one func that reshaped stuff
 x=reshape(x,dimx,dimy);
 y=reshape(y,dimx,dimy);
-Val=reshape(Val,dimx,dimy);
+Value=reshape(Value,dimx,dimy);
 
 #Draw
 using NaNMath
-Top=maximum([NaNMath.maximum(Val),abs(NaNMath.minimum(Val))])
+Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
 steps=10; #Steps from centre to top. 
 levels = [-Top:Top/steps:Top;]
 using PyPlot
 close()
-contourf(x,y,Val, levels=levels);
+contourf(x,y,Value, levels=levels);
 cbar = colorbar()
