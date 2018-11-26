@@ -1,7 +1,15 @@
 module MyModule
 
+using LinearAlgebra
+
 #Creates Meshgrid
 include("meshgrid.jl")
+include("normr.jl")
+
+
+#Continuum mechanics funcs
+include("CalculateDSandSSDirs.jl")
+
 
 #Normal line dislocation funcs
 include("LDstressHS.jl")
@@ -16,8 +24,17 @@ include("LDHSInfMat.jl")
 #Normal tri dislocation funcs
 #Displacement
 include("TDdispFS.jl")
+include("TDdispHS.jl")
 include("TDSetupD.jl")
 include("AngDisDisp.jl")
+
+
+
+#halfspace
+include("TDdisp_HarFunc.jl")
+include("AngSetupFSC.jl")
+include("AngDisDispFSC.jl")
+
 #Strain
 include("TDstrainFS.jl")
 include("TDSetupS.jl")
@@ -37,7 +54,7 @@ include("TransformToADCS.jl")
 include("Okada1985RectangularDislocation.jl")
 
 
-using LinearAlgebra: cross,norm
+
 
 
 end

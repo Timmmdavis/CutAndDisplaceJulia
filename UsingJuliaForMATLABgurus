@@ -46,3 +46,8 @@ remove all multiline statements  (with .../r). Or just remove "..." as this work
 replace logical statements like A>0 with A.>0 if its matrix
 make sure all function names at top of FILE are different!!!! How its saved is useless (file name)
 find is findall https://github.com/JuliaLang/julia/issues/10593
+#if G is a bool
+.!G #is the inverse, need the .
+#. also needed for log, acos and a few others. 
+make sure multilines the + - * etc are on the right hand side of the upper line. 
+

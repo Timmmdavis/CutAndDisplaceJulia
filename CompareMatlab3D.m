@@ -1,6 +1,6 @@
 %Comment - start some vectors (spaced points)
 
-[X,Y,Z] = meshgrid(-3:.02:3,-3:.02:3,2);
+[X,Y,Z] = meshgrid(-3:.02:3,-3:.02:3,0);
 [dimx,dimy] = size(X);
 X=X(:);Y=Y(:);Z=Z(:);
 
@@ -8,9 +8,9 @@ X=X(:);Y=Y(:);Z=Z(:);
 %Y=1;
 %Z=1;
 
-P1=[-1 0 0];
+P1=[-1 0 -1];
 P2=[1 -1 -1];
-P3=[0 1.5 .5];
+P3=[0 1.5 -.5];
 
 Ss=-1;
 Ds=2;
@@ -23,13 +23,13 @@ U=zeros(size(X,1),3);
 D=zeros(size(X,1),6);
 
 tic
-for i=1:100
+for i=1%:100
     i
-    %U(:,:)=TDdispFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
-    D(:,:)=TDstrainFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
+    U(:,:)=TDdispHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu);
+    %D(:,:)=TDstrainHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
 end
 toc
 %disp(U)
 
-[X,Y,Un ]=ReshapeData2d( dimx,dimy,X,Y,D(:,1) );
+[X,Y,Un ]=ReshapeData2d( dimx,dimy,X,Y,U(:,1) );
 contourf(X,Y,Un)

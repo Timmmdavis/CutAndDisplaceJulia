@@ -5,7 +5,7 @@ println("creating func vars")
 x = [-3:0.02:3;];
 y = [-3:0.02:3;];
 x,y=MyModule.meshgrid(x,y);
-z=ones(size(x))*2;
+z=ones(size(x))*0;
 #Get lengths (for reshapes later)
 dimx,dimy = size(x);
 #Turn to col vectors
@@ -13,9 +13,9 @@ x=reshape(x,length(x),1);
 y=reshape(y,length(y),1);
 z=reshape(z,length(z),1);
 #Points
-P1=[-1.,0.,0.];
+P1=[-1.,0.,-1.];
 P2=[1.,-1.,-1.];
-P3=[0.,1.5,.5];
+P3=[0.,1.5,-.5];
 #Angles
 Ax=pi;
 Ay=0;
@@ -46,7 +46,7 @@ Exz=zeros(size(x));
 Eyz=zeros(size(x));
 
 #Timing
-#@time (ue,un,uv)=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+@time (ue,un,uv)=MyModule.TDdispHS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 #@time (Exx,Eyy,Ezz,Exy,Exz,Eyz)=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);un=Exx;
 
 #using Profile
@@ -59,7 +59,7 @@ Eyz=zeros(size(x));
 #using Traceur
 #@trace MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 
-
+#=
 tic=time()
 Threads.@threads for i=1:100 #
 	#(ue[:,1],un[:,1],uv[:,1])=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
@@ -69,8 +69,9 @@ end
 toc=time()
 println("Elapsed time")
 println(toc-tic)
+=#
 
-Value=Exx;
+Value=ue;
 
 ####Some reshaping for drawing:
 #Was one func that reshaped stuff
