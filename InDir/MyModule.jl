@@ -9,7 +9,8 @@ include("normr.jl")
 
 #Continuum mechanics funcs
 include("CalculateDSandSSDirs.jl")
-
+include("RotateCosine3D.jl")
+include("CheckDirectionCosinePerp.jl")
 
 #Normal line dislocation funcs
 include("LDstressHS.jl")

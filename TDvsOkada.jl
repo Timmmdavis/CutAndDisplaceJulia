@@ -8,7 +8,7 @@ println("creating func vars")
 
 #Fault geom
 Strike=60;
-Dip=70;
+Dip=45;
 Length=5;
 Width=5;
 TipDepth=1;
@@ -29,18 +29,35 @@ X=[-1  1 -1 -1 1 1];
 Y=[ 1 -1 -1 -1 1 1];
 Z=[ 0  0  0  0 0 0];
 
-X=X.*Width;
-Y=Y.*Length;
 
-( StrikeSlipCosine,DipSlipCosine ) = MyModule.CalculateDSandSSDirs( cosd(45),0,cosd(45) ) #Plane dipping at dip (facing east!)
-#THEN ROTATE IT BY STRIKE (NEED COSINE ROTATE METHO)
-(X,Y,Z)=MyModule.RotateObject3DNewCoords(X,Y,Z,0,0,0,Ax1,Ax2,Ax3)
 
-#Define dipping fault plane (Would be better to add rectangle and transform....
-#P1=[2.59258869000000	0.509504670000000	-5.69846310000000; -2.59258869000000	-0.509504670000000	-1]
-#P2=[1.73753833000000	1.99049533000000	-1; -1.73753833000000	-1.99049533000000	-5.69846310000000]
-#P3=[-1.73753833000000	-1.99049533000000	-5.69846310000000; 1.73753833000000	1.99049533000000	-1]
 
+X=(X./2).*Width;
+Y=(Y./2).*Length;
+
+( StrikeSlipCosine,DipSlipCosine ) = MyModule.CalculateDSandSSDirs( cosd(Dip),0,cosd(Dip) ) #Plane dipping at dip (facing east!)
+
+RAngle=deg2rad(-Strike)
+StrikeSlipCosine=MyModule.RotateCosine3D(StrikeSlipCosine,RAngle,"z")
+DipSlipCosine=MyModule.RotateCosine3D(DipSlipCosine,RAngle,"z")
+using LinearAlgebra
+FaceNormalVector=cross(vec(StrikeSlipCosine),vec(DipSlipCosine))
+FaceNormalVector=FaceNormalVector'
+
+MyModule.CheckDirectionCosinePerp(FaceNormalVector,DipSlipCosine,StrikeSlipCosine)
+
+(X,Y,Z)=MyModule.RotateObject3DNewCoords(X,Y,Z,0,0,0,DipSlipCosine,StrikeSlipCosine,FaceNormalVector)
+Drop=maximum(Z);
+Z=Z.-Drop.-TipDepth; #Move fault down
+P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]]
+P2=[X[3] Y[3] Z[3];X[4] Y[4] Z[4]]
+P3=[X[5] Y[5] Z[5];X[6] Y[6] Z[6]]
+
+#= draw fault
+using PyPlot
+scatter(X,Y,abs.(Z),Z)
+cbar = colorbar()
+=#
 
 # Comment - start some vectors (spaced points)
 x = range(-10,stop=10,length=50); #linspace deprecated
@@ -54,11 +71,8 @@ x=reshape(x,length(x),1);
 y=reshape(y,length(y),1);
 z=reshape(z,length(z),1);
 
-
-
-
 println("Vars created -> to TD func1")
-(Ux1,Uy1,Uz1)=MyModule.TDdispHS(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,Dds,Dn,nu);
+(Ux1,Uy1,Uz1)=MyModule.TDdispHS(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,-Dds,Dn,nu);
 (Ux2,Uy2,Uz2)=MyModule.TDdispHS(x,y,z,P1[2,:],P2[2,:],P3[2,:],Dss,Dds,Dn,nu);
 Ux=Ux1.+Ux2;
 Uy=Uy1.+Uy2;
@@ -75,12 +89,17 @@ x=reshape(x,dimx,dimy);
 y=reshape(y,dimx,dimy);
 uX=reshape(uX,dimx,dimy);
 Ux=reshape(Ux,dimx,dimy);
+uY=reshape(uY,dimx,dimy);
+Uy=reshape(Uy,dimx,dimy);
+uZ=reshape(uZ,dimx,dimy);
+Uz=reshape(Uz,dimx,dimy);
 
 UxRes=maximum(Ux[:].-uX[:]);
 UyRes=maximum(Uy[:].-uY[:]);
 UzRes=maximum(Uz[:].-uZ[:]);
 
 
+@info UxRes UyRes UzRes
 if UxRes>1E-9
 	error("UxRes too high, Okada and TD not matching for displacement")
 end
@@ -91,14 +110,18 @@ if UzRes>1E-9
 	error("UzRes too high, Okada and TD not matching for displacement")
 end
 
+
 println("Test Passed")
 
 #= if you want to draw remove this line
-println("Starting Makie")
-using Makie
-
-println("Calling Func 2 draw")
-sc1=contour(x, y, uX, levels = 20, linewidth = 0, fillrange = true)
-#sc2=contour(x, y, Ux, levels = 20, linewidth = 0, fillrange = true)
-#hbox(sc2, sc1)
+Value=uZ
+using NaNMath
+Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
+steps=10; #Steps from centre to top. 
+levels = [-Top:Top/steps:Top;]
+using PyPlot
+close()
+contourf(x,y,Value, levels=levels);
+cbar = colorbar()
 =#
+
