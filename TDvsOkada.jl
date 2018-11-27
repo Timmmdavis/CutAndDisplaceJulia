@@ -20,32 +20,20 @@ Dss=0;
 #Elastic cons
 nu=0.25;
 
+
+###Section - arranging the fault surface for the TDE solution
 #Arranged as so
 #P1=[-1  1 0 ; 1 -1 0]; #top left and bottom right
 #P2=[-1 -1 0 ;-1 -1 0]; #bottom left
 #P3=[ 1  1 0 ; 1  1 0]; #top right
-
 X=[-1  1 -1 -1 1 1];
 Y=[ 1 -1 -1 -1 1 1];
 Z=[ 0  0  0  0 0 0];
-
-
-
-
 X=(X./2).*Width;
 Y=(Y./2).*Length;
-
-( StrikeSlipCosine,DipSlipCosine ) = MyModule.CalculateDSandSSDirs( cosd(Dip),0,cosd(Dip) ) #Plane dipping at dip (facing east!)
-
-RAngle=deg2rad(-Strike)
-StrikeSlipCosine=MyModule.RotateCosine3D(StrikeSlipCosine,RAngle,"z")
-DipSlipCosine=MyModule.RotateCosine3D(DipSlipCosine,RAngle,"z")
-using LinearAlgebra
-FaceNormalVector=cross(vec(StrikeSlipCosine),vec(DipSlipCosine))
-FaceNormalVector=FaceNormalVector'
-
-MyModule.CheckDirectionCosinePerp(FaceNormalVector,DipSlipCosine,StrikeSlipCosine)
-
+#Getting the direction cosines for the actual plane
+(StrikeSlipCosine,DipSlipCosine,FaceNormalVector)=MyModule.CreateDirectionCosinesFromStrikeAndDip(Strike,Dip)
+#Now rotate the flat plane to the correct location. 
 (X,Y,Z)=MyModule.RotateObject3DNewCoords(X,Y,Z,0,0,0,DipSlipCosine,StrikeSlipCosine,FaceNormalVector)
 Drop=maximum(Z);
 Z=Z.-Drop.-TipDepth; #Move fault down
@@ -59,7 +47,7 @@ scatter(X,Y,abs.(Z),Z)
 cbar = colorbar()
 =#
 
-# Comment - start some vectors (spaced points)
+# Start some vectors (spaced points)
 x = range(-10,stop=10,length=50); #linspace deprecated
 (x,y)=MyModule.meshgrid(x,x);
 z=ones(size(x))*-0; #Ground surface
