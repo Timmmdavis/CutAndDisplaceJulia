@@ -1,5 +1,6 @@
+authors = ["timmmdavis <r01tjd16@abdn.ac.uk>"]
 name = "MyModule"
-uuid = "14d43040-f7e2-11e8-31da-7fdec24af6e6"
+uuid = "71562590-f7e6-11e8-1c31-fbd4b268be1c"
 version = "0.1.0"
 
 [deps]
