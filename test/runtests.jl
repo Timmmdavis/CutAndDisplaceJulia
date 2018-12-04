@@ -1,7 +1,8 @@
-using MyModule
 #Dependencies
 using Test 
 using LinearAlgebra
+#Add MyModule
+using MyModule
 
 println("Starting Test 1")
 ##Test 1, Check the TDE's match Okada dislocations. 
