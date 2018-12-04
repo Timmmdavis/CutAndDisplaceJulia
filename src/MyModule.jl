@@ -11,6 +11,7 @@ include("normr.jl")
 include("CalculateDSandSSDirs.jl")
 include("RotateCosine3D.jl")
 include("CheckDirectionCosinePerp.jl")
+include("CreateDirectionCosinesFromStrikeAndDip.jl")
 
 #Normal line dislocation funcs
 include("LDstressHS.jl")
