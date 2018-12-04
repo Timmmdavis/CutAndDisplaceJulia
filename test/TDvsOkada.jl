@@ -1,6 +1,8 @@
 #Test case comparing Okada dislocations with TDs (displacement)
 #Would be better to manually rotate points etc (not just predefine)
 
+
+
 #Start creating vars for function: 
 println("creating func vars")
 
