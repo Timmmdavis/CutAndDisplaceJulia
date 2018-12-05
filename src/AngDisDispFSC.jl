@@ -6,6 +6,7 @@ function AngDisDispFSC(y1,y2,y3,cosB,sinB,cotB,cotB2,b1,b2,b3,nu,a)
 #sinB = sin(beta);
 #cosB = cos(beta);
 #cotB = cot(beta);
+#cotB2= cot(beta/2);
 y3b = y3 +2*a;
 z1b = y1*cosB+y3b*sinB;
 z3b = -y1*sinB+y3b*cosB;
