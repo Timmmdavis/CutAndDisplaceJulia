@@ -43,16 +43,31 @@ else
 	v2B= Array{Float64}(undef, length(y1A),1);
 	v3B= Array{Float64}(undef, length(y1A),1);
 	
-    # Configuration I
-    (v1A[I],v2A[I],v3A[I]) = AngDisDispFSC(y1A[I],y2A[I],y3A[I],-pi+beta,b1,b2,b3,nu,-PA[3]);
-    (v1B[I],v2B[I],v3B[I]) = AngDisDispFSC(y1B[I],y2B[I],y3B[I],-pi+beta,b1,b2,b3,nu,-PB[3]);
-	
 	Iflp=.!I; #Invert the bool
+
+	indx=findall(I);
+	indxf=findall(Iflp);
+	b=-pi+beta;
+	sinB = sin(b);
+	cosB = cos(b);
+	cotB = cot(b);
+	cotB2=cot(b/2);
+	# Configuration I
+	for i=1:length(indx)
+		(v1A[indx[i]],v2A[indx[i]],v3A[indx[i]]) = AngDisDispFSC(y1A[indx[i]],y2A[indx[i]],y3A[indx[i]],cosB,sinB,cotB,cotB2,b1,b2,b3,nu,-PA[3]);
+		(v1B[indx[i]],v2B[indx[i]],v3B[indx[i]]) = AngDisDispFSC(y1B[indx[i]],y2B[indx[i]],y3B[indx[i]],cosB,sinB,cotB,cotB2,b1,b2,b3,nu,-PB[3]);
+	end
+	b=beta;
+	sinB = sin(b);
+	cosB = cos(b);
+	cotB = cot(b);
+	cotB2=cot(b/2);
+	# Configuration II
+	for i=1:length(indxf)
+		(v1A[indxf[i]],v2A[indxf[i]],v3A[indxf[i]]) = AngDisDispFSC(y1A[indxf[i]],y2A[indxf[i]],y3A[indxf[i]],cosB,sinB,cotB,cotB2,b1,b2,b3,nu,-PA[3]);
+		(v1B[indxf[i]],v2B[indxf[i]],v3B[indxf[i]]) = AngDisDispFSC(y1B[indxf[i]],y2B[indxf[i]],y3B[indxf[i]],cosB,sinB,cotB,cotB2,b1,b2,b3,nu,-PB[3]);
+    end
 	
-    # Configuration II
-    (v1A[Iflp],v2A[Iflp],v3A[Iflp]) = AngDisDispFSC(y1A[Iflp],y2A[Iflp],y3A[Iflp],beta,b1,b2,b3,nu,-PA[3]);
-    (v1B[Iflp],v2B[Iflp],v3B[Iflp]) = AngDisDispFSC(y1B[Iflp],y2B[Iflp],y3B[Iflp],beta,b1,b2,b3,nu,-PB[3]);
-    
     # Calculate total Free Surface Correction to displacements in ADCS
     v1 = v1B-v1A;
     v2 = v2B-v2A;
