@@ -10,6 +10,8 @@ function contourfill(x,y,v)
 #v=reshape(v,dimx,dimy);
 #}
 
+#Will need PyPlot installed and working and call; using PyPlot;
+
 #Get caxis limits
 maxi=maximum(filter(!isnan, v));
 mini=abs.(minimum(filter(!isnan, v)));
