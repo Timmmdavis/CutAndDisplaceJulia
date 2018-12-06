@@ -1,6 +1,7 @@
 module MyModule
 
 using LinearAlgebra
+using PyPlot
 
 #Creates Meshgrid
 include("meshgrid.jl")
@@ -54,10 +55,7 @@ include("CalculateLocalTriCoords.jl")
 include("CalcTDVectsAndAngles.jl")
 include("TransformToADCS.jl")
 
-
-
-
-
-
+#Drawing 
+include("contourfill.jl")
 
 end

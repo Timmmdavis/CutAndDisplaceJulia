@@ -52,4 +52,4 @@ find is findall https://github.com/JuliaLang/julia/issues/10593
 .!G #is the inverse, need the .
 #. also needed for log, acos and a few others. 
 make sure multilines the + - * etc are on the right hand side of the upper line. 
-nanmax --->  Xmx=maximum(filter(!isnan, X));
+nanmax --->  Xmx=maximum(filter(!isnan, X));  OR using NaNMath; Xmx=NaNMath.maximum(X);
