@@ -1,7 +1,6 @@
 module MyModule
 
 using LinearAlgebra
-using PyPlot
 
 #Creates Meshgrid
 include("meshgrid.jl")
