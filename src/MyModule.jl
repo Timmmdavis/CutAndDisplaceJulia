@@ -6,6 +6,9 @@ using LinearAlgebra
 include("meshgrid.jl")
 include("normr.jl")
 
+#Analytical functions (not sped these up)
+include("Barber1992_GlideDislocation.jl")
+include("Okada1985RectangularDislocation.jl")
 
 #Continuum mechanics funcs
 include("CalculateDSandSSDirs.jl")
@@ -51,7 +54,7 @@ include("CalculateLocalTriCoords.jl")
 include("CalcTDVectsAndAngles.jl")
 include("TransformToADCS.jl")
 
-include("Okada1985RectangularDislocation.jl")
+
 
 
 

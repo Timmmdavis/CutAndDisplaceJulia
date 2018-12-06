@@ -5,10 +5,11 @@ using LinearAlgebra
 using MyModule
 
 println("Starting Test 1")
-##Test 1, Check the TDE's match Okada dislocations. 
+##Test 1, Check the TDE's match Okada dislocations (displacement HS). Need to add strain!!!
 include("test_TDvsOkada.jl")
 println("Test 1 passed")
 
 println("Starting Test 2")
-#Nothing ATM
+##Test 2, Check the LD's match glide dislocation formulas
+include("test_LDvsBarberGlideDisc.jl")
 println("Test 2 passed")

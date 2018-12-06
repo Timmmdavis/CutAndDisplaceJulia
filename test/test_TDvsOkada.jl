@@ -1,7 +1,4 @@
 #Test case comparing Okada dislocations with TDs (displacement)
-#Would be better to manually rotate points etc (not just predefine)
-
-
 
 #Start creating vars for function: 
 println("creating func vars")
@@ -75,43 +72,45 @@ println("Into Okada func")
 (uX,uY,uZ)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
 
 println("Out of func, drawing time, start by reshape")
-x=reshape(x,dimx,dimy);
-y=reshape(y,dimx,dimy);
-uX=reshape(uX,dimx,dimy);
-Ux=reshape(Ux,dimx,dimy);
-uY=reshape(uY,dimx,dimy);
-Uy=reshape(Uy,dimx,dimy);
-uZ=reshape(uZ,dimx,dimy);
-Uz=reshape(Uz,dimx,dimy);
+
 
 UxRes=maximum(Ux[:].-uX[:]);
 UyRes=maximum(Uy[:].-uY[:]);
 UzRes=maximum(Uz[:].-uZ[:]);
 
-
-@info UxRes UyRes UzRes
-if UxRes>1E-9
+println("Values of residuals: TDE vs Okada")
+@info UxRes UyRes UzRes #Display values in test output
+if UxRes>1E-14
 	error("UxRes too high, Okada and TD not matching for displacement")
 end
-if UyRes>1E-9
+if UyRes>1E-14
 	error("UyRes too high, Okada and TD not matching for displacement")
 end
-if UzRes>1E-9
+if UzRes>1E-14
 	error("UzRes too high, Okada and TD not matching for displacement")
 end
 
 
 println("Test Passed")
 
-#= if you want to draw remove this line
-Value=uZ
-using NaNMath
-Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
-steps=10; #Steps from centre to top. 
-levels = [-Top:Top/steps:Top;]
-using PyPlot
-close()
-contourf(x,y,Value, levels=levels);
-cbar = colorbar()
-=#
+# #= if you want to draw remove this line
+# x=reshape(x,dimx,dimy);
+# y=reshape(y,dimx,dimy);
+# uX=reshape(uX,dimx,dimy);
+# Ux=reshape(Ux,dimx,dimy);
+# uY=reshape(uY,dimx,dimy);
+# Uy=reshape(Uy,dimx,dimy);
+# uZ=reshape(uZ,dimx,dimy);
+# Uz=reshape(Uz,dimx,dimy);
+
+# Value=uZ
+# using NaNMath
+# Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
+# steps=10; #Steps from centre to top. 
+# levels = [-Top:Top/steps:Top;]
+# using PyPlot
+# close()
+# contourf(x,y,Value, levels=levels);
+# cbar = colorbar()
+# =#
 
