@@ -17,14 +17,8 @@ include("CheckDirectionCosinePerp.jl")
 include("CreateDirectionCosinesFromStrikeAndDip.jl")
 
 #Normal line dislocation funcs
-include("LDstressHS.jl")
-include("LDstressFS.jl")
-include("LDdispFS.jl")
-include("LDdispHS.jl")
-
-#More involved ones for create inf matricies. 
-include("LDFSInfMat.jl")
-include("LDHSInfMat.jl")
+include("LD.jl")
+include("LD_sum.jl")
 
 #Normal tri dislocation funcs
 #Displacement

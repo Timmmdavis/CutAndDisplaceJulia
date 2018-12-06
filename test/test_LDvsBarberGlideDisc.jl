@@ -13,15 +13,19 @@ x = [minx:spacing:maxx;];
 (X,Y) = MyModule.meshgrid(x,x);
 
 a = 1;  
-b=0.0001; 
 Beta=0;
 Ds=1;
 Dn=0.;
 
+DispFlag=1;
+StressFlag=1;
+HSflag=0;
+
 println("Vars created -> to LD func")
 
-(uX,uY)=MyModule.LDdispFS(X[:],Y[:],0,0,a,Beta,Ds,Dn,nu)
-(sXX,sYY,sXY)=MyModule.LDstressFS(X[:],Y[:],0,0,a,Beta,Ds,Dn,nu,mu)
+(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=MyModule.LD(X[:],Y[:],0,0,a,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+#Accumulating arrays
+(sXX,sYY,sXY,uX,uY)=MyModule.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
 
 println("Out of func, too Barber1992_GlideDislocation")
 
