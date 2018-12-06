@@ -45,17 +45,20 @@ function Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu)
 #
 # Example usage:
 #
-# nu = 0.25;
-# k = 3-4*nu; 
-# mu = 500;
-# spacing=0.1;
-# minx=-4; maxx=4;
-# x = [minx:spacing:maxx;];
-# (X,Y) = MyModule.meshgrid(x,x);
-# dimx,dimy = size(X);
-# a = 1;  
-# b=0.0001; 
-# (Sxx,Syy,Sxy,Ux,Uy)=MyModule.Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu)
+#  nu = 0.25;
+#  k = 3-4*nu; 
+#  mu = 500;
+#  spacing=0.1;
+#  minx=-4; maxx=4;
+#  [X,Y] = meshgrid(minx:spacing:maxx);
+#  a = 1;  
+#  b=0.0001; 
+#  
+#  [X,Y,Sxx,Syy,Sxy,Ux,Uy] =...
+#   Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu);
+# 
+#  quiver(X(:),Y(:),Ux(:),Uy(:))
+#  DrawContourFPlots2d( X,Y,[], Sxx,Syy,Sxy )
 #
 #
 #  Author: Tim Davis
