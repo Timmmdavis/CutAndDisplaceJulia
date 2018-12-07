@@ -15,7 +15,7 @@ Rake=90;
 #Fault slip
 Dds=1;
 Dn=0.3;
-Dss=0.6;
+Dss=0;
 #Elastic cons
 nu=0.25;
 

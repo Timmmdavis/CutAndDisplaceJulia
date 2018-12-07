@@ -14,7 +14,7 @@ TipDepth=1;
 Rake=90;
 #Fault slip
 Dds=1;
-Dn=0;
+Dn=0.5;
 Dss=0;
 #Elastic cons
 nu=0.25;
@@ -22,6 +22,7 @@ nu=0.25;
 #Dip relative to X-axis
 Beta=rad2deg(90-Dip);
 a=Width;
+Ds=Dds;
 #Depth of midpoint
 MidDeptha=sind(Dip)*Width;
 MidDepth=MidDeptha/2+TipDepth;
@@ -39,14 +40,13 @@ x=reshape(x,length(x),1);
 y=reshape(y,length(y),1);
 z=reshape(z,length(z),1);
 
-
 DispFlag=1;
 StressFlag=1;
-HSflag=0;
+HSflag=1;
 
 println("Vars created -> to LD func")
 
-(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=MyModule.LD(x,y,0,MidDepth,a,Beta,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=MyModule.LD(x,y,0,MidDepth,a,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
 #Accumulating arrays
 (sXX,sYY,sXY,uX,uY)=MyModule.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
 
