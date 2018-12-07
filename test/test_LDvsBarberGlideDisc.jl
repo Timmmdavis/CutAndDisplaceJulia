@@ -34,8 +34,6 @@ println("Out of func, too Barber1992_GlideDislocation")
 
 println("Out of func, drawing time, start by reshape")
 
-@info Ux[1:10] uX[1:10]
-
 UxRes=maximum(filter(!isnan, Ux[:].-uX[:]));
 UyRes=maximum(filter(!isnan, Uy[:].-uY[:]));
 SxxRes=maximum(filter(!isnan, Sxx[:].-sXX[:]));
