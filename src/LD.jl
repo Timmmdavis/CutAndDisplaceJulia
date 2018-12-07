@@ -124,18 +124,18 @@ for k = 1:length(xe); #for every element
 		end
 			
 		if DispFlag==1
-			(FF2,FF3)=CompFF2AndFF3(R1S,R2S,con,XB,Yb,XMa,XPa,a[k])
+			(FF2,FF3)=CompFF2AndFF3(R1S,R2S,con,XB,YB,XMa,XPa,a[k])
 			#And same for image dislocation
 			if HSflag==1
 				# Calculate intermediate functions Fnifor the image dislocation
-				(FF2i,FF3i)=CompFF2AndFF3(R1Si,R2Si,con,XBi,Ybi,XMai,XPai,a[k])
+				(FF2i,FF3i)=CompFF2AndFF3(R1Si,R2Si,con,XBi,YBi,XMai,XPai,a[k])
 			end
 		end		
 		
 		if StressFlag==1
-			(FF4,FF5,FF6,FF7)=CompFF4ToFF7(R1S,R2S,Yb,XMa,XPa,XMa2,XPa2,R1S2,R2S2,Y2,con)
+			(FF4,FF5,FF6,FF7)=CompFF4ToFF7(R1S,R2S,YB,XMa,XPa,XMa2,XPa2,R1S2,R2S2,Y2,con)
 			if HSflag==1
-					(FF4i,FF5i,FF6i,FF7i)=CompFF4ToFF7(R1Si,R2Si,Ybi,XMai,XPai,XMa2i,XPa2i,R1S2i,R2S2i,Y2i,con)
+					(FF4i,FF5i,FF6i,FF7i)=CompFF4ToFF7(R1Si,R2Si,YBi,XMai,XPai,XMa2i,XPa2i,R1S2i,R2S2i,Y2i,con)
 					
 					# The halfspace examples of eqs 553a and b of C&S, p 91
 					# See Appendix A of: Martel, SJ and Langley, JS, 2006 Propagation of
@@ -275,14 +275,14 @@ R2S = XPa2 + Y2; R2S2 = R2S^2;
 return(Y2,XMa,XPa,XMa2,XPa2,R1S,R2S,R1S2,R2S2)
 end
 
-function CompFF2AndFF3(R1S,R2S,con,XB,Yb,XMa,XPa,a)
+function CompFF2AndFF3(R1S,R2S,con,XB,YB,XMa,XPa,a)
 #The following derivatives are eqs. 4.5.5a thru d of C&S, p. 58.
 FF2 = con*(log(sqrt(R1S)) - log(sqrt(R2S)));	
 #Steve Martels Solution to elements lying on same plane
 #FB3 = 0 for pts colinear with element, CON*pi for pts. on element 
 #FB3 = difference of arc tangents for all other pts.
 if YB==0; 
-	if abs(XB) < a[k];
+	if abs(XB) < a;
 		FF3=pi;
 	else
 		FF3=0;
@@ -294,11 +294,11 @@ FF3 = -con.*(FF3);
 return(FF2,FF3)
 end
 
-function CompFF4ToFF7(R1S,R2S,Yb,XMa,XPa,XMa2,XPa2,R1S2,R2S2,Y2,con)
+function CompFF4ToFF7(R1S,R2S,YB,XMa,XPa,XMa2,XPa2,R1S2,R2S2,Y2,con)
 FF4 = con*(YB/R1S - YB/R2S);
 FF5 = con*(XMa/R1S - XPa/R2S);
 # The following derivatives are eqs 553a and b of C&S, p 91
 FF6 = con*((XMa2 - Y2)/R1S2 - (XPa2 - Y2)/R2S2);
 FF7 = 2*con*YB*(XMa/R1S2 - XPa/R2S2);
-return(FF4,FF5)
+return(FF4,FF5,FF6,FF7)
 end
