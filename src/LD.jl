@@ -124,29 +124,24 @@ for k = 1:length(xe); #for every element
 		end
 			
 		if DispFlag==1
-			CompFF2AndFF3(R1S,R2S,con,XB,Yb,XMa,XPa,a[k])
+			(FF2,FF3)=CompFF2AndFF3(R1S,R2S,con,XB,Yb,XMa,XPa,a[k])
 			#And same for image dislocation
 			if HSflag==1
 				# Calculate intermediate functions Fnifor the image dislocation
-				CompFF2AndFF3(R1Si,R2Si,con,XBi,Ybi,XMai,XPai,a[k])
+				(FF2i,FF3i)=CompFF2AndFF3(R1Si,R2Si,con,XBi,Ybi,XMai,XPai,a[k])
 			end
 		end		
 		
 		if StressFlag==1
-			FF4 = con*(YB/R1S - YB/R2S);
-			FF5 = con*(XMa/R1S - XPa/R2S);
-			# The following derivatives are eqs 553a and b of C&S, p 91
-			FF6 = con*((XMa2 - Y2)/R1S2 - (XPa2 - Y2)/R2S2);
-			FF7 = 2*con*YB*(XMa/R1S2 - XPa/R2S2);
+			(FF4,FF5,FF6,FF7)=CompFF4ToFF7(R1S,R2S,Yb,XMa,XPa,XMa2,XPa2,R1S2,R2S2,Y2,con)
 			if HSflag==1
-					FF4i = con*(YBi/R1Si - YBi/R2Si);
-					FF5i = con*(XMai/R1Si - XPai/R2Si);
+					(FF4i,FF5i,FF6i,FF7i)=CompFF4ToFF7(R1Si,R2Si,Ybi,XMai,XPai,XMa2i,XPa2i,R1S2i,R2S2i,Y2i,con)
+					
 					# The halfspace examples of eqs 553a and b of C&S, p 91
 					# See Appendix A of: Martel, SJ and Langley, JS, 2006 Propagation of
 					# normal faults to the surface in basalt, Koae fault system, Hawaii
 					# Journal of Structural Geology, 28(12), pp2123-2143
-					FF6i = con*((XMa2i - Y2i)/R1S2i - (XPa2i - Y2i)/R2S2i);
-					FF7i = 2*con*YBi*(XMai/R1S2i - XPai/R2S2i);
+
 					#*Tim* I used MATLABs symbolic to find these not eq's A3 and A4 of Martel
 					# Used EqA1 on variable FF7i (expanded)
 					FF8i =(YBi*(1/((a[k] + XBi)^2 + YBi^2)^2 - 1/(YBi^2 + (a[k] - XBi)^2)^2 + (2*(a[k] - XBi)*(2*a[k] - 2*XBi))/(YBi^2 + (a[k] - XBi)^2)^3 - (2*(a[k] + XBi)*(2*a[k] + 2*XBi))/((a[k] + XBi)^2 + YBi^2)^3))/(2*pi*(nu - 1));
@@ -299,8 +294,11 @@ FF3 = -con.*(FF3);
 return(FF2,FF3)
 end
 
-function CompFF4AndFF5(R1S,R2S,Yb,XMa,XPa,con)
+function CompFF4ToFF7(R1S,R2S,Yb,XMa,XPa,XMa2,XPa2,R1S2,R2S2,Y2,con)
 FF4 = con*(YB/R1S - YB/R2S);
 FF5 = con*(XMa/R1S - XPa/R2S);
+# The following derivatives are eqs 553a and b of C&S, p 91
+FF6 = con*((XMa2 - Y2)/R1S2 - (XPa2 - Y2)/R2S2);
+FF7 = 2*con*YB*(XMa/R1S2 - XPa/R2S2);
 return(FF4,FF5)
 end
