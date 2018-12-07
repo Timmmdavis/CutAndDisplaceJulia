@@ -98,34 +98,28 @@ for k = 1:length(xe); #for every element
 		# Define array of local coordinates for the observation grid relative to
 		#   the midpoint and orientation of the ith element
 		# Refer to (Figure 56, C&S, p 91) and eqs 451 of C&S, p 57
-		XB =  (x[j]-xe[k])*cb + (y[j]-ye[k])*sb;
-		YB = -(x[j]-xe[k])*sb + (y[j]-ye[k])*cb;
+		xMxe=x[j]-xe[k];
+		yMye=y[j]-ye[k];
+		XB =  (xMxe)*cb + (yMye)*sb;
+		YB = -(xMxe)*sb + (yMye)*cb;
 		if HSflag==1
 			if (y[j]>0)
 				error("Half-space solution: Z coordinates must be negative!")
 			end		
+			yAye=y[j]+ye[k];
 			# Coordinates of the image dislocation
-			XBi = (x[j]-xe[k])*cb - (y[j]+ye[k])*sb;		#equation 746 C&S
-			YBi = (x[j]-xe[k])*sb + (y[j]+ye[k])*cb;
+			XBi = (xMxe)*cb - (yAye)*sb;		#equation 746 C&S
+			YBi = (xMxe)*sb + (yAye)*cb;
 		end
 		
 		if StressFlag==1
 			# Calculate derivatives of the function f(x,y), eq 525 of C&S, p 81
 			#   which are used to calculate the displacement and stress components
 			# It is understood that X and Y refer to XB and YB
-			# First abbreviate repeated terms in the derivatives of f(x,y):
-			Y2 = YB^2;
-			XMa = XB-a[k]; XPa = XB+a[k];
-			XMa2 = XMa^2; XPa2 = XPa^2;
-			R1S = XMa2 + Y2; R1S2 = R1S^2;
-			R2S = XPa2 + Y2; R2S2 = R2S^2;
+			(Y2,XMa,XPa,XMa2,XPa2,R1S,R2S,R1S2,R2S2)=AbbreviateTerms(YB,XB,a[k])
 			if HSflag==1
 				# Same thing for the image dislocation
-				Y2i = YBi^2;
-				XMai = XBi-a[k]; XPai = XBi+a[k];
-				XMa2i = XMai^2; XPa2i = XPai^2;
-				R1Si = XMa2i + Y2i; R1S2i = R1Si^2;
-				R2Si = XPa2i + Y2i; R2S2i = R2Si^2;
+				(Y2i,XMai,XPai,XMa2i,XPa2i,R1Si,R2Si,R1S2i,R2S2i)=AbbreviateTerms(YBi,XBi,a[k])
 			end
 		end
 			
@@ -298,8 +292,15 @@ else
 	
 end
 
+end #End LD
 
 
-
-
+function AbbreviateTerms(YB,XB,a)
+# First abbreviate repeated terms in the derivatives of f(x,y):
+Y2 = YB^2;
+XMa = XB-a; XPa = XB+a;
+XMa2 = XMa^2; XPa2 = XPa^2;
+R1S = XMa2 + Y2; R1S2 = R1S^2;
+R2S = XPa2 + Y2; R2S2 = R2S^2;
+return(Y2,XMa,XPa,XMa2,XPa2,R1S,R2S,R1S2,R2S2)
 end
