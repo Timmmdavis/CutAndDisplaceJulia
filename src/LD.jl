@@ -124,36 +124,11 @@ for k = 1:length(xe); #for every element
 		end
 			
 		if DispFlag==1
-			#The following derivatives are eqs. 4.5.5a thru d of C&S, p. 58.
-			FF2 = con*(log(sqrt(R1S)) - log(sqrt(R2S)));	
-			#Steve Martels Solution to elements lying on same plane
-			#FB3 = 0 for pts colinear with element, CON*pi for pts. on element 
-			#FB3 = difference of arc tangents for all other pts.
-			if YB==0; 
-				if abs(XB) < a[k];
-					FF3=pi;
-				else
-					FF3=0;
-				end
-			else
-			FF3 = atan(YB,XMa) - atan(YB,XPa);
-			end
-			FF3 = -con.*(FF3); 	
-			
+			CompFF2AndFF3(R1S,R2S,con,XB,Yb,XMa,XPa,a[k])
 			#And same for image dislocation
 			if HSflag==1
 				# Calculate intermediate functions Fnifor the image dislocation
-				FF2i = con*(log(sqrt(R1Si)) - log(sqrt(R2Si)) ); #Equations 4.5.5 C&S
-				if YBi==0; 
-					if abs(XBi) < a[k];
-						FF3i=pi;
-					else
-						FF3i=0;
-					end
-				else
-					FF3i = atan(YBi,XMai) - atan(YBi,XPai);
-				end
-				FF3i = -con.*(FF3i); 
+				CompFF2AndFF3(R1Si,R2Si,con,XBi,Ybi,XMai,XPai,a[k])
 			end
 		end		
 		
@@ -303,4 +278,29 @@ XMa2 = XMa^2; XPa2 = XPa^2;
 R1S = XMa2 + Y2; R1S2 = R1S^2;
 R2S = XPa2 + Y2; R2S2 = R2S^2;
 return(Y2,XMa,XPa,XMa2,XPa2,R1S,R2S,R1S2,R2S2)
+end
+
+function CompFF2AndFF3(R1S,R2S,con,XB,Yb,XMa,XPa,a)
+#The following derivatives are eqs. 4.5.5a thru d of C&S, p. 58.
+FF2 = con*(log(sqrt(R1S)) - log(sqrt(R2S)));	
+#Steve Martels Solution to elements lying on same plane
+#FB3 = 0 for pts colinear with element, CON*pi for pts. on element 
+#FB3 = difference of arc tangents for all other pts.
+if YB==0; 
+	if abs(XB) < a[k];
+		FF3=pi;
+	else
+		FF3=0;
+	end
+else
+FF3 = atan(YB,XMa) - atan(YB,XPa);
+end
+FF3 = -con.*(FF3); 	
+return(FF2,FF3)
+end
+
+function CompFF4AndFF5(R1S,R2S,Yb,XMa,XPa,con)
+FF4 = con*(YB/R1S - YB/R2S);
+FF5 = con*(XMa/R1S - XPa/R2S);
+return(FF4,FF5)
 end
