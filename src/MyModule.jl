@@ -15,6 +15,9 @@ include("CalculateDSandSSDirs.jl")
 include("RotateCosine3D.jl")
 include("CheckDirectionCosinePerp.jl")
 include("CreateDirectionCosinesFromStrikeAndDip.jl")
+include("HookesLaw2dStrain2Stress.jl")
+include("HookesLaw2dStress2Strain.jl")
+
 
 #Normal line dislocation funcs
 include("LD.jl")
@@ -50,5 +53,7 @@ include("TransformToADCS.jl")
 
 #Drawing 
 include("contourfill.jl")
+
+
 
 end

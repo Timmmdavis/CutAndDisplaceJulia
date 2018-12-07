@@ -102,19 +102,35 @@ uen = sin(2*strike).*(uxx - uyy)/2 - cos(strike).^2 .*uyx + sin(strike).^2 .*uxy
 uee = sin(strike).^2*uxx - sin(2*strike).*(uyx + uxy)/2 + cos(strike).^2 .*uyy;	
 
 ## Tilt
-#uzx = -U1/(2*pi) .* chinnery(@uzx_ss,x,p,L,W,q,dip,nu)  # strike-slip
-#	  -U2/(2*pi) .* chinnery(@uzx_ds,x,p,L,W,q,dip,nu)  # dip-slip
-#	  +U3/(2*pi) .* chinnery(@uzx_tf,x,p,L,W,q,dip,nu); # tensile fault
-#
-#uzy = -U1/(2*pi) .* chinnery(@uzy_ss,x,p,L,W,q,dip,nu)  # strike-slip
-#	  -U2/(2*pi) .* chinnery(@uzy_ds,x,p,L,W,q,dip,nu)  # dip-slip
-#	  +U3/(2*pi) .* chinnery(@uzy_tf,x,p,L,W,q,dip,nu); # tensile fault
-#
-## Rotation from Okada's axes to geographic
-#uze = -sin(strike).*uzx + cos(strike).*uzy;
-#uzn = -cos(strike).*uzx - sin(strike).*uzy;pass functions into function julia
+uzx = -U1/(2*pi) .* chinnery(uzx_ss,x,p,L,W,q,dip,nu)-  # strike-slip
+	   U2/(2*pi) .* chinnery(uzx_ds,x,p,L,W,q,dip,nu)+  # dip-slip
+	   U3/(2*pi) .* chinnery(uzx_tf,x,p,L,W,q,dip,nu); # tensile fault
 
-return(ue,un,uz,unn,une,uen,uee)
+uzy = -U1/(2*pi) .* chinnery(uzy_ss,x,p,L,W,q,dip,nu)-  # strike-slip
+	   U2/(2*pi) .* chinnery(uzy_ds,x,p,L,W,q,dip,nu)+  # dip-slip
+	   U3/(2*pi) .* chinnery(uzy_tf,x,p,L,W,q,dip,nu); # tensile fault
+
+# Rotation from Okada's axes to geographic
+uze = -sin(strike).*uzx + cos(strike).*uzy;
+uzn = -cos(strike).*uzx - sin(strike).*uzy;
+
+#Vertical strain comps
+unz = -uzn;
+uez = -uze;
+uzz = -(uee + unn)*nu/(1-nu);
+
+#Convert to strain tensors that match tri dislocation convs
+uxy= -(uen[:]+une[:])/2;
+uyz= -(uzn[:]+unz[:])/2;
+uxz= -(uze[:]+uez[:])/2;
+exx= -uee;
+eyy= -unn;
+ezz= -uzz;
+exy= -uxy;
+exy= -uyz;
+exz= -uxz;
+
+return(ue,un,uz,exx,eyy,ezz,exy,exy,exz)
 
 end #end func	
 	
