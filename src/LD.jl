@@ -157,40 +157,45 @@ for k = 1:length(xe); #for every element
 			SxyDn[j,k] = cons*Dn*(-YB*(c2b*FF6 - s2b*FF7));
 			
 			if HSflag==1
+				
+				#Add some constants
+				A1=(y[j]*c4b - YB*c3b);
+				A2=(y[j]*s4b - YB*s3b);
+
 				#  Calculate IMAGE AND SUPPLEMENTAL STRESS components due to unit SHEAR and
 				#  NORMAL displacement discontinuity
 				SxxiDs = cons*Ds*(FF4i - 3*(c2b*FF4i - s2b*FF5i) +
 				(2*y[j]*(cb - 3*c3b) + 3*YB*c2b)*FF6i +
 				(2*y[j]*(sb - 3*s3b) + 3*YB*s2b)*FF7i -
-				2*y[j]*(y[j]*c4b - YB*c3b)*FF8i -
-				2*y[j]*(y[j]*s4b - YB*s3b)*FF9i);
+				2*y[j]*A1*FF8i -
+				2*y[j]*A2*FF9i);
 
 				SxxiDn = cons*Dn*(FF5i + (2*y[j]*(sb - 2*s3b) +
 				3*YB*s2b)*FF6i - (2*y[j]*(cb - 2*c3b) +
-				3*YB*c2b)*FF7i - 2*y[j]*(y[j]*s4b - YB*s3b)*FF8i +
-				2*y[j]*(y[j]*c4b - YB*c3b)*FF9i);
+				3*YB*c2b)*FF7i - 2*y[j]*A2*FF8i +
+				2*y[j]*A1*FF9i);
 
 				SyyiDs = cons*Ds*(FF4i - (c2b*FF4i - s2b*FF5i) -
 				(4*y[j]*sb*s2b - YB*c2b)*FF6i +
 				(4*y[j]*sb*c2b + YB*s2b)*FF7i +
-				2*y[j]*(y[j]*c4b - YB*c3b)*FF8i +
-				2*y[j]*(y[j]*s4b - YB*s3b)*FF9i);
+				2*y[j]*A1*FF8i +
+				2*y[j]*A2*FF9i);
 
 				SyyiDn = cons*Dn*(FF5i - (2*y[j]*sb - YB*s2b)*FF6i +
 				(2*y[j]*cb - YB*c2b)*FF7i +
-				2*y[j]*(y[j]*s4b - YB*s3b)*FF8i -
-				2*y[j]*(y[j]*c4b - YB*c3b)*FF9i);
+				2*y[j]*A2*FF8i -
+				2*y[j]*A1*FF9i);
 
 				SxyiDs = cons*Ds*(s2b*FF4i + c2b*FF5i +
 				(2*y[j]*sb*(1+4*c2b) - YB*s2b)*FF6i +
 				(2*y[j]*cb*(3-4*c2b) + YB*c2b)*FF7i +
-				2*y[j]*(y[j]*s4b - YB*s3b)*FF8i -
-				2*y[j]*(y[j]*c4b - YB*c3b)*FF9i);
+				2*y[j]*A2*FF8i -
+				2*y[j]*A1*FF9i);
 
 				SxyiDn = cons*Dn*((4*y[j]*sb*s2b + YB*c2b)*FF6i -
 				(4*y[j]*sb*c2b - YB*s2b)*FF7i -
-				2*y[j]*(y[j]*c4b - YB*c3b)*FF8i -
-				2*y[j]*(y[j]*s4b - YB*s3b)*FF9i);
+				2*y[j]*A1*FF8i -
+				2*y[j]*A2*FF9i);
 				
 				SxxDs[j,k]=SxxDs[j,k]+SxxiDs;
 				SxxDn[j,k]=SxxDn[j,k]+SxxiDn;
@@ -211,32 +216,43 @@ for k = 1:length(xe); #for every element
 			UyDn[j,k] = Dn*(-pr1*sb*FF2 + pr2*cb*FF3 - YB.*(sb*FF4 - cb*FF5));	
 			
 			if HSflag==1;
+			
+				#Add some constants
+				A1=(y[j]*c3b - YB*c2b);
+				A2=(y[j]*s3b - YB*s2b);
+				A3=(y[j]*s2b - YB*sb);
+				A4=(y[j]*c2b - YB*cb);
+			
 				#  See equations 7.4.8 and 7.4.9 in Crouch and Starfield
 				#  Calculate image and supplemental displacement components due to unit shear displacement discontinuity
-				Uxi_s =Ds* (pr1*sb*FF2i - pr2*cb*FF3i +
-				(pr3*(y[j]*s2b - YB*sb) + 2*y[j]*s2b)*FF4i +
-				(pr3*(y[j]*c2b - YB*cb) - y[j]*(1-2*c2b))*FF5i +
-				2*y[j]*(y[j]*s3b - YB*s2b)*FF6i -
-				2*y[j]*(y[j]*c3b - YB*c2b)*FF7i);
+				Uxi_s =Ds* (pr1*sb*FF2i - 
+				pr2*cb*FF3i +
+				(pr3*A3 + 2*y[j]*s2b)*FF4i +
+				(pr3*A4 - y[j]*(1-2*c2b))*FF5i +
+				2*y[j]*A2*FF6i -
+				2*y[j]*A1*FF7i);
 
-				Uyi_s =Ds* (-pr1*cb*FF2i - pr2*sb*FF3i-
-				(pr3*(y[j]*c2b - YB*cb) + y[j]*(1-2*c2b))*FF4i+  
-				(pr3*(y[j]*s2b - YB*sb) - 2*y[j]*s2b)*FF5i+	 
-				2*y[j]*(y[j]*c3b - YB*c2b)*FF6i+
-				2*y[j]*(y[j]*s3b - YB*s2b)*FF7i);     
+				Uyi_s =Ds* (-pr1*cb*FF2i - 
+				pr2*sb*FF3i-
+				(pr3*A4 + y[j]*(1-2*c2b))*FF4i+  
+				(pr3*A3 - 2*y[j]*s2b)*FF5i+	 
+				2*y[j]*A1*FF6i+
+				2*y[j]*A2*FF7i);     
 
 				#Calculate image and supplemental displacement components due to unit normal displacement discontinuity
-				Uxi_n =Dn*(pr1*cb*FF2i + pr2*sb*FF3i-
-				(pr3*(y[j]*c2b - YB*cb) - y[j])*FF4i+
-				pr3*(y[j]*s2b - YB*sb)*FF5i-
-				2*y[j]*(y[j]*c3b - YB*c2b)*FF6i-
-				2*y[j]*(y[j]*s3b - YB*s2b)*FF7i);    
+				Uxi_n =Dn*(pr1*cb*FF2i + 
+				pr2*sb*FF3i-
+				(pr3*A4 - y[j])*FF4i+
+				pr3*A3*FF5i-
+				2*y[j]*A1*FF6i-
+				2*y[j]*A2*FF7i);    
 
-				Uyi_n =Dn* (pr1*sb*FF2i - pr2*cb*FF3i-
-				pr3*(y[j]*s2b - YB*sb)*FF4i-
-				(pr3*(y[j]*c2b - YB*cb) + y[j])*FF5i+
-				2*y[j]*(y[j]*s3b - YB*s2b)*FF6i-
-				2*y[j]*(y[j]*c3b - YB*c2b)*FF7i);
+				Uyi_n =Dn* (pr1*sb*FF2i - 
+				pr2*cb*FF3i-
+				pr3*A3*FF4i-
+				(pr3*A4 + y[j])*FF5i+
+				2*y[j]*A2*FF6i-
+				2*y[j]*A1*FF7i);
 				
 				UxDs[j,k]=UxDs[j,k]+Uxi_s;
 				UxDn[j,k]=UxDn[j,k]+Uxi_n;
