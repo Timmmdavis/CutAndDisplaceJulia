@@ -13,3 +13,8 @@ println("Starting Test 2")
 ##Test 2, Check the LD's match glide dislocation formulas
 include("test_LDvsBarberGlideDisc.jl")
 println("Test 2 passed")
+
+println("Starting Test 3")
+##Test 3, Check the LD's Halfspace match Okada disc at ground surface.
+include("test_LDvsOkada.jl")
+println("Test 3 passed")
