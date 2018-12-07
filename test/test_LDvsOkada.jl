@@ -72,7 +72,7 @@ maxSzz=maximum(sZZ);
 maxSxz=maximum(sXZ);
 
 println("Values of residuals: TDE vs Okada")
-@info UxRes UzRes ExxRes EyyRes ExyRes maxSxx maxSzz maxSxz  #Display values in test output
+@info UxRes UzRes ExxRes EzzRes ExzRes maxSxx maxSzz maxSxz  #Display values in test output
 if UxRes>1E-7
 	error("UxRes too high, Okada and LD not matching for ground displacement")
 end
