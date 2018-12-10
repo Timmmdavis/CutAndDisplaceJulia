@@ -65,19 +65,25 @@ function Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu)
 #  Copyright 2017, Tim Davis, Potsdam University\The University of Aberdeen
 #  Modified from Steve Martel's fracture mechanics homework
 
+Sxx= Array{Float64}(undef, length(X),1);
+Syy= Array{Float64}(undef, length(X),1);
+Sxy= Array{Float64}(undef, length(X),1);
+Ux= Array{Float64}(undef, length(X),1);
+Uy= Array{Float64}(undef, length(X),1);
 
+for i=1:length(X)
+	#Define larger grid that covers where both dislocations will be, this is
+	#used to calculate stress once. 
+	(Sxxp,Syyp,Sxyp,Uxp,Uyp)=CompD(mu,b,k,nu,X[i]-a,Y[i]);
+	(Sxxn,Syyn,Sxyn,Uxn,Uyn)=CompD(mu,b,k,nu,X[i]+a,Y[i]);
 
-#Define larger grid that covers where both dislocations will be, this is
-#used to calculate stress once. 
-(Sxxp,Syyp,Sxyp,Uxp,Uyp)=CompD(mu,b,k,nu,X.-a,Y);
-(Sxxn,Syyn,Sxyn,Uxn,Uyn)=CompD(mu,b,k,nu,X.+a,Y);
+	Ux[i]=Uxp-Uxn;
+	Uy[i]=Uyp-Uyn;
 
-Ux=Uxp.-Uxn;
-Uy=Uyp.-Uyn;
-
-Sxx=Sxxp.-Sxxn;
-Syy=Syyp.-Syyn;
-Sxy=Sxyp.-Sxyn;
+	Sxx[i]=Sxxp-Sxxn;
+	Syy[i]=Syyp-Syyn;
+	Sxy[i]=Sxyp-Sxyn;
+end
 
 
 return(X,Y,Sxx,Syy,Sxy,Ux,Uy)
@@ -86,22 +92,22 @@ end
 function CompD(mu,b,k,nu,X,Y)
 
 #Set up vars
-r = sqrt.(X.^2 + Y.^2);
-sint = Y./r; 
-cost = X./r;  
-theta = atan.(Y,X);
+r = sqrt(X^2 + Y^2);
+sint = Y/r; 
+cost = X/r;  
+theta = atan(Y,X);
     
     
 # Calculate polar rt stress components due to unit displacement discontinuity
 # Positive end Negative end
-# Barber page 201 equations 13.24-13.25
-Srr = ((2*mu)*b*sint)./(pi*(k+1)*r);
+# Barber page 201 equations 1324-1325
+Srr = ((2*mu)*b*sint)/(pi*(k+1)*r);
 Stt = Srr; 
-Srt = -((2*mu)*b*cost)./(pi*(k+1)*r);
+Srt = -((2*mu)*b*cost)/(pi*(k+1)*r);
 
 #Converting the components into Cartesian tensor
 #Calling external function
-(Sxx,Syy,Sxy)=TensorTransformation2D(Srr[:],Stt[:],Srt[:],cos.(theta[:]),cos.((pi/2).-theta[:]) )
+(Sxx,Syy,Sxy)=TensorTransformation2D(Srr,Stt,Srt,cos(theta),cos((pi/2)-theta) )
 
 
 #Displacement equations, see Pollard and Fletcher 2005 Eq 8.36-8.37. 
@@ -113,20 +119,20 @@ c2 = (lambda+mu)/(lambda+2*mu);
 #Equations
 #Ux
 Ux1 = -(b/(2*pi))*atan.(Y,X);
-Ux2 = -(b/(2*pi))*c2*(X.*Y)./(X.^2 .+Y.^2);
+Ux2 = -(b/(2*pi))*c2*(X*Y)/(X^2 +Y^2);
 
-Ux=Ux1+Ux2; bbb=abs.(Ux).==Inf; 
-if any(bbb.==true)
-	Ux[bbb]=0;
+Ux=Ux1+Ux2; bbb=abs(Ux)==Inf; 
+if bbb==true
+	Ux=0;
 end
 
 #Uy
-Uy1 = -(b/(2*pi))*(-c1).*log.(X.^2 .+Y.^2);
-Uy2 = -(b/(2*pi))*c2*(Y.^2)./(X.^2 .+Y.^2);
+Uy1 = -(b/(2*pi))*(-c1)*log.(X^2+Y^2);
+Uy2 = -(b/(2*pi))*c2*(Y^2)/(X^2+Y^2);
 
-Uy=Uy1+Uy2; bbb=abs.(Uy).==Inf; 
-if any(bbb.==true)
-	Uy[bbb]=0;
+Uy=Uy1+Uy2; bbb=abs(Uy)==Inf; 
+if bbb==true
+	Uy=0;
 end
 return(Sxx,Syy,Sxy,Ux,Uy)
 end
