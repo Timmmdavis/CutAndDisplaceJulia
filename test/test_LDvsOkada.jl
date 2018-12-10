@@ -48,10 +48,9 @@ println("Out of func, too Okada")
 
 
 println("Into Okada func")
-(Ux,Uy,Uz,exx,eyy,ezz,exy,exy,exz)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
+(Ux,Uy,Uz,exx,eyy,ezz,exy,exz,eyz)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
 (sxx,szz,sxz)=MyModule.HookesLaw2dStrain2Stress( exx,ezz,exz,E,nu,mu )
 println("Out of func, drawing time, start by reshape")
-
 
 UxRes=maximum(Ux[:].-uX[:]);
 UzRes=maximum(Uz[:].-uZ[:]);

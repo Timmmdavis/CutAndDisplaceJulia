@@ -144,11 +144,12 @@ uxz= -(uze[:]+uez[:])/2;
 exx= -uee;
 eyy= -unn;
 ezz= -uzz;
-exy= -uxy;
-exy= -uyz;
+exy= uxy;
 exz= -uxz;
+eyz= -uyz;
 
-return(ue,un,uz,exx,eyy,ezz,exy,exy,exz)
+
+return(ue,un,uz,exx,eyy,ezz,exy,exz,eyz)
 
 end #end func	
 	

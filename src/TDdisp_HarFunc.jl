@@ -19,9 +19,9 @@ function TDdisp_HarFunc(X,Y,Z,P1,P2,P3,by,bz,bx,nu)
 (bX,bY,bZ) = RotateObject3DNewCoords(bx,by,bz,0,0,0,Vnorm,Vstrike,Vdip);
 
 # Calculate contribution of angular dislocation pair on each TD side 
-(u1,v1,w1) = AngSetupFSC(X,Y,Z,bX,bY,bZ,P1,P2,nu); # Side P1P2
-(u2,v2,w2) = AngSetupFSC(X,Y,Z,bX,bY,bZ,P2,P3,nu); # Side P2P3
-(u3,v3,w3) = AngSetupFSC(X,Y,Z,bX,bY,bZ,P3,P1,nu); # Side P3P1
+(u1,v1,w1) = AngSetupDispFSC(X,Y,Z,bX,bY,bZ,P1,P2,nu); # Side P1P2
+(u2,v2,w2) = AngSetupDispFSC(X,Y,Z,bX,bY,bZ,P2,P3,nu); # Side P2P3
+(u3,v3,w3) = AngSetupDispFSC(X,Y,Z,bX,bY,bZ,P3,P1,nu); # Side P3P1
 
 # Calculate total harmonic function contribution to displacements
 ue = u1+u2+u3;

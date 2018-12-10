@@ -14,7 +14,7 @@ TipDepth=1;
 Rake=90;
 #Fault slip
 Dds=1;
-Dn=0.3;
+Dn=0;
 Dss=0;
 #Elastic cons
 nu=0.25;
@@ -58,18 +58,31 @@ x=reshape(x,length(x),1);
 y=reshape(y,length(y),1);
 z=reshape(z,length(z),1);
 
+DispFlag=1;
+StressFlag=1;
+HSflag=1;
+mu=1;
+
 println("Vars created -> to TD func1")
-(Ux1,Uy1,Uz1)=MyModule.TDdispHS(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,-Dds,Dn,nu);
-(Ux2,Uy2,Uz2)=MyModule.TDdispHS(x,y,z,P1[2,:],P2[2,:],P3[2,:],Dss,Dds,Dn,nu);
+##3
+(Exx1,Eyy1,Ezz1,Exy1,Exz1,Eyz1,Ux1,Uy1,Uz1)=MyModule.TD(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,-Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(Exx2,Eyy2,Ezz2,Exy2,Exz2,Eyz2,Ux2,Uy2,Uz2)=MyModule.TD(x,y,z,P1[2,:],P2[2,:],P3[2,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+
 Ux=Ux1.+Ux2;
 Uy=Uy1.+Uy2;
 Uz=Uz1.+Uz2;
+Exx=Exx1.+Exx2;
+Eyy=Eyy1.+Eyy2;
+Ezz=Ezz1.+Ezz2;
+Exy=Exy1.+Exy2;
+Exz=Exz1.+Exz2;
+Eyz=Eyz1.+Eyz2;
 println("Out of func, too Okada")
 
 MidDeptha=sind(Dip)*Width;
 MidDepth=MidDeptha/2+TipDepth;
 println("Into Okada func")
-(uX,uY,uZ)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
+(uX,uY,uZ,exx,eyy,ezz,exy,exz,eyz)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
 
 println("Out of func, drawing time, start by reshape")
 
@@ -77,6 +90,16 @@ println("Out of func, drawing time, start by reshape")
 UxRes=maximum(Ux[:].-uX[:]);
 UyRes=maximum(Uy[:].-uY[:]);
 UzRes=maximum(Uz[:].-uZ[:]);
+
+ExxRes=maximum(exx[:].-Exx[:]);
+EyyRes=maximum(eyy[:].-Eyy[:]);
+EzzRes=maximum(ezz[:].-Ezz[:]); 
+ExyRes=maximum(exy[:].-Exy[:]);
+ExzRes=maximum(exz[:].-Exz[:]);
+EyzRes=maximum(eyz[:].-Eyz[:]);
+
+@info UxRes UzRes ExxRes EyyRes EzzRes ExyRes ExzRes EyzRes  #Display values in test output
+
 
 println("Values of residuals: TDE vs Okada")
 @info UxRes UyRes UzRes #Display values in test output
@@ -90,12 +113,31 @@ if UzRes>1E-14
 	error("UzRes too high, Okada and TD not matching for displacement")
 end
 
-
+if ExxRes>1E-13
+	error("ExxRes too high, Okada and TD not matching for displacement")
+end
+if EyyRes>1E-13
+	error("EyyRes too high, Okada and TD not matching for displacement")
+end
+if EzzRes>1E-13
+	error("EzzRes too high, Okada and TD not matching for displacement")
+end
+if ExyRes>1E-13
+	error("ExyRes too high, Okada and TD not matching for displacement")
+end
+if ExzRes>1E-13
+	error("ExzRes too high, Okada and TD not matching for displacement")
+end
+if EyzRes>1E-13
+	error("EyzRes too high, Okada and TD not matching for displacement")
+end
 println("Test Passed")
 
-# #= if you want to draw remove this line
-# x=reshape(x,dimx,dimy);
-# y=reshape(y,dimx,dimy);
+
+#= if you want to draw remove this line
+x=reshape(x,dimx,dimy);
+y=reshape(y,dimx,dimy);
+Exx=reshape(Exx,dimx,dimy);
 # uX=reshape(uX,dimx,dimy);
 # Ux=reshape(Ux,dimx,dimy);
 # uY=reshape(uY,dimx,dimy);
@@ -103,14 +145,14 @@ println("Test Passed")
 # uZ=reshape(uZ,dimx,dimy);
 # Uz=reshape(Uz,dimx,dimy);
 
-# Value=uZ
-# using NaNMath
-# Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
-# steps=10; #Steps from centre to top. 
-# levels = [-Top:Top/steps:Top;]
-# using PyPlot
-# close()
-# contourf(x,y,Value, levels=levels);
-# cbar = colorbar()
-# =#
+Value=Exx
+using NaNMath
+Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
+steps=10; #Steps from centre to top. 
+levels = [-Top:Top/steps:Top;]
+using PyPlot
+close()
+contourf(x,y,Value, levels=levels);
+cbar = colorbar()
+=#
 
