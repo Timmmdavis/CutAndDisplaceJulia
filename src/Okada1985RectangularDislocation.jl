@@ -46,7 +46,6 @@ rake = Rake*pi/180;	# converting RAKE in radian
 slip = Ds;
 U3 = Dn;
 
-
 # Defines dislocation in the fault plane system
 U1 = cos(rake).*slip;
 U2 = sin(rake).*slip;
@@ -63,53 +62,72 @@ y = sin(strike).*nc .- cos(strike).*ec .+ cos(dip).*W;
 p = y.*cos(dip) .+ d.*sin(dip);
 q = y.*sin(dip) .- d.*cos(dip);
 
+ux= Array{Float64}(undef, length(x),1);
+uy= Array{Float64}(undef, length(x),1);
+uz= Array{Float64}(undef, length(x),1);
+
+uxx= Array{Float64}(undef, length(x),1);
+uxy= Array{Float64}(undef, length(x),1);
+uyx= Array{Float64}(undef, length(x),1);
+uyy= Array{Float64}(undef, length(x),1);
+
+uzx= Array{Float64}(undef, length(x),1);
+uzy= Array{Float64}(undef, length(x),1);
+
+for i=1:length(x)
 
 #Displacements
-ux = -U1/(2*pi) .* chinnery(ux_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	  U2/(2*pi) .* chinnery(ux_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	  U3/(2*pi) .* chinnery(ux_tf,x,p,L,W,q,dip,nu); # tensile fault
+ux[i] = -U1/(2*pi) .* chinnery(ux_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+	     U2/(2*pi) .* chinnery(ux_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	     U3/(2*pi) .* chinnery(ux_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
 
-uy = -U1/(2*pi) .* chinnery(uy_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	  U2/(2*pi) .* chinnery(uy_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	  U3/(2*pi) .* chinnery(uy_tf,x,p,L,W,q,dip,nu); # tensile fault
+uy[i] = -U1/(2*pi) .* chinnery(uy_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+	     U2/(2*pi) .* chinnery(uy_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	     U3/(2*pi) .* chinnery(uy_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
 	 
-uz = -U1/(2*pi) .* chinnery(uz_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	  U2/(2*pi) .* chinnery(uz_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	  U3/(2*pi) .* chinnery(uz_tf,x,p,L,W,q,dip,nu); # tensile fault
-	
-# Rotation from Okada's axes to geographic
-ue = sin(strike).*ux - cos(strike).*uy;
-un = cos(strike).*ux + sin(strike).*uy;
+uz[i] = -U1/(2*pi) .* chinnery(uz_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+	     U2/(2*pi) .* chinnery(uz_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	     U3/(2*pi) .* chinnery(uz_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
 	
 #Strain	
-uxx = -U1/(2*pi) .* chinnery(uxx_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	   U2/(2*pi) .* chinnery(uxx_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	   U3/(2*pi) .* chinnery(uxx_tf,x,p,L,W,q,dip,nu); # tensile fault
-uxy = -U1/(2*pi) .* chinnery(uxy_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	   U2/(2*pi) .* chinnery(uxy_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	   U3/(2*pi) .* chinnery(uxy_tf,x,p,L,W,q,dip,nu); # tensile fault
-uyx = -U1/(2*pi) .* chinnery(uyx_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	   U2/(2*pi) .* chinnery(uyx_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	   U3/(2*pi) .* chinnery(uyx_tf,x,p,L,W,q,dip,nu); # tensile fault
-uyy = -U1/(2*pi) .* chinnery(uyy_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	   U2/(2*pi) .* chinnery(uyy_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	   U3/(2*pi) .* chinnery(uyy_tf,x,p,L,W,q,dip,nu); # tensile fault
+uxx[i] = -U1/(2*pi) .* chinnery(uxx_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+	      U2/(2*pi) .* chinnery(uxx_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	      U3/(2*pi) .* chinnery(uxx_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
+uxy[i] = -U1/(2*pi) .* chinnery(uxy_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+	      U2/(2*pi) .* chinnery(uxy_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	      U3/(2*pi) .* chinnery(uxy_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
+uyx[i] = -U1/(2*pi) .* chinnery(uyx_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+	      U2/(2*pi) .* chinnery(uyx_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	      U3/(2*pi) .* chinnery(uyx_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
+uyy[i] = -U1/(2*pi) .* chinnery(uyy_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+	      U2/(2*pi) .* chinnery(uyy_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	      U3/(2*pi) .* chinnery(uyy_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
 	  
+
+## Tilt
+uzx[i] = -U1/(2*pi) .* chinnery(uzx_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+		  U2/(2*pi) .* chinnery(uzx_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	      U3/(2*pi) .* chinnery(uzx_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
+
+uzy[i] = -U1/(2*pi) .* chinnery(uzy_ss,x[i],p[i],L,W,q[i],dip,nu)-  # strike-slip
+	      U2/(2*pi) .* chinnery(uzy_ds,x[i],p[i],L,W,q[i],dip,nu)+  # dip-slip
+	      U3/(2*pi) .* chinnery(uzy_tf,x[i],p[i],L,W,q[i],dip,nu); # tensile fault
+
+end	  
+
+#Displacements
+# Rotation from Okada's axes to geographic
+ue = sin(strike).*ux - cos(strike).*uy;
+un = cos(strike).*ux + sin(strike).*uy; 
+
+#Strain	
 # Rotation from Okada's axes to geographic
 unn = cos(strike).^2*uxx + sin(2*strike).*(uxy + uyx)/2 + sin(strike).^2 .*uyy;
 une = sin(2*strike).*(uxx - uyy)/2 + sin(strike).^2 .*uyx - cos(strike).^2 .*uxy;
 uen = sin(2*strike).*(uxx - uyy)/2 - cos(strike).^2 .*uyx + sin(strike).^2 .*uxy;
 uee = sin(strike).^2*uxx - sin(2*strike).*(uyx + uxy)/2 + cos(strike).^2 .*uyy;	
-
-## Tilt
-uzx = -U1/(2*pi) .* chinnery(uzx_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	   U2/(2*pi) .* chinnery(uzx_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	   U3/(2*pi) .* chinnery(uzx_tf,x,p,L,W,q,dip,nu); # tensile fault
-
-uzy = -U1/(2*pi) .* chinnery(uzy_ss,x,p,L,W,q,dip,nu)-  # strike-slip
-	   U2/(2*pi) .* chinnery(uzy_ds,x,p,L,W,q,dip,nu)+  # dip-slip
-	   U3/(2*pi) .* chinnery(uzy_tf,x,p,L,W,q,dip,nu); # tensile fault
-
+	   
+## Tilt	   
 # Rotation from Okada's axes to geographic
 uze = -sin(strike).*uzx + cos(strike).*uzy;
 uzn = -cos(strike).*uzx - sin(strike).*uzy;
@@ -151,7 +169,7 @@ end #end func
 # -----------------------------------------------------------------
 function chinnery(f,x,p,L,W,q,dip,nu)
 
-u = f(x,p,q,dip,nu).-f(x,p.-W,q,dip,nu).-f(x.-L,p,q,dip,nu).+f(x.-L,p.-W,q,dip,nu);
+u = f(x,p,q,dip,nu)-f(x,p-W,q,dip,nu)-f(x-L,p,q,dip,nu)+f(x-L,p-W,q,dip,nu);
 
 return(u)
 end
@@ -160,94 +178,100 @@ end
 # =================================================================
 # Displacement subfunctions
 
-# strike-slip displacement subfunctions [equation (25) p. 1144]
+# strike-slip displacement subfunctions [equation (25) p 1144]
 
 # -----------------------------------------------------------------
 function ux_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 .+ eta.^2 .+ q.^2);
-u = xi.*q./(R.*(R + eta)) + I1(xi,eta,q,dip,nu,R).*sin(dip);
-k = findall(q.!=0);
-u[k] = u[k] + atan.(xi[k].*eta[k]./(q[k].*R[k]));
+R = sqrt(xi^2 + eta^2 + q^2);
+u = xi*q/(R*(R + eta)) + I1(xi,eta,q,dip,nu,R)*sin(dip);
+if q!=0;
+	u = u + atan(xi*eta/(q*R));
+end
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uy_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = (eta.*cos(dip) + q.*sin(dip)).*q./(R.*(R + eta)) + q.*cos(dip)./(R + eta) + I2(eta,q,dip,nu,R).*sin(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+u = (eta*cos(dip) + q*sin(dip))*q/(R*(R + eta)) + q*cos(dip)/(R + eta) + I2(eta,q,dip,nu,R)*sin(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uz_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-u = (eta.*sin(dip) - q.*cos(dip)).*q./(R.*(R + eta)) + q.*sin(dip)./(R + eta) + I4(db,eta,q,dip,nu,R).*sin(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+u = (eta*sin(dip) - q*cos(dip))*q/(R*(R + eta)) + q*sin(dip)/(R + eta) + I4(db,eta,q,dip,nu,R)*sin(dip);
 return(u)	
 end
 	
-# dip-slip displacement subfunctions [equation (26) p. 1144]
+# dip-slip displacement subfunctions [equation (26) p 1144]
 # -----------------------------------------------------------------
 function ux_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = q./R - I3(eta,q,dip,nu,R).*sin(dip).*cos(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+u = q/R - I3(eta,q,dip,nu,R)*sin(dip)*cos(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uy_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = (eta.*cos(dip) + q.*sin(dip)).*q./(R.*(R + xi)) - I1(xi,eta,q,dip,nu,R).*sin(dip).*cos(dip);
-k = findall(q.!=0);
-u[k] = u[k] + cos(dip).*atan.(xi[k].*eta[k]./(q[k].*R[k]));
+R = sqrt(xi^2 + eta^2 + q^2);
+u = (eta*cos(dip) + q*sin(dip))*q/(R*(R + xi)) - I1(xi,eta,q,dip,nu,R)*sin(dip)*cos(dip);
+
+if q!=0
+	u = u + cos(dip)*atan(xi*eta/(q*R));
+end
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uz_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-u = db.*q./(R.*(R + xi)) - I5(xi,eta,q,dip,nu,R,db).*sin(dip).*cos(dip);
-k = findall(q.!=0);
-u[k] = u[k] + sin(dip).*atan.(xi[k].*eta[k]./(q[k].*R[k]));
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+u = db*q/(R*(R + xi)) - I5(xi,eta,q,dip,nu,R,db)*sin(dip)*cos(dip);
+if q!=0
+	u = u + sin(dip)*atan(xi*eta/(q*R));
+end
 return(u)
 end
 
-# tensile fault displacement subfunctions [equation (27) p. 1144]
+# tensile fault displacement subfunctions [equation (27) p 1144]
 # -----------------------------------------------------------------
 function ux_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = q.^2 ./(R.*(R + eta)) - I3(eta,q,dip,nu,R).*sin(dip).^2;
+R = sqrt(xi^2 + eta^2 + q^2);
+u = q^2 /(R*(R + eta)) - I3(eta,q,dip,nu,R)*sin(dip)^2;
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uy_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = -(eta.*sin(dip) - q.*cos(dip)).*q./(R.*(R + xi)) - sin(dip).*xi.*q./(R.*(R + eta)) - I1(xi,eta,q,dip,nu,R).*sin(dip).^2;
-k = findall(q.!=0);
-u[k] = u[k] + sin(dip).*atan.(xi[k].*eta[k]./(q[k].*R[k]));
+R = sqrt(xi^2 + eta^2 + q^2);
+u = -(eta*sin(dip) - q*cos(dip))*q/(R*(R + xi)) - sin(dip)*xi*q/(R*(R + eta)) - I1(xi,eta,q,dip,nu,R)*sin(dip)^2;
+if q!=0
+	u = u + sin(dip)*atan(xi*eta/(q*R));
+end
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uz_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-u = (eta.*cos(dip) + q.*sin(dip)).*q./(R.*(R + xi)) + cos(dip).*xi.*q./(R.*(R + eta)) - I5(xi,eta,q,dip,nu,R,db).*sin(dip).^2;
-k = findall(q.!=0);
-u[k] = u[k] - cos(dip).*atan.(xi[k].*eta[k]./(q[k].*R[k]));
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+u = (eta*cos(dip) + q*sin(dip))*q/(R*(R + xi)) + cos(dip)*xi*q/(R*(R + eta)) - I5(xi,eta,q,dip,nu,R,db)*sin(dip)^2;
+if q!=0
+	u = u - cos(dip)*atan(xi*eta/(q*R));
+end
 return(u)
 end
 
-# I displacement subfunctions [equations (28) (29) p. 1144-1145]
+# I displacement subfunctions [equations (28) (29) p 1144-1145]
 # -----------------------------------------------------------------
 function I1(xi,eta,q,dip,nu,R)
-db = eta.*sin(dip) - q.*cos(dip);
+db = eta*sin(dip) - q*cos(dip);
 if cos(dip) > eps()
-	I = (1 - 2*nu) * (-xi./(cos(dip).*(R + db))) - sin(dip)./cos(dip).*I5(xi,eta,q,dip,nu,R,db);
+	I = (1 - 2*nu) * (-xi/(cos(dip)*(R + db))) - sin(dip)/cos(dip)*I5(xi,eta,q,dip,nu,R,db);
 else
-	I = -(1 - 2*nu)/2 * xi.*q./(R + db).^2;
+	I = -(1 - 2*nu)/2 * xi*q/(R + db)^2;
 end
 return(I)
 end
@@ -255,18 +279,18 @@ end
 
 # -----------------------------------------------------------------
 function I2(eta,q,dip,nu,R)
-I = (1 - 2*nu) * (-log.(R + eta)) - I3(eta,q,dip,nu,R);
+I = (1 - 2*nu) * (-log(R + eta)) - I3(eta,q,dip,nu,R);
 return(I)
 end
 
 # -----------------------------------------------------------------
 function I3(eta,q,dip,nu,R)
-yb = eta.*cos(dip) + q.*sin(dip);
-db = eta.*sin(dip) - q.*cos(dip);
+yb = eta*cos(dip) + q*sin(dip);
+db = eta*sin(dip) - q*cos(dip);
 if cos(dip) > eps()
-	I = (1 - 2*nu) * (yb./(cos(dip)*(R + db)) - log.(R + eta)) + sin(dip)./cos(dip) * I4(db,eta,q,dip,nu,R);
+	I = (1 - 2*nu) * (yb/(cos(dip)*(R + db)) - log(R + eta)) + sin(dip)/cos(dip) * I4(db,eta,q,dip,nu,R);
 else
-	I = (1 - 2*nu)/2 * (eta./(R + db) + yb.*q./(R + db).^2 - log(R + eta));
+	I = (1 - 2*nu)/2 * (eta/(R + db) + yb*q/(R + db)^2 - log(R + eta));
 end
 return(I)
 
@@ -274,21 +298,23 @@ end
 # -----------------------------------------------------------------
 function I4(db,eta,q,dip,nu,R)
 if cos(dip) > eps()
-	I = (1 - 2*nu) * 1 ./cos(dip) * (log.(R + db) - sin(dip).*log.(R + eta));
+	I = (1 - 2*nu) * 1 /cos(dip) * (log(R + db) - sin(dip)*log(R + eta));
 else
-	I = -(1 - 2*nu) * q./(R + db);
+	I = -(1 - 2*nu) * q/(R + db);
 end
 return(I)
 end
 
 # -----------------------------------------------------------------
 function I5(xi,eta,q,dip,nu,R,db)
-X = sqrt.(xi.^2 + q.^2);
+X = sqrt(xi^2 + q^2);
 if cos(dip) > eps()	
-	I = (1 - 2*nu) * 2 ./cos(dip).* atan.((eta.*(X + q.*cos(dip)) + X.*(R + X).*sin(dip)) ./(xi.*(R + X).*cos(dip)));
-	I[xi.==0] = zeros(1,count(xi.==0));
+	I = (1 - 2*nu) * 2 /cos(dip)* atan((eta*(X + q*cos(dip)) + X*(R + X)*sin(dip)) /(xi*(R + X)*cos(dip)));
+	if xi==0
+		I = 0;
+	end
 else
-	I = -(1 - 2*nu) * xi.*sin(dip)./(R + db);
+	I = -(1 - 2*nu) * xi*sin(dip)/(R + db);
 end
 return(I)
 end
@@ -296,93 +322,93 @@ end
 # =================================================================
 # Tilt subfunctions
 
-# strike-slip tilt subfunctions [equation (37) p. 1147]
+# strike-slip tilt subfunctions [equation (37) p 1147]
 
 # -----------------------------------------------------------------
 function uzx_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = -xi.*q.^2 .*A(eta,R).*cos(dip) + ((xi.*q)./R.^3 - K1(xi,eta,q,dip,nu,R)).*sin(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+u = -xi*q^2 *A(eta,R)*cos(dip) + ((xi*q)/R^3 - K1(xi,eta,q,dip,nu,R))*sin(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uzy_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-yb = eta.*cos(dip) + q.*sin(dip);
-u = (db.*q./R.^3).*cos(dip) + (xi.^2 .*q.*A(eta,R).*cos(dip) - sin(dip)./R + yb.*q./R.^3 - K2(xi,eta,q,dip,nu,R)).*sin(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+yb = eta*cos(dip) + q*sin(dip);
+u = (db*q/R^3)*cos(dip) + (xi^2 *q*A(eta,R)*cos(dip) - sin(dip)/R + yb*q/R^3 - K2(xi,eta,q,dip,nu,R))*sin(dip);
 return(u)
 end
 
-# dip-slip tilt subfunctions [equation (38) p. 1147]
+# dip-slip tilt subfunctions [equation (38) p 1147]
 
 # -----------------------------------------------------------------
 function uzx_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-u = db.*q./R.^3 + q.*sin(dip)./(R.*(R + eta)) + K3(xi,eta,q,dip,nu,R).*sin(dip).*cos(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+u = db*q/R^3 + q*sin(dip)/(R*(R + eta)) + K3(xi,eta,q,dip,nu,R)*sin(dip)*cos(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uzy_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-yb = eta.*cos(dip) + q.*sin(dip);
-u = yb.*db.*q.*A(xi,R) - (2*db./(R.*(R + xi)) + xi.*sin(dip)./(R.*(R + eta))).*sin(dip) + K1(xi,eta,q,dip,nu,R).*sin(dip).*cos(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+yb = eta*cos(dip) + q*sin(dip);
+u = yb*db*q*A(xi,R) - (2*db/(R*(R + xi)) + xi*sin(dip)/(R*(R + eta)))*sin(dip) + K1(xi,eta,q,dip,nu,R)*sin(dip)*cos(dip);
 return(u)
 end
 
-# tensile fault tilt subfunctions [equation (39) p. 1147]
+# tensile fault tilt subfunctions [equation (39) p 1147]
 
 # -----------------------------------------------------------------
 function uzx_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = q.^2 ./R.^3 .*sin(dip) - q.^3 .*A(eta,R).*cos(dip) + K3(xi,eta,q,dip,nu,R).*sin(dip).^2;
+R = sqrt(xi^2 + eta^2 + q^2);
+u = q^2 /R^3 *sin(dip) - q^3 *A(eta,R)*cos(dip) + K3(xi,eta,q,dip,nu,R)*sin(dip)^2;
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uzy_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-yb = eta.*cos(dip) + q.*sin(dip);
-u = (yb.*sin(dip) + db.*cos(dip)).*q.^2 .*A(xi,R) + xi.*q.^2 .*A(eta,R).*sin(dip).*cos(dip) - (2*q./(R.*(R + xi)) - K1(xi,eta,q,dip,nu,R)).*sin(dip).^2;
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+yb = eta*cos(dip) + q*sin(dip);
+u = (yb*sin(dip) + db*cos(dip))*q^2 *A(xi,R) + xi*q^2 *A(eta,R)*sin(dip)*cos(dip) - (2*q/(R*(R + xi)) - K1(xi,eta,q,dip,nu,R))*sin(dip)^2;
 return(u)
 end
 	
 # -----------------------------------------------------------------
 function A(x,R)
-a = (2*R + x)./(R.^3 .*(R + x).^2);
+a = (2*R + x)/(R^3 *(R + x)^2);
 return(a)
 end
 
-# K tilt subfunctions [equations (40) (41) p. 1148]
+# K tilt subfunctions [equations (40) (41) p 1148]
 # -----------------------------------------------------------------
 function K1(xi,eta,q,dip,nu,R)
-db = eta.*sin(dip) - q.*cos(dip);
+db = eta*sin(dip) - q*cos(dip);
 if cos(dip) > eps()
-	K = (1 - 2*nu) * xi./cos(dip) .* (1 ./(R.*(R + db)) - sin(dip)./(R.*(R + eta)));
+	K = (1 - 2*nu) * xi/cos(dip) * (1 /(R*(R + db)) - sin(dip)/(R*(R + eta)));
 else
-	K = (1 - 2*nu) * xi.*q./(R.*(R + db).^2);
+	K = (1 - 2*nu) * xi*q/(R*(R + db)^2);
 end
 return(K)
 end
 
 # -----------------------------------------------------------------
 function K2(xi,eta,q,dip,nu,R)
-K = (1 - 2*nu) * (-sin(dip)./R + q.*cos(dip)./(R.*(R + eta))) - K3(xi,eta,q,dip,nu,R);
+K = (1 - 2*nu) * (-sin(dip)/R + q*cos(dip)/(R*(R + eta))) - K3(xi,eta,q,dip,nu,R);
 return(K)
 end
 
 # -----------------------------------------------------------------
 function K3(xi,eta,q,dip,nu,R)
-db = eta.*sin(dip) - q.*cos(dip);
-yb = eta.*cos(dip) + q.*sin(dip);
+db = eta*sin(dip) - q*cos(dip);
+yb = eta*cos(dip) + q*sin(dip);
 if cos(dip) > eps()
-	K = (1 - 2*nu) * 1 ./cos(dip) .* (q./(R.*(R + eta)) - yb./(R.*(R + db)));
+	K = (1 - 2*nu) * 1 /cos(dip) * (q/(R*(R + eta)) - yb/(R*(R + db)));
 else
-	K = (1 - 2*nu) * sin(dip)./(R + db) .* (xi.^2 ./(R.*(R + db)) - 1);
+	K = (1 - 2*nu) * sin(dip)/(R + db) * (xi^2 /(R*(R + db)) - 1);
 end
 return(K)
 end
@@ -390,137 +416,137 @@ end
 # =================================================================
 # Strain subfunctions
 
-# strike-slip strain subfunctions [equation (31) p. 1145]
+# strike-slip strain subfunctions [equation (31) p 1145]
 
 # -----------------------------------------------------------------
 function uxx_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = xi.^2 .*q.*A(eta,R) - J1(xi,eta,q,dip,nu,R).*sin(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+u = xi^2 *q*A(eta,R) - J1(xi,eta,q,dip,nu,R)*sin(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uxy_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-u = xi.^3 .*db./(R.^3 .*(eta.^2 + q.^2)) - (xi.^3 .*A(eta,R) + J2(xi,eta,q,dip,nu,R)).*sin(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+u = xi^3 *db/(R^3 *(eta^2 + q^2)) - (xi^3 *A(eta,R) + J2(xi,eta,q,dip,nu,R))*sin(dip);
 return(u)
 end
 	
 # -----------------------------------------------------------------
 function uyx_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = xi.*q./R.^3 .*cos(dip) + (xi.*q.^2 .*A(eta,R) - J2(xi,eta,q,dip,nu,R)).*sin(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+u = xi*q/R^3 *cos(dip) + (xi*q^2 *A(eta,R) - J2(xi,eta,q,dip,nu,R))*sin(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uyy_ss(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-yb = eta.*cos(dip) + q.*sin(dip);
-u = yb.*q./R.^3 .*cos(dip) + (q.^3 .*A(eta,R).*sin(dip) - 2*q.*sin(dip)./(R.*(R + eta)) - (xi.^2 + eta.^2)./R.^3 .*cos(dip) - J4(xi,eta,q,dip,nu,R)).*sin(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+yb = eta*cos(dip) + q*sin(dip);
+u = yb*q/R^3 *cos(dip) + (q^3 *A(eta,R)*sin(dip) - 2*q*sin(dip)/(R*(R + eta)) - (xi^2 + eta^2)/R^3 *cos(dip) - J4(xi,eta,q,dip,nu,R))*sin(dip);
 return(u)
 end	
 	
-# dip-slip strain subfunctions [equation (32) p. 1146]
+# dip-slip strain subfunctions [equation (32) p 1146]
 
 # -----------------------------------------------------------------
 function uxx_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = xi.*q./R.^3 + J3(xi,eta,q,dip,nu,R).*sin(dip).*cos(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+u = xi*q/R^3 + J3(xi,eta,q,dip,nu,R)*sin(dip)*cos(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uxy_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-yb = eta.*cos(dip) + q.*sin(dip);
-u = yb.*q./R.^3 - sin(dip)./R + J1(xi,eta,q,dip,nu,R).*sin(dip).*cos(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+yb = eta*cos(dip) + q*sin(dip);
+u = yb*q/R^3 - sin(dip)/R + J1(xi,eta,q,dip,nu,R)*sin(dip)*cos(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uyx_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-yb = eta.*cos(dip) + q.*sin(dip);
-u = yb.*q./R.^3 + q.*cos(dip)./(R.*(R + eta)) + J1(xi,eta,q,dip,nu,R).*sin(dip).*cos(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+yb = eta*cos(dip) + q*sin(dip);
+u = yb*q/R^3 + q*cos(dip)/(R*(R + eta)) + J1(xi,eta,q,dip,nu,R)*sin(dip)*cos(dip);
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uyy_ds(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-yb = eta.*cos(dip) + q.*sin(dip);
-u = yb.^2 .*q.*A(xi,R) - (2*yb./(R.*(R + xi)) + xi.*cos(dip)./(R.*(R + eta))).*sin(dip) + J2(xi,eta,q,dip,nu,R).*sin(dip).*cos(dip);
+R = sqrt(xi^2 + eta^2 + q^2);
+yb = eta*cos(dip) + q*sin(dip);
+u = yb^2 *q*A(xi,R) - (2*yb/(R*(R + xi)) + xi*cos(dip)/(R*(R + eta)))*sin(dip) + J2(xi,eta,q,dip,nu,R)*sin(dip)*cos(dip);
 return(u)
 end
 
-# tensile fault strain subfunctions [equation (33) p. 1146]
+# tensile fault strain subfunctions [equation (33) p 1146]
 
 # -----------------------------------------------------------------
 function uxx_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = xi.*q.^2 .*A(eta,R) + J3(xi,eta,q,dip,nu,R).*sin(dip).^2;
+R = sqrt(xi^2 + eta^2 + q^2);
+u = xi*q^2 *A(eta,R) + J3(xi,eta,q,dip,nu,R)*sin(dip)^2;
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uxy_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-u = -db.*q./R.^3 - xi.^2 .*q.*A(eta,R).*sin(dip) + J1(xi,eta,q,dip,nu,R).*sin(dip).^2;
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+u = -db*q/R^3 - xi^2 *q*A(eta,R)*sin(dip) + J1(xi,eta,q,dip,nu,R)*sin(dip)^2;
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uyx_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-u = q.^2 ./R.^3 .*cos(dip) + q.^3 .*A(eta,R).*sin(dip) + J1(xi,eta,q,dip,nu,R).*sin(dip).^2;
+R = sqrt(xi^2 + eta^2 + q^2);
+u = q^2 /R^3 *cos(dip) + q^3 *A(eta,R)*sin(dip) + J1(xi,eta,q,dip,nu,R)*sin(dip)^2;
 return(u)
 end
 
 # -----------------------------------------------------------------
 function uyy_tf(xi,eta,q,dip,nu)
-R = sqrt.(xi.^2 + eta.^2 + q.^2);
-db = eta.*sin(dip) - q.*cos(dip);
-yb = eta.*cos(dip) + q.*sin(dip);
-u = (yb.*cos(dip) - db.*sin(dip)).*q.^2 .*A(xi,R) - q.*sin(2*dip)./(R.*(R + xi)) - (xi.*q.^2 .*A(eta,R) - J2(xi,eta,q,dip,nu,R)).*sin(dip).^2;
+R = sqrt(xi^2 + eta^2 + q^2);
+db = eta*sin(dip) - q*cos(dip);
+yb = eta*cos(dip) + q*sin(dip);
+u = (yb*cos(dip) - db*sin(dip))*q^2 *A(xi,R) - q*sin(2*dip)/(R*(R + xi)) - (xi*q^2 *A(eta,R) - J2(xi,eta,q,dip,nu,R))*sin(dip)^2;
 return(u)
 end
 
-# J tensile fault subfunctions [equations (34) (35) p. 1146-1147]
+# J tensile fault subfunctions [equations (34) (35) p 1146-1147]
 # -----------------------------------------------------------------
 function J1(xi,eta,q,dip,nu,R)
-db = eta.*sin(dip) - q.*cos(dip);
+db = eta*sin(dip) - q*cos(dip);
 if cos(dip) > eps()
-	J = (1 - 2*nu) * 1 ./cos(dip) * (xi.^2 ./(R.*(R + db).^2) - 1 ./(R + db)) - sin(dip)./cos(dip)*K3(xi,eta,q,dip,nu,R);
+	J = (1 - 2*nu) * 1 /cos(dip) * (xi^2 /(R*(R + db)^2) - 1 /(R + db)) - sin(dip)/cos(dip)*K3(xi,eta,q,dip,nu,R);
 else
-	J = (1 - 2*nu)/2 * q./(R + db).^2 .* (2*xi.^2 ./(R.*(R + db)) - 1);
+	J = (1 - 2*nu)/2 * q/(R + db)^2 * (2*xi^2 /(R*(R + db)) - 1);
 end
 return(J)
 end
 
 # -----------------------------------------------------------------
 function J2(xi,eta,q,dip,nu,R)
-db = eta.*sin(dip) - q.*cos(dip);
-yb = eta.*cos(dip) + q.*sin(dip);
+db = eta*sin(dip) - q*cos(dip);
+yb = eta*cos(dip) + q*sin(dip);
 if cos(dip) > eps()
-	J = (1 - 2*nu) * 1 ./cos(dip) * xi.*yb./(R.*(R + db).^2) - sin(dip)./cos(dip)*K1(xi,eta,q,dip,nu,R);
+	J = (1 - 2*nu) * 1 /cos(dip) * xi*yb/(R*(R + db)^2) - sin(dip)/cos(dip)*K1(xi,eta,q,dip,nu,R);
 else
-	J = (1 - 2*nu)/2 * xi.*sin(dip)./(R + db).^2 .* (2*q.^2 ./(R.*(R + db)) - 1);
+	J = (1 - 2*nu)/2 * xi*sin(dip)/(R + db)^2 * (2*q^2 /(R*(R + db)) - 1);
 end
 return(J)
 end
 
 # -----------------------------------------------------------------
 function J3(xi,eta,q,dip,nu,R)
-J = (1 - 2*nu) * -xi./(R.*(R + eta)) - J2(xi,eta,q,dip,nu,R);
+J = (1 - 2*nu) * -xi/(R*(R + eta)) - J2(xi,eta,q,dip,nu,R);
 return(J)
 end
 
 # -----------------------------------------------------------------
 function J4(xi,eta,q,dip,nu,R)
-J = (1 - 2*nu) * (-cos(dip)./R - q.*sin(dip)./(R.*(R + eta))) - J1(xi,eta,q,dip,nu,R);
+J = (1 - 2*nu) * (-cos(dip)/R - q*sin(dip)/(R*(R + eta))) - J1(xi,eta,q,dip,nu,R);
 return(J)
 end
 
