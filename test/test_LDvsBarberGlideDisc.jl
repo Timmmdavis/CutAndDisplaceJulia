@@ -11,11 +11,18 @@ spacing=0.1;
 minx=-4; maxx=4;
 x = [minx:spacing:maxx;];
 (X,Y) = MyModule.meshgrid(x,x);
+#Get lengths (for reshapes later)
+dimx,dimy = size(X);
 
-a = 1;  
-Beta=0;
-Ds=1;
-Dn=0.;
+#Doing with two Els
+a=1;
+hlflen = [0.5 0.5];  
+xe=[-0.5 0.5];
+ye=[0. 0.];
+Beta=[0. 0.];
+Ds=[1. 1.];
+Dn=[0. 0.];
+
 
 DispFlag=1;
 StressFlag=1;
@@ -23,13 +30,13 @@ HSflag=0;
 
 println("Vars created -> to LD func")
 
-(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=MyModule.LD(X[:],Y[:],0,0,a,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=MyModule.LD(X[:],Y[:],xe,ye,hlflen,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
 #Accumulating arrays
 (sXX,sYY,sXY,uX,uY)=MyModule.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
 
 println("Out of func, too Barber1992_GlideDislocation")
 
-(X,Y,Sxx,Syy,Sxy,Ux,Uy)=MyModule.Barber1992_GlideDislocation(k,mu,X[:],Y[:],a,Ds,nu)
+(X,Y,Sxx,Syy,Sxy,Ux,Uy)=MyModule.Barber1992_GlideDislocation(k,mu,X[:],Y[:],a,Ds[1],nu)
 
 
 println("Out of func, drawing time, start by reshape")
@@ -61,18 +68,15 @@ end
 
 println("Test Passed")
 
-# #= if you want to draw remove this line
-# x=reshape(x,dimx,dimy);
-# y=reshape(y,dimx,dimy);
+# ##= if you want to draw remove this line
+# x=reshape(X,dimx,dimy);
+# y=reshape(Y,dimx,dimy);
 # uX=reshape(uX,dimx,dimy);
 # Ux=reshape(Ux,dimx,dimy);
 # uY=reshape(uY,dimx,dimy);
 # Uy=reshape(Uy,dimx,dimy);
-# uZ=reshape(uZ,dimx,dimy);
-# Uz=reshape(Uz,dimx,dimy);
 
-
-# Value=uZ
+# Value=uX
 # using NaNMath
 # Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
 # steps=10; #Steps from centre to top. 
@@ -81,5 +85,5 @@ println("Test Passed")
 # close()
 # contourf(x,y,Value, levels=levels);
 # cbar = colorbar()
-# =#
+# ##=#
 

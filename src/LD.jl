@@ -50,12 +50,14 @@ function LD(x,y,xe,ye,a,Beta,Ds,Dn,nu,Mu,DispFlag,StressFlag,HSflag)
 # dimx,dimy = size(x);
 # x=reshape(x,length(x),1);
 # y=reshape(y,length(y),1);
+# xe=copy(x);
+# ye=copy(y);
 # DispFlag=0;
 # StressFlag=1;
 # HSflag=0;
-# Ds=1;
-# Dn=1
-#(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn)=MyModule.LD(x,y,x,y,ones(size(x))*0.01,zeros(size(x)),0.25,1,Ds,Dn,DispFlag,StressFlag,HSflag);
+# Ds=ones(size(xe));
+# Dn=ones(size(xe));
+#(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn)=MyModule.LD(x,y,xe,ye,ones(size(x))*0.01,zeros(size(x)),0.25,1,Ds,Dn,DispFlag,StressFlag,HSflag);
  
 # Define material constant used in calculating influence coefficients
 con=1/(4*pi*(1-nu));
@@ -83,6 +85,7 @@ if DispFlag==1
 	UyDn= Array{Float64}(undef, length(x),length(xe));
 end
 
+@info length(xe)
 for k = 1:length(xe); #for every element 
 
 	sb = sin(Beta[k]); cb = cos(Beta[k]);
@@ -149,12 +152,12 @@ for k = 1:length(xe); #for every element
 			end
 
 			# Calculate the stress components using eqs 555 of C&S, p 92
-			SxxDs[j,k] = cons*Ds*(2*(cb*cb)*FF4 + s2b*FF5 + YB*(c2b*FF6-s2b*FF7));
-			SxxDn[j,k] = cons*Dn*(-FF5 + YB*(s2b*FF6 + c2b*FF7));
-			SyyDs[j,k] = cons*Ds*(2*(sb*sb)*FF4 - s2b*FF5 - YB*(c2b*FF6-s2b*FF7));
-			SyyDn[j,k] = cons*Dn*(-FF5 - YB*(s2b*FF6 + c2b*FF7));
-			SxyDs[j,k] = cons*Ds*(s2b*FF4 - c2b*FF5 + YB*(s2b*FF6+c2b*FF7));
-			SxyDn[j,k] = cons*Dn*(-YB*(c2b*FF6 - s2b*FF7));
+			SxxDs[j,k] = cons*Ds[k]*(2*(cb*cb)*FF4 + s2b*FF5 + YB*(c2b*FF6-s2b*FF7));
+			SxxDn[j,k] = cons*Dn[k]*(-FF5 + YB*(s2b*FF6 + c2b*FF7));
+			SyyDs[j,k] = cons*Ds[k]*(2*(sb*sb)*FF4 - s2b*FF5 - YB*(c2b*FF6-s2b*FF7));
+			SyyDn[j,k] = cons*Dn[k]*(-FF5 - YB*(s2b*FF6 + c2b*FF7));
+			SxyDs[j,k] = cons*Ds[k]*(s2b*FF4 - c2b*FF5 + YB*(s2b*FF6+c2b*FF7));
+			SxyDn[j,k] = cons*Dn[k]*(-YB*(c2b*FF6 - s2b*FF7));
 			
 			if HSflag==1
 				
@@ -164,35 +167,35 @@ for k = 1:length(xe); #for every element
 
 				#  Calculate IMAGE AND SUPPLEMENTAL STRESS components due to unit SHEAR and
 				#  NORMAL displacement discontinuity
-				SxxiDs = cons*Ds*(FF4i - 3*(c2b*FF4i - s2b*FF5i) +
+				SxxiDs = cons*Ds[k]*(FF4i - 3*(c2b*FF4i - s2b*FF5i) +
 				(2*y[j]*(cb - 3*c3b) + 3*YB*c2b)*FF6i +
 				(2*y[j]*(sb - 3*s3b) + 3*YB*s2b)*FF7i -
 				2*y[j]*A1*FF8i -
 				2*y[j]*A2*FF9i);
 
-				SxxiDn = cons*Dn*(FF5i + (2*y[j]*(sb - 2*s3b) +
+				SxxiDn = cons*Dn[k]*(FF5i + (2*y[j]*(sb - 2*s3b) +
 				3*YB*s2b)*FF6i - (2*y[j]*(cb - 2*c3b) +
 				3*YB*c2b)*FF7i - 2*y[j]*A2*FF8i +
 				2*y[j]*A1*FF9i);
 
-				SyyiDs = cons*Ds*(FF4i - (c2b*FF4i - s2b*FF5i) -
+				SyyiDs = cons*Ds[k]*(FF4i - (c2b*FF4i - s2b*FF5i) -
 				(4*y[j]*sb*s2b - YB*c2b)*FF6i +
 				(4*y[j]*sb*c2b + YB*s2b)*FF7i +
 				2*y[j]*A1*FF8i +
 				2*y[j]*A2*FF9i);
 
-				SyyiDn = cons*Dn*(FF5i - (2*y[j]*sb - YB*s2b)*FF6i +
+				SyyiDn = cons*Dn[k]*(FF5i - (2*y[j]*sb - YB*s2b)*FF6i +
 				(2*y[j]*cb - YB*c2b)*FF7i +
 				2*y[j]*A2*FF8i -
 				2*y[j]*A1*FF9i);
 
-				SxyiDs = cons*Ds*(s2b*FF4i + c2b*FF5i +
+				SxyiDs = cons*Ds[k]*(s2b*FF4i + c2b*FF5i +
 				(2*y[j]*sb*(1+4*c2b) - YB*s2b)*FF6i +
 				(2*y[j]*cb*(3-4*c2b) + YB*c2b)*FF7i +
 				2*y[j]*A2*FF8i -
 				2*y[j]*A1*FF9i);
 
-				SxyiDn = cons*Dn*((4*y[j]*sb*s2b + YB*c2b)*FF6i -
+				SxyiDn = cons*Dn[k]*((4*y[j]*sb*s2b + YB*c2b)*FF6i -
 				(4*y[j]*sb*c2b - YB*s2b)*FF7i -
 				2*y[j]*A1*FF8i -
 				2*y[j]*A2*FF9i);
@@ -210,10 +213,10 @@ for k = 1:length(xe); #for every element
 		
 		if DispFlag==1
 			#Calculate the displacement components using eqs. 5.5.4 of C&S, p. 91.
-			UxDs[j,k] = Ds*(-pr1*sb*FF2 + pr2*cb*FF3 + YB.*(sb*FF4 - cb*FF5));
-			UxDn[j,k] = Dn*(-pr1*cb*FF2 - pr2*sb*FF3 - YB.*(cb*FF4 + sb*FF5));
-			UyDs[j,k] = Ds*(+pr1*cb*FF2 + pr2*sb*FF3 - YB.*(cb*FF4 + sb*FF5));
-			UyDn[j,k] = Dn*(-pr1*sb*FF2 + pr2*cb*FF3 - YB.*(sb*FF4 - cb*FF5));	
+			UxDs[j,k] = Ds[k]*(-pr1*sb*FF2 + pr2*cb*FF3 + YB.*(sb*FF4 - cb*FF5));
+			UxDn[j,k] = Dn[k]*(-pr1*cb*FF2 - pr2*sb*FF3 - YB.*(cb*FF4 + sb*FF5));
+			UyDs[j,k] = Ds[k]*(+pr1*cb*FF2 + pr2*sb*FF3 - YB.*(cb*FF4 + sb*FF5));
+			UyDn[j,k] = Dn[k]*(-pr1*sb*FF2 + pr2*cb*FF3 - YB.*(sb*FF4 - cb*FF5));	
 			
 			if HSflag==1;
 			
@@ -225,14 +228,14 @@ for k = 1:length(xe); #for every element
 			
 				#  See equations 7.4.8 and 7.4.9 in Crouch and Starfield
 				#  Calculate image and supplemental displacement components due to unit shear displacement discontinuity
-				Uxi_s =Ds* (pr1*sb*FF2i - 
+				Uxi_s =Ds[k]* (pr1*sb*FF2i - 
 				pr2*cb*FF3i +
 				(pr3*A3 + 2*y[j]*s2b)*FF4i +
 				(pr3*A4 - y[j]*(1-2*c2b))*FF5i +
 				2*y[j]*A2*FF6i -
 				2*y[j]*A1*FF7i);
 
-				Uyi_s =Ds* (-pr1*cb*FF2i - 
+				Uyi_s =Ds[k]* (-pr1*cb*FF2i - 
 				pr2*sb*FF3i-
 				(pr3*A4 + y[j]*(1-2*c2b))*FF4i+  
 				(pr3*A3 - 2*y[j]*s2b)*FF5i+	 
@@ -240,14 +243,14 @@ for k = 1:length(xe); #for every element
 				2*y[j]*A2*FF7i);     
 
 				#Calculate image and supplemental displacement components due to unit normal displacement discontinuity
-				Uxi_n =Dn*(pr1*cb*FF2i + 
+				Uxi_n =Dn[k]*(pr1*cb*FF2i + 
 				pr2*sb*FF3i-
 				(pr3*A4 - y[j])*FF4i+
 				pr3*A3*FF5i-
 				2*y[j]*A1*FF6i-
 				2*y[j]*A2*FF7i);    
 
-				Uyi_n =Dn* (pr1*sb*FF2i - 
+				Uyi_n =Dn[k]* (pr1*sb*FF2i - 
 				pr2*cb*FF3i-
 				pr3*A3*FF4i-
 				(pr3*A4 + y[j])*FF5i+
