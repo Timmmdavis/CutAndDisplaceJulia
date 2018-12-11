@@ -58,6 +58,15 @@ function LD(x,y,xe,ye,a,Beta,Ds,Dn,nu,Mu,DispFlag,StressFlag,HSflag)
 # Ds=ones(size(xe));
 # Dn=ones(size(xe));
 #(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn)=MyModule.LD(x,y,xe,ye,ones(size(x))*0.01,zeros(size(x)),0.25,1,Ds,Dn,DispFlag,StressFlag,HSflag);
+
+CorrectDimsFlg= size(xe)==size(ye) 	&&
+				size(xe)==size(a) 	&&
+				size(xe)==size(Beta)&&
+				size(xe)==size(Ds) 	&&
+				size(xe)==size(Dn);
+if CorrectDimsFlg!=1
+	error("Element size inputs must be the same dimensions")
+end
  
 # Define material constant used in calculating influence coefficients
 con=1/(4*pi*(1-nu));
@@ -85,7 +94,6 @@ if DispFlag==1
 	UyDn= Array{Float64}(undef, length(x),length(xe));
 end
 
-@info length(xe)
 for k = 1:length(xe); #for every element 
 
 	sb = sin(Beta[k]); cb = cos(Beta[k]);

@@ -57,4 +57,3 @@ z=(Ax1[3].*X).+(Ax2[3].*Y).+(Ax3[3].*Z);
 return(x,y,z)
 
 end
-

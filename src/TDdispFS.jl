@@ -1,91 +1,4 @@
 function TDdispFS(X,Y,Z,P1,P2,P3,by,bz,bx,nu)
-# TDdispFS 
-# Calculates displacements associated with a triangular dislocation in an 
-# elastic full-space.
-#
-# TD: Triangular Dislocation
-# EFCS: Earth-Fixed Coordinate System
-# TDCS: Triangular Dislocation Coordinate System
-# ADCS: Angular Dislocation Coordinate System
-# 
-# INPUTS
-# X, Y and Z: 
-# Coordinates of calculation points in EFCS (East, North, Up). X, Y and Z 
-# must have the same size.
-#
-# P1,P2 and P3:
-# Coordinates of TD vertices in EFCS.
-# 
-# Ss, Ds and Ts:
-# TD slip vector components (Strike-slip, Dip-slip, Tensile-slip).
-#
-# nu:
-# Poisson's ratio.
-#
-# OUTPUTS
-# ue, un and uv:
-# Calculated displacement vector components in EFCS. ue, un and uv have
-# the same unit as Ss, Ds and Ts in the inputs.
-# 
-# 
-# Example: Calculate and plot the first component of displacement vector 
-# on a regular grid.
-# 
-# (X,Y,Z) = meshgrid(-3:.02:3,-3:.02:3,2);
-# (ue,un,uv) = TDdispFS(X,Y,Z,(-1 0 0),(1 -1 -1),(0 1.5 .5),-1,2,3,.25);
-# h = surf(X,Y,reshape(ue,size(X)),'edgecolor','none');
-# view(2)
-# axis equal
-# axis tight
-# set(gcf,'renderer','painters')
-#
-# Reference journal article: 
-# Nikkhoo M. and Walter T.R., 2015. Triangular dislocation: An analytical, 
-# artefact-free solution. 
-# Submitted to Geophysical Journal International 
-#
-# Copyright (c) 2014 Mehdi Nikkhoo
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a 
-# copy of this software and associated documentation files 
-# (the "Software"), to deal in the Software without restriction, including 
-# without limitation the rights to use, copy, modify, merge, publish, 
-# distribute, sublicense, and/or sell copies of the Software, and to permit
-# persons to whom the Software is furnished to do so, subject to the 
-# following conditions:
-# 
-# The above copyright notice and this permission notice shall be included 
-# in all copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-# NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
-# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-# USE OR OTHER DEALINGS IN THE SOFTWARE.
-#
-# I appreciate any comments or bug reports.
-#
-# Mehdi Nikkhoo
-# created: 2012.5.14
-# Last modified: 2014.7.30
-# 
-# VolcanoTectonics Research Group
-# Section 2.1, Physics of Earthquakes and Volcanoes
-# Department 2, Physics of the Earth
-# Helmholtz Centre Potsdam
-# German Research Centre for Geosciences (GFZ)
-# 
-# email: 
-# mehdi.nikkhoo@gfz-potsdam.de 
-# mehdi.nikkhoo@gmail.com
-
-
-#bx = Ts; # Tensile-slip
-#by = Ss; # Strike-slip
-#bz = Ds; # Dip-slip
-
 
 #Init some vars
 p1 = zeros(3,1);
@@ -158,9 +71,9 @@ for i=1:length(x)
 		wV[i] = NaN;
 	end
 
-	a1=-x[i];	a2=p1_2[1]-y[i];	a3=p1_3[1]-z[i];
+	a1=-x[i];	a2=P1[2]-y[i];	a3=P1[3]-z[i];
 	b1=-x[i];	b2=-y[i];		b3=-z[i];
-	c1=-x[i];	c2=p3_2[1]-y[i];	c3=p3_3[1]-z[i];
+	c1=-x[i];	c2=P3[2]-y[i];	c3=P3[3]-z[i];
 	a12=a1^2;
 	# Calculate the Burgers' function contribution corresponding to the TD
 	na = sqrt((a12+a2.^2+a3.^2));

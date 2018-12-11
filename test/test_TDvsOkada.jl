@@ -65,18 +65,33 @@ mu=1;
 
 println("Vars created -> to TD func1")
 ##3
-(Exx1,Eyy1,Ezz1,Exy1,Exz1,Eyz1,Ux1,Uy1,Uz1)=MyModule.TD(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
-(Exx2,Eyy2,Ezz2,Exy2,Exz2,Eyz2,Ux2,Uy2,Uz2)=MyModule.TD(x,y,z,P1[2,:],P2[2,:],P3[2,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+# (Exx1,Eyy1,Ezz1,Exy1,Exz1,Eyz1,Ux1,Uy1,Uz1)=MyModule.TD(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+# (Exx2,Eyy2,Ezz2,Exy2,Exz2,Eyz2,Ux2,Uy2,Uz2)=MyModule.TD(x,y,z,P1[2,:],P2[2,:],P3[2,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
 
-Ux=Ux1.+Ux2;
-Uy=Uy1.+Uy2;
-Uz=Uz1.+Uz2;
-Exx=Exx1.+Exx2;
-Eyy=Eyy1.+Eyy2;
-Ezz=Ezz1.+Ezz2;
-Exy=Exy1.+Exy2;
-Exz=Exz1.+Exz2;
-Eyz=Eyz1.+Eyz2;
+# Ux=Ux1.+Ux2;
+# Uy=Uy1.+Uy2;
+# Uz=Uz1.+Uz2;
+# Exx=Exx1.+Exx2;
+# Eyy=Eyy1.+Eyy2;
+# Ezz=Ezz1.+Ezz2;
+# Exy=Exy1.+Exy2;
+# Exz=Exz1.+Exz2;
+# Eyz=Eyz1.+Eyz2;
+
+(eexx,eeyy,eezz,eexy,eexz,eeyz,uux,uuy,uuz)=MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
+Exx=sum(eexx,dims=2);
+Eyy=sum(eeyy,dims=2);
+Ezz=sum(eezz,dims=2);
+Exy=sum(eexy,dims=2);
+Exz=sum(eexz,dims=2);
+Eyz=sum(eeyz,dims=2);
+Ux=sum(uux,dims=2);
+Uy=sum(uuy,dims=2);
+Uz=sum(uuz,dims=2);
+#error("add in Dn Dss and Dds mats (not summed)")
+
+
+
 println("Out of func, too Okada")
 
 MidDeptha=sind(Dip)*Width;
@@ -134,25 +149,25 @@ end
 println("Test Passed")
 
 
-#= if you want to draw remove this line
-x=reshape(x,dimx,dimy);
-y=reshape(y,dimx,dimy);
-Exx=reshape(Exx,dimx,dimy);
-# uX=reshape(uX,dimx,dimy);
-# Ux=reshape(Ux,dimx,dimy);
-# uY=reshape(uY,dimx,dimy);
-# Uy=reshape(Uy,dimx,dimy);
-# uZ=reshape(uZ,dimx,dimy);
-# Uz=reshape(Uz,dimx,dimy);
+# ###= if you want to draw remove this line
+# x=reshape(x,dimx,dimy);
+# y=reshape(y,dimx,dimy);
+# Exx=reshape(Exx,dimx,dimy);
+ # uX=reshape(uX,dimx,dimy);
+ # Ux=reshape(Ux,dimx,dimy);
+ # uY=reshape(uY,dimx,dimy);
+ # Uy=reshape(Uy,dimx,dimy);
+ # uZ=reshape(uZ,dimx,dimy);
+ # Uz=reshape(Uz,dimx,dimy);
 
-Value=Exx
-using NaNMath
-Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
-steps=10; #Steps from centre to top. 
-levels = [-Top:Top/steps:Top;]
-using PyPlot
-close()
-contourf(x,y,Value, levels=levels);
-cbar = colorbar()
-=#
+# Value=uX
+# using NaNMath
+# Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
+# steps=10; #Steps from centre to top. 
+# levels = [-Top:Top/steps:Top;]
+# using PyPlot
+# close()
+# contourf(x,y,Value, levels=levels);
+# cbar = colorbar()
+# #=#
 
