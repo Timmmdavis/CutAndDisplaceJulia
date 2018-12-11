@@ -37,8 +37,8 @@ Y=(Y./2).*Length;
 Drop=maximum(Z);
 Z=Z.-Drop.-TipDepth; #Move fault down
 P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]]
-P2=[X[3] Y[3] Z[3];X[4] Y[4] Z[4]]
-P3=[X[5] Y[5] Z[5];X[6] Y[6] Z[6]]
+P2=[X[5] Y[5] Z[5];X[4] Y[4] Z[4]]
+P3=[X[3] Y[3] Z[3];X[6] Y[6] Z[6]]
 
 #= draw fault
 using PyPlot
@@ -65,7 +65,7 @@ mu=1;
 
 println("Vars created -> to TD func1")
 ##3
-(Exx1,Eyy1,Ezz1,Exy1,Exz1,Eyz1,Ux1,Uy1,Uz1)=MyModule.TD(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,-Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(Exx1,Eyy1,Ezz1,Exy1,Exz1,Eyz1,Ux1,Uy1,Uz1)=MyModule.TD(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
 (Exx2,Eyy2,Ezz2,Exy2,Exz2,Eyz2,Ux2,Uy2,Uz2)=MyModule.TD(x,y,z,P1[2,:],P2[2,:],P3[2,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
 
 Ux=Ux1.+Ux2;
