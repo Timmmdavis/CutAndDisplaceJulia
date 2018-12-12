@@ -13,9 +13,9 @@ Width=5;
 TipDepth=1;
 Rake=90;
 #Fault slip
-Dds=1;
-Dn=0;
-Dss=0;
+Dds=2;
+Dn=0.6;
+Dss=0.5;
 #Elastic cons
 nu=0.25;
 
@@ -63,22 +63,22 @@ StressFlag=1;
 HSflag=1;
 mu=1;
 
+TotalSlip=sqrt(Dds.^2+Dss.^2);
+Rake=90-atand(Dss/Dds); #degrees
+
+#@info TotalSlip Rake
+#poop
+
 println("Vars created -> to TD func1")
 ##3
-# (Exx1,Eyy1,Ezz1,Exy1,Exz1,Eyz1,Ux1,Uy1,Uz1)=MyModule.TD(x,y,z,P1[1,:],P2[1,:],P3[1,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
-# (Exx2,Eyy2,Ezz2,Exy2,Exz2,Eyz2,Ux2,Uy2,Uz2)=MyModule.TD(x,y,z,P1[2,:],P2[2,:],P3[2,:],Dss,Dds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(eexx,eeyy,eezz,eexy,eexz,eeyz,UxDn,UyDn,UzDn,UxDss,UyDss,UzDss,UxDds,UyDds,UzDds)=MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
 
-# Ux=Ux1.+Ux2;
-# Uy=Uy1.+Uy2;
-# Uz=Uz1.+Uz2;
-# Exx=Exx1.+Exx2;
-# Eyy=Eyy1.+Eyy2;
-# Ezz=Ezz1.+Ezz2;
-# Exy=Exy1.+Exy2;
-# Exz=Exz1.+Exz2;
-# Eyz=Eyz1.+Eyz2;
+uux=UxDn+UxDss+UxDds;
+uuy=UyDn+UyDss+UyDds;
+uuz=UzDn+UzDss+UzDds;
 
-(eexx,eeyy,eezz,eexy,eexz,eeyz,uux,uuy,uuz)=MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
+@info uux[1] uuy[1] uuz[1]
+ 
 Exx=sum(eexx,dims=2);
 Eyy=sum(eeyy,dims=2);
 Ezz=sum(eezz,dims=2);
@@ -97,7 +97,7 @@ println("Out of func, too Okada")
 MidDeptha=sind(Dip)*Width;
 MidDepth=MidDeptha/2+TipDepth;
 println("Into Okada func")
-(uX,uY,uZ,exx,eyy,ezz,exy,exz,eyz)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
+(uX,uY,uZ,exx,eyy,ezz,exy,exz,eyz)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,TotalSlip,Dn,nu);
 
 println("Out of func, drawing time, start by reshape")
 
@@ -118,13 +118,13 @@ EyzRes=maximum(eyz[:].-Eyz[:]);
 
 println("Values of residuals: TDE vs Okada")
 @info UxRes UyRes UzRes #Display values in test output
-if UxRes>1E-14
+if UxRes>1E-13
 	error("UxRes too high, Okada and TD not matching for displacement")
 end
-if UyRes>1E-14
+if UyRes>1E-13
 	error("UyRes too high, Okada and TD not matching for displacement")
 end
-if UzRes>1E-14
+if UzRes>1E-13
 	error("UzRes too high, Okada and TD not matching for displacement")
 end
 
@@ -153,14 +153,14 @@ println("Test Passed")
 # x=reshape(x,dimx,dimy);
 # y=reshape(y,dimx,dimy);
 # Exx=reshape(Exx,dimx,dimy);
- # uX=reshape(uX,dimx,dimy);
- # Ux=reshape(Ux,dimx,dimy);
- # uY=reshape(uY,dimx,dimy);
- # Uy=reshape(Uy,dimx,dimy);
- # uZ=reshape(uZ,dimx,dimy);
- # Uz=reshape(Uz,dimx,dimy);
+# uX=reshape(uX,dimx,dimy);
+# Ux=reshape(Ux,dimx,dimy);
+# uY=reshape(uY,dimx,dimy);
+# Uy=reshape(Uy,dimx,dimy);
+# uZ=reshape(uZ,dimx,dimy);
+# Uz=reshape(Uz,dimx,dimy);
 
-# Value=uX
+# Value=Ux
 # using NaNMath
 # Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
 # steps=10; #Steps from centre to top. 
