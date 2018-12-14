@@ -99,35 +99,40 @@ end
 println("This initial allocation should follow through the functions....")
 #Do some allocation before loop
 if DispFlag==1
-	UxDn = Array{Float64}(undef, length(X),SzCmp); 
-	UyDn = Array{Float64}(undef, length(X),SzCmp); 
-	UzDn = Array{Float64}(undef, length(X),SzCmp); 
-	UxDss = Array{Float64}(undef, length(X),SzCmp); 
-	UyDss = Array{Float64}(undef, length(X),SzCmp); 
-	UzDss = Array{Float64}(undef, length(X),SzCmp); 
-	UxDds = Array{Float64}(undef, length(X),SzCmp); 
-	UyDds = Array{Float64}(undef, length(X),SzCmp); 
-	UzDds = Array{Float64}(undef, length(X),SzCmp); 
+	
+	#First (and hopefully last allocation)
+	UxDn = zeros(length(X),SzCmp); 
+	UyDn = zeros(length(X),SzCmp); 
+	UzDn = zeros(length(X),SzCmp); 
+	UxDss = zeros(length(X),SzCmp); 
+	UyDss = zeros(length(X),SzCmp); 
+	UzDss = zeros(length(X),SzCmp); 
+	UxDds = zeros(length(X),SzCmp); 
+	UyDds = zeros(length(X),SzCmp); 
+	UzDds = zeros(length(X),SzCmp); 
+	
 end
 if StrainFlag==1
-	ExxDn = Array{Float64}(undef, length(X),SzCmp); 
-	EyyDn = Array{Float64}(undef, length(X),SzCmp); 
-	EzzDn = Array{Float64}(undef, length(X),SzCmp);
-	ExyDn = Array{Float64}(undef, length(X),SzCmp); 
-	ExzDn = Array{Float64}(undef, length(X),SzCmp); 
-	EyzDn = Array{Float64}(undef, length(X),SzCmp);
-	ExxDss = Array{Float64}(undef, length(X),SzCmp); 
-	EyyDss = Array{Float64}(undef, length(X),SzCmp); 
-	EzzDss = Array{Float64}(undef, length(X),SzCmp);
-	ExyDss = Array{Float64}(undef, length(X),SzCmp); 
-	ExzDss = Array{Float64}(undef, length(X),SzCmp); 
-	EyzDss = Array{Float64}(undef, length(X),SzCmp);
-	ExxDds = Array{Float64}(undef, length(X),SzCmp); 
-	EyyDds = Array{Float64}(undef, length(X),SzCmp); 
-	EzzDds = Array{Float64}(undef, length(X),SzCmp);
-	ExyDds = Array{Float64}(undef, length(X),SzCmp); 
-	ExzDds = Array{Float64}(undef, length(X),SzCmp); 
-	EyzDds = Array{Float64}(undef, length(X),SzCmp);
+
+	#First (and hopefully last allocation)
+	ExxDn = zeros(length(X),SzCmp); 
+	EyyDn = zeros(length(X),SzCmp); 
+	EzzDn = zeros(length(X),SzCmp);
+	ExyDn = zeros(length(X),SzCmp); 
+	ExzDn = zeros(length(X),SzCmp); 
+	EyzDn = zeros(length(X),SzCmp);
+	ExxDss = zeros(length(X),SzCmp); 
+	EyyDss = zeros(length(X),SzCmp); 
+	EzzDss = zeros(length(X),SzCmp);
+	ExyDss = zeros(length(X),SzCmp); 
+	ExzDss = zeros(length(X),SzCmp); 
+	EyzDss = zeros(length(X),SzCmp);
+	ExxDds = zeros(length(X),SzCmp); 
+	EyyDds = zeros(length(X),SzCmp); 
+	EzzDds = zeros(length(X),SzCmp);
+	ExyDds = zeros(length(X),SzCmp); 
+	ExzDds = zeros(length(X),SzCmp); 
+	EyzDds = zeros(length(X),SzCmp);
 end
 
 for i=1:SzCmp #For every element
@@ -158,7 +163,10 @@ for i=1:SzCmp #For every element
 		(UxDn[:,i],UyDn[:,i],UzDn[:,i],
 		 UxDss[:,i],UyDss[:,i],UzDss[:,i],
 		 UxDds[:,i],UyDds[:,i],UzDds[:,i]) = 
-		 TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu);
+		 TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,
+		 UxDn[:,i],UyDn[:,i],UzDn[:,i],
+		 UxDss[:,i],UyDss[:,i],UzDss[:,i],
+		 UxDds[:,i],UyDds[:,i],UzDds[:,i]);
 		
 		if HSflag==1
 			
@@ -290,80 +298,87 @@ end
 end
 
 
-function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu)
+function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,
+				UxDn,UyDn,UzDn,
+				UxDss,UyDss,UzDss,
+				UxDds,UyDds,UzDds)
 #Calculate displacement components in a full space
 (Vnorm,Vstrike,Vdip)=CalculateLocalTriCoords(P1,P2,P3)
-(p1,p2,p3,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,x,y,z)=GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip)
+(p1,p2,p3,e12,e13,e23,A,B,C,Pos,Neg,casezLog,x,y,z)=GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip)
 p1_2=p1[2];p1_3=p1[3];
 p3_2=p3[2];p3_3=p3[3];
 
-xn=x[casenLog];
-yn=y[casenLog];
-zn=z[casenLog];
-xp=x[casepLog];
-yp=y[casepLog];
-zp=z[casepLog];
+#Turn to cart index
+Pos=findall(Pos);
+Neg=findall(Neg)
 
 # Calculate first angular dislocation contribution POS
-(ux1Tp,uy1Tp,uz1Tp,vx1Tp,vy1Tp,vz1Tp,wx1Tp,wy1Tp,wz1Tp) = TDSetupD(xp,yp,zp,A,Dn,Dss,Dds,nu,p1,-e13);
+@time (UxDn[Pos],UxDss[Pos],UxDds[Pos],
+ UyDn[Pos],UyDss[Pos],UyDds[Pos],
+ UzDn[Pos],UzDss[Pos],UzDds[Pos]) = 
+ TDSetupD(x[Pos],y[Pos],z[Pos],A,Dn,Dss,Dds,nu,p1,-e13,
+ UxDn[Pos],UxDss[Pos],UxDds[Pos],
+ UyDn[Pos],UyDss[Pos],UyDds[Pos],
+ UzDn[Pos],UzDss[Pos],UzDds[Pos]);
 # Calculate second angular dislocation contribution
-(ux2Tp,uy2Tp,uz2Tp,vx2Tp,vy2Tp,vz2Tp,wx2Tp,wy2Tp,wz2Tp) = TDSetupD(xp,yp,zp,B,Dn,Dss,Dds,nu,p2,e12);
+(UxDn[Pos],UxDss[Pos],UxDds[Pos],
+ UyDn[Pos],UyDss[Pos],UyDds[Pos],
+ UzDn[Pos],UzDss[Pos],UzDds[Pos]) =
+ TDSetupD(x[Pos],y[Pos],z[Pos],B,Dn,Dss,Dds,nu,p2,e12,
+ UxDn[Pos],UxDss[Pos],UxDds[Pos],
+ UyDn[Pos],UyDss[Pos],UyDds[Pos],
+ UzDn[Pos],UzDss[Pos],UzDds[Pos]); 
 # Calculate third angular dislocation contribution
-(ux3Tp,uy3Tp,uz3Tp,vx3Tp,vy3Tp,vz3Tp,wx3Tp,wy3Tp,wz3Tp) = TDSetupD(xp,yp,zp,C,Dn,Dss,Dds,nu,p3,e23);	
+(UxDn[Pos],UxDss[Pos],UxDds[Pos],
+ UyDn[Pos],UyDss[Pos],UyDds[Pos],
+ UzDn[Pos],UzDss[Pos],UzDds[Pos]) =
+ TDSetupD(x[Pos],y[Pos],z[Pos],C,Dn,Dss,Dds,nu,p3,e23,
+ UxDn[Pos],UxDss[Pos],UxDds[Pos],
+ UyDn[Pos],UyDss[Pos],UyDds[Pos],
+ UzDn[Pos],UzDss[Pos],UzDds[Pos]);
 
+ 
 # Calculate first angular dislocation contribution NEG
-(ux1Tn,uy1Tn,uz1Tn,vx1Tn,vy1Tn,vz1Tn,wx1Tn,wy1Tn,wz1Tn) = TDSetupD(xn,yn,zn,A,Dn,Dss,Dds,nu,p1,e13);
+(UxDn[Neg],UxDss[Neg],UxDds[Neg],
+ UyDn[Neg],UyDss[Neg],UyDds[Neg],
+ UzDn[Neg],UzDss[Neg],UzDds[Neg]) =
+ TDSetupD(x[Neg],y[Neg],z[Neg],A,Dn,Dss,Dds,nu,p1,e13,
+ UxDn[Neg],UxDss[Neg],UxDds[Neg],
+ UyDn[Neg],UyDss[Neg],UyDds[Neg],
+ UzDn[Neg],UzDss[Neg],UzDds[Neg]);
 # Calculate second angular dislocation contribution
-(ux2Tn,uy2Tn,uz2Tn,vx2Tn,vy2Tn,vz2Tn,wx2Tn,wy2Tn,wz2Tn) = TDSetupD(xn,yn,zn,B,Dn,Dss,Dds,nu,p2,-e12);
+(UxDn[Neg],UxDss[Neg],UxDds[Neg],
+ UyDn[Neg],UyDss[Neg],UyDds[Neg],
+ UzDn[Neg],UzDss[Neg],UzDds[Neg]) = 
+ TDSetupD(x[Neg],y[Neg],z[Neg],B,Dn,Dss,Dds,nu,p2,-e12,
+ UxDn[Neg],UxDss[Neg],UxDds[Neg],
+ UyDn[Neg],UyDss[Neg],UyDds[Neg],
+ UzDn[Neg],UzDss[Neg],UzDds[Neg]);
 # Calculate third angular dislocation contribution
-(ux3Tn,uy3Tn,uz3Tn,vx3Tn,vy3Tn,vz3Tn,wx3Tn,wy3Tn,wz3Tn) = TDSetupD(xn,yn,zn,C,Dn,Dss,Dds,nu,p3,-e23);		
+(UxDn[Neg],UxDss[Neg],UxDds[Neg],
+ UyDn[Neg],UyDss[Neg],UyDds[Neg],
+ UzDn[Neg],UzDss[Neg],UzDds[Neg]) =
+ TDSetupD(x[Neg],y[Neg],z[Neg],C,Dn,Dss,Dds,nu,p3,-e23,
+ UxDn[Neg],UxDss[Neg],UxDds[Neg],
+ UyDn[Neg],UyDss[Neg],UyDds[Neg],
+ UzDn[Neg],UzDss[Neg],UzDds[Neg]);	
+ 
 
-#Do some allocation before loop
-println("Send these directly into the func above? Add in there (reduce alloc massiv amounts)")
-uxV = Array{Float64}(undef, length(x),1); 
-vxV = Array{Float64}(undef, length(x),1); 
-wxV = Array{Float64}(undef, length(x),1);
-uyV = Array{Float64}(undef, length(x),1); 
-vyV = Array{Float64}(undef, length(x),1); 
-wyV = Array{Float64}(undef, length(x),1);
-uzV = Array{Float64}(undef, length(x),1); 
-vzV = Array{Float64}(undef, length(x),1); 
-wzV = Array{Float64}(undef, length(x),1);
-
-uxV[casenLog]=ux1Tn+ux2Tn+ux3Tn;
-vxV[casenLog]=vx1Tn+vx2Tn+vx3Tn;
-wxV[casenLog]=wx1Tn+wx2Tn+wx3Tn;
-uxV[casepLog]=ux1Tp+ux2Tp+ux3Tp;
-vxV[casepLog]=vx1Tp+vx2Tp+vx3Tp;
-wxV[casepLog]=wx1Tp+wx2Tp+wx3Tp;
-
-uyV[casenLog]=uy1Tn+uy2Tn+uy3Tn;
-vyV[casenLog]=vy1Tn+vy2Tn+vy3Tn;
-wyV[casenLog]=wy1Tn+wy2Tn+wy3Tn;
-uyV[casepLog]=uy1Tp+uy2Tp+uy3Tp;
-vyV[casepLog]=vy1Tp+vy2Tp+vy3Tp;
-wyV[casepLog]=wy1Tp+wy2Tp+wy3Tp;
-
-uzV[casenLog]=uz1Tn+uz2Tn+uz3Tn;
-vzV[casenLog]=vz1Tn+vz2Tn+vz3Tn;
-wzV[casenLog]=wz1Tn+wz2Tn+wz3Tn;
-uzV[casepLog]=uz1Tp+uz2Tp+uz3Tp;
-vzV[casepLog]=vz1Tp+vz2Tp+vz3Tp;
-wzV[casepLog]=wz1Tp+wz2Tp+wz3Tp;
+ 
 
 # Calculate the "incomplete" displacement vector components in TDCS
 for i=1:length(x)
 
 	if casezLog[i] == 1; 
-		uxV[i] = NaN;
-		vxV[i] = NaN;
-		wxV[i] = NaN;
-		uyV[i] = NaN;
-		vyV[i] = NaN;
-		wyV[i] = NaN;
-		uzV[i] = NaN;
-		vzV[i] = NaN;
-		wzV[i] = NaN;
+		UxDn[i] = NaN;
+		UyDn[i] = NaN;
+		UzDn[i] = NaN;
+		UxDss[i] = NaN;
+		UyDss[i] = NaN;
+		UzDss[i] = NaN;
+		UxDds[i] = NaN;
+		UyDds[i] = NaN;
+		UzDds[i] = NaN;
 	end
 
 	a1=-x[i];	a2=p1_2[1]-y[i];	a3=p1_3[1]-z[i];
@@ -384,19 +399,23 @@ for i=1:length(x)
 	Fi = -2*atan(one,two)/4/pi; 
 	
 	# Calculate the complete displacement vector components in TDCS
-	uxV[i] = Dn*Fi+uxV[i];
-	vyV[i] = Dss*Fi+vyV[i];
-	wzV[i] = Dds*Fi+wzV[i];
+	UxDn[i]  = Dn*Fi+UxDn[i];
+	UyDss[i] = Dss*Fi+UyDss[i];
+	UzDds[i] = Dds*Fi+UzDds[i];
 	#Only add parts that matter
 
 	
 end	
 
+
 println("Remove allocation of new vars below")
 # Transform the complete displacement vector components from TDCS into EFCS
-(UxDn,UyDn,UzDn)=   RotateObject3DNewCoords(uxV,vxV,wxV,0,0,0,Vnorm,Vstrike,Vdip)
-(UxDss,UyDss,UzDss)=RotateObject3DNewCoords(uyV,vyV,wyV,0,0,0,Vnorm,Vstrike,Vdip)
-(UxDds,UyDds,UzDds)=RotateObject3DNewCoords(uzV,vzV,wzV,0,0,0,Vnorm,Vstrike,Vdip)
+(UxDn, UyDn, UzDn) =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0,0,0,Vnorm,Vstrike,Vdip)
+(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0,0,0,Vnorm,Vstrike,Vdip)
+(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0,0,0,Vnorm,Vstrike,Vdip)
+
+
+
 
 return(UxDn,UyDn,UzDn,UxDss,UyDss,UzDss,UxDds,UyDds,UzDds)
 end
@@ -556,7 +575,10 @@ return(casepLog,casenLog,casezLog)
 end
 
 
-function TDSetupD(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec)
+function TDSetupD(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec,
+ UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds)
 # TDSetupD transforms coordinates of the calculation points as well as 
 # slip vector components from ADCS into TDCS. It then calculates the 
 # displacements in ADCS and transforms them into TDCS.
@@ -569,16 +591,11 @@ Ang=-pi+alpha;
 cosA = cos(Ang);
 sinA = sin(Ang);
 
-println("Wont need to be allocated if passed directly in")
-Ux = Array{Float64}(undef, length(x),1);
-Uy = Array{Float64}(undef, length(x),1);
-Uz = Array{Float64}(undef, length(x),1);
-Vx = Array{Float64}(undef, length(x),1);
-Vy = Array{Float64}(undef, length(x),1);
-Vz = Array{Float64}(undef, length(x),1);
-Wx = Array{Float64}(undef, length(x),1);
-Wy = Array{Float64}(undef, length(x),1);
-Wz = Array{Float64}(undef, length(x),1);
+# Transform displacements from TDCS into ADCS (Do for each component)
+println("Allocation not needed here")
+(UyDn, UzDn)   =RotateObject2D!(UyDn, UzDn ,0,0,Ct,St) #Rotate back
+(UyDss,UzDss)  =RotateObject2D!(UyDss,UzDss,0,0,Ct,St) #Rotate back
+(UyDds,UzDds)  =RotateObject2D!(UyDds,UzDds,0,0,Ct,St) #Rotate back
 
 #Extra defs out of loop to speed it up
 E1=(1-nu); #Elastic cons
@@ -594,33 +611,41 @@ for i=1:length(x)
 	(ux,uy,uz,vx,vy,vz,wx,wy,wz) = AngDisDisp(x[i],y1[i],z1[i],cosA,sinA,E1,E2,cosA2,sinADE1);
 	
 	#components due to opening
-	Ux[i]=Dn8p/E1*ux;
-	Vx[i]=Dn8p/E1*vx;
-	Wx[i]=Dn8p/E1*wx;
+	UxDn[i]=UxDn[i]+(Dn8p/E1*ux);
+	UyDn[i]=UyDn[i]+(Dn8p/E1*vx);
+	UzDn[i]=UzDn[i]+(Dn8p/E1*wx);
+	
 	#comp mixed components (in the current coords)
-	Uy[i]=(Dss1/8/pi/E1*uy)+(Dds0*sinADE1*uz)
-	Uz[i]=(Dss0/8/pi/E1*uy)+(Dds1*sinADE1*uz)
+	UxDss[i]=UxDss[i]+(Dss1/8/pi/E1*uy)+(Dds0*sinADE1*uz)
+	UxDds[i]=UxDds[i]+(Dss0/8/pi/E1*uy)+(Dds1*sinADE1*uz)
 	
-	Vy[i]=(Dss1*x[i]/8/pi/E1*vy)+(Dds0*x[i]*sinADE1*vz)	
-	Vz[i]=(Dss0*x[i]/8/pi/E1*vy)+(Dds1*x[i]*sinADE1*vz)		
+	UyDss[i]=UyDss[i]+(Dss1*x[i]/8/pi/E1*vy)+(Dds0*x[i]*sinADE1*vz)	
+	UyDds[i]=UyDds[i]+(Dss0*x[i]/8/pi/E1*vy)+(Dds1*x[i]*sinADE1*vz)		
 	
-	Wy[i]=(Dss1*x[i]/8/pi/E1*wy)+(Dds0*x[i]*sinADE1*wz)
-	Wz[i]=(Dss0*x[i]/8/pi/E1*wy)+(Dds1*x[i]*sinADE1*wz)
+	UzDss[i]=UzDss[i]+(Dss1*x[i]/8/pi/E1*wy)+(Dds0*x[i]*sinADE1*wz)
+	UzDds[i]=UzDds[i]+(Dss0*x[i]/8/pi/E1*wy)+(Dds1*x[i]*sinADE1*wz)
 
 	
 end
 
+#@info UyDn[1] UzDn[1]
+
 # Transform displacements from ADCS into TDCS (Do for each component)
 println("Allocation not needed here")
-(Vx,Wx)  =RotateObject2D(Vx,Wx,0,0,Ct,-St) #Rotate back
-(Vy,Wy)  =RotateObject2D(Vy,Wy,0,0,Ct,-St) #Rotate back
-(Vz,Wz)  =RotateObject2D(Vz,Wz,0,0,Ct,-St) #Rotate back
+(UyDn, UzDn)   =RotateObject2D!(UyDn, UzDn ,0,0,Ct,-St) #Rotate back
+(UyDss,UzDss)  =RotateObject2D!(UyDss,UzDss,0,0,Ct,-St) #Rotate back
+(UyDds,UzDds)  =RotateObject2D!(UyDds,UzDds,0,0,Ct,-St) #Rotate back
+
+#@info UyDn[1] UzDn[1]
+
 
 #Add in actual burgers vector
-Uy=Uy.*Dss;Vy=Vy.*Dss;Wy=Wy.*Dss;
-Uz=Uz.*Dds;Vz=Vz.*Dds;Wz=Wz.*Dds;
+UxDss=UxDss.*Dss;UyDss=UyDss.*Dss;UzDss=UzDss.*Dss;
+UxDds=UxDds.*Dds;UyDds=UyDds.*Dds;UzDds=UzDds.*Dds;
 
-return(Ux,Uy,Uz,Vx,Vy,Vz,Wx,Wy,Wz)
+return( UxDn,UxDss,UxDds,
+		UyDn,UyDss,UyDds,
+		UzDn,UzDss,UzDds)
 end
 
 

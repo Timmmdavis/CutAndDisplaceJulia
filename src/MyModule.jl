@@ -48,7 +48,11 @@ include("TD_sum.jl")
 
 #Rotation in Mehdis funcs
 include("RotateObject3DNewCoords.jl") #Mehdis 'CoordTrans'
+include("RotateObject3DNewCoords!.jl") #Mehdis 'CoordTrans'
 include("RotateObject2D.jl")
+include("RotateObject2D!.jl")
+
+
 
 #Good for both
 #include("trimodefinder.jl")
@@ -62,6 +66,8 @@ include("RotateObject2D.jl")
 #Drawing 
 include("contourfill.jl")
 
+#DELETE
+include("TestFooAllocs.jl")
 
 
 end
