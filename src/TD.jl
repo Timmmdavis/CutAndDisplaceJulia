@@ -1370,8 +1370,6 @@ function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu)
  ExxDds23,EyyDds23,EzzDds23,ExyDds23,ExzDds23,EyzDds23) =
  AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P3,P1,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P3P1
 
- @info Dn Dss Dds
- 
 # Calculate total harmonic function contribution to strains and stresses
 ExxDn=(ExxDn12+ExxDn13+ExxDn23).*Dn;
 EyyDn=(EyyDn12+EyyDn13+EyyDn23).*Dn;
@@ -1404,17 +1402,6 @@ end
 function AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,PA,PB,mu,lambda,nu,Vnorm,Vstrike,Vdip)
 # AngSetupFSC_S calculates the Free Surface Correction to strains and 
 # stresses associated with angular dislocation pair on each TD side.
-
-
-println("Remove me")
-# @info e13 e12 e23
-# @info ExxDn1Tp[end] EyyDn1Tp[end] EzzDn1Tp[end] ExyDn1Tp[end] ExzDn1Tp[end] EyzDn1Tp[end]
-# @info ExxDn2Tp[end] EyyDn2Tp[end] EzzDn2Tp[end] ExyDn2Tp[end] ExzDn2Tp[end] EyzDn2Tp[end]
-# @info ExxDn3Tp[end] EyyDn3Tp[end] EzzDn3Tp[end] ExyDn3Tp[end] ExzDn3Tp[end] EyzDn3Tp[end]
-# @info ExxDn1Tn[end] EyyDn1Tn[end] EzzDn1Tn[end] ExyDn1Tn[end] ExzDn1Tn[end] EyzDn1Tn[end]
-# @info ExxDn2Tn[end] EyyDn2Tn[end] EzzDn2Tn[end] ExyDn2Tn[end] ExzDn2Tn[end] EyzDn2Tn[end]
-# @info ExxDn3Tn[end] EyyDn3Tn[end] EzzDn3Tn[end] ExyDn3Tn[end] ExzDn3Tn[end] EyzDn3Tn[end]
-# popp 
 
 # Calculate TD side vector and the angle of the angular dislocation pair
 (SideVec,eZ,beta)=CalcSideVec(PA,PB)

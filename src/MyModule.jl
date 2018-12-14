@@ -25,6 +25,7 @@ include("LD_sum.jl")
 
 #Normal tri dislocation funcs
 include("TD.jl")
+include("TD_sum.jl")
 
 #Displacement
 #include("TDdispFS.jl")

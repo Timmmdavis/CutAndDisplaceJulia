@@ -1,5 +1,9 @@
-function LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
+function LD_sum(SxxDs,SxxDn,SyyDs,
+				SyyDn,SxyDs,SxyDn,
+				UxDs,UxDn,
+				UyDs,UyDn)
 #Simply sums the different modes of dislocations. (Safer than always writing this out)
+#Could be written more elegantly 
 
 #Accumulating arrays
 Sxx=sum(SxxDs.+SxxDn,dims=2);
