@@ -204,37 +204,63 @@ for i=1:SzCmp #For every element
 				UzDds[:,i] = -UzDds[:,i];				
 			end
 			
-		end
+		end #HsFlag
 		
-	end 
+	end#DispFlag 
 
 	if StrainFlag==1
 
 		#Elastic con
 		lambda=(2*mu*nu)/(1-(2*nu));
 		
-		(ExxDn[:,i],EyyDn[:,i],EzzDn[:,i],ExyDn[:,i],ExzDn[:,i],EyzDn[:,i],
+		(ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
 		 ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
 		 ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]) =
-		 TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda)	
+		 TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda);	
 		
 		if HSflag==1
 		
-			(ExxFSC,EyyFSC,EzzFSC,ExyFSC,ExzFSC,EyzFSC) = TDstrain_HarFunc(X,Y,Z,P1,P2,P3,by,bz,bx,mu,lambda,nu);
+			println("went into HS func")
+		
+			(ExxDnFSC, EyyDnFSC, EzzDnFSC, ExyDnFSC, ExzDnFSC, EyzDnFSC,
+			 ExxDssFSC,EyyDssFSC,EzzDssFSC,ExyDssFSC,ExzDssFSC,EyzDssFSC,
+			 ExxDdsFSC,EyyDdsFSC,EzzDdsFSC,ExyDdsFSC,ExzDdsFSC,EyzDdsFSC) =
+			 TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu);
 		
 			# Calculate image dislocation contribution to strains and stresses
-			(ExxIS,EyyIS,EzzIS,ExyIS,ExzIS,EyzIS) = TDstrainFS(X,Y,Z,P1i,P2i,P3i,by,bz,bx,mu,lambda);
+			(ExxDnIS, EyyDnIS, EzzDnIS, ExyDnIS, ExzDnIS, EyzDnIS,
+			 ExxDssIS,EyyDssIS,EzzDssIS,ExyDssIS,ExzDssIS,EyzDssIS,
+			 ExxDdsIS,EyyDdsIS,EzzDdsIS,ExyDdsIS,ExzDdsIS,EyzDdsIS) =
+			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda);
 			if P1i[3]==0 && P2i[3]==0 && P3i[3]==0
-				ExzIS = -ExzIS;
-				EyzIS = -EyzIS;
+				ExzDnIS = -ExzDnIS;
+				EyzDnIS = -EyzDnIS;
+				ExzDssIS = -ExzDssIS;
+				EyzDssIS = -EyzDssIS;
+				ExzDdsIS = -ExzDdsIS;
+				EyzDdsIS = -EyzDdsIS;
 			end
 			
-			Exx[:,i]=Exx[:,i]+ExxFSC+ExxIS;
-			Eyy[:,i]=Eyy[:,i]+EyyFSC+EyyIS;
-			Ezz[:,i]=Ezz[:,i]+EzzFSC+EzzIS;
-			Exy[:,i]=Exy[:,i]+ExyFSC+ExyIS;
-			Exz[:,i]=Exz[:,i]+ExzFSC+ExzIS;
-			Eyz[:,i]=Eyz[:,i]+EyzFSC+EyzIS;
+			ExxDn[:,i]=ExxDn[:,i]+ExxDnFSC+ExxDnIS;
+			EyyDn[:,i]=EyyDn[:,i]+EyyDnFSC+EyyDnIS;
+			EzzDn[:,i]=EzzDn[:,i]+EzzDnFSC+EzzDnIS;
+			ExyDn[:,i]=ExyDn[:,i]+ExyDnFSC+ExyDnIS;
+			ExzDn[:,i]=ExzDn[:,i]+ExzDnFSC+ExzDnIS;
+			EyzDn[:,i]=EyzDn[:,i]+EyzDnFSC+EyzDnIS;
+			
+			ExxDss[:,i]=ExxDss[:,i]+ExxDssFSC+ExxDssIS;
+			EyyDss[:,i]=EyyDss[:,i]+EyyDssFSC+EyyDssIS;
+			EzzDss[:,i]=EzzDss[:,i]+EzzDssFSC+EzzDssIS;
+			ExyDss[:,i]=ExyDss[:,i]+ExyDssFSC+ExyDssIS;
+			ExzDss[:,i]=ExzDss[:,i]+ExzDssFSC+ExzDssIS;
+			EyzDss[:,i]=EyzDss[:,i]+EyzDssFSC+EyzDssIS;
+			
+			ExxDds[:,i]=ExxDds[:,i]+ExxDdsFSC+ExxDdsIS;
+			EyyDds[:,i]=EyyDds[:,i]+EyyDdsFSC+EyyDdsIS;
+			EzzDds[:,i]=EzzDds[:,i]+EzzDdsFSC+EzzDdsIS;
+			ExyDds[:,i]=ExyDds[:,i]+ExyDdsFSC+ExyDdsIS;
+			ExzDds[:,i]=ExzDds[:,i]+ExzDdsFSC+ExzDdsIS;
+			EyzDds[:,i]=EyzDds[:,i]+EyzDdsFSC+EyzDdsIS;
 			
 		end #HS flag
 		
@@ -244,14 +270,16 @@ end #Over all els
 	
 	
 if DispFlag==0
-	return(Exx,Eyy,Ezz,Exy,Exz,Eyz)
+	return(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+		   ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+		   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds)
 elseif StrainFlag==0
 	return(UxDn,UyDn,UzDn,
 		   UxDss,UyDss,UzDss,
 		   UxDds,UyDds,UzDds)
 else
 
-	return(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
+	return(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
 		   ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
 		   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
 		   UxDn,UyDn,UzDn,
@@ -1311,7 +1339,7 @@ return(ExxBx,ExxBy,ExxBz,
 end
 
 
-function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,by,bz,bx,mu,lambda,nu)
+function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu)
 # TDstrain_HarFunc calculates the harmonic function contribution to the
 # strains and stresses associated with a triangular dislocation in a 
 # half-space. The function cancels the surface normal tractions induced by 
@@ -1326,22 +1354,50 @@ function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,by,bz,bx,mu,lambda,nu)
 (Vnorm,Vstrike,Vdip)=CalculateLocalTriCoords(P1,P2,P3)
 
 ## Transform slip vector components from TDCS into EFCS
-(bX,bY,bZ) = RotateObject3DNewCoords(bx,by,bz,0,0,0,Vnorm,Vstrike,Vdip);
+(bX,bY,bZ) = RotateObject3DNewCoords(Dn,Dss,Dds,0,0,0,Vnorm,Vstrike,Vdip);
 
 # Calculate contribution of angular dislocation pair on each TD side 
-(Exx1,Eyy1,Ezz1,Exy1,Exz1,Eyz1) = AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P1,P2,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P1P2
-(Exx2,Eyy2,Ezz2,Exy2,Exz2,Eyz2) = AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P2,P3,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P2P3
-(Exx3,Eyy3,Ezz3,Exy3,Exz3,Eyz3) = AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P3,P1,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P3P1
+(ExxDn12, EyyDn12, EzzDn12, ExyDn12, ExzDn12, EyzDn12,
+ ExxDss12,EyyDss12,EzzDss12,ExyDss12,ExzDss12,EyzDss12,
+ ExxDds12,EyyDds12,EzzDds12,ExyDds12,ExzDds12,EyzDds12) =
+ AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P1,P2,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P1P2
+(ExxDn13, EyyDn13, EzzDn13, ExyDn13, ExzDn13, EyzDn13,
+ ExxDss13,EyyDss13,EzzDss13,ExyDss13,ExzDss13,EyzDss13,
+ ExxDds13,EyyDds13,EzzDds13,ExyDds13,ExzDds13,EyzDds13) =
+ AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P2,P3,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P2P3
+(ExxDn23, EyyDn23, EzzDn23, ExyDn23, ExzDn23, EyzDn23,
+ ExxDss23,EyyDss23,EzzDss23,ExyDss23,ExzDss23,EyzDss23,
+ ExxDds23,EyyDds23,EzzDds23,ExyDds23,ExzDds23,EyzDds23) =
+ AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P3,P1,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P3P1
 
+ @info Dn Dss Dds
+ 
 # Calculate total harmonic function contribution to strains and stresses
-Exx=Exx1.+Exx2.+Exx3;
-Eyy=Eyy1.+Eyy2.+Eyy3;
-Ezz=Ezz1.+Ezz2.+Ezz3;
-Exy=Exy1.+Exy2.+Exy3;
-Exz=Exz1.+Exz2.+Exz3;
-Eyz=Eyz1.+Eyz2.+Eyz3;
+ExxDn=(ExxDn12+ExxDn13+ExxDn23).*Dn;
+EyyDn=(EyyDn12+EyyDn13+EyyDn23).*Dn;
+EzzDn=(EzzDn12+EzzDn13+EzzDn23).*Dn;
+ExyDn=(ExyDn12+ExyDn13+ExyDn23).*Dn;
+ExzDn=(ExzDn12+ExzDn13+ExzDn23).*Dn;
+EyzDn=(EyzDn12+EyzDn13+EyzDn23).*Dn;
 
-return(Exx,Eyy,Ezz,Exy,Exz,Eyz);
+ExxDss=(ExxDss12+ExxDss13+ExxDss23).*Dss;
+EyyDss=(EyyDss12+EyyDss13+EyyDss23).*Dss;
+EzzDss=(EzzDss12+EzzDss13+EzzDss23).*Dss;
+ExyDss=(ExyDss12+ExyDss13+ExyDss23).*Dss;
+ExzDss=(ExzDss12+ExzDss13+ExzDss23).*Dss;
+EyzDss=(EyzDss12+EyzDss13+EyzDss23).*Dss;
+
+ExxDds=(ExxDds12+ExxDds13+ExxDds23).*Dds;
+EyyDds=(EyyDds12+EyyDds13+EyyDds23).*Dds;
+EzzDds=(EzzDds12+EzzDds13+EzzDds23).*Dds;
+ExyDds=(ExyDds12+ExyDds13+ExyDds23).*Dds;
+ExzDds=(ExzDds12+ExzDds13+ExzDds23).*Dds;
+EyzDds=(EyzDds12+EyzDds13+EyzDds23).*Dds;
+
+
+return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
+		ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+		ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
 end
 
 
@@ -1372,7 +1428,7 @@ if abs(beta)<eps() || abs(pi-beta)<eps()
 	Eyz = zeros(length(X),1);
 else
     (b1,b2,b3,I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,bX,bY,bZ,beta)
-	AFlip = [ey1[1] ey1[2] ey1[3] ey2[1] ey2[2]  ey2[3]  ey3[1] ey3[2]  ey3[3]]; # Transformation matrix
+
 	
 	println("Make sure there is no allocation in these")
 	## Transform slip vector components from TDCS into EFCS
@@ -1385,25 +1441,25 @@ else
 	(Dn0ds,Dss0ds,Dds1__)=RotateObject3DNewCoords(Dn0ds,Dss0ds,Dds1__,0,0,0,ey1,ey2,ey3)
 	
     # For singularities at surface
-	ExxDn = zeros(length(x),1);
-	ExxDss= zeros(length(x),1);
-	ExxDds= zeros(length(x),1);
-	EyyDn = zeros(length(x),1);
-	EyyDss= zeros(length(x),1);
-	EyyDds= zeros(length(x),1);
-	EzzDn = zeros(length(x),1);
-	EzzDss= zeros(length(x),1);
-	EzzDds= zeros(length(x),1);
+	ExxDn = zeros(length(X),1);
+	ExxDss= zeros(length(X),1);
+	ExxDds= zeros(length(X),1);
+	EyyDn = zeros(length(X),1);
+	EyyDss= zeros(length(X),1);
+	EyyDds= zeros(length(X),1);
+	EzzDn = zeros(length(X),1);
+	EzzDss= zeros(length(X),1);
+	EzzDds= zeros(length(X),1);
 
-	ExyDn = zeros(length(x),1);
-	ExyDss= zeros(length(x),1);
-	ExyDds= zeros(length(x),1);
-	ExzDn = zeros(length(x),1);
-	ExzDss= zeros(length(x),1);
-	ExzDds= zeros(length(x),1);
-	EyzDn = zeros(length(x),1);
-	EyzDss= zeros(length(x),1);
-	EyzDds= zeros(length(x),1);
+	ExyDn = zeros(length(X),1);
+	ExyDss= zeros(length(X),1);
+	ExyDds= zeros(length(X),1);
+	ExzDn = zeros(length(X),1);
+	ExzDss= zeros(length(X),1);
+	ExzDds= zeros(length(X),1);
+	EyzDn = zeros(length(X),1);
+	EyzDss= zeros(length(X),1);
+	EyzDds= zeros(length(X),1);
 	
 	
     Iflp=.!I; #Invert the bool
@@ -1418,13 +1474,69 @@ else
 	
     # Configuration I
 	for i=1:length(indx)
-		(v11A[indx[i]],v22A[indx[i]],v33A[indx[i]],v12A[indx[i]],v13A[indx[i]],v23A[indx[i]]) = AngDisStrainFSC(-y1A[indx[i]],-y2A[indx[i]],y3A[indx[i]],cosB,sinB,cotB,-b1,-b2,b3,nu,-PA[3]);
-		v13A[indx[i]] = -v13A[indx[i]];
-		v23A[indx[i]] = -v23A[indx[i]];
-    
-		(v11B[indx[i]],v22B[indx[i]],v33B[indx[i]],v12B[indx[i]],v13B[indx[i]],v23B[indx[i]]) = AngDisStrainFSC(-y1B[indx[i]],-y2B[indx[i]],y3B[indx[i]],cosB,sinB,cotB,-b1,-b2,b3,nu,-PB[3]);
-		v13B[indx[i]] = -v13B[indx[i]];
-		v23B[indx[i]] = -v23B[indx[i]];
+		 #xx    yy    zz    xy    xz    yz
+		(v11Ax,v22Ax,v33Ax,v12Ax,v13Ax,v23Ax,  #Dn
+	     v11Ay,v22Ay,v33Ay,v12Ay,v13Ay,v23Ay,  #Dss
+	     v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(-y1A[indx[i]],-y2A[indx[i]],y3A[indx[i]],cosB,sinB,cotB,-b1,-b2,b3,nu,-PA[3]);
+		 
+		v13Ax = -v13Ax;
+		v13Ay = -v13Ay;
+		v13Az = -v13Az;
+		v23Ax = -v23Ax;
+		v23Ay = -v23Ay;
+		v23Az = -v23Az;
+		
+		#For configuration 1 Dn and Dss are flipped
+		ExxDn[indx[i]] = -((-Dn1__*v11Ax)+(-Dss0n_*v11Ay)+(Dds0n_*v11Az))
+		ExxDss[indx[i]]= -((-Dn0ss*v11Ax)+(-Dss1__*v11Ay)+(Dds1ss*v11Az))
+		ExxDds[indx[i]]= -((-Dn0ds*v11Ax)+(-Dss0ds*v11Ay)+(Dds1__*v11Az))
+		EyyDn[indx[i]] = -((-Dn1__*v22Ax)+(-Dss0n_*v22Ay)+(Dds0n_*v22Az))
+		EyyDss[indx[i]]= -((-Dn0ss*v22Ax)+(-Dss1__*v22Ay)+(Dds1ss*v22Az))
+		EyyDds[indx[i]]= -((-Dn0ds*v22Ax)+(-Dss0ds*v22Ay)+(Dds1__*v22Az))
+		EzzDn[indx[i]] = -((-Dn1__*v33Ax)+(-Dss0n_*v33Ay)+(Dds0n_*v33Az))
+		EzzDss[indx[i]]= -((-Dn0ss*v33Ax)+(-Dss1__*v33Ay)+(Dds1ss*v33Az))
+		EzzDds[indx[i]]= -((-Dn0ds*v33Ax)+(-Dss0ds*v33Ay)+(Dds1__*v33Az))
+		ExyDn[indx[i]] = -((-Dn1__/2*v12Ax)+(-Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
+		ExyDss[indx[i]]= -((-Dn0ss/2*v12Ax)+(-Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
+		ExyDds[indx[i]]= -((-Dn0ds/2*v12Ax)+(-Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
+		ExzDn[indx[i]] = -((-Dn1__/2*v13Ax)+(-Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
+		ExzDss[indx[i]]= -((-Dn0ss/2*v13Ax)+(-Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
+		ExzDds[indx[i]]= -((-Dn0ds/2*v13Ax)+(-Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
+		EyzDn[indx[i]] = -((-Dn1__/2*v23Ax)+(-Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
+		EyzDss[indx[i]]= -((-Dn0ss/2*v23Ax)+(-Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
+		EyzDds[indx[i]]= -((-Dn0ds/2*v23Ax)+(-Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
+		
+		(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
+	     v11By,v22By,v33By,v12By,v13By,v23By,
+	     v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(-y1B[indx[i]],-y2B[indx[i]],y3B[indx[i]],cosB,sinB,cotB,-b1,-b2,b3,nu,-PB[3]);
+		 
+		 
+		v13Bx = -v13Bx;
+		v13By = -v13By;
+		v13Bz = -v13Bz;
+		v23Bx = -v23Bx;
+		v23By = -v23By;
+		v23Bz = -v23Bz;
+		
+		ExxDn[indx[i]] = ExxDn[indx[i]] + ((-Dn1__*v11Bx)+(-Dss0n_*v11By)+(Dds0n_*v11Bz))
+		ExxDss[indx[i]]= ExxDss[indx[i]]+ ((-Dn0ss*v11Bx)+(-Dss1__*v11By)+(Dds1ss*v11Bz))
+		ExxDds[indx[i]]= ExxDds[indx[i]]+ ((-Dn0ds*v11Bx)+(-Dss0ds*v11By)+(Dds1__*v11Bz))
+		EyyDn[indx[i]] = EyyDn[indx[i]] + ((-Dn1__*v22Bx)+(-Dss0n_*v22By)+(Dds0n_*v22Bz))
+		EyyDss[indx[i]]= EyyDss[indx[i]]+ ((-Dn0ss*v22Bx)+(-Dss1__*v22By)+(Dds1ss*v22Bz))
+		EyyDds[indx[i]]= EyyDds[indx[i]]+ ((-Dn0ds*v22Bx)+(-Dss0ds*v22By)+(Dds1__*v22Bz))
+		EzzDn[indx[i]] = EzzDn[indx[i]] + ((-Dn1__*v33Bx)+(-Dss0n_*v33By)+(Dds0n_*v33Bz))
+		EzzDss[indx[i]]= EzzDss[indx[i]]+ ((-Dn0ss*v33Bx)+(-Dss1__*v33By)+(Dds1ss*v33Bz))
+		EzzDds[indx[i]]= EzzDds[indx[i]]+ ((-Dn0ds*v33Bx)+(-Dss0ds*v33By)+(Dds1__*v33Bz))
+		ExyDn[indx[i]] = ExyDn[indx[i]] + ((-Dn1__/2*v12Bx)+(-Dss0n_/2*v12By)+(Dds0n_/2*v12Bz))
+		ExyDss[indx[i]]= ExyDss[indx[i]]+ ((-Dn0ss/2*v12Bx)+(-Dss1__/2*v12By)+(Dds1ss/2*v12Bz))
+		ExyDds[indx[i]]= ExyDds[indx[i]]+ ((-Dn0ds/2*v12Bx)+(-Dss0ds/2*v12By)+(Dds1__/2*v12Bz))
+		ExzDn[indx[i]] = ExzDn[indx[i]] + ((-Dn1__/2*v13Bx)+(-Dss0n_/2*v13By)+(Dds0n_/2*v13Bz))
+		ExzDss[indx[i]]= ExzDss[indx[i]]+ ((-Dn0ss/2*v13Bx)+(-Dss1__/2*v13By)+(Dds1ss/2*v13Bz))
+		ExzDds[indx[i]]= ExzDds[indx[i]]+ ((-Dn0ds/2*v13Bx)+(-Dss0ds/2*v13By)+(Dds1__/2*v13Bz))
+		EyzDn[indx[i]] = EyzDn[indx[i]] + ((-Dn1__/2*v23Bx)+(-Dss0n_/2*v23By)+(Dds0n_/2*v23Bz))
+		EyzDss[indx[i]]= EyzDss[indx[i]]+ ((-Dn0ss/2*v23Bx)+(-Dss1__/2*v23By)+(Dds1ss/2*v23Bz))
+		EyzDds[indx[i]]= EyzDds[indx[i]]+ ((-Dn0ds/2*v23Bx)+(-Dss0ds/2*v23By)+(Dds1__/2*v23Bz))
+		
 	end
     
 	b=beta;
@@ -1433,27 +1545,74 @@ else
 	cotB = cot(b);
     # Configuration II
 	for i=1:length(indxf)
-		(v11A[indxf[i]],v22A[indxf[i]],v33A[indxf[i]],v12A[indxf[i]],v13A[indxf[i]],v23A[indxf[i]]) = AngDisStrainFSC(y1A[indxf[i]],y2A[indxf[i]],y3A[indxf[i]],cosB,sinB,cotB,b1,b2,b3,nu,-PA[3]);
-		
-		(v11B[indxf[i]],v22B[indxf[i]],v33B[indxf[i]],v12B[indxf[i]],v13B[indxf[i]],v23B[indxf[i]]) = AngDisStrainFSC(y1B[indxf[i]],y2B[indxf[i]],y3B[indxf[i]],cosB,sinB,cotB,b1,b2,b3,nu,-PB[3]);
-	end
-
-
-
-    # Calculate total Free Surface Correction to strains in ADCS
-    v11 = v11B-v11A;
-    v22 = v22B-v22A;
-    v33 = v33B-v33A;
-    v12 = v12B-v12A;
-    v13 = v13B-v13A;
-    v23 = v23B-v23A;
 	
 
+	
+		(v11Ax,v22Ax,v33Ax,v12Ax,v13Ax,v23Ax,
+	     v11Ay,v22Ay,v33Ay,v12Ay,v13Ay,v23Ay,
+	     v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(y1A[indxf[i]],y2A[indxf[i]],y3A[indxf[i]],cosB,sinB,cotB,b1,b2,b3,nu,-PA[3]);
+		 
+		#For configuration 2 no components are flipped
+		ExxDn[indxf[i]] = -((Dn1__*v11Ax)+(Dss0n_*v11Ay)+(Dds0n_*v11Az))
+		ExxDss[indxf[i]]= -((Dn0ss*v11Ax)+(Dss1__*v11Ay)+(Dds1ss*v11Az))
+		ExxDds[indxf[i]]= -((Dn0ds*v11Ax)+(Dss0ds*v11Ay)+(Dds1__*v11Az))
+		EyyDn[indxf[i]] = -((Dn1__*v22Ax)+(Dss0n_*v22Ay)+(Dds0n_*v22Az))
+		EyyDss[indxf[i]]= -((Dn0ss*v22Ax)+(Dss1__*v22Ay)+(Dds1ss*v22Az))
+		EyyDds[indxf[i]]= -((Dn0ds*v22Ax)+(Dss0ds*v22Ay)+(Dds1__*v22Az))
+		EzzDn[indxf[i]] = -((Dn1__*v33Ax)+(Dss0n_*v33Ay)+(Dds0n_*v33Az))
+		EzzDss[indxf[i]]= -((Dn0ss*v33Ax)+(Dss1__*v33Ay)+(Dds1ss*v33Az))
+		EzzDds[indxf[i]]= -((Dn0ds*v33Ax)+(Dss0ds*v33Ay)+(Dds1__*v33Az))
+		ExyDn[indxf[i]] = -((Dn1__/2*v12Ax)+(Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
+		ExyDss[indxf[i]]= -((Dn0ss/2*v12Ax)+(Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
+		ExyDds[indxf[i]]= -((Dn0ds/2*v12Ax)+(Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
+		ExzDn[indxf[i]] = -((Dn1__/2*v13Ax)+(Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
+		ExzDss[indxf[i]]= -((Dn0ss/2*v13Ax)+(Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
+		ExzDds[indxf[i]]= -((Dn0ds/2*v13Ax)+(Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
+		EyzDn[indxf[i]] = -((Dn1__/2*v23Ax)+(Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
+		EyzDss[indxf[i]]= -((Dn0ss/2*v23Ax)+(Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
+		EyzDds[indxf[i]]= -((Dn0ds/2*v23Ax)+(Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
+		
+		(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
+	     v11By,v22By,v33By,v12By,v13By,v23By,
+	     v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(y1B[indxf[i]],y2B[indxf[i]],y3B[indxf[i]],cosB,sinB,cotB,b1,b2,b3,nu,-PB[3]);
+		 
+		ExxDn[indxf[i]] = ExxDn[indxf[i]] + ((Dn1__*v11Bx)+(Dss0n_*v11By)+(Dds0n_*v11Bz))
+		ExxDss[indxf[i]]= ExxDss[indxf[i]]+ ((Dn0ss*v11Bx)+(Dss1__*v11By)+(Dds1ss*v11Bz))
+		ExxDds[indxf[i]]= ExxDds[indxf[i]]+ ((Dn0ds*v11Bx)+(Dss0ds*v11By)+(Dds1__*v11Bz))
+		EyyDn[indxf[i]] = EyyDn[indxf[i]] + ((Dn1__*v22Bx)+(Dss0n_*v22By)+(Dds0n_*v22Bz))
+		EyyDss[indxf[i]]= EyyDss[indxf[i]]+ ((Dn0ss*v22Bx)+(Dss1__*v22By)+(Dds1ss*v22Bz))
+		EyyDds[indxf[i]]= EyyDds[indxf[i]]+ ((Dn0ds*v22Bx)+(Dss0ds*v22By)+(Dds1__*v22Bz))
+		EzzDn[indxf[i]] = EzzDn[indxf[i]] + ((Dn1__*v33Bx)+(Dss0n_*v33By)+(Dds0n_*v33Bz))
+		EzzDss[indxf[i]]= EzzDss[indxf[i]]+ ((Dn0ss*v33Bx)+(Dss1__*v33By)+(Dds1ss*v33Bz))
+		EzzDds[indxf[i]]= EzzDds[indxf[i]]+ ((Dn0ds*v33Bx)+(Dss0ds*v33By)+(Dds1__*v33Bz))
+		ExyDn[indxf[i]] = ExyDn[indxf[i]] + ((Dn1__/2*v12Bx)+(Dss0n_/2*v12By)+(Dds0n_/2*v12Bz))
+		ExyDss[indxf[i]]= ExyDss[indxf[i]]+ ((Dn0ss/2*v12Bx)+(Dss1__/2*v12By)+(Dds1ss/2*v12Bz))
+		ExyDds[indxf[i]]= ExyDds[indxf[i]]+ ((Dn0ds/2*v12Bx)+(Dss0ds/2*v12By)+(Dds1__/2*v12Bz))
+		ExzDn[indxf[i]] = ExzDn[indxf[i]] + ((Dn1__/2*v13Bx)+(Dss0n_/2*v13By)+(Dds0n_/2*v13Bz))
+		ExzDss[indxf[i]]= ExzDss[indxf[i]]+ ((Dn0ss/2*v13Bx)+(Dss1__/2*v13By)+(Dds1ss/2*v13Bz))
+		ExzDds[indxf[i]]= ExzDds[indxf[i]]+ ((Dn0ds/2*v13Bx)+(Dss0ds/2*v13By)+(Dds1__/2*v13Bz))
+		EyzDn[indxf[i]] = EyzDn[indxf[i]] + ((Dn1__/2*v23Bx)+(Dss0n_/2*v23By)+(Dds0n_/2*v23Bz))
+		EyzDss[indxf[i]]= EyzDss[indxf[i]]+ ((Dn0ss/2*v23Bx)+(Dss1__/2*v23By)+(Dds1ss/2*v23Bz))
+		EyzDds[indxf[i]]= EyzDds[indxf[i]]+ ((Dn0ds/2*v23Bx)+(Dss0ds/2*v23By)+(Dds1__/2*v23Bz))
+		
+		
+	end
+
+	
+	AFlip = [ey1[1] ey1[2] ey1[3] ey2[1] ey2[2]  ey2[3]  ey3[1] ey3[2]  ey3[3]]; # Transformation matrix
+
+	
     # Transform total Free Surface Correction to strains from ADCS to EFCS
-    (Exx,Eyy,Ezz,Exy,Exz,Eyz) = TensorTransformation3D(v11,v22,v33,v12,v13,v23,AFlip);
+	(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = TensorTransformation3D(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,AFlip);
+	(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = TensorTransformation3D(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,AFlip);
+	(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = TensorTransformation3D(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,AFlip);	
+	
+
 end
 
-return(Exx,Eyy,Ezz,Exy,Exz,Eyz);
+return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
+		ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+		ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
 end
 
 
@@ -1488,8 +1647,7 @@ rFib_ry2=z1b/rb/(rb+z3b)-y1/rb/(rb+y3b);#y2=xinADCS
 rFib_ry1=y2/rb/(rb+y3b)-cosB*y2/rb/(rb+z3b);#y1=yinADCS
 rFib_ry3=-sinB*y2/rb/(rb+z3b);#y3=zinADCS
 
-#info -----  x=Dn,y=Dss,z=Dds, 11=xx 22=yy 33=zz;
-v11x = b1*(1/4*((-2+2*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((1-W5)*cotB-
+v11x = (1/4*((-2+2*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((1-W5)*cotB-
     y1/W6*W4)/rb*y1+N1*y2/W6*(a/rb^3*y1*cotB-1/W6*W4+y1^2/
     W6^2*W4/rb+y1^2/W6*a/rb^3)-N1*y2*cosB*cotB/W7^2*W2*(y1/
     rb-sinB)-N1*y2*cosB*cotB/W7*a/rb^3*y1-3*a*y2*W8*cotB/rb^5*
@@ -1504,7 +1662,7 @@ v11x = b1*(1/4*((-2+2*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((1-W5)*cotB-
     rb-sinB)+cosB/W7*(1/rb*cosB*y1*(N1*cosB-a/rb)*cotB+W1*a/rb^
     3*y1*cotB+(2-2*nu)*(1/rb*sinB*y1-1)*cosB)+2*a*y3b*cosB*cotB/
     rb2^2*y1))/pi/(1-nu));
-v11y = b2*(1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y1/W6-((2-2*nu)*cotB^2+1)*
+v11y = (1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y1/W6-((2-2*nu)*cotB^2+1)*
     cosB*(y1/rb-sinB)/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*
     cotB/rb+y1^2/W6*W4)/rb*y1+N1/W6*(-N1*cotB+a*cotB/rb-a*
     y1^2*cotB/rb^3+2*y1/W6*W4-y1^3/W6^2*W4/rb-y1^3/W6*a/
@@ -1521,7 +1679,7 @@ v11y = b2*(1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y1/W6-((2-2*nu)*cotB^2+1)*
     ((2-2*nu)*cosB-W1/W7*W9)-(rb*sinB-y1)/rb^3*((2-2*nu)*cosB-W1/
     W7*W9)*y1+(rb*sinB-y1)/rb*(-1/rb*cosB*y1/W7*W9+W1/W7^2*
     W9*(y1/rb-sinB)+W1/W7*a/rb^3/cosB*y1)))/pi/(1-nu));
-v11z= b3*(1/4*(N1*(-y2/W6^2*(1+a/rb)/rb*y1-y2/W6*a/rb^3*y1+y2*
+v11z= (1/4*(N1*(-y2/W6^2*(1+a/rb)/rb*y1-y2/W6*a/rb^3*y1+y2*
     cosB/W7^2*W2*(y1/rb-sinB)+y2*cosB/W7*a/rb^3*y1)+y2*W8/
     rb^3*(a/rb2+1/W6)*y1-y2*W8/rb*(-2*a/rb2^2*y1-1/W6^2/
     rb*y1)-y2*W8*cosB/rb^3/W7*(W1/W7*W2+a*y3b/rb2)*y1-y2*W8*
@@ -1529,7 +1687,7 @@ v11z= b3*(1/4*(N1*(-y2/W6^2*(1+a/rb)/rb*y1-y2/W6*a/rb^3*y1+y2*
     cosB/rb/W7*(1/rb*cosB*y1/W7*W2-W1/W7^2*W2*(y1/rb-sinB)-
     W1/W7*a/rb^3*y1-2*a*y3b/rb2^2*y1))/pi/(1-nu));
 	
-v22x = b1*(1/4*(N1*(((2-2*nu)*cotB^2-nu)/rb*y2/W6-((2-2*nu)*cotB^2+1-
+v22x = (1/4*(N1*(((2-2*nu)*cotB^2-nu)/rb*y2/W6-((2-2*nu)*cotB^2+1-
     2*nu)*cosB/rb*y2/W7)+N1/W6^2*(y1*cotB*(1-W5)+nu*y3b-a+y2^
     2/W6*W4)/rb*y2-N1/W6*(a*y1*cotB/rb^3*y2+2*y2/W6*W4-y2^
     3/W6^2*W4/rb-y2^3/W6*a/rb^3)+N1*z1b*cotB/W7^2*W2/rb*
@@ -1544,7 +1702,7 @@ v22x = b1*(1/4*(N1*(((2-2*nu)*cotB^2-nu)/rb*y2/W6-((2-2*nu)*cotB^2+1-
     a*z1b*cotB/rb*W1)*y2+1/rb2/W7^2*(y2^2*cosB^2-a*z1b*cotB/
     rb*W1)*y2-1/rb/W7*(2*y2*cosB^2+a*z1b*cotB/rb^3*W1*y2-a*
     z1b*cotB/rb2*cosB*y2)))/pi/(1-nu));
-v22y = b2*(1/4*((2-2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((W5-1)*cotB+y1/W6*
+v22y = (1/4*((2-2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((W5-1)*cotB+y1/W6*
     W4)-N1*y2^2/W6^2*((W5-1)*cotB+y1/W6*W4)/rb+N1*y2/W6*(-a/
     rb^3*y2*cotB-y1/W6^2*W4/rb*y2-y2/W6*a/rb^3*y1)-N1*cotB/
     W7*W9+N1*y2^2*cotB/W7^2*W9/rb+N1*y2^2*cotB/W7*a/rb^3/
@@ -1559,7 +1717,7 @@ v22y = b2*(1/4*((2-2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((W5-1)*cotB+y1/W6*
     2*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)+y2*W8*cotB/rb/W7*(1/
     rb*cosB*y2/W7*W9-W1/W7^2*W9/rb*y2-W1/W7*a/rb^3/cosB*y2-
     2*a*y3b/rb2^2/cosB*y2))/pi/(1-nu));
-v22z = b3*(1/4*(N1*(-sinB/rb*y2/W7+y2/W6^2*(1+a/rb)/rb*y1+y2/W6*
+v22z = (1/4*(N1*(-sinB/rb*y2/W7+y2/W6^2*(1+a/rb)/rb*y1+y2/W6*
     a/rb^3*y1-z1b/W7^2*W2/rb*y2-z1b/W7*a/rb^3*y2)-y2*W8/
     rb^3*(a/rb2+1/W6)*y1+y1*W8/rb*(-2*a/rb2^2*y2-1/W6^2/
     rb*y2)+W8/W7^2*(sinB*(cosB-a/rb)+z1b/rb*(1+a*y3b/rb2)-1/
@@ -1569,7 +1727,7 @@ v22z = b3*(1/4*(N1*(-sinB/rb*y2/W7+y2/W6^2*(1+a/rb)/rb*y1+y2/W6*
     (y2^2*cosB*sinB-a*z1b/rb*W1)*y2-1/rb/W7*(2*y2*cosB*sinB+a*
     z1b/rb^3*W1*y2-a*z1b/rb2*cosB*y2)))/pi/(1-nu));
 
-v33x = b1*(1/4*((2-2*nu)*(N1*rFib_ry3*cotB-y2/W6^2*W5*(y3b/rb+1)-
+v33x = (1/4*((2-2*nu)*(N1*rFib_ry3*cotB-y2/W6^2*W5*(y3b/rb+1)-
     1/2*y2/W6*a/rb^3*2*y3b+y2*cosB/W7^2*W2*W3+1/2*y2*cosB/W7*
     a/rb^3*2*y3b)+y2/rb*(2*nu/W6+a/rb2)-1/2*y2*W8/rb^3*(2*
     nu/W6+a/rb2)*2*y3b+y2*W8/rb*(-2*nu/W6^2*(y3b/rb+1)-a/
@@ -1578,7 +1736,7 @@ v33x = b1*(1/4*((2-2*nu)*(N1*rFib_ry3*cotB-y2/W6^2*W5*(y3b/rb+1)-
     y3b-y2*W8*cosB/rb/W7^2*(1-2*nu-W1/W7*W2-a*y3b/rb2)*W3+y2*
     W8*cosB/rb/W7*(-(cosB*y3b/rb+1)/W7*W2+W1/W7^2*W2*W3+1/2*
     W1/W7*a/rb^3*2*y3b-a/rb2+a*y3b/rb2^2*2*y3b))/pi/(1-nu));
-v33y = b2*(1/4*((-2+2*nu)*N1*cotB*((y3b/rb+1)/W6-cosB*W3/W7)+(2-2*nu)*
+v33y = (1/4*((-2+2*nu)*N1*cotB*((y3b/rb+1)/W6-cosB*W3/W7)+(2-2*nu)*
     y1/W6^2*W5*(y3b/rb+1)+1/2*(2-2*nu)*y1/W6*a/rb^3*2*y3b+(2-
     2*nu)*sinB/W7*W2-(2-2*nu)*z1b/W7^2*W2*W3-1/2*(2-2*nu)*z1b/
     W7*a/rb^3*2*y3b+1/rb*(N1*cotB-2*nu*y1/W6-a*y1/rb2)-1/2*
@@ -1593,16 +1751,14 @@ v33y = b2*(1/4*((-2+2*nu)*N1*cotB*((y3b/rb+1)/W6-cosB*W3/W7)+(2-2*nu)*
     2*y3b+a/rb*(-z1b/rb2-y3b*sinB/rb2+y3b*z1b/rb2^2*2*y3b-
     sinB*W1/rb/W7-z1b*(cosB*y3b/rb+1)/rb/W7+1/2*z1b*W1/rb^3/
     W7*2*y3b+z1b*W1/rb/W7^2*W3)))/pi/(1-nu));
-v33z =b3*(1/4*((2-2*nu)*rFib_ry3-(2-2*nu)*y2*sinB/W7^2*W2*W3-1/2*
+v33z =(1/4*((2-2*nu)*rFib_ry3-(2-2*nu)*y2*sinB/W7^2*W2*W3-1/2*
     (2-2*nu)*y2*sinB/W7*a/rb^3*2*y3b+y2*sinB/rb/W7*(1+W1/W7*
     W2+a*y3b/rb2)-1/2*y2*W8*sinB/rb^3/W7*(1+W1/W7*W2+a*y3b/
     rb2)*2*y3b-y2*W8*sinB/rb/W7^2*(1+W1/W7*W2+a*y3b/rb2)*W3+
     y2*W8*sinB/rb/W7*((cosB*y3b/rb+1)/W7*W2-W1/W7^2*W2*W3-
     1/2*W1/W7*a/rb^3*2*y3b+a/rb2-a*y3b/rb2^2*2*y3b))/pi/(1-nu));
 
-	
-println("the shear component here have two parts (burgers vecs), can we still merge em?")	
-v12x = b1/2*(1/4*((-2+2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1-W5)*cotB-y1/
+v12x = (1/4*((-2+2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1-W5)*cotB-y1/
     W6*W4)-N1*y2^2/W6^2*((1-W5)*cotB-y1/W6*W4)/rb+N1*y2/W6*
     (a/rb^3*y2*cotB+y1/W6^2*W4/rb*y2+y2/W6*a/rb^3*y1)+N1*
     cosB*cotB/W7*W2-N1*y2^2*cosB*cotB/W7^2*W2/rb-N1*y2^2*cosB*
@@ -1619,7 +1775,7 @@ v12x = b1/2*(1/4*((-2+2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1-W5)*cotB-y1/
     (N1*cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*cosB)/rb*y2+cosB/
     W7*(1/rb*cosB*y2*(N1*cosB-a/rb)*cotB+W1*a/rb^3*y2*cotB+(2-2*
     nu)/rb*sinB*y2*cosB)+2*a*y3b*cosB*cotB/rb2^2*y2))/pi/(1-nu))+
-	b1/2*(1/4*(N1*(((2-2*nu)*cotB^2-nu)/rb*y1/W6-((2-2*nu)*cotB^2+1-   
+	(1/4*(N1*(((2-2*nu)*cotB^2-nu)/rb*y1/W6-((2-2*nu)*cotB^2+1-   
     2*nu)*cosB*(y1/rb-sinB)/W7)+N1/W6^2*(y1*cotB*(1-W5)+nu*y3b-
     a+y2^2/W6*W4)/rb*y1-N1/W6*((1-W5)*cotB+a*y1^2*cotB/rb^3-
     y2^2/W6^2*W4/rb*y1-y2^2/W6*a/rb^3*y1)-N1*cosB*cotB/W7*
@@ -1637,7 +1793,7 @@ v12x = b1/2*(1/4*((-2+2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1-W5)*cotB-y1/
     W7*(-a*cosB*cotB/rb*W1+a*z1b*cotB/rb^3*W1*y1-a*z1b*cotB/
     rb2*cosB*y1)))/pi/(1-nu));
 	
-v12y = b2/2*(1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y2/W6-((2-2*nu)*cotB^2+1)*
+v12y = (1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y2/W6-((2-2*nu)*cotB^2+1)*
     cosB/rb*y2/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*cotB/rb+
     y1^2/W6*W4)/rb*y2+N1/W6*(-a*y1*cotB/rb^3*y2-y1^2/W6^
     2*W4/rb*y2-y1^2/W6*a/rb^3*y2)+N1*cotB/W7^2*(z1b*cosB-a*
@@ -1652,7 +1808,7 @@ v12y = b2/2*(1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y2/W6-((2-2*nu)*cotB^2+1)*
     W1/W7*W9)-(rb*sinB-y1)/rb^3*((2-2*nu)*cosB-W1/W7*W9)*y2+(rb*
     sinB-y1)/rb*(-1/rb*cosB*y2/W7*W9+W1/W7^2*W9/rb*y2+W1/W7*
     a/rb^3/cosB*y2)))/pi/(1-nu))+
-	b2/2*(1/4*((2-2*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((W5-1)*cotB+
+	(1/4*((2-2*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((W5-1)*cotB+
     y1/W6*W4)/rb*y1+N1*y2/W6*(-a/rb^3*y1*cotB+1/W6*W4-y1^
     2/W6^2*W4/rb-y1^2/W6*a/rb^3)+N1*y2*cotB/W7^2*W9*(y1/
     rb-sinB)+N1*y2*cotB/W7*a/rb^3/cosB*y1+3*a*y2*W8*cotB/rb^
@@ -1666,7 +1822,7 @@ v12y = b2/2*(1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y2/W6-((2-2*nu)*cotB^2+1)*
     cotB/rb/W7*(1/rb*cosB*y1/W7*W9-W1/W7^2*W9*(y1/rb-sinB)-
     W1/W7*a/rb^3/cosB*y1-2*a*y3b/rb2^2/cosB*y1))/pi/(1-nu));
 	
-v12z = b3/2*(1/4*(N1*(1/W6*(1+a/rb)-y2^2/W6^2*(1+a/rb)/rb-y2^2/
+v12z = (1/4*(N1*(1/W6*(1+a/rb)-y2^2/W6^2*(1+a/rb)/rb-y2^2/
     W6*a/rb^3-cosB/W7*W2+y2^2*cosB/W7^2*W2/rb+y2^2*cosB/W7*
     a/rb^3)-W8/rb*(a/rb2+1/W6)+y2^2*W8/rb^3*(a/rb2+1/W6)-
     y2*W8/rb*(-2*a/rb2^2*y2-1/W6^2/rb*y2)+W8*cosB/rb/W7*
@@ -1674,7 +1830,7 @@ v12z = b3/2*(1/4*(N1*(1/W6*(1+a/rb)-y2^2/W6^2*(1+a/rb)/rb-y2^2/
     y3b/rb2)-y2^2*W8*cosB/rb2/W7^2*(W1/W7*W2+a*y3b/rb2)+y2*
     W8*cosB/rb/W7*(1/rb*cosB*y2/W7*W2-W1/W7^2*W2/rb*y2-W1/
     W7*a/rb^3*y2-2*a*y3b/rb2^2*y2))/pi/(1-nu))+  
-    b3/2*(1/4*(N1*(-sinB*(y1/rb-sinB)/W7-1/W6*(1+a/rb)+y1^2/W6^
+    (1/4*(N1*(-sinB*(y1/rb-sinB)/W7-1/W6*(1+a/rb)+y1^2/W6^
     2*(1+a/rb)/rb+y1^2/W6*a/rb^3+cosB/W7*W2-z1b/W7^2*W2*
     (y1/rb-sinB)-z1b/W7*a/rb^3*y1)+W8/rb*(a/rb2+1/W6)-y1^2*
     W8/rb^3*(a/rb2+1/W6)+y1*W8/rb*(-2*a/rb2^2*y1-1/W6^2/
@@ -1686,7 +1842,7 @@ v12z = b3/2*(1/4*(N1*(1/W6*(1+a/rb)-y2^2/W6^2*(1+a/rb)/rb-y2^2/
     (y1/rb-sinB)-1/rb/W7*(-a*cosB/rb*W1+a*z1b/rb^3*W1*y1-a*
     z1b/rb2*cosB*y1)))/pi/(1-nu));
 
-v13x = b1/2*(1/4*((-2+2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1-W5)*
+v13x = (1/4*((-2+2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1-W5)*
     cotB-y1/W6*W4)*(y3b/rb+1)+N1*y2/W6*(1/2*a/rb^3*2*y3b*cotB+
     y1/W6^2*W4*(y3b/rb+1)+1/2*y1/W6*a/rb^3*2*y3b)-N1*y2*cosB*
     cotB/W7^2*W2*W3-1/2*N1*y2*cosB*cotB/W7*a/rb^3*2*y3b+a/
@@ -1704,7 +1860,7 @@ v13x = b1/2*(1/4*((-2+2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1-W5)*
     cosB)*W3+cosB/W7*((cosB*y3b/rb+1)*(N1*cosB-a/rb)*cotB+1/2*W1*
     a/rb^3*2*y3b*cotB+1/2*(2-2*nu)/rb*sinB*2*y3b*cosB)-a*cosB*
     cotB/rb2+a*y3b*cosB*cotB/rb2^2*2*y3b))/pi/(1-nu))+
-	b1/2*(1/4*((2-2*nu)*(N1*rFib_ry1*cotB-y1/W6^2*W5/rb*y2-y2/W6*
+	(1/4*((2-2*nu)*(N1*rFib_ry1*cotB-y1/W6^2*W5/rb*y2-y2/W6*
     a/rb^3*y1+y2*cosB/W7^2*W2*(y1/rb-sinB)+y2*cosB/W7*a/rb^
     3*y1)-y2*W8/rb^3*(2*nu/W6+a/rb2)*y1+y2*W8/rb*(-2*nu/W6^
     2/rb*y1-2*a/rb2^2*y1)-y2*W8*cosB/rb^3/W7*(1-2*nu-W1/W7*
@@ -1713,7 +1869,7 @@ v13x = b1/2*(1/4*((-2+2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1-W5)*
     W2+W1/W7^2*W2*(y1/rb-sinB)+W1/W7*a/rb^3*y1+2*a*y3b/rb2^
     2*y1))/pi/(1-nu));
 	
-v13y = b2/2*(1/4*(N1*(((2-2*nu)*cotB^2+nu)*(y3b/rb+1)/W6-((2-2*nu)*cotB^
+v13y = (1/4*(N1*(((2-2*nu)*cotB^2+nu)*(y3b/rb+1)/W6-((2-2*nu)*cotB^
     2+1)*cosB*W3/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*cotB/
     rb+y1^2/W6*W4)*(y3b/rb+1)+N1/W6*(nu-1/2*a*y1*cotB/rb^3*2*
     y3b-y1^2/W6^2*W4*(y3b/rb+1)-1/2*y1^2/W6*a/rb^3*2*y3b)+
@@ -1733,7 +1889,7 @@ v13y = b2/2*(1/4*(N1*(((2-2*nu)*cotB^2+nu)*(y3b/rb+1)/W6-((2-2*nu)*cotB^
     3*((2-2*nu)*cosB-W1/W7*W9)*2*y3b+(rb*sinB-y1)/rb*(-(cosB*y3b/
     rb+1)/W7*W9+W1/W7^2*W9*W3+1/2*W1/W7*a/rb^3/cosB*2*
     y3b)))/pi/(1-nu))+
-	b2/2*(1/4*((-2+2*nu)*N1*cotB*(1/rb*y1/W6-cosB*(y1/rb-sinB)/W7)-
+	(1/4*((-2+2*nu)*N1*cotB*(1/rb*y1/W6-cosB*(y1/rb-sinB)/W7)-
     (2-2*nu)/W6*W5+(2-2*nu)*y1^2/W6^2*W5/rb+(2-2*nu)*y1^2/W6*
     a/rb^3+(2-2*nu)*cosB/W7*W2-(2-2*nu)*z1b/W7^2*W2*(y1/rb-
     sinB)-(2-2*nu)*z1b/W7*a/rb^3*y1-W8/rb^3*(N1*cotB-2*nu*y1/
@@ -1747,7 +1903,7 @@ v13y = b2/2*(1/4*(N1*(((2-2*nu)*cotB^2+nu)*(y3b/rb+1)/W6-((2-2*nu)*cotB^
     cosB*W1/rb/W7-z1b/rb2*cosB*y1/W7+z1b*W1/rb^3/W7*y1+z1b*
     W1/rb/W7^2*(y1/rb-sinB))))/pi/(1-nu));
 	
-v13z = b3/2*(1/4*(N1*(-y2/W6^2*(1+a/rb)*(y3b/rb+1)-1/2*y2/W6*a/
+v13z = (1/4*(N1*(-y2/W6^2*(1+a/rb)*(y3b/rb+1)-1/2*y2/W6*a/
     rb^3*2*y3b+y2*cosB/W7^2*W2*W3+1/2*y2*cosB/W7*a/rb^3*2*
     y3b)-y2/rb*(a/rb2+1/W6)+1/2*y2*W8/rb^3*(a/rb2+1/W6)*2*
     y3b-y2*W8/rb*(-a/rb2^2*2*y3b-1/W6^2*(y3b/rb+1))+y2*cosB/
@@ -1756,14 +1912,14 @@ v13z = b3/2*(1/4*(N1*(-y2/W6^2*(1+a/rb)*(y3b/rb+1)-1/2*y2/W6*a/
     y3b/rb2)*W3+y2*W8*cosB/rb/W7*((cosB*y3b/rb+1)/W7*W2-W1/
     W7^2*W2*W3-1/2*W1/W7*a/rb^3*2*y3b+a/rb2-a*y3b/rb2^2*2*
     y3b))/pi/(1-nu))+
-    b3/2*(1/4*((2-2*nu)*rFib_ry1-(2-2*nu)*y2*sinB/W7^2*W2*(y1/rb-
+    (1/4*((2-2*nu)*rFib_ry1-(2-2*nu)*y2*sinB/W7^2*W2*(y1/rb-
     sinB)-(2-2*nu)*y2*sinB/W7*a/rb^3*y1-y2*W8*sinB/rb^3/W7*(1+
     W1/W7*W2+a*y3b/rb2)*y1-y2*W8*sinB/rb/W7^2*(1+W1/W7*W2+
     a*y3b/rb2)*(y1/rb-sinB)+y2*W8*sinB/rb/W7*(1/rb*cosB*y1/
     W7*W2-W1/W7^2*W2*(y1/rb-sinB)-W1/W7*a/rb^3*y1-2*a*y3b/
     rb2^2*y1))/pi/(1-nu));
 
-v23x = b1/2*(1/4*(N1*(((2-2*nu)*cotB^2-nu)*(y3b/rb+1)/W6-((2-2*nu)*
+v23x = (1/4*(N1*(((2-2*nu)*cotB^2-nu)*(y3b/rb+1)/W6-((2-2*nu)*
     cotB^2+1-2*nu)*cosB*W3/W7)+N1/W6^2*(y1*cotB*(1-W5)+nu*y3b-a+
     y2^2/W6*W4)*(y3b/rb+1)-N1/W6*(1/2*a*y1*cotB/rb^3*2*y3b+
     nu-y2^2/W6^2*W4*(y3b/rb+1)-1/2*y2^2/W6*a/rb^3*2*y3b)-N1*
@@ -1784,7 +1940,7 @@ v23x = b1/2*(1/4*(N1*(((2-2*nu)*cotB^2-nu)*(y3b/rb+1)/W6-((2-2*nu)*
     2*cosB^2-a*z1b*cotB/rb*W1)*W3-1/rb/W7*(-a*sinB*cotB/rb*W1+
     1/2*a*z1b*cotB/rb^3*W1*2*y3b-a*z1b*cotB/rb*(cosB*y3b/rb+
     1))))/pi/(1-nu))+
-	b1/2*(1/4*((2-2*nu)*(N1*rFib_ry2*cotB+1/W6*W5-y2^2/W6^2*W5/
+	(1/4*((2-2*nu)*(N1*rFib_ry2*cotB+1/W6*W5-y2^2/W6^2*W5/
     rb-y2^2/W6*a/rb^3-cosB/W7*W2+y2^2*cosB/W7^2*W2/rb+y2^2*
     cosB/W7*a/rb^3)+W8/rb*(2*nu/W6+a/rb2)-y2^2*W8/rb^3*(2*
     nu/W6+a/rb2)+y2*W8/rb*(-2*nu/W6^2/rb*y2-2*a/rb2^2*y2)+
@@ -1794,7 +1950,7 @@ v23x = b1/2*(1/4*(N1*(((2-2*nu)*cotB^2-nu)*(y3b/rb+1)/W6-((2-2*nu)*
     cosB*y2/W7*W2+W1/W7^2*W2/rb*y2+W1/W7*a/rb^3*y2+2*a*
     y3b/rb2^2*y2))/pi/(1-nu));
 	
-v23y = b2/2*(1/4*((2-2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((W5-1)*cotB+
+v23y = (1/4*((2-2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((W5-1)*cotB+
     y1/W6*W4)*(y3b/rb+1)+N1*y2/W6*(-1/2*a/rb^3*2*y3b*cotB-y1/
     W6^2*W4*(y3b/rb+1)-1/2*y1/W6*a/rb^3*2*y3b)+N1*y2*cotB/
     W7^2*W9*W3+1/2*N1*y2*cotB/W7*a/rb^3/cosB*2*y3b-a/rb^3*
@@ -1810,7 +1966,7 @@ v23y = b2/2*(1/4*((2-2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((W5-1)*cotB+
     W9+a*y3b/rb2/cosB)*W3+y2*W8*cotB/rb/W7*((cosB*y3b/rb+1)/
     W7*W9-W1/W7^2*W9*W3-1/2*W1/W7*a/rb^3/cosB*2*y3b+a/rb2/
     cosB-a*y3b/rb2^2/cosB*2*y3b))/pi/(1-nu))+
-	b2/2*(1/4*((-2+2*nu)*N1*cotB*(1/rb*y2/W6-cosB/rb*y2/W7)+(2-
+	(1/4*((-2+2*nu)*N1*cotB*(1/rb*y2/W6-cosB/rb*y2/W7)+(2-
     2*nu)*y1/W6^2*W5/rb*y2+(2-2*nu)*y1/W6*a/rb^3*y2-(2-2*
     nu)*z1b/W7^2*W2/rb*y2-(2-2*nu)*z1b/W7*a/rb^3*y2-W8/rb^
     3*(N1*cotB-2*nu*y1/W6-a*y1/rb2)*y2+W8/rb*(2*nu*y1/W6^2/
@@ -1822,7 +1978,7 @@ v23y = b2/2*(1/4*((2-2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((W5-1)*cotB+
     rb/W7)*y2+a/rb*(2*y3b*z1b/rb2^2*y2-z1b/rb2*cosB*y2/W7+
     z1b*W1/rb^3/W7*y2+z1b*W1/rb2/W7^2*y2)))/pi/(1-nu));
 	
-v23z = b3/2*(1/4*(N1*(-sinB*W3/W7+y1/W6^2*(1+a/rb)*(y3b/rb+1)+
+v23z = (1/4*(N1*(-sinB*W3/W7+y1/W6^2*(1+a/rb)*(y3b/rb+1)+
     1/2*y1/W6*a/rb^3*2*y3b+sinB/W7*W2-z1b/W7^2*W2*W3-1/2*
     z1b/W7*a/rb^3*2*y3b)+y1/rb*(a/rb2+1/W6)-1/2*y1*W8/rb^
     3*(a/rb2+1/W6)*2*y3b+y1*W8/rb*(-a/rb2^2*2*y3b-1/W6^2*
@@ -1835,7 +1991,7 @@ v23z = b3/2*(1/4*(N1*(-sinB*W3/W7+y1/W6^2*(1+a/rb)*(y3b/rb+1)+
     W1)*2*y3b+1/rb/W7^2*(y2^2*cosB*sinB-a*z1b/rb*W1)*W3-1/
     rb/W7*(-a*sinB/rb*W1+1/2*a*z1b/rb^3*W1*2*y3b-a*z1b/rb*
     (cosB*y3b/rb+1))))/pi/(1-nu))+
-    b3/2*(1/4*((2-2*nu)*rFib_ry2+(2-2*nu)*sinB/W7*W2-(2-2*nu)*y2^2*
+    (1/4*((2-2*nu)*rFib_ry2+(2-2*nu)*sinB/W7*W2-(2-2*nu)*y2^2*
     sinB/W7^2*W2/rb-(2-2*nu)*y2^2*sinB/W7*a/rb^3+W8*sinB/rb/
     W7*(1+W1/W7*W2+a*y3b/rb2)-y2^2*W8*sinB/rb^3/W7*(1+W1/
     W7*W2+a*y3b/rb2)-y2^2*W8*sinB/rb2/W7^2*(1+W1/W7*W2+a*
