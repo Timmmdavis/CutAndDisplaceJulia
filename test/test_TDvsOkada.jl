@@ -79,16 +79,20 @@ println("Vars created -> to TD func1")
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
  MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
+ #MyModule.TD(x,y,z,P1[1,:]',P2[1,:]',P3[1,:]',[Dss],[Dds],[Dn],nu,mu,DispFlag,StressFlag,HSflag)
+
 
 uux=UxDn+UxDss+UxDds;#
 uuy=UyDn+UyDss+UyDds;
 uuz=UzDn+UzDss+UzDds;
-eexx=ExxDn+ExxDss+ExxDds;
+eexx=ExxDn+ExxDss+ExxDds;#
 eeyy=EyyDn+EyyDss+EyyDds;
 eezz=EzzDn+EzzDss+EzzDds;
 eexy=ExyDn+ExyDss+ExyDds;
 eexz=ExzDn+ExzDss+ExzDds;
 eeyz=EyzDn+EyzDss+EyzDds;
+
+println("Run loop that explicity checks when components are zero nothing comes out thier inf mats")
 
 Exx=sum(eexx,dims=2);
 Eyy=sum(eeyy,dims=2);

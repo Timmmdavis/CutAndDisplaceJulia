@@ -81,6 +81,8 @@ function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,DispFlag,StrainFlag,HSfl
 # mehdi.nikkhoo@gfz-potsdam.de 
 # mehdi.nikkhoo@gmail.com
 
+
+
 SzCmp=size(P1List,1); if length(P1List)==3; SzCmp=1; end
 
 CorrectDimsFlg= SzCmp==size(P2List,1) &&
@@ -91,6 +93,8 @@ CorrectDimsFlg= SzCmp==size(P2List,1) &&
 if CorrectDimsFlg!=1
 	error("Element size inputs must be the same dimensions")
 end
+
+
 
 println("This initial allocation should follow through the functions....")
 #Do some allocation before loop
@@ -1000,6 +1004,16 @@ zp=z[casepLog];
  ExxDds3Tn,EyyDds3Tn,EzzDds3Tn,ExyDds3Tn,ExzDds3Tn,EyzDds3Tn) = 
  TDSetupS(xn,yn,zn,C,Dn,Dss,Dds,nu,p3,-e23);
  
+println("Remove me")
+# @info e13 e12 e23
+# @info ExxDn1Tp[end] EyyDn1Tp[end] EzzDn1Tp[end] ExyDn1Tp[end] ExzDn1Tp[end] EyzDn1Tp[end]
+# @info ExxDn2Tp[end] EyyDn2Tp[end] EzzDn2Tp[end] ExyDn2Tp[end] ExzDn2Tp[end] EyzDn2Tp[end]
+# @info ExxDn3Tp[end] EyyDn3Tp[end] EzzDn3Tp[end] ExyDn3Tp[end] ExzDn3Tp[end] EyzDn3Tp[end]
+# @info ExxDn1Tn[end] EyyDn1Tn[end] EzzDn1Tn[end] ExyDn1Tn[end] ExzDn1Tn[end] EyzDn1Tn[end]
+# @info ExxDn2Tn[end] EyyDn2Tn[end] EzzDn2Tn[end] ExyDn2Tn[end] ExzDn2Tn[end] EyzDn2Tn[end]
+# @info ExxDn3Tn[end] EyyDn3Tn[end] EzzDn3Tn[end] ExyDn3Tn[end] ExzDn3Tn[end] EyzDn3Tn[end]
+# popp 
+ 
 #Pass directly in to funcs above, no allocation
 ExxDn = Array{Float64}(undef, length(x),1); 
 EyyDn = Array{Float64}(undef, length(x),1); 
@@ -1152,11 +1166,15 @@ E1=(1-nu); #Elastic cons
 E2=(2*nu+1);
 cosA2=cosA^2;
 sinADE1=sinA/8/pi/(1-nu);
+
+Dn1=1;
 #Burger func constants
-E3=Dn/8/pi/E1;
+E3=Dn1/8/pi/E1;
 
 E5Dss1=Dss1/8/pi/E1;
 E5Dss0=Dss0/8/pi/E1;
+
+
 
 
 # Calculate strains associated with an angular dislocation in ADCS
@@ -1172,12 +1190,12 @@ for i=1:length(x)
 	 AngDisStrain(x[i],y1[i],z1[i],cosA,sinA,Dn,Dss1[1],Dds1[1],nu,E1,E2,cosA2,sinADE1)
 
 	#Opening components 
-	ExxDn[i]	= Dn*(rFi_rx)+E3* exxDn
-	EyyDn[i] 	= E3* eyyDn; 
-	EzzDn[i] 	= E3* ezzDn;
-	ExyDn[i] 	= Dn*(rFi_ry)/2-E3* exyDn; 
-	ExzDn[i] 	= Dn*(rFi_rz)/2-E3* exzDn;
-	EyzDn[i]  	= E3* eyzDn;
+	ExxDn[i]	= Dn1*(rFi_rx)+E3* exxDn
+	EyyDn[i] 	= Dn1*E3* eyyDn; 
+	EzzDn[i] 	= Dn1*E3* ezzDn;
+	ExyDn[i] 	= Dn1*(rFi_ry)/2-E3* exyDn; 
+	ExzDn[i] 	= Dn1*(rFi_rz)/2-E3* exzDn;
+	EyzDn[i]  	= Dn1*E3* eyzDn;
 	
 	#Some constants
 	E4Dss1=Dss1*x[i]/8/pi/E1;
@@ -1193,34 +1211,34 @@ for i=1:length(x)
 	EzzDss[i] 	= (-E4Dss1* ezzDss) + (Dds0*(rFi_rz)+Dds0*x[i]*sinADE1* ezzDds); 
 	EzzDds[i] 	= (-E4Dss0* ezzDss) + (Dds1*(rFi_rz)+Dds1*x[i]*sinADE1* ezzDds); 
 	
-	#error("Look carefully here")
 	ExyDss[i] 	= (Dss1*(rFi_rx)/2+E5Dss1* exyDss)  -  (Dds0*sinADE1* exyDds);	
 	ExyDds[i] 	= (Dss0*(rFi_rx)/2+E5Dss0* exyDss)  -  (Dds1*sinADE1* exyDds);	
 	
 	ExzDss[i] 	= (E5Dss1* exzDss) + (Dds0*(rFi_rx)/2-Dds0*sinADE1*exzDds) ; 
 	ExzDds[i] 	= (E5Dss0* exzDss) + (Dds1*(rFi_rx)/2-Dds1*sinADE1*exzDds);
-		 
-		 
-		 
-	EyzDss[i] 	= (Dss1*(rFi_rz)/2-E4Dss1* eyzDss) + (Dds0*(rFi_ry)/2-Dds0*x[1]*sinADE1* eyzDds);
-	EyzDds[i] 	= (Dss0*(rFi_rz)/2-E4Dss0* eyzDss) + (Dds1*(rFi_ry)/2-Dds1*x[1]*sinADE1* eyzDds);	
-		  
+
+	EyzDss[i] 	= (Dss1*(rFi_rz)/2-E4Dss1* eyzDss) + (Dds0*(rFi_ry)/2-Dds0*x[i]*sinADE1* eyzDds);
+	EyzDds[i] 	= (Dss0*(rFi_rz)/2-E4Dss0* eyzDss) + (Dds1*(rFi_ry)/2-Dds1*x[i]*sinADE1* eyzDds);		  
+
 end	
 
+# @info x[1] y1[1] z1[1] cosA sinA Dn Dss1 Dds1 Dss0 Dds0 nu E1 E2 cosA2 sinADE1 Ang
+# @info ExxDn[end] EyyDn[end] EzzDn[end] ExyDn[end] ExzDn[end] EyzDn[end]
+# poop
 
 # Transform strains from ADCS into TDCS
 println("Remove Allocation here")
 B=[[1 0 0];[0 Ct St];[0 -St Ct]]; # 3x3 Transformation matrix
 
-
-
 #Empty arrays for tens trans (Indiv comps)
 (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = 
-TensorTransformation3D(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDss,B);
+TensorTransformation3D(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,B);
 (ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = 
 TensorTransformation3D(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,B);
 (ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = 
 TensorTransformation3D(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,B);
+
+
 
 
 
@@ -1295,7 +1313,6 @@ ExzBz = (nu*C+x2*C/Wr+x2*z/Wr3);#    bz*(rFi_rx)/2+bz*sinADE1* (INNY BIT) ;
 EyzBx = (y2/r3-nu/r-nu*cosA*C+nu*sinA*S+eta*sinA*cosA/W2-eta*(y*cosA+z*sinA)/W2r+eta*y*z/W2r2-eta*y*z/Wr3);	#E3*
 EyzBy = (y/r3+sinA*cosA^2/W2-cosA*(y*cosA+z*sinA)/W2r+y*z*cosA/W2r2-y*z*cosA/Wr3); #by*(rFi_rz)/2-E4*
 EyzBz =	(y*z/Wr3-sinA*cosA/W2+(y*cosA+z*sinA)/W2r-y*z/W2r2); #bz*(rFi_ry)/2-bz*x*sinADE1*
-
 
 return(ExxBx,ExxBy,ExxBz,
 	   EyyBx,EyyBy,EyyBz,
