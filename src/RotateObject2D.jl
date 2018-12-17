@@ -30,8 +30,8 @@ function RotateObject2D(X,Y,Pa,Pb,Ct,St)
 
 #Only move coords if needed
 if Pa!=0 || Pb!=0 
-	X =  X.-Pa;
-	Y =  Y.-Pb;
+	X= X.-Pa;
+	Y= Y.-Pb;
 end
 
 #Rotate to new axes Ax Ay Az

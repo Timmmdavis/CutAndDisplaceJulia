@@ -1,4 +1,3 @@
-function RotateObject3DNewCoords!(X,Y,Z,Pa,Pb,Pc,Ax1,Ax2,Ax3)
 # usage #1:
 # [Xnw,Ynw,Znw] = RotateObject3dNewCoords(X,Y,Z,Pa,Pb,Pc,Ax1,Ax2,Ax3)
 #
@@ -42,21 +41,28 @@ function RotateObject3DNewCoords!(X,Y,Z,Pa,Pb,Pc,Ax1,Ax2,Ax3)
 #  Author: Tim Davis
 #  Copyright 2018, Tim Davis, Potsdam University
 
-for i=1:length(X)
-	
-	#Rotate to new axes Ax Ay Az
-	x=(Ax1[1]*X[i])+(Ax2[1]*Y[i])+(Ax3[1]*Z[i]);
-	y=(Ax1[2]*X[i])+(Ax2[2]*Y[i])+(Ax3[2]*Z[i]);
-	Z[i]=(Ax1[3]*X[i])+(Ax2[3]*Y[i])+(Ax3[3]*Z[i]);
-	X[i]=x;
-	Y[i]=y;
-	
 
+@inline @fastmath function RotateObject3DNewCoords!(X::Float64,Y::Float64,Z::Float64,Pa,Pb,Pc,Ax1,Ax2,Ax3)
+#For single values
+#Rotate to new axes Ax Ay Az
+x=	 (Ax1[1]*(X-Pa))+(Ax2[1]*(Y-Pb))+(Ax3[1]*(Z-Pc));
+y=	 (Ax1[2]*(X-Pa))+(Ax2[2]*(Y-Pb))+(Ax3[2]*(Z-Pc));
+Z.=	 (Ax1[3]*(X-Pa))+(Ax2[3]*(Y-Pb))+(Ax3[3]*(Z-Pc));
+X=x;
+Y=y;
+return(X,Y,Z)
 end
 
-
+@inline @fastmath function RotateObject3DNewCoords!(X::Array,Y::Array,Z::Array,Pa,Pb,Pc,Ax1,Ax2,Ax3)
+	#For multiple values
+@simd for i=1:length(X)
+	#Rotate to new axes Ax Ay Az
+	x=	 (Ax1[1]*(X[i]-Pa))+(Ax2[1]*(Y[i]-Pb))+(Ax3[1]*(Z[i]-Pc));
+	y=	 (Ax1[2]*(X[i]-Pa))+(Ax2[2]*(Y[i]-Pb))+(Ax3[2]*(Z[i]-Pc));
+	Z[i]=(Ax1[3]*(X[i]-Pa))+(Ax2[3]*(Y[i]-Pb))+(Ax3[3]*(Z[i]-Pc));
+	X[i]=x;
+	Y[i]=y;
+end	
 
 return(X,Y,Z)
-
-
 end

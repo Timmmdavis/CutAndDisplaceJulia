@@ -1,4 +1,3 @@
-function RotateObject2D!(X,Y,Pa,Pb,Ct,St)
 # usage #1:
 # [Xnw,Ynw] = RotateObject2D!(X,Y,Pa,Pb,Ax1,Ax2)
 #
@@ -28,25 +27,24 @@ function RotateObject2D!(X,Y,Pa,Pb,Ct,St)
 #  Author: Tim Davis
 #  Copyright 2018, Tim Davis, Potsdam University
 
+@inline @fastmath function RotateObject2D!(X::Float64,Y::Float64,Pa,Pb,Ct,St)
+#For single values
+#Rotate to new axes Ax Ay Az
+x =(Ct[1]*(X-Pa))+(-St[1]*(Y-Pb));
+Y.=(St[1]*(X-Pa))+( Ct[1]*(Y-Pb));
+X=x;
+end
 
-
-for i=1:length(X)
-	
+@inline @fastmath function RotateObject2D!(X::Array,Y::Array,Pa,Pb,Ct,St)
+@simd for i=1:length(X)
 	#Rotate to new axes Ax Ay Az
-	x=   (Ct[1]*(X[i]+Pa))+(-St[1]*(Y[i]+Pb));
-	Y[i]=(St[1]*(X[i]+Pa))+( Ct[1]*(Y[i]+Pb));
+	x=   (Ct[1]*(X[i]-Pa))+(-St[1]*(Y[i]-Pb));
+	Y[i]=(St[1]*(X[i]-Pa))+( Ct[1]*(Y[i]-Pb));
 	X[i]=x;
-	
-	
-	#x=   (Ct[1]*X[i])+(-St[1]*Y[i]);
-	#Y[i]=(St[1]*X[i])+( Ct[1]*Y[i]);
 end
 
 #Vectorised form of: Eq 2.23, Pollard, arranging cosines of new directions in table
 #http://continuummechanics.org/stressxforms.html
-
-
 return(X,Y)
-
 end
 

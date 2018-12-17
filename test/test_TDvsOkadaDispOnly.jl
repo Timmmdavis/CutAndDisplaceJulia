@@ -3,6 +3,8 @@
 #Start creating vars for function: 
 println("creating func vars")
 
+
+
 #Inputs
 
 #Fault geom
@@ -13,8 +15,8 @@ Width=5;
 TipDepth=1;
 Rake=90;
 #Fault slip
-Dds=0.;  #2
-Dn=1; #0.6
+Dds=1.;  #2
+Dn=0; #0.6
 Dss=0;#0.5
 #Elastic cons
 nu=0.25;
@@ -61,7 +63,7 @@ z=reshape(z,length(z),1);
 DispFlag=1;
 StressFlag=0;
 HSflag=0;
-mu=1;
+mu=1.;
 
 TotalSlip=sqrt(Dds.^2+Dss.^2);
 Rake=90-atand(Dss/Dds); #degrees
@@ -77,10 +79,13 @@ println("Vars created -> to TD func1")
 #  0.024894 seconds (925 allocations: 4.613 MiB)
 #  0.018520 seconds (1.14 k allocations: 5.272 MiB) - later on 19.15
 #  0.019185 seconds (888 allocations: 3.531 MiB) - Part of coord trans stopped
-(UxDn,UyDn,UzDn,
- UxDss,UyDss,UzDss,
- UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
+#  0.014736 seconds (782 allocations: 3.142 MiB)
+
+@time (UxDn,UyDn,UzDn,
+UxDss,UyDss,UzDss,
+UxDds,UyDds,UzDds)=
+MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
+ 
 
 uux=UxDn+UxDss+UxDds;#
 uuy=UyDn+UyDss+UyDds;
@@ -89,8 +94,6 @@ uuz=UzDn+UzDss+UzDds;
 Ux=sum(uux,dims=2);
 Uy=sum(uuy,dims=2);
 Uz=sum(uuz,dims=2);
-#error("add in Dn Dss and Dds mats (not summed)")
-
 
 
 
@@ -142,19 +145,19 @@ Uz=sum(uuz,dims=2);
 
 # println("Test P2 Passed")
 
-# ###= if you want to draw remove this line
-# x=reshape(x,dimx,dimy);
-# y=reshape(y,dimx,dimy);
-# Ux=reshape(Ux,dimx,dimy);
-# Uy=reshape(Uy,dimx,dimy);
-# Uz=reshape(Uz,dimx,dimy);
+###= if you want to draw remove this line
+x=reshape(x,dimx,dimy);
+y=reshape(y,dimx,dimy);
+Ux=reshape(Ux,dimx,dimy);
+Uy=reshape(Uy,dimx,dimy);
+Uz=reshape(Uz,dimx,dimy);
 
-# Value=Ux
-# using NaNMath
-# Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
-# steps=10; #Steps from centre to top. 
-# levels = [-Top:Top/steps:Top;]
-# using PyPlot
-# close()
-# contourf(x,y,Value, levels=levels);
-# cbar = colorbar()
+Value=Ux
+using NaNMath
+Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
+steps=10; #Steps from centre to top. 
+levels = [-Top:Top/steps:Top;]
+using PyPlot
+close()
+contourf(x,y,Value, levels=levels);
+cbar = colorbar()

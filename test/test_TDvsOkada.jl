@@ -13,7 +13,7 @@ Width=5;
 TipDepth=1;
 Rake=90;
 #Fault slip
-Dds=2.;  #2
+Dds=2;  #2
 Dn=0.6; #0.6
 Dss=0.5;#0.5
 #Elastic cons
@@ -61,7 +61,7 @@ z=reshape(z,length(z),1);
 DispFlag=1;
 StressFlag=1;
 HSflag=1;
-mu=1;
+mu=1.;
 
 TotalSlip=sqrt(Dds.^2+Dss.^2);
 Rake=90-atand(Dss/Dds); #degrees
@@ -80,9 +80,10 @@ println("Vars created -> to TD func1")
  UxDds,UyDds,UzDds)=
  MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
  
-(Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
-MyModule.TD_sum(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-	   ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ 
+ (Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
+ MyModule.TD_sum(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
 	   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
 	   UxDn,UyDn,UzDn,
 	   UxDss,UyDss,UzDss,
@@ -109,7 +110,7 @@ ExyRes=maximum(exy[:].-Exy[:]);
 ExzRes=maximum(exz[:].-Exz[:]);
 EyzRes=maximum(eyz[:].-Eyz[:]);
 
-@info UxRes UzRes ExxRes EyyRes EzzRes ExyRes ExzRes EyzRes  #Display values in test output
+@info UxRes UyRes UzRes ExxRes EyyRes EzzRes ExyRes ExzRes EyzRes  #Display values in test output
 
 
 println("Values of residuals: TDE vs Okada")
@@ -250,7 +251,7 @@ println("Test P2 Passed")
 # uZ=reshape(uZ,dimx,dimy);
 # Uz=reshape(Uz,dimx,dimy);
 
-# Value=Exx
+# Value=Ux
 # using NaNMath
 # Top=maximum([NaNMath.maximum(Value),abs(NaNMath.minimum(Value))])
 # steps=10; #Steps from centre to top. 
@@ -260,4 +261,9 @@ println("Test P2 Passed")
 # contourf(x,y,Value, levels=levels);
 # cbar = colorbar()
 # #=#
+
+
+
+
+
 
