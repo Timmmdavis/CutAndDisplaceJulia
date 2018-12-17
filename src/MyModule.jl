@@ -1,5 +1,6 @@
 module MyModule
 using LinearAlgebra
+using Profile
 
 #Creates Meshgrid
 include("meshgrid.jl")
