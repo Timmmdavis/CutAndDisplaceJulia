@@ -12,6 +12,26 @@ Txy2 = A[1].*A[2].*Txx1.+(A[1].*A[5].+A[2].*A[4]).*Txy1.+(A[1].*A[8].+A[2].*A[7]
 Txz2 = A[1].*A[3].*Txx1.+(A[1].*A[6].+A[3].*A[4]).*Txy1.+(A[1].*A[9].+A[3].*A[7]).*Txz1.+(A[9].*A[4].+A[7].*A[6]).*Tyz1.+A[6].*A[4].*Tyy1.+A[7].*A[9].*Tzz1;
 Tyz2 = A[2].*A[3].*Txx1.+(A[3].*A[5].+A[2].*A[6]).*Txy1.+(A[3].*A[8].+A[2].*A[9]).*Txz1.+(A[8].*A[6].+A[9].*A[5]).*Tyz1.+A[5].*A[6].*Tyy1.+A[8].*A[9].*Tzz1;
 
+
+# Txx2=zeros(size(Txx1));
+# Tyy2=zeros(size(Txx1));
+# Tzz2=zeros(size(Txx1));
+# Txy2=zeros(size(Txx1));
+# Txz2=zeros(size(Txx1));
+# Tyz2=zeros(size(Txx1));
+# for i=1:length(Txx2)
+    # Quat=A;
+    # Tensor=[[Txx1[i,:] Txy1[i,:] Txz1[i,:]]; [Txy1[i,:] Tyy1[i,:] Tyz1[i,:]]; [Txz1[i,:] Tyz1[i,:] Tzz1[i,:]]];
+    # CartStress=Quat*Tensor*Quat';
+    # Txx2[i]=CartStress[1,1];
+    # Tyy2[i]=CartStress[2,2];
+    # Tzz2[i]=CartStress[3,3];
+    # Txy2[i]=CartStress[1,2];
+    # Txz2[i]=CartStress[1,3];
+    # Tyz2[i]=CartStress[2,3];
+# end
+
+
 return(Txx2,Tyy2,Tzz2,Txy2,Txz2,Tyz2)
 
 end

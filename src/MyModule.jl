@@ -20,6 +20,8 @@ include("HookesLaw2dStress2Strain.jl")
 include("TensorTransformation3D.jl")
 include("TensorTransformation2D.jl")
 
+include("TensorTransformation3D!.jl")
+
 #Normal line dislocation funcs
 include("LD.jl")
 include("LD_sum.jl")
@@ -69,6 +71,7 @@ include("contourfill.jl")
 
 #DELETE
 include("TestFooAllocs.jl")
+include("TestFooAllocs2.jl")
 
 
 end

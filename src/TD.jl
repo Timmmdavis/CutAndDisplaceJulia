@@ -97,7 +97,7 @@ if CorrectDimsFlg!=1
 	error("Element size inputs must be the same dimensions")
 end
 
-#println("This initial allocation should follow through the functions....")
+##println("This initial allocation should follow through the functions....")
 #Do some allocation before loop
 if DispFlag==1
 	
@@ -140,7 +140,7 @@ end
 
 for i=1:SzCmp #For every element (multithreaded)  Threads.@threads 
 
-	#println("Remove this line once strain done")
+	##println("Remove this line once strain done")
 	bx = Dn[i];  # DisplacementNormal
 	by = Dss[i]; # DisplacementStrike-slip
 	bz = Dds[i]; # DisplacementDip-slip
@@ -183,6 +183,7 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 			 UxDss[:,i],UyDss[:,i],UzDss[:,i],
 			 UxDds[:,i],UyDds[:,i],UzDds[:,i]);
 			
+			#println("Can I avoid this allocation?")
 			# Calculate image dislocation contribution to displacements
 			(UxDnIS,UyDnIS,UzDnIS,
 			 UxDssIS,UyDssIS,UzDssIS,
@@ -232,11 +233,14 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 		(ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
 		 ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
 		 ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]) =
-		 TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda);	
+		 TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,
+		 ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
+		 ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
+		 ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]);	
 		
 		if HSflag==1
 		
-			println("went into HS func")
+			#println("went into HS func")
 		
 			(ExxDnFSC, EyyDnFSC, EzzDnFSC, ExyDnFSC, ExzDnFSC, EyzDnFSC,
 			 ExxDssFSC,EyyDssFSC,EzzDssFSC,ExyDssFSC,ExzDssFSC,EyzDssFSC,
@@ -635,7 +639,7 @@ for i=1:length(x)
 	
 end
 
-
+println("Try this rotation on the compoents coming out the func... faster? Therefore halving the transforms...")
 # Transform displacements from ADCS into TDCS (Do for each component)
 (UyDn, UzDn)   =RotateObject2D!(UyDn, UzDn ,0,0,Ct,-St) #Rotate back
 (UyDss,UzDss)  =RotateObject2D!(UyDss,UzDss,0,0,Ct,-St) #Rotate back
@@ -775,7 +779,7 @@ else
 
 	
 	
-	println("Make sure there is no allocation in these")
+	#println("Make sure there is no allocation in these")
 	## Transform slip vector components from TDCS into EFCS
 	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
 	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0,0,0,Vnorm,Vstrike,Vdip);
@@ -1009,7 +1013,10 @@ return(ux[1],uy[1],uz[1],vx[1],vy[1],vz[1],wx[1],wy[1],wz[1])
 end
 
 
-function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda)
+function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,
+		 ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+		 ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+		 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds)
 # TDstressFS 
 # Calculates stresses and strains associated with a triangular dislocation 
 # in an elastic full-space.
@@ -1018,117 +1025,66 @@ nu =lambda/(2*(mu+lambda));    #Poisson's ratio, Equation 8.28 Pollard
 
 #Convert from global to the dislocation coordinate system
 (Vnorm,Vstrike,Vdip)=CalculateLocalTriCoords(P1,P2,P3)
-(p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog)=GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip)
-xn=x[casenLog];
-yn=y[casenLog];
-zn=z[casenLog];
-xp=x[casepLog];
-yp=y[casepLog];
-zp=z[casepLog];
+(p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,Pos,Neg,casezLog)=GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip)
 
+#Turn to cart index
+Pos=findall(Pos);
+Neg=findall(Neg)
 
 # Calculate first angular dislocation contribution POS
-(ExxDn1Tp,EyyDn1Tp,EzzDn1Tp,ExyDn1Tp,ExzDn1Tp,EyzDn1Tp,
- ExxDss1Tp,EyyDss1Tp,EzzDss1Tp,ExyDss1Tp,ExzDss1Tp,EyzDss1Tp,
- ExxDds1Tp,EyyDds1Tp,EzzDds1Tp,ExyDds1Tp,ExzDds1Tp,EyzDds1Tp) =
- TDSetupS(xp,yp,zp,A,Dn,Dss,Dds,nu,p1,-e13);
+(ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
+ ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
+ ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]) =
+ TDSetupS(x[Pos],y[Pos],z[Pos],A,Dn,Dss,Dds,nu,p1,-e13,
+ ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
+ ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
+ ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]);
  
 # Calculate second angular dislocation contribution
-(ExxDn2Tp,EyyDn2Tp,EzzDn2Tp,ExyDn2Tp,ExzDn2Tp,EyzDn2Tp,
- ExxDss2Tp,EyyDss2Tp,EzzDss2Tp,ExyDss2Tp,ExzDss2Tp,EyzDss2Tp,
- ExxDds2Tp,EyyDds2Tp,EzzDds2Tp,ExyDds2Tp,ExzDds2Tp,EyzDds2Tp) =
- TDSetupS(xp,yp,zp,B,Dn,Dss,Dds,nu,p2,e12); 
+(ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
+ ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
+ ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]) =
+ TDSetupS(x[Pos],y[Pos],z[Pos],B,Dn,Dss,Dds,nu,p2,e12,
+ ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
+ ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
+ ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]); 
  
 # Calculate third angular dislocation contribution
-(ExxDn3Tp,EyyDn3Tp,EzzDn3Tp,ExyDn3Tp,ExzDn3Tp,EyzDn3Tp,
- ExxDss3Tp,EyyDss3Tp,EzzDss3Tp,ExyDss3Tp,ExzDss3Tp,EyzDss3Tp,
- ExxDds3Tp,EyyDds3Tp,EzzDds3Tp,ExyDds3Tp,ExzDds3Tp,EyzDds3Tp) =
- TDSetupS(xp,yp,zp,C,Dn,Dss,Dds,nu,p3,e23);
+(ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
+ ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
+ ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]) =
+ TDSetupS(x[Pos],y[Pos],z[Pos],C,Dn,Dss,Dds,nu,p3,e23,
+ ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
+ ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
+ ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]);
 
 
 # Calculate first angular dislocation contribution NEG
-(ExxDn1Tn,EyyDn1Tn,EzzDn1Tn,ExyDn1Tn,ExzDn1Tn,EyzDn1Tn,
- ExxDss1Tn,EyyDss1Tn,EzzDss1Tn,ExyDss1Tn,ExzDss1Tn,EyzDss1Tn,
- ExxDds1Tn,EyyDds1Tn,EzzDds1Tn,ExyDds1Tn,ExzDds1Tn,EyzDds1Tn) =
- TDSetupS(xn,yn,zn,A,Dn,Dss,Dds,nu,p1,e13);
+(ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
+ ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
+ ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]) =
+ TDSetupS(x[Neg],y[Neg],z[Neg],A,Dn,Dss,Dds,nu,p1,e13,
+ ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
+ ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
+ ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]);
  
 # Calculate second angular dislocation contribution
-(ExxDn2Tn,EyyDn2Tn,EzzDn2Tn,ExyDn2Tn,ExzDn2Tn,EyzDn2Tn,
- ExxDss2Tn,EyyDss2Tn,EzzDss2Tn,ExyDss2Tn,ExzDss2Tn,EyzDss2Tn,
- ExxDds2Tn,EyyDds2Tn,EzzDds2Tn,ExyDds2Tn,ExzDds2Tn,EyzDds2Tn) = 
- TDSetupS(xn,yn,zn,B,Dn,Dss,Dds,nu,p2,-e12);
+(ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
+ ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
+ ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]) = 
+ TDSetupS(x[Neg],y[Neg],z[Neg],B,Dn,Dss,Dds,nu,p2,-e12,
+ ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
+ ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
+ ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]);
  
 # Calculate third angular dislocation contribution 
-(ExxDn3Tn,EyyDn3Tn,EzzDn3Tn,ExyDn3Tn,ExzDn3Tn,EyzDn3Tn,
- ExxDss3Tn,EyyDss3Tn,EzzDss3Tn,ExyDss3Tn,ExzDss3Tn,EyzDss3Tn,
- ExxDds3Tn,EyyDds3Tn,EzzDds3Tn,ExyDds3Tn,ExzDds3Tn,EyzDds3Tn) = 
- TDSetupS(xn,yn,zn,C,Dn,Dss,Dds,nu,p3,-e23);
-
- 
-#Pass directly in to funcs above, no allocation
-ExxDn = Array{Float64}(undef, length(x),1); 
-EyyDn = Array{Float64}(undef, length(x),1); 
-EzzDn = Array{Float64}(undef, length(x),1);
-ExyDn = Array{Float64}(undef, length(x),1); 
-ExzDn = Array{Float64}(undef, length(x),1); 
-EyzDn = Array{Float64}(undef, length(x),1);
-ExxDss = Array{Float64}(undef, length(x),1); 
-EyyDss = Array{Float64}(undef, length(x),1); 
-EzzDss = Array{Float64}(undef, length(x),1);
-ExyDss = Array{Float64}(undef, length(x),1); 
-ExzDss = Array{Float64}(undef, length(x),1); 
-EyzDss = Array{Float64}(undef, length(x),1);
-ExxDds = Array{Float64}(undef, length(x),1); 
-EyyDds = Array{Float64}(undef, length(x),1); 
-EzzDds = Array{Float64}(undef, length(x),1);
-ExyDds = Array{Float64}(undef, length(x),1); 
-ExzDds = Array{Float64}(undef, length(x),1); 
-EyzDds = Array{Float64}(undef, length(x),1);
- 
-#Add contributions		
-ExxDn[casenLog]=(ExxDn1Tn+ExxDn2Tn+ExxDn3Tn).*Dn;
-EyyDn[casenLog]=(EyyDn1Tn+EyyDn2Tn+EyyDn3Tn).*Dn;
-EzzDn[casenLog]=(EzzDn1Tn+EzzDn2Tn+EzzDn3Tn).*Dn;
-ExyDn[casenLog]=(ExyDn1Tn+ExyDn2Tn+ExyDn3Tn).*Dn;
-ExzDn[casenLog]=(ExzDn1Tn+ExzDn2Tn+ExzDn3Tn).*Dn; 
-EyzDn[casenLog]=(EyzDn1Tn+EyzDn2Tn+EyzDn3Tn).*Dn;
-
-ExxDss[casenLog]=(ExxDss1Tn+ExxDss2Tn+ExxDss3Tn).*Dss;
-EyyDss[casenLog]=(EyyDss1Tn+EyyDss2Tn+EyyDss3Tn).*Dss;
-EzzDss[casenLog]=(EzzDss1Tn+EzzDss2Tn+EzzDss3Tn).*Dss;
-ExyDss[casenLog]=(ExyDss1Tn+ExyDss2Tn+ExyDss3Tn).*Dss;
-ExzDss[casenLog]=(ExzDss1Tn+ExzDss2Tn+ExzDss3Tn).*Dss;
-EyzDss[casenLog]=(EyzDss1Tn+EyzDss2Tn+EyzDss3Tn).*Dss;
-
-ExxDds[casenLog]=(ExxDds1Tn+ExxDds2Tn+ExxDds3Tn).*Dds;
-EyyDds[casenLog]=(EyyDds1Tn+EyyDds2Tn+EyyDds3Tn).*Dds;
-EzzDds[casenLog]=(EzzDds1Tn+EzzDds2Tn+EzzDds3Tn).*Dds;
-ExyDds[casenLog]=(ExyDds1Tn+ExyDds2Tn+ExyDds3Tn).*Dds;
-ExzDds[casenLog]=(ExzDds1Tn+ExzDds2Tn+ExzDds3Tn).*Dds;
-EyzDds[casenLog]=(EyzDds1Tn+EyzDds2Tn+EyzDds3Tn).*Dds;
-
-#Add contributions		
-ExxDn[casepLog]=(ExxDn1Tp+ExxDn2Tp+ExxDn3Tp).*Dn;
-EyyDn[casepLog]=(EyyDn1Tp+EyyDn2Tp+EyyDn3Tp).*Dn;
-EzzDn[casepLog]=(EzzDn1Tp+EzzDn2Tp+EzzDn3Tp).*Dn;
-ExyDn[casepLog]=(ExyDn1Tp+ExyDn2Tp+ExyDn3Tp).*Dn;
-ExzDn[casepLog]=(ExzDn1Tp+ExzDn2Tp+ExzDn3Tp).*Dn; 
-EyzDn[casepLog]=(EyzDn1Tp+EyzDn2Tp+EyzDn3Tp).*Dn;
-
-ExxDss[casepLog]=(ExxDss1Tp+ExxDss2Tp+ExxDss3Tp).*Dss;
-EyyDss[casepLog]=(EyyDss1Tp+EyyDss2Tp+EyyDss3Tp).*Dss;
-EzzDss[casepLog]=(EzzDss1Tp+EzzDss2Tp+EzzDss3Tp).*Dss;
-ExyDss[casepLog]=(ExyDss1Tp+ExyDss2Tp+ExyDss3Tp).*Dss;
-ExzDss[casepLog]=(ExzDss1Tp+ExzDss2Tp+ExzDss3Tp).*Dss;
-EyzDss[casepLog]=(EyzDss1Tp+EyzDss2Tp+EyzDss3Tp).*Dss;
-
-ExxDds[casepLog]=(ExxDds1Tp+ExxDds2Tp+ExxDds3Tp).*Dds;
-EyyDds[casepLog]=(EyyDds1Tp+EyyDds2Tp+EyyDds3Tp).*Dds;
-EzzDds[casepLog]=(EzzDds1Tp+EzzDds2Tp+EzzDds3Tp).*Dds;
-ExyDds[casepLog]=(ExyDds1Tp+ExyDds2Tp+ExyDds3Tp).*Dds;
-ExzDds[casepLog]=(ExzDds1Tp+ExzDds2Tp+ExzDds3Tp).*Dds;
-EyzDds[casepLog]=(EyzDds1Tp+EyzDds2Tp+EyzDds3Tp).*Dds;
-		
+(ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
+ ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
+ ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]) = 
+ TDSetupS(x[Neg],y[Neg],z[Neg],C,Dn,Dss,Dds,nu,p3,-e23,
+ ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
+ ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
+ ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]);	
 		
 # Calculate the strain tensor components in TDCS
 for i=1:length(x)
@@ -1156,19 +1112,11 @@ for i=1:length(x)
 	end
 end
 
-
-
-
-
  
-println("Make sure no memory reassignments here... (func below)")
 # Transform the strain tensor components from TDCS into EFCS
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = TensorTransformation3D(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,[Vnorm Vstrike Vdip]);
-
-(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = TensorTransformation3D(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,[Vnorm Vstrike Vdip]);
-
-(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = TensorTransformation3D(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,[Vnorm Vstrike Vdip]);
-
+(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,[Vnorm Vstrike Vdip]);
+(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,[Vnorm Vstrike Vdip]);
+(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,[Vnorm Vstrike Vdip]);
 
 
 return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
@@ -1178,39 +1126,26 @@ return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
 end
 
 
-function TDSetupS(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec)
+function TDSetupS(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec,
+				 ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+				 ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+				 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds)
 # TDSetupS transforms coordinates of the calculation points as well as 
 # slip vector components from ADCS into TDCS. It then calculates the 
 # strains in ADCS and transforms them into TDCS.
 
-(Ct,St,y1,z1,Dss1,Dds0)=TransformToADCS(y,z,1,0,SideVec,TriVertex)
-(Dss0,Dds1)=RotateObject2D(0.,1.,0,0,Ct,St)
+Ct=SideVec[3];
+St=SideVec[2];
+# Transform coordinates of the calculation points from TDCS into ADCS
+(y,z)  =RotateObject2D!(y,z,TriVertex[2],TriVertex[3],Ct,St)
+# Transform the in-plane slip vector components from TDCS into ADCS
+(Dss1,Dds0)=RotateObject2D(Dss,0.,0,0,Ct,St)
+(Dss0,Dds1)=RotateObject2D(0.,Dds,0,0,Ct,St)
 
 #Init arrays
 Ang=-pi+alpha;
 cosA = cos(Ang);
 sinA = sin(Ang);
-
-println("Avoid this allocation")
-ExxDn = Array{Float64}(undef, length(x),1);
-ExxDss= Array{Float64}(undef, length(x),1);
-ExxDds= Array{Float64}(undef, length(x),1);
-EyyDn = Array{Float64}(undef, length(x),1);
-EyyDss= Array{Float64}(undef, length(x),1);
-EyyDds= Array{Float64}(undef, length(x),1);
-EzzDn = Array{Float64}(undef, length(x),1);
-EzzDss= Array{Float64}(undef, length(x),1);
-EzzDds= Array{Float64}(undef, length(x),1);
-
-ExyDn = Array{Float64}(undef, length(x),1);
-ExyDss= Array{Float64}(undef, length(x),1);
-ExyDds= Array{Float64}(undef, length(x),1);
-ExzDn = Array{Float64}(undef, length(x),1);
-ExzDss= Array{Float64}(undef, length(x),1);
-ExzDds= Array{Float64}(undef, length(x),1);
-EyzDn = Array{Float64}(undef, length(x),1);
-EyzDss= Array{Float64}(undef, length(x),1);
-EyzDds= Array{Float64}(undef, length(x),1);
 
 #Extra defs out of loop to speed it up
 E1=(1-nu); #Elastic cons
@@ -1218,14 +1153,22 @@ E2=(2*nu+1);
 cosA2=cosA^2;
 sinADE1=sinA/8/pi/(1-nu);
 
-Dn1=1;
 #Burger func constants
-E3=Dn1/8/pi/E1;
+E3=Dn/8/pi/E1;
 
 E5Dss1=Dss1/8/pi/E1;
 E5Dss0=Dss0/8/pi/E1;
 
 
+# Transform strains from ADCS into TDCS 
+B=[[1   0   0 ]; [0  Ct  St ]; [0  -St  Ct]]	 # 3x3 Transformation matrix
+A=[[1   0   0 ]; [0  Ct  -St ]; [0  St  Ct]]	 # 3x3 Transformation matrix (inverse)
+(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = 
+TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,A);
+(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = 
+TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,A);
+(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = 
+TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,A);
 
 
 # Calculate strains associated with an angular dislocation in ADCS
@@ -1238,58 +1181,55 @@ for i=1:length(x)
 	 exzDn,exzDss,exzDds,
 	 eyzDn,eyzDss,eyzDds,
 	 rFi_rx,rFi_ry,rFi_rz) =
-	 AngDisStrain(x[i],y1[i],z1[i],cosA,sinA,Dn,Dss1[1],Dds1[1],nu,E1,E2,cosA2,sinADE1)
+	 AngDisStrain(x[i],y[i],z[i],cosA,sinA,Dn,Dss1[1],Dds1[1],nu,E1,E2,cosA2,sinADE1)
 
 	#Opening components 
-	ExxDn[i]	= Dn1*(rFi_rx)+E3* exxDn
-	EyyDn[i] 	= Dn1*E3* eyyDn; 
-	EzzDn[i] 	= Dn1*E3* ezzDn;
-	ExyDn[i] 	= Dn1*(rFi_ry)/2-E3* exyDn; 
-	ExzDn[i] 	= Dn1*(rFi_rz)/2-E3* exzDn;
-	EyzDn[i]  	= Dn1*E3* eyzDn;
+	ExxDn[i]	= ExxDn[i] + Dn*(rFi_rx)+E3* exxDn
+	EyyDn[i] 	= EyyDn[i] + E3* eyyDn; 
+	EzzDn[i] 	= EzzDn[i] + E3* ezzDn;
+	ExyDn[i] 	= ExyDn[i] + Dn*(rFi_ry)/2-E3* exyDn; 
+	ExzDn[i] 	= ExzDn[i] + Dn*(rFi_rz)/2-E3* exzDn;
+	EyzDn[i]  	= EyzDn[i] + E3* eyzDn;
 	
 	#Some constants
 	E4Dss1=Dss1*x[i]/8/pi/E1;
 	E4Dss0=Dss0*x[i]/8/pi/E1;
 	
 	#Comp mixed components (in the current coords)
-	ExxDss[i] 	= (-E4Dss1* exxDss)  +  (Dds0*x[i]*sinADE1* exxDds);
-	ExxDds[i] 	= (-E4Dss0* exxDss)  +  (Dds1*x[i]*sinADE1* exxDds);
+	ExxDss[i] 	= ExxDss[i] + (-E4Dss1* exxDss)  +  (Dds0*x[i]*sinADE1* exxDds);
+	ExxDds[i] 	= ExxDds[i] + (-E4Dss0* exxDss)  +  (Dds1*x[i]*sinADE1* exxDds);
 	
-	EyyDss[i] 	= (Dss1*(rFi_ry)-E4Dss1* eyyDss)  +  (Dds0*x[i]*sinADE1* eyyDds);
-	EyyDds[i] 	= (Dss0*(rFi_ry)-E4Dss0* eyyDss)  +  (Dds1*x[i]*sinADE1* eyyDds);
+	EyyDss[i] 	= EyyDss[i] + (Dss1*(rFi_ry)-E4Dss1* eyyDss)  +  (Dds0*x[i]*sinADE1* eyyDds);
+	EyyDds[i] 	= EyyDds[i] + (Dss0*(rFi_ry)-E4Dss0* eyyDss)  +  (Dds1*x[i]*sinADE1* eyyDds);
 	
-	EzzDss[i] 	= (-E4Dss1* ezzDss) + (Dds0*(rFi_rz)+Dds0*x[i]*sinADE1* ezzDds); 
-	EzzDds[i] 	= (-E4Dss0* ezzDss) + (Dds1*(rFi_rz)+Dds1*x[i]*sinADE1* ezzDds); 
+	EzzDss[i] 	= EzzDss[i] + (-E4Dss1* ezzDss) + (Dds0*(rFi_rz)+Dds0*x[i]*sinADE1* ezzDds); 
+	EzzDds[i] 	= EzzDds[i] + (-E4Dss0* ezzDss) + (Dds1*(rFi_rz)+Dds1*x[i]*sinADE1* ezzDds); 
 	
-	ExyDss[i] 	= (Dss1*(rFi_rx)/2+E5Dss1* exyDss)  -  (Dds0*sinADE1* exyDds);	
-	ExyDds[i] 	= (Dss0*(rFi_rx)/2+E5Dss0* exyDss)  -  (Dds1*sinADE1* exyDds);	
+	ExyDss[i] 	= ExyDss[i] + (Dss1*(rFi_rx)/2+E5Dss1* exyDss)  -  (Dds0*sinADE1* exyDds);	
+	ExyDds[i] 	= ExyDds[i] + (Dss0*(rFi_rx)/2+E5Dss0* exyDss)  -  (Dds1*sinADE1* exyDds);	
 	
-	ExzDss[i] 	= (E5Dss1* exzDss) + (Dds0*(rFi_rx)/2-Dds0*sinADE1*exzDds) ; 
-	ExzDds[i] 	= (E5Dss0* exzDss) + (Dds1*(rFi_rx)/2-Dds1*sinADE1*exzDds);
+	ExzDss[i] 	= ExzDss[i] + (E5Dss1* exzDss) + (Dds0*(rFi_rx)/2-Dds0*sinADE1*exzDds) ; 
+	ExzDds[i] 	= ExzDds[i] + (E5Dss0* exzDss) + (Dds1*(rFi_rx)/2-Dds1*sinADE1*exzDds);
 
-	EyzDss[i] 	= (Dss1*(rFi_rz)/2-E4Dss1* eyzDss) + (Dds0*(rFi_ry)/2-Dds0*x[i]*sinADE1* eyzDds);
-	EyzDds[i] 	= (Dss0*(rFi_rz)/2-E4Dss0* eyzDss) + (Dds1*(rFi_ry)/2-Dds1*x[i]*sinADE1* eyzDds);		  
+	EyzDss[i] 	= EyzDss[i] + (Dss1*(rFi_rz)/2-E4Dss1* eyzDss) + (Dds0*(rFi_ry)/2-Dds0*x[i]*sinADE1* eyzDds);
+	EyzDds[i] 	= EyzDds[i] + (Dss0*(rFi_rz)/2-E4Dss0* eyzDss) + (Dds1*(rFi_ry)/2-Dds1*x[i]*sinADE1* eyzDds);		  
 
 end	
 
 # Transform strains from ADCS into TDCS
-println("Remove Allocation here")
-B=[[1 0 0];[0 Ct St];[0 -St Ct]]; # 3x3 Transformation matrix
-
-#Empty arrays for tens trans (Indiv comps)
 (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = 
-TensorTransformation3D(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,B);
+TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,B);
 (ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = 
-TensorTransformation3D(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,B);
+TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,B);
 (ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = 
-TensorTransformation3D(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,B);
+TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,B);
 
+## Transform coordinates of the calculation points from ADCS into TDCS
+(y,z)  =RotateObject2D!(y,z,0,0,Ct,-St)
+y.=y.-TriVertex[2];
+z.=z.-TriVertex[3];
 
-
-
-
-return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
+return(	ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
 		ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
 		ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds)
 end
@@ -1449,7 +1389,7 @@ else
     (I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
 
 	
-	println("Make sure there is no allocation in these")
+	#println("Make sure there is no allocation in these")
 	## Transform slip vector components from TDCS into EFCS
 	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(1.,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
 	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,1.,0.,0,0,0,Vnorm,Vstrike,Vdip);
