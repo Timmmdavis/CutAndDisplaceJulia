@@ -31,8 +31,9 @@
 #For single values
 #Rotate to new axes Ax Ay Az
 x =(Ct[1]*(X-Pa))+(-St[1]*(Y-Pb));
-Y.=(St[1]*(X-Pa))+( Ct[1]*(Y-Pb));
+Y =(St[1]*(X-Pa))+( Ct[1]*(Y-Pb));
 X=x;
+return(X,Y)
 end
 
 @inline @fastmath function RotateObject2D!(X::Array,Y::Array,Pa,Pb,Ct,St)

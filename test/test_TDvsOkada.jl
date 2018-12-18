@@ -80,6 +80,9 @@ Rake=90-atand(Dss/Dds); #degrees
 println("Vars created -> to TD func1")
 ##3
 
+#using BenchmarkTools
+#@btime (No output when you use it)
+
 @time (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
  ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
  ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
@@ -162,7 +165,7 @@ println("Now checking that when we are for only one component e.g. dipslip we on
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,[1 1],[0 0],[0 0],nu,mu,DispFlag,StressFlag,HSflag)
+ MyModule.TD(x,y,z,P1,P2,P3,[1. 1.],[0. 0.],[0. 0.],nu,mu,DispFlag,StressFlag,HSflag)
 uux=UxDn+UxDds;#
 uuy=UyDn+UyDds;
 uuz=UzDn+UzDds;
@@ -192,7 +195,7 @@ end
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,[0 0],[1 1],[0 0],nu,mu,DispFlag,StressFlag,HSflag)
+ MyModule.TD(x,y,z,P1,P2,P3,[0. 0.],[1. 1.],[0. 0.],nu,mu,DispFlag,StressFlag,HSflag)
 uux=UxDn+UxDss;#
 uuy=UyDn+UyDss;
 uuz=UzDn+UzDss;
@@ -222,7 +225,7 @@ end
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,[0 0],[0 0],[1 1],nu,mu,DispFlag,StressFlag,HSflag)
+ MyModule.TD(x,y,z,P1,P2,P3,[0. 0.],[0. 0.],[1. 1.],nu,mu,DispFlag,StressFlag,HSflag)
 uux=UxDss+UxDds;#
 uuy=UyDss+UyDds;
 uuz=UzDss+UzDds;
