@@ -97,7 +97,7 @@ if CorrectDimsFlg!=1
 	error("Element size inputs must be the same dimensions")
 end
 
-##println("This initial allocation should follow through the functions....")
+###println("This initial allocation should follow through the functions....")
 #Do some allocation before loop
 if DispFlag==1
 	
@@ -140,7 +140,7 @@ end
 
 for i=1:SzCmp #For every element (multithreaded)  Threads.@threads 
 
-	##println("Remove this line once strain done")
+	###println("Remove this line once strain done")
 	bx = Dn[i];  # DisplacementNormal
 	by = Dss[i]; # DisplacementStrike-slip
 	bz = Dds[i]; # DisplacementDip-slip
@@ -166,7 +166,7 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 		(UxDn[:,i], UyDn[:,i], UzDn[:,i],
 		 UxDss[:,i],UyDss[:,i],UzDss[:,i],
 		 UxDds[:,i],UyDds[:,i],UzDds[:,i]) = 
-		 TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,0,
+		 TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,
 		 UxDn[:,i], UyDn[:,i], UzDn[:,i],
 		 UxDss[:,i],UyDss[:,i],UzDss[:,i],
 		 UxDds[:,i],UyDds[:,i],UzDds[:,i]);
@@ -183,12 +183,12 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 			 UxDss[:,i],UyDss[:,i],UzDss[:,i],
 			 UxDds[:,i],UyDds[:,i],UzDds[:,i]);
 			
-			#println("Can I avoid this allocation?")
+			##println("Can I avoid this allocation?")
 			# Calculate image dislocation contribution to displacements
 			(UxDnIS,UyDnIS,UzDnIS,
 			 UxDssIS,UyDssIS,UzDssIS,
 			 UxDdsIS,UyDdsIS,UzDdsIS) =
-			 TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],nu,1,
+			 TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],nu,
 			 copy(zers), copy(zers), copy(zers),
 			 copy(zers),copy(zers), copy(zers),
 			 copy(zers),copy(zers), copy(zers));
@@ -240,18 +240,25 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 		
 		if HSflag==1
 		
-			#println("went into HS func")
+			##println("went into HS func")
 		
-			(ExxDnFSC, EyyDnFSC, EzzDnFSC, ExyDnFSC, ExzDnFSC, EyzDnFSC,
-			 ExxDssFSC,EyyDssFSC,EzzDssFSC,ExyDssFSC,ExzDssFSC,EyzDssFSC,
-			 ExxDdsFSC,EyyDdsFSC,EzzDdsFSC,ExyDdsFSC,ExzDdsFSC,EyzDdsFSC) =
-			 TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu);
+			(ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
+		     ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
+		     ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]) =
+			 TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,
+			 ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
+			 ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
+			 ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]);	
 		
 			# Calculate image dislocation contribution to strains and stresses
 			(ExxDnIS, EyyDnIS, EzzDnIS, ExyDnIS, ExzDnIS, EyzDnIS,
 			 ExxDssIS,EyyDssIS,EzzDssIS,ExyDssIS,ExzDssIS,EyzDssIS,
 			 ExxDdsIS,EyyDdsIS,EzzDdsIS,ExyDdsIS,ExzDdsIS,EyzDdsIS) =
-			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda);
+			 TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,
+			 copy(zers),copy(zers),copy(zers),copy(zers),copy(zers),copy(zers),
+			 copy(zers),copy(zers),copy(zers),copy(zers),copy(zers),copy(zers),
+			 copy(zers),copy(zers),copy(zers),copy(zers),copy(zers),copy(zers));
+			 
 			if P1i[3]==0 && P2i[3]==0 && P3i[3]==0
 				ExzDnIS = -ExzDnIS;
 				EyzDnIS = -EyzDnIS;
@@ -261,26 +268,26 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 				EyzDdsIS = -EyzDdsIS;
 			end
 			
-			ExxDn[:,i]=ExxDn[:,i]+ExxDnFSC+ExxDnIS;
-			EyyDn[:,i]=EyyDn[:,i]+EyyDnFSC+EyyDnIS;
-			EzzDn[:,i]=EzzDn[:,i]+EzzDnFSC+EzzDnIS;
-			ExyDn[:,i]=ExyDn[:,i]+ExyDnFSC+ExyDnIS;
-			ExzDn[:,i]=ExzDn[:,i]+ExzDnFSC+ExzDnIS;
-			EyzDn[:,i]=EyzDn[:,i]+EyzDnFSC+EyzDnIS;
+			ExxDn[:,i]=ExxDn[:,i]+ExxDnIS;
+			EyyDn[:,i]=EyyDn[:,i]+EyyDnIS;
+			EzzDn[:,i]=EzzDn[:,i]+EzzDnIS;
+			ExyDn[:,i]=ExyDn[:,i]+ExyDnIS;
+			ExzDn[:,i]=ExzDn[:,i]+ExzDnIS;
+			EyzDn[:,i]=EyzDn[:,i]+EyzDnIS;
 			
-			ExxDss[:,i]=ExxDss[:,i]+ExxDssFSC+ExxDssIS;
-			EyyDss[:,i]=EyyDss[:,i]+EyyDssFSC+EyyDssIS;
-			EzzDss[:,i]=EzzDss[:,i]+EzzDssFSC+EzzDssIS;
-			ExyDss[:,i]=ExyDss[:,i]+ExyDssFSC+ExyDssIS;
-			ExzDss[:,i]=ExzDss[:,i]+ExzDssFSC+ExzDssIS;
-			EyzDss[:,i]=EyzDss[:,i]+EyzDssFSC+EyzDssIS;
+			ExxDss[:,i]=ExxDss[:,i]+ExxDssIS;
+			EyyDss[:,i]=EyyDss[:,i]+EyyDssIS;
+			EzzDss[:,i]=EzzDss[:,i]+EzzDssIS;
+			ExyDss[:,i]=ExyDss[:,i]+ExyDssIS;
+			ExzDss[:,i]=ExzDss[:,i]+ExzDssIS;
+			EyzDss[:,i]=EyzDss[:,i]+EyzDssIS;
 			
-			ExxDds[:,i]=ExxDds[:,i]+ExxDdsFSC+ExxDdsIS;
-			EyyDds[:,i]=EyyDds[:,i]+EyyDdsFSC+EyyDdsIS;
-			EzzDds[:,i]=EzzDds[:,i]+EzzDdsFSC+EzzDdsIS;
-			ExyDds[:,i]=ExyDds[:,i]+ExyDdsFSC+ExyDdsIS;
-			ExzDds[:,i]=ExzDds[:,i]+ExzDdsFSC+ExzDdsIS;
-			EyzDds[:,i]=EyzDds[:,i]+EyzDdsFSC+EyzDdsIS;
+			ExxDds[:,i]=ExxDds[:,i]+ExxDdsIS;
+			EyyDds[:,i]=EyyDds[:,i]+EyyDdsIS;
+			EzzDds[:,i]=EzzDds[:,i]+EzzDdsIS;
+			ExyDds[:,i]=ExyDds[:,i]+ExyDdsIS;
+			ExzDds[:,i]=ExzDds[:,i]+ExzDdsIS;
+			EyzDds[:,i]=EyzDds[:,i]+EyzDdsIS;
 			
 		end #HS flag
 		
@@ -310,7 +317,7 @@ end
 end
 
 
-function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,ImageFlag,
+function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,
 				UxDn, UyDn, UzDn,
 				UxDss,UyDss,UzDss,
 				UxDds,UyDds,UzDds)
@@ -639,7 +646,7 @@ for i=1:length(x)
 	
 end
 
-println("Try this rotation on the compoents coming out the func... faster? Therefore halving the transforms...")
+#println("Try this rotation on the compoents coming out the func... faster? Therefore halving the transforms...")
 # Transform displacements from ADCS into TDCS (Do for each component)
 (UyDn, UzDn)   =RotateObject2D!(UyDn, UzDn ,0,0,Ct,-St) #Rotate back
 (UyDss,UzDss)  =RotateObject2D!(UyDss,UzDss,0,0,Ct,-St) #Rotate back
@@ -769,17 +776,12 @@ if abs(beta)<eps() || abs(pi-beta)<eps()
 else
     (I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
     
-    # Transform total Free Surface Correction to displacements from EFCS 
-    # to ADCS
-		
-	#Inverse rot mat
+    # Transform current total displacements from EFCS to ADCS
 	(UxDn, UyDn, UzDn) =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0,0,0,ey1,ey2,ey3)
 	(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0,0,0,ey1,ey2,ey3)
 	(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0,0,0,ey1,ey2,ey3)	
-
 	
-	
-	#println("Make sure there is no allocation in these")
+	##println("Make sure there is no allocation in these")
 	## Transform slip vector components from TDCS into EFCS
 	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
 	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0,0,0,Vnorm,Vstrike,Vdip);
@@ -873,6 +875,7 @@ else
 	VyR=[ey1[2],ey2[2],ey3[2]];
 	VzR=[ey1[3],ey2[3],ey3[3]];
 	
+	#println("Try this rotation on the compoents coming out the func... faster? Therefore halving the transforms...")
     # Transform total Free Surface Correction to displacements from ADCS 
     # to EFCS
 	(UxDn,UyDn,UzDn)   =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0,0,0,VxR,VyR,VzR)
@@ -1216,6 +1219,7 @@ for i=1:length(x)
 
 end	
 
+#println("Try this rotation on the compoents coming out the func... faster? Therefore halving the transforms...")
 # Transform strains from ADCS into TDCS
 (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = 
 TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,B);
@@ -1311,7 +1315,10 @@ return(ExxBx,ExxBy,ExxBz,
 end
 
 
-function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu)
+function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,
+			 ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+			 ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+			 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
 # TDstrain_HarFunc calculates the harmonic function contribution to the
 # strains and stresses associated with a triangular dislocation in a 
 # half-space. The function cancels the surface normal tractions induced by 
@@ -1325,45 +1332,35 @@ function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu)
 # respectively.
 (Vnorm,Vstrike,Vdip)=CalculateLocalTriCoords(P1,P2,P3)
 
-## Transform slip vector components from TDCS into EFCS
-(bX,bY,bZ) = RotateObject3DNewCoords(Dn,Dss,Dds,0,0,0,Vnorm,Vstrike,Vdip);
-
 # Calculate contribution of angular dislocation pair on each TD side 
-(ExxDn12, EyyDn12, EzzDn12, ExyDn12, ExzDn12, EyzDn12,
- ExxDss12,EyyDss12,EzzDss12,ExyDss12,ExzDss12,EyzDss12,
- ExxDds12,EyyDds12,EzzDds12,ExyDds12,ExzDds12,EyzDds12) =
- AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P1,P2,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P1P2
+
+# P1P2
+(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) =
+ AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P1,P2,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
+ 
+# P2P3
 (ExxDn13, EyyDn13, EzzDn13, ExyDn13, ExzDn13, EyzDn13,
  ExxDss13,EyyDss13,EzzDss13,ExyDss13,ExzDss13,EyzDss13,
  ExxDds13,EyyDds13,EzzDds13,ExyDds13,ExzDds13,EyzDds13) =
- AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P2,P3,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P2P3
-(ExxDn23, EyyDn23, EzzDn23, ExyDn23, ExzDn23, EyzDn23,
- ExxDss23,EyyDss23,EzzDss23,ExyDss23,ExzDss23,EyzDss23,
- ExxDds23,EyyDds23,EzzDds23,ExyDds23,ExzDds23,EyzDds23) =
- AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,P3,P1,mu,lambda,nu,Vnorm,Vstrike,Vdip); # P3P1
-
-# Calculate total harmonic function contribution to strains and stresses
-ExxDn=(ExxDn12+ExxDn13+ExxDn23).*Dn;
-EyyDn=(EyyDn12+EyyDn13+EyyDn23).*Dn;
-EzzDn=(EzzDn12+EzzDn13+EzzDn23).*Dn;
-ExyDn=(ExyDn12+ExyDn13+ExyDn23).*Dn;
-ExzDn=(ExzDn12+ExzDn13+ExzDn23).*Dn;
-EyzDn=(EyzDn12+EyzDn13+EyzDn23).*Dn;
-
-ExxDss=(ExxDss12+ExxDss13+ExxDss23).*Dss;
-EyyDss=(EyyDss12+EyyDss13+EyyDss23).*Dss;
-EzzDss=(EzzDss12+EzzDss13+EzzDss23).*Dss;
-ExyDss=(ExyDss12+ExyDss13+ExyDss23).*Dss;
-ExzDss=(ExzDss12+ExzDss13+ExzDss23).*Dss;
-EyzDss=(EyzDss12+EyzDss13+EyzDss23).*Dss;
-
-ExxDds=(ExxDds12+ExxDds13+ExxDds23).*Dds;
-EyyDds=(EyyDds12+EyyDds13+EyyDds23).*Dds;
-EzzDds=(EzzDds12+EzzDds13+EzzDds23).*Dds;
-ExyDds=(ExyDds12+ExyDds13+ExyDds23).*Dds;
-ExzDds=(ExzDds12+ExzDds13+ExzDds23).*Dds;
-EyzDds=(EyzDds12+EyzDds13+EyzDds23).*Dds;
-
+ AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P2,P3,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds); 
+ 
+ 
+# P3P1 
+(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) =
+ AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P3,P1,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
 
 return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
 		ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
@@ -1371,7 +1368,10 @@ return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
 end
 
 
-function AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,PA,PB,mu,lambda,nu,Vnorm,Vstrike,Vdip)
+function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+							ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+							ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+							ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
 # AngSetupFSC_S calculates the Free Surface Correction to strains and 
 # stresses associated with angular dislocation pair on each TD side.
 
@@ -1379,46 +1379,27 @@ function AngSetupStrainFSC(X,Y,Z,bX,bY,bZ,PA,PB,mu,lambda,nu,Vnorm,Vstrike,Vdip)
 (SideVec,eZ,beta)=CalcSideVec(PA,PB)
 
 if abs(beta)<eps() || abs(pi-beta)<eps()
-    Exx = zeros(length(X),1);
-	Eyy = zeros(length(X),1);
-	Ezz = zeros(length(X),1);
-	Exy = zeros(length(X),1);
-	Exz = zeros(length(X),1);
-	Eyz = zeros(length(X),1);
+    #Inputs come out the same (we add 0...)
 else
     (I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
 
+	AFlip = [ey1[1] ey1[2] ey1[3] ey2[1] ey2[2]  ey2[3]  ey3[1] ey3[2]  ey3[3]]; # Transformation matrix
 	
-	#println("Make sure there is no allocation in these")
+    # Transform current total strains from EFCS to ADCS
+	(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = TensorTransformation3D(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,AFlip);
+	(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = TensorTransformation3D(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,AFlip);
+	(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = TensorTransformation3D(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,AFlip);	
+	
+	
+	##println("Make sure there is no allocation in these")
 	## Transform slip vector components from TDCS into EFCS
-	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(1.,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
-	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,1.,0.,0,0,0,Vnorm,Vstrike,Vdip);
-	(Dn0ds,Dss0ds,Dds1__) = RotateObject3DNewCoords(0.,0.,1.,0,0,0,Vnorm,Vstrike,Vdip);
+	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
+	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0,0,0,Vnorm,Vstrike,Vdip);
+	(Dn0ds,Dss0ds,Dds1__) = RotateObject3DNewCoords(0.,0.,Dds,0,0,0,Vnorm,Vstrike,Vdip);
 	# Transform slip vector components from EFCS to ADCS
 	(Dn1__,Dss0n_,Dds0n_)=RotateObject3DNewCoords(Dn1__,Dss0n_,Dds0n_,0,0,0,ey1,ey2,ey3)
 	(Dn0ss,Dss1__,Dds1ss)=RotateObject3DNewCoords(Dn0ss,Dss1__,Dds1ss,0,0,0,ey1,ey2,ey3)
 	(Dn0ds,Dss0ds,Dds1__)=RotateObject3DNewCoords(Dn0ds,Dss0ds,Dds1__,0,0,0,ey1,ey2,ey3)
-	
-    # For singularities at surface
-	ExxDn = zeros(length(X),1);
-	ExxDss= zeros(length(X),1);
-	ExxDds= zeros(length(X),1);
-	EyyDn = zeros(length(X),1);
-	EyyDss= zeros(length(X),1);
-	EyyDds= zeros(length(X),1);
-	EzzDn = zeros(length(X),1);
-	EzzDss= zeros(length(X),1);
-	EzzDds= zeros(length(X),1);
-
-	ExyDn = zeros(length(X),1);
-	ExyDss= zeros(length(X),1);
-	ExyDds= zeros(length(X),1);
-	ExzDn = zeros(length(X),1);
-	ExzDss= zeros(length(X),1);
-	ExzDds= zeros(length(X),1);
-	EyzDn = zeros(length(X),1);
-	EyzDss= zeros(length(X),1);
-	EyzDds= zeros(length(X),1);
 	
 	
     Iflp=.!I; #Invert the bool
@@ -1446,24 +1427,24 @@ else
 		v23Az = -v23Az;
 		
 		#For configuration 1 Dn and Dss are flipped
-		ExxDn[indx[i]] = -((-Dn1__*v11Ax)+(-Dss0n_*v11Ay)+(Dds0n_*v11Az))
-		ExxDss[indx[i]]= -((-Dn0ss*v11Ax)+(-Dss1__*v11Ay)+(Dds1ss*v11Az))
-		ExxDds[indx[i]]= -((-Dn0ds*v11Ax)+(-Dss0ds*v11Ay)+(Dds1__*v11Az))
-		EyyDn[indx[i]] = -((-Dn1__*v22Ax)+(-Dss0n_*v22Ay)+(Dds0n_*v22Az))
-		EyyDss[indx[i]]= -((-Dn0ss*v22Ax)+(-Dss1__*v22Ay)+(Dds1ss*v22Az))
-		EyyDds[indx[i]]= -((-Dn0ds*v22Ax)+(-Dss0ds*v22Ay)+(Dds1__*v22Az))
-		EzzDn[indx[i]] = -((-Dn1__*v33Ax)+(-Dss0n_*v33Ay)+(Dds0n_*v33Az))
-		EzzDss[indx[i]]= -((-Dn0ss*v33Ax)+(-Dss1__*v33Ay)+(Dds1ss*v33Az))
-		EzzDds[indx[i]]= -((-Dn0ds*v33Ax)+(-Dss0ds*v33Ay)+(Dds1__*v33Az))
-		ExyDn[indx[i]] = -((-Dn1__/2*v12Ax)+(-Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
-		ExyDss[indx[i]]= -((-Dn0ss/2*v12Ax)+(-Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
-		ExyDds[indx[i]]= -((-Dn0ds/2*v12Ax)+(-Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
-		ExzDn[indx[i]] = -((-Dn1__/2*v13Ax)+(-Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
-		ExzDss[indx[i]]= -((-Dn0ss/2*v13Ax)+(-Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
-		ExzDds[indx[i]]= -((-Dn0ds/2*v13Ax)+(-Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
-		EyzDn[indx[i]] = -((-Dn1__/2*v23Ax)+(-Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
-		EyzDss[indx[i]]= -((-Dn0ss/2*v23Ax)+(-Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
-		EyzDds[indx[i]]= -((-Dn0ds/2*v23Ax)+(-Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
+		ExxDn[indx[i]] = ExxDn[indx[i]] -((-Dn1__*v11Ax)+(-Dss0n_*v11Ay)+(Dds0n_*v11Az))
+		ExxDss[indx[i]]= ExxDss[indx[i]]-((-Dn0ss*v11Ax)+(-Dss1__*v11Ay)+(Dds1ss*v11Az))
+		ExxDds[indx[i]]= ExxDds[indx[i]]-((-Dn0ds*v11Ax)+(-Dss0ds*v11Ay)+(Dds1__*v11Az))
+		EyyDn[indx[i]] = EyyDn[indx[i]] -((-Dn1__*v22Ax)+(-Dss0n_*v22Ay)+(Dds0n_*v22Az))
+		EyyDss[indx[i]]= EyyDss[indx[i]]-((-Dn0ss*v22Ax)+(-Dss1__*v22Ay)+(Dds1ss*v22Az))
+		EyyDds[indx[i]]= EyyDds[indx[i]]-((-Dn0ds*v22Ax)+(-Dss0ds*v22Ay)+(Dds1__*v22Az))
+		EzzDn[indx[i]] = EzzDn[indx[i]] -((-Dn1__*v33Ax)+(-Dss0n_*v33Ay)+(Dds0n_*v33Az))
+		EzzDss[indx[i]]= EzzDss[indx[i]]-((-Dn0ss*v33Ax)+(-Dss1__*v33Ay)+(Dds1ss*v33Az))
+		EzzDds[indx[i]]= EzzDds[indx[i]]-((-Dn0ds*v33Ax)+(-Dss0ds*v33Ay)+(Dds1__*v33Az))
+		ExyDn[indx[i]] = ExyDn[indx[i]] -((-Dn1__/2*v12Ax)+(-Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
+		ExyDss[indx[i]]= ExyDss[indx[i]]-((-Dn0ss/2*v12Ax)+(-Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
+		ExyDds[indx[i]]= ExyDds[indx[i]]-((-Dn0ds/2*v12Ax)+(-Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
+		ExzDn[indx[i]] = ExzDn[indx[i]] -((-Dn1__/2*v13Ax)+(-Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
+		ExzDss[indx[i]]= ExzDss[indx[i]]-((-Dn0ss/2*v13Ax)+(-Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
+		ExzDds[indx[i]]= ExzDds[indx[i]]-((-Dn0ds/2*v13Ax)+(-Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
+		EyzDn[indx[i]] = EyzDn[indx[i]] -((-Dn1__/2*v23Ax)+(-Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
+		EyzDss[indx[i]]= EyzDss[indx[i]]-((-Dn0ss/2*v23Ax)+(-Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
+		EyzDds[indx[i]]= EyzDds[indx[i]]-((-Dn0ds/2*v23Ax)+(-Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
 		
 		(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
 	     v11By,v22By,v33By,v12By,v13By,v23By,
@@ -1512,24 +1493,24 @@ else
 	     v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(y1A[indxf[i]],y2A[indxf[i]],y3A[indxf[i]],cosB,sinB,cotB,nu,-PA[3]);
 		 
 		#For configuration 2 no components are flipped
-		ExxDn[indxf[i]] = -((Dn1__*v11Ax)+(Dss0n_*v11Ay)+(Dds0n_*v11Az))
-		ExxDss[indxf[i]]= -((Dn0ss*v11Ax)+(Dss1__*v11Ay)+(Dds1ss*v11Az))
-		ExxDds[indxf[i]]= -((Dn0ds*v11Ax)+(Dss0ds*v11Ay)+(Dds1__*v11Az))
-		EyyDn[indxf[i]] = -((Dn1__*v22Ax)+(Dss0n_*v22Ay)+(Dds0n_*v22Az))
-		EyyDss[indxf[i]]= -((Dn0ss*v22Ax)+(Dss1__*v22Ay)+(Dds1ss*v22Az))
-		EyyDds[indxf[i]]= -((Dn0ds*v22Ax)+(Dss0ds*v22Ay)+(Dds1__*v22Az))
-		EzzDn[indxf[i]] = -((Dn1__*v33Ax)+(Dss0n_*v33Ay)+(Dds0n_*v33Az))
-		EzzDss[indxf[i]]= -((Dn0ss*v33Ax)+(Dss1__*v33Ay)+(Dds1ss*v33Az))
-		EzzDds[indxf[i]]= -((Dn0ds*v33Ax)+(Dss0ds*v33Ay)+(Dds1__*v33Az))
-		ExyDn[indxf[i]] = -((Dn1__/2*v12Ax)+(Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
-		ExyDss[indxf[i]]= -((Dn0ss/2*v12Ax)+(Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
-		ExyDds[indxf[i]]= -((Dn0ds/2*v12Ax)+(Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
-		ExzDn[indxf[i]] = -((Dn1__/2*v13Ax)+(Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
-		ExzDss[indxf[i]]= -((Dn0ss/2*v13Ax)+(Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
-		ExzDds[indxf[i]]= -((Dn0ds/2*v13Ax)+(Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
-		EyzDn[indxf[i]] = -((Dn1__/2*v23Ax)+(Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
-		EyzDss[indxf[i]]= -((Dn0ss/2*v23Ax)+(Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
-		EyzDds[indxf[i]]= -((Dn0ds/2*v23Ax)+(Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
+		ExxDn[indxf[i]] = ExxDn[indxf[i]] -((Dn1__*v11Ax)+(Dss0n_*v11Ay)+(Dds0n_*v11Az))
+		ExxDss[indxf[i]]= ExxDss[indxf[i]]-((Dn0ss*v11Ax)+(Dss1__*v11Ay)+(Dds1ss*v11Az))
+		ExxDds[indxf[i]]= ExxDds[indxf[i]]-((Dn0ds*v11Ax)+(Dss0ds*v11Ay)+(Dds1__*v11Az))
+		EyyDn[indxf[i]] = EyyDn[indxf[i]] -((Dn1__*v22Ax)+(Dss0n_*v22Ay)+(Dds0n_*v22Az))
+		EyyDss[indxf[i]]= EyyDss[indxf[i]]-((Dn0ss*v22Ax)+(Dss1__*v22Ay)+(Dds1ss*v22Az))
+		EyyDds[indxf[i]]= EyyDds[indxf[i]]-((Dn0ds*v22Ax)+(Dss0ds*v22Ay)+(Dds1__*v22Az))
+		EzzDn[indxf[i]] = EzzDn[indxf[i]] -((Dn1__*v33Ax)+(Dss0n_*v33Ay)+(Dds0n_*v33Az))
+		EzzDss[indxf[i]]= EzzDss[indxf[i]]-((Dn0ss*v33Ax)+(Dss1__*v33Ay)+(Dds1ss*v33Az))
+		EzzDds[indxf[i]]= EzzDds[indxf[i]]-((Dn0ds*v33Ax)+(Dss0ds*v33Ay)+(Dds1__*v33Az))
+		ExyDn[indxf[i]] = ExyDn[indxf[i]] -((Dn1__/2*v12Ax)+(Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
+		ExyDss[indxf[i]]= ExyDss[indxf[i]]-((Dn0ss/2*v12Ax)+(Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
+		ExyDds[indxf[i]]= ExyDds[indxf[i]]-((Dn0ds/2*v12Ax)+(Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
+		ExzDn[indxf[i]] = ExzDn[indxf[i]] -((Dn1__/2*v13Ax)+(Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
+		ExzDss[indxf[i]]= ExzDss[indxf[i]]-((Dn0ss/2*v13Ax)+(Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
+		ExzDds[indxf[i]]= ExzDds[indxf[i]]-((Dn0ds/2*v13Ax)+(Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
+		EyzDn[indxf[i]] = EyzDn[indxf[i]] -((Dn1__/2*v23Ax)+(Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
+		EyzDss[indxf[i]]= EyzDss[indxf[i]]-((Dn0ss/2*v23Ax)+(Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
+		EyzDds[indxf[i]]= EyzDds[indxf[i]]-((Dn0ds/2*v23Ax)+(Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
 		
 		(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
 	     v11By,v22By,v33By,v12By,v13By,v23By,
@@ -1556,9 +1537,6 @@ else
 		
 		
 	end
-
-	
-	AFlip = [ey1[1] ey1[2] ey1[3] ey2[1] ey2[2]  ey2[3]  ey3[1] ey3[2]  ey3[3]]; # Transformation matrix
 
 	
     # Transform total Free Surface Correction to strains from ADCS to EFCS
