@@ -90,9 +90,9 @@ end
 
 #Allocate some arrays of zeros that will be taken through the following loops with the results appended
 if DispFlag==1
-	UxDn = zeros(length(X),SzCmp); 
-	UyDn = zeros(length(X),SzCmp); 
-	UzDn = zeros(length(X),SzCmp); 
+	UxDn  = zeros(length(X),SzCmp); 
+	UyDn  = zeros(length(X),SzCmp); 
+	UzDn  = zeros(length(X),SzCmp); 
 	UxDss = zeros(length(X),SzCmp); 
 	UyDss = zeros(length(X),SzCmp); 
 	UzDss = zeros(length(X),SzCmp); 
@@ -101,12 +101,12 @@ if DispFlag==1
 	UzDds = zeros(length(X),SzCmp); 
 end
 if StrainFlag==1
-	ExxDn = zeros(length(X),SzCmp); 
-	EyyDn = zeros(length(X),SzCmp); 
-	EzzDn = zeros(length(X),SzCmp);
-	ExyDn = zeros(length(X),SzCmp); 
-	ExzDn = zeros(length(X),SzCmp); 
-	EyzDn = zeros(length(X),SzCmp);
+	ExxDn  = zeros(length(X),SzCmp); 
+	EyyDn  = zeros(length(X),SzCmp); 
+	EzzDn  = zeros(length(X),SzCmp);
+	ExyDn  = zeros(length(X),SzCmp); 
+	ExzDn  = zeros(length(X),SzCmp); 
+	EyzDn  = zeros(length(X),SzCmp);
 	ExxDss = zeros(length(X),SzCmp); 
 	EyyDss = zeros(length(X),SzCmp); 
 	EzzDss = zeros(length(X),SzCmp);
@@ -123,9 +123,9 @@ end
 
 Threads.@threads for i=1:SzCmp #For every element (multithreaded) 
 
-	P1=P1List[i,:];
-	P2=P2List[i,:];
-	P3=P3List[i,:];
+	P1=copy(P1List[i,:]);
+	P2=copy(P2List[i,:]);
+	P3=copy(P3List[i,:]);
 
 	if HSflag==1
 		if any(Z .>0) | any(P1[3] .>0) | any(P2[3] .>0) | any(P3[3] .>0)
@@ -149,7 +149,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 		 UxDn[:,i], UyDn[:,i], UzDn[:,i],
 		 UxDss[:,i],UyDss[:,i],UzDss[:,i],
 		 UxDds[:,i],UyDds[:,i],UzDds[:,i]);
-		
+		 
 		if HSflag==1
 			
 			# Calculate harmonic function contribution to displacements
@@ -169,6 +169,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 			 UxDn[:,i], UyDn[:,i], UzDn[:,i],
 			 UxDss[:,i],UyDss[:,i],UzDss[:,i],
 			 UxDds[:,i],UyDds[:,i],UzDds[:,i]);
+		 	 
 					
 		end #HsFlag
 
@@ -183,7 +184,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 		(ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
 		 ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
 		 ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]) =
-		 TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,0,
+		 TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,0,
 		 ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
 		 ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
 		 ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]);	
@@ -203,7 +204,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 			(ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
 			 ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
 			 ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]) =
-			 TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,1,
+			 TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,nu,1,
 			 ExxDn[:,i], EyyDn[:,i], EzzDn[:,i], ExyDn[:,i], ExzDn[:,i], EyzDn[:,i],
 			 ExxDss[:,i],EyyDss[:,i],EzzDss[:,i],ExyDss[:,i],ExzDss[:,i],EyzDss[:,i],
 			 ExxDds[:,i],EyyDds[:,i],EzzDds[:,i],ExyDds[:,i],ExzDds[:,i],EyzDds[:,i]);
@@ -264,6 +265,7 @@ if ImageFlag==1; #This means we are computing the iamge dislocation
 end
 
 
+
 #Turn to cart index
 Pos=findall(Pos);
 Neg=findall(Neg)
@@ -292,7 +294,6 @@ Neg=findall(Neg)
  UxDn[Pos],UxDss[Pos],UxDds[Pos],
  UyDn[Pos],UyDss[Pos],UyDds[Pos],
  UzDn[Pos],UzDss[Pos],UzDds[Pos]);
-
  
 # Calculate first angular dislocation contribution NEG
 (UxDn[Neg],UxDss[Neg],UxDds[Neg],
@@ -318,6 +319,8 @@ Neg=findall(Neg)
  UxDn[Neg],UxDss[Neg],UxDds[Neg],
  UyDn[Neg],UyDss[Neg],UyDds[Neg],
  UzDn[Neg],UzDss[Neg],UzDds[Neg]);	
+ 
+
  
 
 # Calculate the "incomplete" displacement vector components in TDCS
@@ -448,19 +451,22 @@ function CalcTDVectsAndAngles(p1,p2,p3)
 
 # Calculate the unit vectors along TD sides in TDCS
 e12=p2-p1;
-e12=e12/norm(e12);
+e12=e12/sqrt(e12[1]^2+e12[2]^2+e12[3]^2)  #could use :norm(e12);
 e13=p3-p1;
-e13=e13/norm(e13);
+e13=e13/sqrt(e13[1]^2+e13[2]^2+e13[3]^2);
 e23=p3-p2;
-e23=e23/norm(e23);
+e23=e23/sqrt(e23[1]^2+e23[2]^2+e23[3]^2);
 
 # Calculate the TD angles
-A=e12'*e13;
-A=acos(A[1]);
-B=-e12'*e23;
-B=acos(B[1]);
-C=e23'*e13;
-C=acos(C[1]);
+#A=e12'*e13;
+A=(e12[1]*e13[1])+(e12[2]*e13[2])+(e12[3]*e13[3]);
+A=acos(A);
+#B=-e12'*e23;
+B=(-e12[1]*e23[1])+(-e12[2]*e23[2])+(-e12[3]*e23[3]);
+B=acos(B);
+#C=e23'*e13;
+C=(e23[1]*e13[1])+(e23[2]*e13[2])+(e23[3]*e13[3]);
+C=acos(C);
 
 return(e12,e13,e23,A,B,C)
 end
@@ -569,12 +575,13 @@ cosA2=cosA^2;
 sinADE1=sinA/8/pi/(1-nu);
 
 Dn8p=Dn/8/pi;
-
+ 
 # Calculate displacements associated with an angular dislocation in ADCS
 for i=eachindex(x) #1:length(x)
 	
 	(ux,uy,uz,vx,vy,vz,wx,wy,wz) = AngDisDisp(x[i],y[i],z[i],cosA,sinA,E1,E2,cosA2,sinADE1);
 
+	
 	if Dn!=0 #Only doing if needed
 		#Ux is in global coords:
 		#components due to opening
@@ -621,6 +628,7 @@ for i=eachindex(x) #1:length(x)
 	
 end
 
+
 ## Transform coordinates of the calculation points from ADCS into TDCS
 (y,z)  =RotateObject2D!(y,z,0,0,Ct,-St)
 y.=y.-TriVertex[2];
@@ -632,20 +640,6 @@ return( UxDn,UxDss,UxDds,
 end
 
 
-function TransformToADCS(y,z,Dss,Dds,SideVec,TriVertex)
-#Convert to dislocation coordinate system
-
-Ct=SideVec[3];
-St=SideVec[2];
-P1=TriVertex[2];
-P2=TriVertex[3];
-# Transform coordinates of the calculation points from TDCS into ADCS
-(y1,z1)  =RotateObject2D(y,z,P1,P2,Ct,St)
-# Transform the in-plane slip vector components from TDCS into ADCS
-(Dss1,Dds1)=RotateObject2D(Dss,Dds,0,0,Ct,St)
-
-return(Ct,St,y1,z1,Dss1,Dds1)
-end
 
 function AngDisDisp(x,y,z,cosA,sinA,E1,E2,cosA2,sinADE1)
 # AngDisDisp calculates the "incomplete" displacements (without the 
@@ -1039,15 +1033,13 @@ return(ux[1],uy[1],uz[1],vx[1],vy[1],vz[1],wx[1],wy[1],wz[1])
 end
 
 
-function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,ImageFlag,
+function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,ImageFlag,
 		 ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
 		 ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
 		 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds)
 # TDstressFS 
 # Calculates stresses and strains associated with a triangular dislocation 
 # in an elastic full-space.
-
-nu =lambda/(2*(mu+lambda));    #Poisson's ratio, Equation 8.28 Pollard
 
 #Convert from global to the dislocation coordinate system
 (Vnorm,Vstrike,Vdip)=CalculateLocalTriCoords(P1,P2,P3)
@@ -1232,7 +1224,7 @@ for i=eachindex(x)
 	 exzDn,exzDss,exzDds,
 	 eyzDn,eyzDss,eyzDds,
 	 rFi_rx,rFi_ry,rFi_rz) =
-	 AngDisStrain(x[i],y[i],z[i],cosA,sinA,Dn,Dss1[1],Dds1[1],nu,E1,E2,cosA2,sinADE1)
+	 AngDisStrain(x[i],y[i],z[i],cosA,sinA,nu,E2,sinADE1)
 
 	if Dn!=0 #Only doing if needed
 		exxdn= Dn*(rFi_rx)+E3* exxDn
@@ -1312,7 +1304,7 @@ return(	ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
 end
 
 
-function AngDisStrain(x,y,z,cosA,sinA,bx,by,bz,nu,E1,E2,cosA2,sinADE1)
+function AngDisStrain(x,y,z,cosA,sinA,nu,E2,sinADE1)
 # AngDisStrain calculates the strains associated with an angular 
 # dislocation in an elastic full-space.
 

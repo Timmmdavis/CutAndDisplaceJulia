@@ -50,6 +50,7 @@ y=	 (Ax1[2]*(X-Pa))+(Ax2[2]*(Y-Pb))+(Ax3[2]*(Z-Pc));
 Z=	 (Ax1[3]*(X-Pa))+(Ax2[3]*(Y-Pb))+(Ax3[3]*(Z-Pc));
 X=x;
 Y=y;
+#Z=z;
 return(X,Y,Z)
 end
 
@@ -57,11 +58,12 @@ end
 	#For multiple values
 @simd for i=1:length(X)
 	#Rotate to new axes Ax Ay Az
-	x=	 (Ax1[1]*(X[i]-Pa))+(Ax2[1]*(Y[i]-Pb))+(Ax3[1]*(Z[i]-Pc));
-	y=	 (Ax1[2]*(X[i]-Pa))+(Ax2[2]*(Y[i]-Pb))+(Ax3[2]*(Z[i]-Pc));
+	x	=(Ax1[1]*(X[i]-Pa))+(Ax2[1]*(Y[i]-Pb))+(Ax3[1]*(Z[i]-Pc));
+	y	=(Ax1[2]*(X[i]-Pa))+(Ax2[2]*(Y[i]-Pb))+(Ax3[2]*(Z[i]-Pc));
 	Z[i]=(Ax1[3]*(X[i]-Pa))+(Ax2[3]*(Y[i]-Pb))+(Ax3[3]*(Z[i]-Pc));
 	X[i]=x;
 	Y[i]=y;
+	#Z[i]=z;
 end	
 
 return(X,Y,Z)

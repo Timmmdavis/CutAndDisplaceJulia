@@ -19,14 +19,14 @@
 	
 	txz = A[1]*A[3]*Txx[i]+(A[1]*A[6]+A[3]*A[4])*Txy[i]+(A[1]*A[9]+A[3]*A[7])*Txz[i]+(A[4]*A[9]+A[6]*A[7])*Tyz[i]+A[4]*A[6]*Tyy[i]+A[7]*A[9]*Tzz[i];
 	
-	tyz = A[2]*A[3]*Txx[i]+(A[3]*A[5]+A[2]*A[6])*Txy[i]+(A[3]*A[8]+A[2]*A[9])*Txz[i]+(A[6]*A[8]+A[5]*A[9])*Tyz[i]+A[5]*A[6]*Tyy[i]+A[8]*A[9]*Tzz[i];
+	Tyz[i] = A[2]*A[3]*Txx[i]+(A[3]*A[5]+A[2]*A[6])*Txy[i]+(A[3]*A[8]+A[2]*A[9])*Txz[i]+(A[6]*A[8]+A[5]*A[9])*Tyz[i]+A[5]*A[6]*Tyy[i]+A[8]*A[9]*Tzz[i];
 	
 	Txx[i]=txx;
 	Tyy[i]=tyy;
 	Tzz[i]=tzz;
 	Txy[i]=txy;
 	Txz[i]=txz;
-	Tyz[i]=tyz;
+	#Tyz[i]=tyz;
 end
 return(Txx,Tyy,Tzz,Txy,Txz,Tyz)
 end
@@ -39,14 +39,14 @@ end
 	tzz = A[3]^2 *Txx +2*A[3]*A[6]*Txy +2*A[3]*A[9]*Txz +2*A[6]*A[9]*Tyz+A[6]^2 *Tyy+A[9]^2 *Tzz;
 	txy = A[1]*A[2]*Txx+(A[1]*A[5]+A[2]*A[4])*Txy+(A[1]*A[8]+A[2]*A[7])*Txz+(A[4]*A[8]+A[5]*A[7])*Tyz+A[4]*A[5]*Tyy+A[7]*A[8]*Tzz;
 	txz = A[1]*A[3]*Txx+(A[1]*A[6]+A[3]*A[4])*Txy+(A[1]*A[9]+A[3]*A[7])*Txz+(A[4]*A[9]+A[6]*A[7])*Tyz+A[4]*A[6]*Tyy+A[7]*A[9]*Tzz;
-	tyz = A[2]*A[3]*Txx+(A[3]*A[5]+A[2]*A[6])*Txy+(A[3]*A[8]+A[2]*A[9])*Txz+(A[6]*A[8]+A[5]*A[9])*Tyz+A[5]*A[6]*Tyy+A[8]*A[9]*Tzz;
+	Tyz = A[2]*A[3]*Txx+(A[3]*A[5]+A[2]*A[6])*Txy+(A[3]*A[8]+A[2]*A[9])*Txz+(A[6]*A[8]+A[5]*A[9])*Tyz+A[5]*A[6]*Tyy+A[8]*A[9]*Tzz;
 	
 	Txx=txx;
 	Tyy=tyy;
 	Tzz=tzz;
 	Txy=txy;
 	Txz=txz;
-	Tyz=tyz;
+	#Tyz=tyz;
 
 return(Txx,Tyy,Tzz,Txy,Txz,Tyz)
 end

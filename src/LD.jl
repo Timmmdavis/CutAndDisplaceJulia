@@ -76,22 +76,22 @@ Dn=0 .-Dn; #flip
 
 if StressFlag==1
 	#Init array (stress at each point)
-	SxxDn= Array{Float64}(undef, length(x),length(xe));
-	SyyDn= Array{Float64}(undef, length(x),length(xe));
-	SxyDn= Array{Float64}(undef, length(x),length(xe));
-	SxxDs= Array{Float64}(undef, length(x),length(xe));
-	SyyDs= Array{Float64}(undef, length(x),length(xe));
-	SxyDs= Array{Float64}(undef, length(x),length(xe));
+	SxxDn= zeros(length(x),length(xe));
+	SyyDn= zeros(length(x),length(xe));
+	SxyDn= zeros(length(x),length(xe));
+	SxxDs= zeros(length(x),length(xe));
+	SyyDs= zeros(length(x),length(xe));
+	SxyDs= zeros(length(x),length(xe));
 end
 
 if DispFlag==1
 	#Define material constants used in calculating displacements.
 	pr1 = 1-2*nu; pr2 = 2-2*nu; pr3=3-4*nu;
 	#Init array (stress at each point)
-	UxDs= Array{Float64}(undef, length(x),length(xe));
-	UyDs= Array{Float64}(undef, length(x),length(xe));
-	UxDn= Array{Float64}(undef, length(x),length(xe));
-	UyDn= Array{Float64}(undef, length(x),length(xe));
+	UxDs= zeros(length(x),length(xe));
+	UyDs= zeros(length(x),length(xe));
+	UxDn= zeros(length(x),length(xe));
+	UyDn= zeros(length(x),length(xe));
 end
 
 for k = 1:length(xe); #for every element 

@@ -1,13 +1,5 @@
 #Test case comparing Okada dislocations with TDs (displacement)
 
-
-println("ToDo 
-		1st Remove coord transform of global sum (Ux etc, do inside loop)
-		2nd If this doesnt solve the halfspace FS func issue (allocating as zeros and adding) 
-		,then put this before the original call
-		3rd clean up funcs, write what each does actually, i.e. coord transform ADCS to TDCS, Comp Vect etc
-		4th try and speed up reducing alloc etc")
-
 #Start creating vars for function: 
 println("creating func vars")
 
@@ -21,7 +13,7 @@ Width=5;
 TipDepth=1;
 Rake=90;
 #Fault slip
-Dds=2.;  #2
+Dds=1.;  #2
 Dn=0.6; #0.6
 Dss=0.5;#0.5
 #Elastic cons
@@ -54,8 +46,9 @@ scatter(X,Y,abs.(Z),Z)
 cbar = colorbar()
 =#
 
+println("Put back to 50")
 # Start some vectors (spaced points)
-x = range(-10,stop=10,length=50); #linspace deprecated
+x = range(-10,stop=10,length=5); #linspace deprecated
 (x,y)=MyModule.meshgrid(x,x);
 z=ones(size(x))*-0; #Ground surface
 
@@ -83,6 +76,9 @@ println("Vars created -> to TD func1")
 #using BenchmarkTools
 #@btime (No output when you use it)
 
+for i=1:10000
+println((10000/i)/100) #progress 
+
 @time (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
  ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
  ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
@@ -91,7 +87,7 @@ println("Vars created -> to TD func1")
  UxDds,UyDds,UzDds)=
  MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
  
- 
+
  (Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
  MyModule.TD_sum(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
  ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
@@ -155,6 +151,8 @@ if EyzRes>1E-13
 	error("EyzRes too high, Okada and TD not matching for displacement")
 end
 println("Test P1 Passed")
+
+end
 
 println("Test P2 Off for now...")
 println("Now checking that when we are for only one component e.g. dipslip we only get values in those matricies")

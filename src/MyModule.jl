@@ -36,8 +36,6 @@ include("RotateObject3DNewCoords!.jl") #Mehdis 'CoordTrans'
 include("RotateObject2D.jl")
 include("RotateObject2D!.jl")
 
-
-
 #Drawing 
 include("contourfill.jl")
 

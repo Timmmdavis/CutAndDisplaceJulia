@@ -33,6 +33,7 @@
 x =(Ct[1]*(X-Pa))+(-St[1]*(Y-Pb));
 Y =(St[1]*(X-Pa))+( Ct[1]*(Y-Pb));
 X=x;
+#y=Y;
 return(X,Y)
 end
 
@@ -42,6 +43,7 @@ end
 	x=   (Ct[1]*(X[i]-Pa))+(-St[1]*(Y[i]-Pb));
 	Y[i]=(St[1]*(X[i]-Pa))+( Ct[1]*(Y[i]-Pb));
 	X[i]=x;
+	#Y[i]=y;
 end
 
 #Vectorised form of: Eq 2.23, Pollard, arranging cosines of new directions in table

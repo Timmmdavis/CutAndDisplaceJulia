@@ -51,8 +51,7 @@ if n==1
 end
 
 #Preallocating arrays
-RotatedCosine= Array{Float64}(undef, size(InputCosine));
-
+RotatedCosine= zeros(size(InputCosine));
 RotationMatrix=zeros(3,3,n);
 
 #Filling this array with 3x3 tensors, each 3rd dim is each point

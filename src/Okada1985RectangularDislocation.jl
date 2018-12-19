@@ -62,17 +62,17 @@ y = sin(strike).*nc .- cos(strike).*ec .+ cos(dip).*W;
 p = y.*cos(dip) .+ d.*sin(dip);
 q = y.*sin(dip) .- d.*cos(dip);
 
-ux= Array{Float64}(undef, length(x),1);
-uy= Array{Float64}(undef, length(x),1);
-uz= Array{Float64}(undef, length(x),1);
+ux= zeros(length(x),1);
+uy= zeros(length(x),1);
+uz= zeros(length(x),1);
 
-uxx= Array{Float64}(undef, length(x),1);
-uxy= Array{Float64}(undef, length(x),1);
-uyx= Array{Float64}(undef, length(x),1);
-uyy= Array{Float64}(undef, length(x),1);
+uxx= zeros(length(x),1);
+uxy= zeros(length(x),1);
+uyx= zeros(length(x),1);
+uyy= zeros(length(x),1);
 
-uzx= Array{Float64}(undef, length(x),1);
-uzy= Array{Float64}(undef, length(x),1);
+uzx= zeros(length(x),1);
+uzy= zeros(length(x),1);
 
 for i=1:length(x)
 
