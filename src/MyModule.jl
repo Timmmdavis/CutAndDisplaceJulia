@@ -39,10 +39,4 @@ include("RotateObject2D!.jl")
 #Drawing 
 include("contourfill.jl")
 
-
-
-#REMOVE
-include("TestThreading.jl")
-
-
 end
