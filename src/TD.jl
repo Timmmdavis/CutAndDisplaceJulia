@@ -742,11 +742,11 @@ if abs(beta)<eps() || abs(pi-beta)<eps()
 else
     (I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
     
-    # Transform current total displacements from EFCS to ADCS
-	(UxDn, UyDn, UzDn) =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0,0,0,ey1,ey2,ey3)
-	(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0,0,0,ey1,ey2,ey3)
-	(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0,0,0,ey1,ey2,ey3)	
-	
+	#Inverse rot mat
+	VxR=[ey1[1],ey2[1],ey3[1]];
+	VyR=[ey1[2],ey2[2],ey3[2]];
+	VzR=[ey1[3],ey2[3],ey3[3]];
+
 	## Transform slip vector components from TDCS into EFCS
 	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
 	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0,0,0,Vnorm,Vstrike,Vdip);
@@ -772,29 +772,47 @@ else
 		
 		
 		#Add mixed components together (different coords)
-		UxDn[indx[i]]  = UxDn[indx[i]] -((Dn1__/4/pi/(1-nu)*uxA)+(Dss0n_/4/pi/(1-nu)*uyA)+(Dds0n_/4/pi/(1-nu)*uzA))
-		UxDss[indx[i]] = UxDss[indx[i]]-((Dn0ss/4/pi/(1-nu)*uxA)+(Dss1__/4/pi/(1-nu)*uyA)+(Dds1ss/4/pi/(1-nu)*uzA))
-		UxDds[indx[i]] = UxDds[indx[i]]-((Dn0ds/4/pi/(1-nu)*uxA)+(Dss0ds/4/pi/(1-nu)*uyA)+(Dds1__/4/pi/(1-nu)*uzA))
-		UyDn[indx[i]]  = UyDn[indx[i]] -((Dn1__/4/pi/(1-nu)*vxA)+(Dss0n_/4/pi/(1-nu)*vyA)+(Dds0n_/4/pi/(1-nu)*vzA))
-		UyDss[indx[i]] = UyDss[indx[i]]-((Dn0ss/4/pi/(1-nu)*vxA)+(Dss1__/4/pi/(1-nu)*vyA)+(Dds1ss/4/pi/(1-nu)*vzA))
-		UyDds[indx[i]] = UyDds[indx[i]]-((Dn0ds/4/pi/(1-nu)*vxA)+(Dss0ds/4/pi/(1-nu)*vyA)+(Dds1__/4/pi/(1-nu)*vzA))
-		UzDn[indx[i]]  = UzDn[indx[i]] -((Dn1__/4/pi/(1-nu)*wxA)+(Dss0n_/4/pi/(1-nu)*wyA)+(Dds0n_/4/pi/(1-nu)*wzA))
-		UzDss[indx[i]] = UzDss[indx[i]]-((Dn0ss/4/pi/(1-nu)*wxA)+(Dss1__/4/pi/(1-nu)*wyA)+(Dds1ss/4/pi/(1-nu)*wzA))
-		UzDds[indx[i]] = UzDds[indx[i]]-((Dn0ds/4/pi/(1-nu)*wxA)+(Dss0ds/4/pi/(1-nu)*wyA)+(Dds1__/4/pi/(1-nu)*wzA))
+		uxDn =-((Dn1__/4/pi/(1-nu)*uxA)+(Dss0n_/4/pi/(1-nu)*uyA)+(Dds0n_/4/pi/(1-nu)*uzA))
+		uxDss=-((Dn0ss/4/pi/(1-nu)*uxA)+(Dss1__/4/pi/(1-nu)*uyA)+(Dds1ss/4/pi/(1-nu)*uzA))
+		uxDds=-((Dn0ds/4/pi/(1-nu)*uxA)+(Dss0ds/4/pi/(1-nu)*uyA)+(Dds1__/4/pi/(1-nu)*uzA))
+		uyDn =-((Dn1__/4/pi/(1-nu)*vxA)+(Dss0n_/4/pi/(1-nu)*vyA)+(Dds0n_/4/pi/(1-nu)*vzA))
+		uyDss=-((Dn0ss/4/pi/(1-nu)*vxA)+(Dss1__/4/pi/(1-nu)*vyA)+(Dds1ss/4/pi/(1-nu)*vzA))
+		uyDds=-((Dn0ds/4/pi/(1-nu)*vxA)+(Dss0ds/4/pi/(1-nu)*vyA)+(Dds1__/4/pi/(1-nu)*vzA))
+		uzDn =-((Dn1__/4/pi/(1-nu)*wxA)+(Dss0n_/4/pi/(1-nu)*wyA)+(Dds0n_/4/pi/(1-nu)*wzA))
+		uzDss=-((Dn0ss/4/pi/(1-nu)*wxA)+(Dss1__/4/pi/(1-nu)*wyA)+(Dds1ss/4/pi/(1-nu)*wzA))
+		uzDds=-((Dn0ds/4/pi/(1-nu)*wxA)+(Dss0ds/4/pi/(1-nu)*wyA)+(Dds1__/4/pi/(1-nu)*wzA))
 		
 		
 		(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(y1B[indx[i]],y2B[indx[i]],y3B[indx[i]],cosB,sinB,cotB,cotB2,nu,-PB[3]);
 		
 		#Add mixed components together (different coords)
-		UxDn[indx[i]]  =UxDn[indx[i]]  + ((Dn1__/4/pi/(1-nu)*uxB)+(Dss0n_/4/pi/(1-nu)*uyB)+(Dds0n_/4/pi/(1-nu)*uzB))
-		UxDss[indx[i]] =UxDss[indx[i]] + ((Dn0ss/4/pi/(1-nu)*uxB)+(Dss1__/4/pi/(1-nu)*uyB)+(Dds1ss/4/pi/(1-nu)*uzB))
-		UxDds[indx[i]] =UxDds[indx[i]] + ((Dn0ds/4/pi/(1-nu)*uxB)+(Dss0ds/4/pi/(1-nu)*uyB)+(Dds1__/4/pi/(1-nu)*uzB))
-		UyDn[indx[i]]  =UyDn[indx[i]]  + ((Dn1__/4/pi/(1-nu)*vxB)+(Dss0n_/4/pi/(1-nu)*vyB)+(Dds0n_/4/pi/(1-nu)*vzB))
-		UyDss[indx[i]] =UyDss[indx[i]] + ((Dn0ss/4/pi/(1-nu)*vxB)+(Dss1__/4/pi/(1-nu)*vyB)+(Dds1ss/4/pi/(1-nu)*vzB))
-		UyDds[indx[i]] =UyDds[indx[i]] + ((Dn0ds/4/pi/(1-nu)*vxB)+(Dss0ds/4/pi/(1-nu)*vyB)+(Dds1__/4/pi/(1-nu)*vzB))
-		UzDn[indx[i]]  =UzDn[indx[i]]  + ((Dn1__/4/pi/(1-nu)*wxB)+(Dss0n_/4/pi/(1-nu)*wyB)+(Dds0n_/4/pi/(1-nu)*wzB))
-		UzDss[indx[i]] =UzDss[indx[i]] + ((Dn0ss/4/pi/(1-nu)*wxB)+(Dss1__/4/pi/(1-nu)*wyB)+(Dds1ss/4/pi/(1-nu)*wzB))
-		UzDds[indx[i]] =UzDds[indx[i]] + ((Dn0ds/4/pi/(1-nu)*wxB)+(Dss0ds/4/pi/(1-nu)*wyB)+(Dds1__/4/pi/(1-nu)*wzB))
+		uxDn  =uxDn  + ((Dn1__/4/pi/(1-nu)*uxB)+(Dss0n_/4/pi/(1-nu)*uyB)+(Dds0n_/4/pi/(1-nu)*uzB))
+		uxDss =uxDss + ((Dn0ss/4/pi/(1-nu)*uxB)+(Dss1__/4/pi/(1-nu)*uyB)+(Dds1ss/4/pi/(1-nu)*uzB))
+		uxDds =uxDds + ((Dn0ds/4/pi/(1-nu)*uxB)+(Dss0ds/4/pi/(1-nu)*uyB)+(Dds1__/4/pi/(1-nu)*uzB))
+		uyDn  =uyDn  + ((Dn1__/4/pi/(1-nu)*vxB)+(Dss0n_/4/pi/(1-nu)*vyB)+(Dds0n_/4/pi/(1-nu)*vzB))
+		uyDss =uyDss + ((Dn0ss/4/pi/(1-nu)*vxB)+(Dss1__/4/pi/(1-nu)*vyB)+(Dds1ss/4/pi/(1-nu)*vzB))
+		uyDds =uyDds + ((Dn0ds/4/pi/(1-nu)*vxB)+(Dss0ds/4/pi/(1-nu)*vyB)+(Dds1__/4/pi/(1-nu)*vzB))
+		uzDn  =uzDn  + ((Dn1__/4/pi/(1-nu)*wxB)+(Dss0n_/4/pi/(1-nu)*wyB)+(Dds0n_/4/pi/(1-nu)*wzB))
+		uzDss =uzDss + ((Dn0ss/4/pi/(1-nu)*wxB)+(Dss1__/4/pi/(1-nu)*wyB)+(Dds1ss/4/pi/(1-nu)*wzB))
+		uzDds =uzDds + ((Dn0ds/4/pi/(1-nu)*wxB)+(Dss0ds/4/pi/(1-nu)*wyB)+(Dds1__/4/pi/(1-nu)*wzB))
+		
+		#Add mixed components together (different coords)
+		(uxDn, uyDn, uzDn) =RotateObject3DNewCoords!(uxDn, uyDn, uzDn ,0,0,0,VxR,VyR,VzR)
+		(uxDss,uyDss,uzDss)=RotateObject3DNewCoords!(uxDss,uyDss,uzDss,0,0,0,VxR,VyR,VzR)
+		(uxDds,uyDds,uzDds)=RotateObject3DNewCoords!(uxDds,uyDds,uzDds,0,0,0,VxR,VyR,VzR)
+		
+				
+		#Add mixed components together (different coords)
+		UxDn[indx[i]]  =UxDn[indx[i]]  + uxDn;
+		UxDss[indx[i]] =UxDss[indx[i]] + uxDss;
+		UxDds[indx[i]] =UxDds[indx[i]] + uxDds;
+		UyDn[indx[i]]  =UyDn[indx[i]]  + uyDn;
+		UyDss[indx[i]] =UyDss[indx[i]] + uyDss;
+		UyDds[indx[i]] =UyDds[indx[i]] + uyDds;
+		UzDn[indx[i]]  =UzDn[indx[i]]  + uzDn;
+		UzDss[indx[i]] =UzDss[indx[i]] + uzDss;
+		UzDds[indx[i]] =UzDds[indx[i]] + uzDds;
+		
 		
 	end
 	
@@ -810,43 +828,46 @@ else
 		(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(y1A[indxf[i]],y2A[indxf[i]],y3A[indxf[i]],cosB,sinB,cotB,cotB2,nu,-PA[3]);
 		
 		#Add mixed components together (different coords)
-		UxDn[indxf[i]]  = UxDn[indxf[i]] -((Dn1__/4/pi/(1-nu)*uxA)+(Dss0n_/4/pi/(1-nu)*uyA)+(Dds0n_/4/pi/(1-nu)*uzA))
-		UxDss[indxf[i]] = UxDss[indxf[i]]-((Dn0ss/4/pi/(1-nu)*uxA)+(Dss1__/4/pi/(1-nu)*uyA)+(Dds1ss/4/pi/(1-nu)*uzA))
-		UxDds[indxf[i]] = UxDds[indxf[i]]-((Dn0ds/4/pi/(1-nu)*uxA)+(Dss0ds/4/pi/(1-nu)*uyA)+(Dds1__/4/pi/(1-nu)*uzA))
-		UyDn[indxf[i]]  = UyDn[indxf[i]] -((Dn1__/4/pi/(1-nu)*vxA)+(Dss0n_/4/pi/(1-nu)*vyA)+(Dds0n_/4/pi/(1-nu)*vzA))
-		UyDss[indxf[i]] = UyDss[indxf[i]]-((Dn0ss/4/pi/(1-nu)*vxA)+(Dss1__/4/pi/(1-nu)*vyA)+(Dds1ss/4/pi/(1-nu)*vzA))
-		UyDds[indxf[i]] = UyDds[indxf[i]]-((Dn0ds/4/pi/(1-nu)*vxA)+(Dss0ds/4/pi/(1-nu)*vyA)+(Dds1__/4/pi/(1-nu)*vzA))
-		UzDn[indxf[i]]  = UzDn[indxf[i]] -((Dn1__/4/pi/(1-nu)*wxA)+(Dss0n_/4/pi/(1-nu)*wyA)+(Dds0n_/4/pi/(1-nu)*wzA))
-		UzDss[indxf[i]] = UzDss[indxf[i]]-((Dn0ss/4/pi/(1-nu)*wxA)+(Dss1__/4/pi/(1-nu)*wyA)+(Dds1ss/4/pi/(1-nu)*wzA))
-		UzDds[indxf[i]] = UzDds[indxf[i]]-((Dn0ds/4/pi/(1-nu)*wxA)+(Dss0ds/4/pi/(1-nu)*wyA)+(Dds1__/4/pi/(1-nu)*wzA))	
+		uxDn = -((Dn1__/4/pi/(1-nu)*uxA)+(Dss0n_/4/pi/(1-nu)*uyA)+(Dds0n_/4/pi/(1-nu)*uzA))
+		uxDss= -((Dn0ss/4/pi/(1-nu)*uxA)+(Dss1__/4/pi/(1-nu)*uyA)+(Dds1ss/4/pi/(1-nu)*uzA))
+		uxDds= -((Dn0ds/4/pi/(1-nu)*uxA)+(Dss0ds/4/pi/(1-nu)*uyA)+(Dds1__/4/pi/(1-nu)*uzA))
+		uyDn = -((Dn1__/4/pi/(1-nu)*vxA)+(Dss0n_/4/pi/(1-nu)*vyA)+(Dds0n_/4/pi/(1-nu)*vzA))
+		uyDss= -((Dn0ss/4/pi/(1-nu)*vxA)+(Dss1__/4/pi/(1-nu)*vyA)+(Dds1ss/4/pi/(1-nu)*vzA))
+		uyDds= -((Dn0ds/4/pi/(1-nu)*vxA)+(Dss0ds/4/pi/(1-nu)*vyA)+(Dds1__/4/pi/(1-nu)*vzA))
+		uzDn = -((Dn1__/4/pi/(1-nu)*wxA)+(Dss0n_/4/pi/(1-nu)*wyA)+(Dds0n_/4/pi/(1-nu)*wzA))
+		uzDss= -((Dn0ss/4/pi/(1-nu)*wxA)+(Dss1__/4/pi/(1-nu)*wyA)+(Dds1ss/4/pi/(1-nu)*wzA))
+		uzDds= -((Dn0ds/4/pi/(1-nu)*wxA)+(Dss0ds/4/pi/(1-nu)*wyA)+(Dds1__/4/pi/(1-nu)*wzA))	
 		
 		(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(y1B[indxf[i]],y2B[indxf[i]],y3B[indxf[i]],cosB,sinB,cotB,cotB2,nu,-PB[3]);
 		
 		#Add mixed components together (different coords)
-		UxDn[indxf[i]]  =UxDn[indxf[i]]  + ((Dn1__/4/pi/(1-nu)*uxB)+(Dss0n_/4/pi/(1-nu)*uyB)+(Dds0n_/4/pi/(1-nu)*uzB))
-		UxDss[indxf[i]] =UxDss[indxf[i]] + ((Dn0ss/4/pi/(1-nu)*uxB)+(Dss1__/4/pi/(1-nu)*uyB)+(Dds1ss/4/pi/(1-nu)*uzB))
-		UxDds[indxf[i]] =UxDds[indxf[i]] + ((Dn0ds/4/pi/(1-nu)*uxB)+(Dss0ds/4/pi/(1-nu)*uyB)+(Dds1__/4/pi/(1-nu)*uzB))
-		UyDn[indxf[i]]  =UyDn[indxf[i]]  + ((Dn1__/4/pi/(1-nu)*vxB)+(Dss0n_/4/pi/(1-nu)*vyB)+(Dds0n_/4/pi/(1-nu)*vzB))
-		UyDss[indxf[i]] =UyDss[indxf[i]] + ((Dn0ss/4/pi/(1-nu)*vxB)+(Dss1__/4/pi/(1-nu)*vyB)+(Dds1ss/4/pi/(1-nu)*vzB))
-		UyDds[indxf[i]] =UyDds[indxf[i]] + ((Dn0ds/4/pi/(1-nu)*vxB)+(Dss0ds/4/pi/(1-nu)*vyB)+(Dds1__/4/pi/(1-nu)*vzB))
-		UzDn[indxf[i]]  =UzDn[indxf[i]]  + ((Dn1__/4/pi/(1-nu)*wxB)+(Dss0n_/4/pi/(1-nu)*wyB)+(Dds0n_/4/pi/(1-nu)*wzB))
-		UzDss[indxf[i]] =UzDss[indxf[i]] + ((Dn0ss/4/pi/(1-nu)*wxB)+(Dss1__/4/pi/(1-nu)*wyB)+(Dds1ss/4/pi/(1-nu)*wzB))
-		UzDds[indxf[i]] =UzDds[indxf[i]] + ((Dn0ds/4/pi/(1-nu)*wxB)+(Dss0ds/4/pi/(1-nu)*wyB)+(Dds1__/4/pi/(1-nu)*wzB))
+		uxDn  =uxDn  + ((Dn1__/4/pi/(1-nu)*uxB)+(Dss0n_/4/pi/(1-nu)*uyB)+(Dds0n_/4/pi/(1-nu)*uzB))
+		uxDss =uxDss + ((Dn0ss/4/pi/(1-nu)*uxB)+(Dss1__/4/pi/(1-nu)*uyB)+(Dds1ss/4/pi/(1-nu)*uzB))
+		uxDds =uxDds + ((Dn0ds/4/pi/(1-nu)*uxB)+(Dss0ds/4/pi/(1-nu)*uyB)+(Dds1__/4/pi/(1-nu)*uzB))
+		uyDn  =uyDn  + ((Dn1__/4/pi/(1-nu)*vxB)+(Dss0n_/4/pi/(1-nu)*vyB)+(Dds0n_/4/pi/(1-nu)*vzB))
+		uyDss =uyDss + ((Dn0ss/4/pi/(1-nu)*vxB)+(Dss1__/4/pi/(1-nu)*vyB)+(Dds1ss/4/pi/(1-nu)*vzB))
+		uyDds =uyDds + ((Dn0ds/4/pi/(1-nu)*vxB)+(Dss0ds/4/pi/(1-nu)*vyB)+(Dds1__/4/pi/(1-nu)*vzB))
+		uzDn  =uzDn  + ((Dn1__/4/pi/(1-nu)*wxB)+(Dss0n_/4/pi/(1-nu)*wyB)+(Dds0n_/4/pi/(1-nu)*wzB))
+		uzDss =uzDss + ((Dn0ss/4/pi/(1-nu)*wxB)+(Dss1__/4/pi/(1-nu)*wyB)+(Dds1ss/4/pi/(1-nu)*wzB))
+		uzDds =uzDds + ((Dn0ds/4/pi/(1-nu)*wxB)+(Dss0ds/4/pi/(1-nu)*wyB)+(Dds1__/4/pi/(1-nu)*wzB))
+		
+		#Add mixed components together (different coords)
+		(uxDn, uyDn, uzDn) =RotateObject3DNewCoords!(uxDn, uyDn, uzDn ,0,0,0,VxR,VyR,VzR)
+		(uxDss,uyDss,uzDss)=RotateObject3DNewCoords!(uxDss,uyDss,uzDss,0,0,0,VxR,VyR,VzR)
+		(uxDds,uyDds,uzDds)=RotateObject3DNewCoords!(uxDds,uyDds,uzDds,0,0,0,VxR,VyR,VzR)
+		
+		#Add mixed components together (different coords)
+		UxDn[indxf[i]]  =UxDn[indxf[i]]  + uxDn;
+		UxDss[indxf[i]] =UxDss[indxf[i]] + uxDss;
+		UxDds[indxf[i]] =UxDds[indxf[i]] + uxDds;
+		UyDn[indxf[i]]  =UyDn[indxf[i]]  + uyDn;
+		UyDss[indxf[i]] =UyDss[indxf[i]] + uyDss;
+		UyDds[indxf[i]] =UyDds[indxf[i]] + uyDds;
+		UzDn[indxf[i]]  =UzDn[indxf[i]]  + uzDn;
+		UzDss[indxf[i]] =UzDss[indxf[i]] + uzDss;
+		UzDds[indxf[i]] =UzDds[indxf[i]] + uzDds;
 		
     end
-	
-	#Inverse rot mat
-	VxR=[ey1[1],ey2[1],ey3[1]];
-	VyR=[ey1[2],ey2[2],ey3[2]];
-	VzR=[ey1[3],ey2[3],ey3[3]];
-	
-	#println("Try this rotation on the compoents coming out the func... faster? Therefore halving the transforms...")
-    # Transform total Free Surface Correction to displacements from ADCS 
-    # to EFCS
-	(UxDn,UyDn,UzDn)   =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0,0,0,VxR,VyR,VzR)
-	(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0,0,0,VxR,VyR,VzR)
-	(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0,0,0,VxR,VyR,VzR)
-
 
 end	#if statement
 
@@ -968,12 +989,6 @@ vz = ((1 -2*nu)*(-sinB*log(rb+z3b)-y1 /(rb+y3b)*(1 +a/
 wz = (2*(1 -nu)*Fib+2*(1 -nu)*(y2*sinB/(rb+z3b)*(cosB+
     a/rb))+y2 *(y3b-a)*sinB/(rb*(rb+z3b))*(1 +(rb*cosB+y3b)/(rb+
     z3b)*(cosB+a/rb)+a*y3b/rb^2));  #b3/4/pi/(1 -nu)*
-	
-
-
-# u = ux[1]+uy[1]+uz[1];
-# v = vx[1]+vy[1]+vz[1];
-# w = wx[1]+wy[1]+wz[1];
 
 #Export individual components
 return(ux[1],uy[1],uz[1],vx[1],vy[1],vz[1],wx[1],wy[1],wz[1])
@@ -1161,14 +1176,6 @@ E5Dss0=Dss0/8/pi/E1;
 
 # Transform strains from ADCS into TDCS 
 B=[[1   0   0 ]; [0  Ct  St ]; [0  -St  Ct]]	 # 3x3 Transformation matrix
-A=[[1   0   0 ]; [0  Ct  -St ]; [0  St  Ct]]	 # 3x3 Transformation matrix (inverse)
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = 
-TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,A);
-(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = 
-TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,A);
-(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = 
-TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,A);
-
 
 # Calculate strains associated with an angular dislocation in ADCS
 for i=1:length(x)
@@ -1183,46 +1190,69 @@ for i=1:length(x)
 	 AngDisStrain(x[i],y[i],z[i],cosA,sinA,Dn,Dss1[1],Dds1[1],nu,E1,E2,cosA2,sinADE1)
 
 	#Opening components 
-	ExxDn[i]	= ExxDn[i] + Dn*(rFi_rx)+E3* exxDn
-	EyyDn[i] 	= EyyDn[i] + E3* eyyDn; 
-	EzzDn[i] 	= EzzDn[i] + E3* ezzDn;
-	ExyDn[i] 	= ExyDn[i] + Dn*(rFi_ry)/2-E3* exyDn; 
-	ExzDn[i] 	= ExzDn[i] + Dn*(rFi_rz)/2-E3* exzDn;
-	EyzDn[i]  	= EyzDn[i] + E3* eyzDn;
+	exxdn= Dn*(rFi_rx)+E3* exxDn
+	eyydn= E3* eyyDn; 
+	ezzdn= E3* ezzDn;
+	exydn= Dn*(rFi_ry)/2-E3* exyDn; 
+	exzdn= Dn*(rFi_rz)/2-E3* exzDn;
+	eyzdn= E3* eyzDn;
 	
 	#Some constants
 	E4Dss1=Dss1*x[i]/8/pi/E1;
 	E4Dss0=Dss0*x[i]/8/pi/E1;
 	
 	#Comp mixed components (in the current coords)
-	ExxDss[i] 	= ExxDss[i] + (-E4Dss1* exxDss)  +  (Dds0*x[i]*sinADE1* exxDds);
-	ExxDds[i] 	= ExxDds[i] + (-E4Dss0* exxDss)  +  (Dds1*x[i]*sinADE1* exxDds);
+	exxdss= (-E4Dss1* exxDss)  +  (Dds0*x[i]*sinADE1* exxDds);
+	exxdds= (-E4Dss0* exxDss)  +  (Dds1*x[i]*sinADE1* exxDds);
 	
-	EyyDss[i] 	= EyyDss[i] + (Dss1*(rFi_ry)-E4Dss1* eyyDss)  +  (Dds0*x[i]*sinADE1* eyyDds);
-	EyyDds[i] 	= EyyDds[i] + (Dss0*(rFi_ry)-E4Dss0* eyyDss)  +  (Dds1*x[i]*sinADE1* eyyDds);
+	eyydss= (Dss1*(rFi_ry)-E4Dss1* eyyDss)  +  (Dds0*x[i]*sinADE1* eyyDds);
+	eyydds= (Dss0*(rFi_ry)-E4Dss0* eyyDss)  +  (Dds1*x[i]*sinADE1* eyyDds);
 	
-	EzzDss[i] 	= EzzDss[i] + (-E4Dss1* ezzDss) + (Dds0*(rFi_rz)+Dds0*x[i]*sinADE1* ezzDds); 
-	EzzDds[i] 	= EzzDds[i] + (-E4Dss0* ezzDss) + (Dds1*(rFi_rz)+Dds1*x[i]*sinADE1* ezzDds); 
+	ezzdss= (-E4Dss1* ezzDss) + (Dds0*(rFi_rz)+Dds0*x[i]*sinADE1* ezzDds); 
+	ezzdds= (-E4Dss0* ezzDss) + (Dds1*(rFi_rz)+Dds1*x[i]*sinADE1* ezzDds); 
 	
-	ExyDss[i] 	= ExyDss[i] + (Dss1*(rFi_rx)/2+E5Dss1* exyDss)  -  (Dds0*sinADE1* exyDds);	
-	ExyDds[i] 	= ExyDds[i] + (Dss0*(rFi_rx)/2+E5Dss0* exyDss)  -  (Dds1*sinADE1* exyDds);	
+	exydss= (Dss1*(rFi_rx)/2+E5Dss1* exyDss)  -  (Dds0*sinADE1* exyDds);	
+	exydds= (Dss0*(rFi_rx)/2+E5Dss0* exyDss)  -  (Dds1*sinADE1* exyDds);	
 	
-	ExzDss[i] 	= ExzDss[i] + (E5Dss1* exzDss) + (Dds0*(rFi_rx)/2-Dds0*sinADE1*exzDds) ; 
-	ExzDds[i] 	= ExzDds[i] + (E5Dss0* exzDss) + (Dds1*(rFi_rx)/2-Dds1*sinADE1*exzDds);
+	exzdss= (E5Dss1* exzDss) + (Dds0*(rFi_rx)/2-Dds0*sinADE1*exzDds) ; 
+	exzdds= (E5Dss0* exzDss) + (Dds1*(rFi_rx)/2-Dds1*sinADE1*exzDds);
 
-	EyzDss[i] 	= EyzDss[i] + (Dss1*(rFi_rz)/2-E4Dss1* eyzDss) + (Dds0*(rFi_ry)/2-Dds0*x[i]*sinADE1* eyzDds);
-	EyzDds[i] 	= EyzDds[i] + (Dss0*(rFi_rz)/2-E4Dss0* eyzDss) + (Dds1*(rFi_ry)/2-Dds1*x[i]*sinADE1* eyzDds);		  
+	eyzdss= (Dss1*(rFi_rz)/2-E4Dss1* eyzDss) + (Dds0*(rFi_ry)/2-Dds0*x[i]*sinADE1* eyzDds);
+	eyzdds= (Dss0*(rFi_rz)/2-E4Dss0* eyzDss) + (Dds1*(rFi_ry)/2-Dds1*x[i]*sinADE1* eyzDds);		  
 
+	# Transform strains from ADCS into TDCS
+	(exxdn,eyydn,ezzdn,exydn,exzdn,eyzdn) = 
+	TensorTransformation3D!(exxdn,eyydn,ezzdn,exydn,exzdn,eyzdn,B);
+	(exxdss,eyydss,ezzdss,exydss,exzdss,eyzdss) = 
+	TensorTransformation3D!(exxdss,eyydss,ezzdss,exydss,exzdss,eyzdss,B);
+	(exxdds,eyydds,ezzdds,exydds,exzdds,eyzdds) = 
+	TensorTransformation3D!(exxdds,eyydds,ezzdds,exydds,exzdds,eyzdds,B);
+	
+	#Add to total vector
+	ExxDn[i] 	= ExxDn[i] +exxdn;
+	EyyDn[i] 	= EyyDn[i] +eyydn
+	EzzDn[i] 	= EzzDn[i] +ezzdn
+	ExyDn[i] 	= ExyDn[i] +exydn
+	ExzDn[i] 	= ExzDn[i] +exzdn
+	EyzDn[i] 	= EyzDn[i] +eyzdn
+	
+	ExxDss[i] 	= ExxDss[i] +exxdss;
+	EyyDss[i] 	= EyyDss[i] +eyydss
+	EzzDss[i] 	= EzzDss[i] +ezzdss
+	ExyDss[i] 	= ExyDss[i] +exydss
+	ExzDss[i] 	= ExzDss[i] +exzdss
+	EyzDss[i] 	= EyzDss[i] +eyzdss
+	
+	ExxDds[i] 	= ExxDds[i] +exxdds
+	EyyDds[i] 	= EyyDds[i] +eyydds
+	EzzDds[i] 	= EzzDds[i] +ezzdds
+	ExyDds[i] 	= ExyDds[i] +exydds
+	ExzDds[i] 	= ExzDds[i] +exzdds
+	EyzDds[i] 	= EyzDds[i] +eyzdds
+	
+	
 end	
 
-#println("Try this rotation on the compoents coming out the func... faster? Therefore halving the transforms...")
-# Transform strains from ADCS into TDCS
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = 
-TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,B);
-(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = 
-TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,B);
-(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = 
-TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,B);
 
 ## Transform coordinates of the calculation points from ADCS into TDCS
 (y,z)  =RotateObject2D!(y,z,0,0,Ct,-St)
@@ -1381,13 +1411,6 @@ else
 
 	AFlip = [ey1[1] ey1[2] ey1[3] ey2[1] ey2[2]  ey2[3]  ey3[1] ey3[2]  ey3[3]]; # Transformation matrix
 	
-    # Transform current total strains from EFCS to ADCS
-	(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,AFlip);
-	(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,AFlip);
-	(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,AFlip);	
-	
-	
-	println("Make sure there is no allocation in these")
 	## Transform slip vector components from TDCS into EFCS
 	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
 	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0,0,0,Vnorm,Vstrike,Vdip);
@@ -1423,24 +1446,24 @@ else
 		v23Az = -v23Az;
 		
 		#For configuration 1 Dn and Dss are flipped
-		ExxDn[indx[i]] = ExxDn[indx[i]] -((-Dn1__*v11Ax)+(-Dss0n_*v11Ay)+(Dds0n_*v11Az))
-		ExxDss[indx[i]]= ExxDss[indx[i]]-((-Dn0ss*v11Ax)+(-Dss1__*v11Ay)+(Dds1ss*v11Az))
-		ExxDds[indx[i]]= ExxDds[indx[i]]-((-Dn0ds*v11Ax)+(-Dss0ds*v11Ay)+(Dds1__*v11Az))
-		EyyDn[indx[i]] = EyyDn[indx[i]] -((-Dn1__*v22Ax)+(-Dss0n_*v22Ay)+(Dds0n_*v22Az))
-		EyyDss[indx[i]]= EyyDss[indx[i]]-((-Dn0ss*v22Ax)+(-Dss1__*v22Ay)+(Dds1ss*v22Az))
-		EyyDds[indx[i]]= EyyDds[indx[i]]-((-Dn0ds*v22Ax)+(-Dss0ds*v22Ay)+(Dds1__*v22Az))
-		EzzDn[indx[i]] = EzzDn[indx[i]] -((-Dn1__*v33Ax)+(-Dss0n_*v33Ay)+(Dds0n_*v33Az))
-		EzzDss[indx[i]]= EzzDss[indx[i]]-((-Dn0ss*v33Ax)+(-Dss1__*v33Ay)+(Dds1ss*v33Az))
-		EzzDds[indx[i]]= EzzDds[indx[i]]-((-Dn0ds*v33Ax)+(-Dss0ds*v33Ay)+(Dds1__*v33Az))
-		ExyDn[indx[i]] = ExyDn[indx[i]] -((-Dn1__/2*v12Ax)+(-Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
-		ExyDss[indx[i]]= ExyDss[indx[i]]-((-Dn0ss/2*v12Ax)+(-Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
-		ExyDds[indx[i]]= ExyDds[indx[i]]-((-Dn0ds/2*v12Ax)+(-Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
-		ExzDn[indx[i]] = ExzDn[indx[i]] -((-Dn1__/2*v13Ax)+(-Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
-		ExzDss[indx[i]]= ExzDss[indx[i]]-((-Dn0ss/2*v13Ax)+(-Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
-		ExzDds[indx[i]]= ExzDds[indx[i]]-((-Dn0ds/2*v13Ax)+(-Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
-		EyzDn[indx[i]] = EyzDn[indx[i]] -((-Dn1__/2*v23Ax)+(-Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
-		EyzDss[indx[i]]= EyzDss[indx[i]]-((-Dn0ss/2*v23Ax)+(-Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
-		EyzDds[indx[i]]= EyzDds[indx[i]]-((-Dn0ds/2*v23Ax)+(-Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
+		exxDn = -((-Dn1__*v11Ax)+(-Dss0n_*v11Ay)+(Dds0n_*v11Az))
+		exxDss= -((-Dn0ss*v11Ax)+(-Dss1__*v11Ay)+(Dds1ss*v11Az))
+		exxDds= -((-Dn0ds*v11Ax)+(-Dss0ds*v11Ay)+(Dds1__*v11Az))
+		eyyDn = -((-Dn1__*v22Ax)+(-Dss0n_*v22Ay)+(Dds0n_*v22Az))
+		eyyDss= -((-Dn0ss*v22Ax)+(-Dss1__*v22Ay)+(Dds1ss*v22Az))
+		eyyDds= -((-Dn0ds*v22Ax)+(-Dss0ds*v22Ay)+(Dds1__*v22Az))
+		ezzDn = -((-Dn1__*v33Ax)+(-Dss0n_*v33Ay)+(Dds0n_*v33Az))
+		ezzDss= -((-Dn0ss*v33Ax)+(-Dss1__*v33Ay)+(Dds1ss*v33Az))
+		ezzDds= -((-Dn0ds*v33Ax)+(-Dss0ds*v33Ay)+(Dds1__*v33Az))
+		exyDn = -((-Dn1__/2*v12Ax)+(-Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
+		exyDss= -((-Dn0ss/2*v12Ax)+(-Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
+		exyDds= -((-Dn0ds/2*v12Ax)+(-Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
+		exzDn = -((-Dn1__/2*v13Ax)+(-Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
+		exzDss= -((-Dn0ss/2*v13Ax)+(-Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
+		exzDds= -((-Dn0ds/2*v13Ax)+(-Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
+		eyzDn = -((-Dn1__/2*v23Ax)+(-Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
+		eyzDss= -((-Dn0ss/2*v23Ax)+(-Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
+		eyzDds= -((-Dn0ds/2*v23Ax)+(-Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
 		
 		(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
 	     v11By,v22By,v33By,v12By,v13By,v23By,
@@ -1454,24 +1477,50 @@ else
 		v23By = -v23By;
 		v23Bz = -v23Bz;
 		
-		ExxDn[indx[i]] = ExxDn[indx[i]] + ((-Dn1__*v11Bx)+(-Dss0n_*v11By)+(Dds0n_*v11Bz))
-		ExxDss[indx[i]]= ExxDss[indx[i]]+ ((-Dn0ss*v11Bx)+(-Dss1__*v11By)+(Dds1ss*v11Bz))
-		ExxDds[indx[i]]= ExxDds[indx[i]]+ ((-Dn0ds*v11Bx)+(-Dss0ds*v11By)+(Dds1__*v11Bz))
-		EyyDn[indx[i]] = EyyDn[indx[i]] + ((-Dn1__*v22Bx)+(-Dss0n_*v22By)+(Dds0n_*v22Bz))
-		EyyDss[indx[i]]= EyyDss[indx[i]]+ ((-Dn0ss*v22Bx)+(-Dss1__*v22By)+(Dds1ss*v22Bz))
-		EyyDds[indx[i]]= EyyDds[indx[i]]+ ((-Dn0ds*v22Bx)+(-Dss0ds*v22By)+(Dds1__*v22Bz))
-		EzzDn[indx[i]] = EzzDn[indx[i]] + ((-Dn1__*v33Bx)+(-Dss0n_*v33By)+(Dds0n_*v33Bz))
-		EzzDss[indx[i]]= EzzDss[indx[i]]+ ((-Dn0ss*v33Bx)+(-Dss1__*v33By)+(Dds1ss*v33Bz))
-		EzzDds[indx[i]]= EzzDds[indx[i]]+ ((-Dn0ds*v33Bx)+(-Dss0ds*v33By)+(Dds1__*v33Bz))
-		ExyDn[indx[i]] = ExyDn[indx[i]] + ((-Dn1__/2*v12Bx)+(-Dss0n_/2*v12By)+(Dds0n_/2*v12Bz))
-		ExyDss[indx[i]]= ExyDss[indx[i]]+ ((-Dn0ss/2*v12Bx)+(-Dss1__/2*v12By)+(Dds1ss/2*v12Bz))
-		ExyDds[indx[i]]= ExyDds[indx[i]]+ ((-Dn0ds/2*v12Bx)+(-Dss0ds/2*v12By)+(Dds1__/2*v12Bz))
-		ExzDn[indx[i]] = ExzDn[indx[i]] + ((-Dn1__/2*v13Bx)+(-Dss0n_/2*v13By)+(Dds0n_/2*v13Bz))
-		ExzDss[indx[i]]= ExzDss[indx[i]]+ ((-Dn0ss/2*v13Bx)+(-Dss1__/2*v13By)+(Dds1ss/2*v13Bz))
-		ExzDds[indx[i]]= ExzDds[indx[i]]+ ((-Dn0ds/2*v13Bx)+(-Dss0ds/2*v13By)+(Dds1__/2*v13Bz))
-		EyzDn[indx[i]] = EyzDn[indx[i]] + ((-Dn1__/2*v23Bx)+(-Dss0n_/2*v23By)+(Dds0n_/2*v23Bz))
-		EyzDss[indx[i]]= EyzDss[indx[i]]+ ((-Dn0ss/2*v23Bx)+(-Dss1__/2*v23By)+(Dds1ss/2*v23Bz))
-		EyzDds[indx[i]]= EyzDds[indx[i]]+ ((-Dn0ds/2*v23Bx)+(-Dss0ds/2*v23By)+(Dds1__/2*v23Bz))
+		exxDn = exxDn + ((-Dn1__*v11Bx)+(-Dss0n_*v11By)+(Dds0n_*v11Bz))
+		exxDss= exxDss+ ((-Dn0ss*v11Bx)+(-Dss1__*v11By)+(Dds1ss*v11Bz))
+		exxDds= exxDds+ ((-Dn0ds*v11Bx)+(-Dss0ds*v11By)+(Dds1__*v11Bz))
+		eyyDn = eyyDn + ((-Dn1__*v22Bx)+(-Dss0n_*v22By)+(Dds0n_*v22Bz))
+		eyyDss= eyyDss+ ((-Dn0ss*v22Bx)+(-Dss1__*v22By)+(Dds1ss*v22Bz))
+		eyyDds= eyyDds+ ((-Dn0ds*v22Bx)+(-Dss0ds*v22By)+(Dds1__*v22Bz))
+		ezzDn = ezzDn + ((-Dn1__*v33Bx)+(-Dss0n_*v33By)+(Dds0n_*v33Bz))
+		ezzDss= ezzDss+ ((-Dn0ss*v33Bx)+(-Dss1__*v33By)+(Dds1ss*v33Bz))
+		ezzDds= ezzDds+ ((-Dn0ds*v33Bx)+(-Dss0ds*v33By)+(Dds1__*v33Bz))
+		exyDn = exyDn + ((-Dn1__/2*v12Bx)+(-Dss0n_/2*v12By)+(Dds0n_/2*v12Bz))
+		exyDss= exyDss+ ((-Dn0ss/2*v12Bx)+(-Dss1__/2*v12By)+(Dds1ss/2*v12Bz))
+		exyDds= exyDds+ ((-Dn0ds/2*v12Bx)+(-Dss0ds/2*v12By)+(Dds1__/2*v12Bz))
+		exzDn = exzDn + ((-Dn1__/2*v13Bx)+(-Dss0n_/2*v13By)+(Dds0n_/2*v13Bz))
+		exzDss= exzDss+ ((-Dn0ss/2*v13Bx)+(-Dss1__/2*v13By)+(Dds1ss/2*v13Bz))
+		exzDds= exzDds+ ((-Dn0ds/2*v13Bx)+(-Dss0ds/2*v13By)+(Dds1__/2*v13Bz))
+		eyzDn = eyzDn + ((-Dn1__/2*v23Bx)+(-Dss0n_/2*v23By)+(Dds0n_/2*v23Bz))
+		eyzDss= eyzDss+ ((-Dn0ss/2*v23Bx)+(-Dss1__/2*v23By)+(Dds1ss/2*v23Bz))
+		eyzDds= eyzDds+ ((-Dn0ds/2*v23Bx)+(-Dss0ds/2*v23By)+(Dds1__/2*v23Bz))
+		
+		# Transform total Free Surface Correction to strains from ADCS to EFCS
+		(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn) = TensorTransformation3D!(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn,AFlip);
+		(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss) = TensorTransformation3D!(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss,AFlip);
+		(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds) = TensorTransformation3D!(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds,AFlip);	
+		
+		#Add to total vector
+		ExxDn[indx[i]] = ExxDn[indx[i]] +exxDn;
+		ExxDss[indx[i]]= ExxDss[indx[i]]+exxDss;
+		ExxDds[indx[i]]= ExxDds[indx[i]]+exxDds;
+		EyyDn[indx[i]] = EyyDn[indx[i]] +eyyDn;
+		EyyDss[indx[i]]= EyyDss[indx[i]]+eyyDss;
+		EyyDds[indx[i]]= EyyDds[indx[i]]+eyyDds;
+		EzzDn[indx[i]] = EzzDn[indx[i]] +ezzDn;
+		EzzDss[indx[i]]= EzzDss[indx[i]]+ezzDss;
+		EzzDds[indx[i]]= EzzDds[indx[i]]+ezzDds;
+		ExyDn[indx[i]] = ExyDn[indx[i]] +exyDn;
+		ExyDss[indx[i]]= ExyDss[indx[i]]+exyDss;
+		ExyDds[indx[i]]= ExyDds[indx[i]]+exyDds;
+		ExzDn[indx[i]] = ExzDn[indx[i]] +exzDn;
+		ExzDss[indx[i]]= ExzDss[indx[i]]+exzDss;
+		ExzDds[indx[i]]= ExzDds[indx[i]]+exzDds;
+		EyzDn[indx[i]] = EyzDn[indx[i]] +eyzDn;
+		EyzDss[indx[i]]= EyzDss[indx[i]]+eyzDss;
+		EyzDds[indx[i]]= EyzDds[indx[i]]+eyzDds;
+		
 		
 	end
     
@@ -1489,56 +1538,78 @@ else
 	     v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(y1A[indxf[i]],y2A[indxf[i]],y3A[indxf[i]],cosB,sinB,cotB,nu,-PA[3]);
 		 
 		#For configuration 2 no components are flipped
-		ExxDn[indxf[i]] = ExxDn[indxf[i]] -((Dn1__*v11Ax)+(Dss0n_*v11Ay)+(Dds0n_*v11Az))
-		ExxDss[indxf[i]]= ExxDss[indxf[i]]-((Dn0ss*v11Ax)+(Dss1__*v11Ay)+(Dds1ss*v11Az))
-		ExxDds[indxf[i]]= ExxDds[indxf[i]]-((Dn0ds*v11Ax)+(Dss0ds*v11Ay)+(Dds1__*v11Az))
-		EyyDn[indxf[i]] = EyyDn[indxf[i]] -((Dn1__*v22Ax)+(Dss0n_*v22Ay)+(Dds0n_*v22Az))
-		EyyDss[indxf[i]]= EyyDss[indxf[i]]-((Dn0ss*v22Ax)+(Dss1__*v22Ay)+(Dds1ss*v22Az))
-		EyyDds[indxf[i]]= EyyDds[indxf[i]]-((Dn0ds*v22Ax)+(Dss0ds*v22Ay)+(Dds1__*v22Az))
-		EzzDn[indxf[i]] = EzzDn[indxf[i]] -((Dn1__*v33Ax)+(Dss0n_*v33Ay)+(Dds0n_*v33Az))
-		EzzDss[indxf[i]]= EzzDss[indxf[i]]-((Dn0ss*v33Ax)+(Dss1__*v33Ay)+(Dds1ss*v33Az))
-		EzzDds[indxf[i]]= EzzDds[indxf[i]]-((Dn0ds*v33Ax)+(Dss0ds*v33Ay)+(Dds1__*v33Az))
-		ExyDn[indxf[i]] = ExyDn[indxf[i]] -((Dn1__/2*v12Ax)+(Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
-		ExyDss[indxf[i]]= ExyDss[indxf[i]]-((Dn0ss/2*v12Ax)+(Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
-		ExyDds[indxf[i]]= ExyDds[indxf[i]]-((Dn0ds/2*v12Ax)+(Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
-		ExzDn[indxf[i]] = ExzDn[indxf[i]] -((Dn1__/2*v13Ax)+(Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
-		ExzDss[indxf[i]]= ExzDss[indxf[i]]-((Dn0ss/2*v13Ax)+(Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
-		ExzDds[indxf[i]]= ExzDds[indxf[i]]-((Dn0ds/2*v13Ax)+(Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
-		EyzDn[indxf[i]] = EyzDn[indxf[i]] -((Dn1__/2*v23Ax)+(Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
-		EyzDss[indxf[i]]= EyzDss[indxf[i]]-((Dn0ss/2*v23Ax)+(Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
-		EyzDds[indxf[i]]= EyzDds[indxf[i]]-((Dn0ds/2*v23Ax)+(Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
+		exxDn =-((Dn1__*v11Ax)+(Dss0n_*v11Ay)+(Dds0n_*v11Az))
+		exxDss=-((Dn0ss*v11Ax)+(Dss1__*v11Ay)+(Dds1ss*v11Az))
+		exxDds=-((Dn0ds*v11Ax)+(Dss0ds*v11Ay)+(Dds1__*v11Az))
+		eyyDn =-((Dn1__*v22Ax)+(Dss0n_*v22Ay)+(Dds0n_*v22Az))
+		eyyDss=-((Dn0ss*v22Ax)+(Dss1__*v22Ay)+(Dds1ss*v22Az))
+		eyyDds=-((Dn0ds*v22Ax)+(Dss0ds*v22Ay)+(Dds1__*v22Az))
+		ezzDn =-((Dn1__*v33Ax)+(Dss0n_*v33Ay)+(Dds0n_*v33Az))
+		ezzDss=-((Dn0ss*v33Ax)+(Dss1__*v33Ay)+(Dds1ss*v33Az))
+		ezzDds=-((Dn0ds*v33Ax)+(Dss0ds*v33Ay)+(Dds1__*v33Az))
+		exyDn =-((Dn1__/2*v12Ax)+(Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
+		exyDss=-((Dn0ss/2*v12Ax)+(Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
+		exyDds=-((Dn0ds/2*v12Ax)+(Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
+		exzDn =-((Dn1__/2*v13Ax)+(Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
+		exzDss=-((Dn0ss/2*v13Ax)+(Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
+		exzDds=-((Dn0ds/2*v13Ax)+(Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))
+		eyzDn =-((Dn1__/2*v23Ax)+(Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
+		eyzDss=-((Dn0ss/2*v23Ax)+(Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
+		eyzDds=-((Dn0ds/2*v23Ax)+(Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
 		
 		(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
 	     v11By,v22By,v33By,v12By,v13By,v23By,
 	     v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(y1B[indxf[i]],y2B[indxf[i]],y3B[indxf[i]],cosB,sinB,cotB,nu,-PB[3]);
 		 
-		ExxDn[indxf[i]] = ExxDn[indxf[i]] + ((Dn1__*v11Bx)+(Dss0n_*v11By)+(Dds0n_*v11Bz))
-		ExxDss[indxf[i]]= ExxDss[indxf[i]]+ ((Dn0ss*v11Bx)+(Dss1__*v11By)+(Dds1ss*v11Bz))
-		ExxDds[indxf[i]]= ExxDds[indxf[i]]+ ((Dn0ds*v11Bx)+(Dss0ds*v11By)+(Dds1__*v11Bz))
-		EyyDn[indxf[i]] = EyyDn[indxf[i]] + ((Dn1__*v22Bx)+(Dss0n_*v22By)+(Dds0n_*v22Bz))
-		EyyDss[indxf[i]]= EyyDss[indxf[i]]+ ((Dn0ss*v22Bx)+(Dss1__*v22By)+(Dds1ss*v22Bz))
-		EyyDds[indxf[i]]= EyyDds[indxf[i]]+ ((Dn0ds*v22Bx)+(Dss0ds*v22By)+(Dds1__*v22Bz))
-		EzzDn[indxf[i]] = EzzDn[indxf[i]] + ((Dn1__*v33Bx)+(Dss0n_*v33By)+(Dds0n_*v33Bz))
-		EzzDss[indxf[i]]= EzzDss[indxf[i]]+ ((Dn0ss*v33Bx)+(Dss1__*v33By)+(Dds1ss*v33Bz))
-		EzzDds[indxf[i]]= EzzDds[indxf[i]]+ ((Dn0ds*v33Bx)+(Dss0ds*v33By)+(Dds1__*v33Bz))
-		ExyDn[indxf[i]] = ExyDn[indxf[i]] + ((Dn1__/2*v12Bx)+(Dss0n_/2*v12By)+(Dds0n_/2*v12Bz))
-		ExyDss[indxf[i]]= ExyDss[indxf[i]]+ ((Dn0ss/2*v12Bx)+(Dss1__/2*v12By)+(Dds1ss/2*v12Bz))
-		ExyDds[indxf[i]]= ExyDds[indxf[i]]+ ((Dn0ds/2*v12Bx)+(Dss0ds/2*v12By)+(Dds1__/2*v12Bz))
-		ExzDn[indxf[i]] = ExzDn[indxf[i]] + ((Dn1__/2*v13Bx)+(Dss0n_/2*v13By)+(Dds0n_/2*v13Bz))
-		ExzDss[indxf[i]]= ExzDss[indxf[i]]+ ((Dn0ss/2*v13Bx)+(Dss1__/2*v13By)+(Dds1ss/2*v13Bz))
-		ExzDds[indxf[i]]= ExzDds[indxf[i]]+ ((Dn0ds/2*v13Bx)+(Dss0ds/2*v13By)+(Dds1__/2*v13Bz))
-		EyzDn[indxf[i]] = EyzDn[indxf[i]] + ((Dn1__/2*v23Bx)+(Dss0n_/2*v23By)+(Dds0n_/2*v23Bz))
-		EyzDss[indxf[i]]= EyzDss[indxf[i]]+ ((Dn0ss/2*v23Bx)+(Dss1__/2*v23By)+(Dds1ss/2*v23Bz))
-		EyzDds[indxf[i]]= EyzDds[indxf[i]]+ ((Dn0ds/2*v23Bx)+(Dss0ds/2*v23By)+(Dds1__/2*v23Bz))
+		exxDn = exxDn + ((Dn1__*v11Bx)+(Dss0n_*v11By)+(Dds0n_*v11Bz))
+		exxDss= exxDss+ ((Dn0ss*v11Bx)+(Dss1__*v11By)+(Dds1ss*v11Bz))
+		exxDds= exxDds+ ((Dn0ds*v11Bx)+(Dss0ds*v11By)+(Dds1__*v11Bz))
+		eyyDn = eyyDn + ((Dn1__*v22Bx)+(Dss0n_*v22By)+(Dds0n_*v22Bz))
+		eyyDss= eyyDss+ ((Dn0ss*v22Bx)+(Dss1__*v22By)+(Dds1ss*v22Bz))
+		eyyDds= eyyDds+ ((Dn0ds*v22Bx)+(Dss0ds*v22By)+(Dds1__*v22Bz))
+		ezzDn = ezzDn + ((Dn1__*v33Bx)+(Dss0n_*v33By)+(Dds0n_*v33Bz))
+		ezzDss= ezzDss+ ((Dn0ss*v33Bx)+(Dss1__*v33By)+(Dds1ss*v33Bz))
+		ezzDds= ezzDds+ ((Dn0ds*v33Bx)+(Dss0ds*v33By)+(Dds1__*v33Bz))
+		exyDn = exyDn + ((Dn1__/2*v12Bx)+(Dss0n_/2*v12By)+(Dds0n_/2*v12Bz))
+		exyDss= exyDss+ ((Dn0ss/2*v12Bx)+(Dss1__/2*v12By)+(Dds1ss/2*v12Bz))
+		exyDds= exyDds+ ((Dn0ds/2*v12Bx)+(Dss0ds/2*v12By)+(Dds1__/2*v12Bz))
+		exzDn = exzDn + ((Dn1__/2*v13Bx)+(Dss0n_/2*v13By)+(Dds0n_/2*v13Bz))
+		exzDss= exzDss+ ((Dn0ss/2*v13Bx)+(Dss1__/2*v13By)+(Dds1ss/2*v13Bz))
+		exzDds= exzDds+ ((Dn0ds/2*v13Bx)+(Dss0ds/2*v13By)+(Dds1__/2*v13Bz))
+		eyzDn = eyzDn + ((Dn1__/2*v23Bx)+(Dss0n_/2*v23By)+(Dds0n_/2*v23Bz))
+		eyzDss= eyzDss+ ((Dn0ss/2*v23Bx)+(Dss1__/2*v23By)+(Dds1ss/2*v23Bz))
+		eyzDds= eyzDds+ ((Dn0ds/2*v23Bx)+(Dss0ds/2*v23By)+(Dds1__/2*v23Bz))
+		
+	     # Transform total Free Surface Correction to strains from ADCS to EFCS
+		(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn) = TensorTransformation3D!(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn,AFlip);
+		(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss) = TensorTransformation3D!(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss,AFlip);
+		(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds) = TensorTransformation3D!(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds,AFlip);	
+		
+				
+		#Add to total vector
+		ExxDn[indxf[i]] = ExxDn[indxf[i]] +exxDn;
+		ExxDss[indxf[i]]= ExxDss[indxf[i]]+exxDss;
+		ExxDds[indxf[i]]= ExxDds[indxf[i]]+exxDds;
+		EyyDn[indxf[i]] = EyyDn[indxf[i]] +eyyDn;
+		EyyDss[indxf[i]]= EyyDss[indxf[i]]+eyyDss;
+		EyyDds[indxf[i]]= EyyDds[indxf[i]]+eyyDds;
+		EzzDn[indxf[i]] = EzzDn[indxf[i]] +ezzDn;
+		EzzDss[indxf[i]]= EzzDss[indxf[i]]+ezzDss;
+		EzzDds[indxf[i]]= EzzDds[indxf[i]]+ezzDds;
+		ExyDn[indxf[i]] = ExyDn[indxf[i]] +exyDn;
+		ExyDss[indxf[i]]= ExyDss[indxf[i]]+exyDss;
+		ExyDds[indxf[i]]= ExyDds[indxf[i]]+exyDds;
+		ExzDn[indxf[i]] = ExzDn[indxf[i]] +exzDn;
+		ExzDss[indxf[i]]= ExzDss[indxf[i]]+exzDss;
+		ExzDds[indxf[i]]= ExzDds[indxf[i]]+exzDds;
+		EyzDn[indxf[i]] = EyzDn[indxf[i]] +eyzDn;
+		EyzDss[indxf[i]]= EyzDss[indxf[i]]+eyzDss;
+		EyzDds[indxf[i]]= EyzDds[indxf[i]]+eyzDds;
 		
 		
 	end
 
-	
-    # Transform total Free Surface Correction to strains from ADCS to EFCS
-	(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,AFlip);
-	(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,AFlip);
-	(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,AFlip);	
+
 	
 
 end

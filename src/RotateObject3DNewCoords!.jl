@@ -47,7 +47,7 @@
 #Rotate to new axes Ax Ay Az
 x=	 (Ax1[1]*(X-Pa))+(Ax2[1]*(Y-Pb))+(Ax3[1]*(Z-Pc));
 y=	 (Ax1[2]*(X-Pa))+(Ax2[2]*(Y-Pb))+(Ax3[2]*(Z-Pc));
-Z.=	 (Ax1[3]*(X-Pa))+(Ax2[3]*(Y-Pb))+(Ax3[3]*(Z-Pc));
+Z=	 (Ax1[3]*(X-Pa))+(Ax2[3]*(Y-Pb))+(Ax3[3]*(Z-Pc));
 X=x;
 Y=y;
 return(X,Y,Z)
