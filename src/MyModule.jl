@@ -30,25 +30,6 @@ include("LD_sum.jl")
 include("TD.jl")
 include("TD_sum.jl")
 
-#Displacement
-#include("TDdispFS.jl")
-#include("TDdispHS.jl")
-#include("TDSetupD.jl")
-#include("AngDisDisp.jl")
-
-#Strain
-#include("TDstrainFS.jl")
-#include("TDstrain_HarFunc.jl")
-#include("TDSetupS.jl")
-#include("AngDisStrain.jl")
-#include("AngDisStrainFSC.jl")
-#include("AngSetupStrainFSC.jl")
-
-#halfspace
-#include("TDdisp_HarFunc.jl")
-#include("AngSetupDispFSC.jl")
-#include("AngDisDispFSC.jl")
-
 #Rotation in Mehdis funcs
 include("RotateObject3DNewCoords.jl") #Mehdis 'CoordTrans'
 include("RotateObject3DNewCoords!.jl") #Mehdis 'CoordTrans'
@@ -57,21 +38,10 @@ include("RotateObject2D!.jl")
 
 
 
-#Good for both
-#include("trimodefinder.jl")
-#include("CalculateLocalTriCoords.jl")
-#include("CalcTDVectsAndAngles.jl")
-#include("TransformToADCS.jl")
-#include("CalcSideVec.jl")
-#include("CalcSlipVectorDiscCoords.jl")
-
-
 #Drawing 
 include("contourfill.jl")
 
-#DELETE
-include("TestFooAllocs.jl")
-include("TestFooAllocs2.jl")
+
 
 
 end
