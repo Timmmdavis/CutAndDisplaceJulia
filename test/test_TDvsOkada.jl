@@ -13,7 +13,7 @@ Width=5;
 TipDepth=1;
 Rake=90;
 #Fault slip
-Dds=1.;  #2
+Dds=2.;  #2
 Dn=0.6; #0.6
 Dss=0.5;#0.5
 #Elastic cons
@@ -39,6 +39,14 @@ Z=Z.-Drop.-TipDepth; #Move fault down
 P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]]
 P2=[X[5] Y[5] Z[5];X[4] Y[4] Z[4]]
 P3=[X[3] Y[3] Z[3];X[6] Y[6] Z[6]]
+
+println("Repeating array if you want to test with more tris (not the soltion vs okada, just speed)")
+#P1=repeat(P1,50,1)
+#P2=repeat(P2,50,1)
+#P3=repeat(P3,50,1)
+DssVec=repeat([Dss],size(P1,1),1)
+DdsVec=repeat([Dds],size(P1,1),1)
+DnVec=repeat([Dn],size(P1,1),1)
 
 #= draw fault
 using PyPlot
@@ -66,11 +74,8 @@ mu=1.;
 TotalSlip=sqrt(Dds.^2+Dss.^2);
 Rake=90-atand(Dss/Dds); #degrees
 
-#@info TotalSlip Rake
-#poop
-
 println("Vars created -> to TD func1")
-##3
+
 
 #using BenchmarkTools
 #@btime (No output when you use it)
@@ -81,7 +86,7 @@ println("Vars created -> to TD func1")
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,[Dss Dss],[Dds Dds],[Dn Dn],nu,mu,DispFlag,StressFlag,HSflag)
+ MyModule.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,nu,mu,DispFlag,StressFlag,HSflag)
  
 
  (Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
