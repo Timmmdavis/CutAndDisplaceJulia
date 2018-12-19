@@ -46,9 +46,8 @@ scatter(X,Y,abs.(Z),Z)
 cbar = colorbar()
 =#
 
-println("Put back to 50")
 # Start some vectors (spaced points)
-x = range(-10,stop=10,length=5); #linspace deprecated
+x = range(-10,stop=10,length=50); #linspace deprecated
 (x,y)=MyModule.meshgrid(x,x);
 z=ones(size(x))*-0; #Ground surface
 
@@ -75,9 +74,6 @@ println("Vars created -> to TD func1")
 
 #using BenchmarkTools
 #@btime (No output when you use it)
-
-for i=1:10000
-println((10000/i)/100) #progress 
 
 @time (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
  ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
@@ -152,7 +148,6 @@ if EyzRes>1E-13
 end
 println("Test P1 Passed")
 
-end
 
 println("Test P2 Off for now...")
 println("Now checking that when we are for only one component e.g. dipslip we only get values in those matricies")

@@ -65,11 +65,11 @@ function Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu)
 #  Copyright 2017, Tim Davis, Potsdam University\The University of Aberdeen
 #  Modified from Steve Martel's fracture mechanics homework
 
-Sxx= zeros(length(x),length(xe));
-Syy= zeros(length(x),length(xe));
-Sxy= zeros(length(x),length(xe));
-Ux= zeros(length(x),length(xe));
-Uy= zeros(length(x),length(xe));
+Sxx= zeros(length(X),1);
+Syy= zeros(length(X),1);
+Sxy= zeros(length(X),1);
+Ux= zeros(length(X),1);
+Uy= zeros(length(X),1);
 
 for i=1:length(X)
 	#Define larger grid that covers where both dislocations will be, this is
