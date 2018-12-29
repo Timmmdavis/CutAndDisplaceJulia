@@ -17,7 +17,7 @@ Dds=2.;  #2
 Dn=0.6; #0.6
 Dss=0.5;#0.5
 #Elastic cons
-const nu=0.25;
+nu=0.25; #const 
 
 
 ###Section - arranging the fault surface for the TDE solution
@@ -36,17 +36,17 @@ Y=(Y./2).*Length;
 (X,Y,Z)=MyModule.RotateObject3DNewCoords(X,Y,Z,0,0,0,DipSlipCosine,StrikeSlipCosine,FaceNormalVector)
 Drop=maximum(Z);
 Z=Z.-Drop.-TipDepth; #Move fault down
-const P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]]
-const P2=[X[5] Y[5] Z[5];X[4] Y[4] Z[4]]
-const P3=[X[3] Y[3] Z[3];X[6] Y[6] Z[6]]
+P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]] #const 
+P2=[X[5] Y[5] Z[5];X[4] Y[4] Z[4]] #const 
+P3=[X[3] Y[3] Z[3];X[6] Y[6] Z[6]] #const 
 
 #Repeating array if you want to test with more tris (not the solution vs okada, just speed)
 #P1=repeat(P1,50,1)
 #P2=repeat(P2,50,1)
 #P3=repeat(P3,50,1)
-const DssVec=repeat([Dss],size(P1,1),1)
-const DdsVec=repeat([Dds],size(P1,1),1)
-const DnVec=repeat([Dn],size(P1,1),1)
+DssVec=repeat([Dss],size(P1,1),1) #const 
+DdsVec=repeat([Dds],size(P1,1),1) #const 
+DnVec=repeat([Dn],size(P1,1),1) #const 
 
 #= draw fault
 using PyPlot
@@ -62,14 +62,14 @@ zz=ones(size(xx))*-0; #Ground surface
 #Get lengths (for reshapes later)
 dimx,dimy = size(xx);
 #Turn to col vectors
-const x=reshape(xx,length(xx),1);
-const y=reshape(yy,length(yy),1);
-const z=reshape(zz,length(zz),1);
+x=reshape(xx,length(xx),1); #const 
+y=reshape(yy,length(yy),1); #const 
+z=reshape(zz,length(zz),1); #const 
 
-const DispFlag=1;
-const StressFlag=1;
-const HSflag=1;
-const mu=1.;
+DispFlag=1; #const 
+StressFlag=1; #const 
+HSflag=1; #const 
+mu=1.; #const 
 
 TotalSlip=sqrt(Dds.^2+Dss.^2);
 Rake=90-atand(Dss/Dds); #degrees
