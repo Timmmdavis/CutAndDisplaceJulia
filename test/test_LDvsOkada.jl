@@ -9,7 +9,7 @@ println("creating func vars")
 Strike=0;
 Dip=45;
 Length=100000;
-Width=5; # fault width in the DIP direction (WIDTH > 0)
+Width=5; # fault width in the DIP direction (WIDTHTD > 0)
 TipDepth=1;
 Rake=90;
 #Fault slip
@@ -70,7 +70,7 @@ maxSxx=maximum(sXX);
 maxSzz=maximum(sZZ);
 maxSxz=maximum(sXZ);
 
-println("Values of residuals: TDE vs Okada")
+println("Values of residuals: LD-Halfspace vs Okada")
 @info UxRes UzRes ExxRes EzzRes ExzRes maxSxx maxSzz maxSxz  #Display values in test output
 if UxRes>1E-7
 	error("UxRes too high, Okada and LD not matching for ground displacement")

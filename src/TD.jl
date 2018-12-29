@@ -76,7 +76,6 @@ function TD(X::Array{Float64,2},Y::Array{Float64,2},Z::Array{Float64,2},
 # mehdi.nikkhoo@gfz-potsdam.de 
 # mehdi.nikkhoo@gmail.com
 
-
 SzCmp=size(P1List,1); if length(P1List)==3; SzCmp=1; end
 
 CorrectDimsFlg= SzCmp==size(P2List,1) &&
@@ -121,22 +120,23 @@ if StrainFlag==1
 	EyzDds = zeros(length(X),SzCmp);
 end
 
-Threads.@threads for i=1:SzCmp #For every element (multithreaded) 
+Threads.@threads for i=1:SzCmp #For every element (multithreaded) Threads.@threads 
+	#println("Multithreading off")
 
-	P1=copy(P1List[i,:]);
-	P2=copy(P2List[i,:]);
-	P3=copy(P3List[i,:]);
+	P1=deepcopy(P1List[i,:]);
+	P2=deepcopy(P2List[i,:]);
+	P3=deepcopy(P3List[i,:]);
 
 	if HSflag==1
 		if any(Z .>0) | any(P1[3] .>0) | any(P2[3] .>0) | any(P3[3] .>0)
 			error("Half-space solution: Z coordinates must be negative!")
 		end
-		P1i=copy(P1);
-		P2i=copy(P2);
-		P3i=copy(P3);
-		P1i[3] = copy(-P1[3]);
-		P2i[3] = copy(-P2[3]);
-		P3i[3] = copy(-P3[3]);
+		P1i=deepcopy(P1);
+		P2i=deepcopy(P2);
+		P3i=deepcopy(P3);
+		P1i[3] = deepcopy(-P1[3]);
+		P2i[3] = deepcopy(-P2[3]);
+		P3i[3] = deepcopy(-P3[3]);
 	end
 
 	if DispFlag==1
@@ -252,9 +252,9 @@ if ImageFlag==1; #This means we are computing the iamge dislocation
 	VyR=[Vnorm[2],Vstrike[2],Vdip[2]];
 	VzR=[Vnorm[3],Vstrike[3],Vdip[3]];
 	# Transform the complete displacement vector EFCS to TDCS 
-	(UxDn, UyDn, UzDn) =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0,0,0,VxR,VyR,VzR)
-	(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0,0,0,VxR,VyR,VzR)
-	(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0,0,0,VxR,VyR,VzR)
+	(UxDn, UyDn, UzDn) =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0.,0.,0.,VxR,VyR,VzR)
+	(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0.,0.,0.,VxR,VyR,VzR)
+	(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0.,0.,0.,VxR,VyR,VzR)
 	
 	#Flip these so we add component
 	if P1[3]==0 && P2[3]==0 && P3[3]==0
@@ -264,61 +264,59 @@ if ImageFlag==1; #This means we are computing the iamge dislocation
 	end
 end
 
-
-
 #Turn to cart index
 Pos=findall(Pos);
 Neg=findall(Neg)
 
 # Calculate first angular dislocation contribution POS
-(UxDn[Pos],UxDss[Pos],UxDds[Pos],
- UyDn[Pos],UyDss[Pos],UyDds[Pos],
- UzDn[Pos],UzDss[Pos],UzDds[Pos]) = 
- TDSetupD(x[Pos],y[Pos],z[Pos],A,Dn,Dss,Dds,nu,p1,-e13,
- UxDn[Pos],UxDss[Pos],UxDds[Pos],
- UyDn[Pos],UyDss[Pos],UyDds[Pos],
- UzDn[Pos],UzDss[Pos],UzDds[Pos]);
+(UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds) = 
+ TDSetupD(x,y,z,A,Dn,Dss,Dds,nu,p1,-e13,
+ UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds,Pos);  
 # Calculate second angular dislocation contribution
-(UxDn[Pos],UxDss[Pos],UxDds[Pos],
- UyDn[Pos],UyDss[Pos],UyDds[Pos],
- UzDn[Pos],UzDss[Pos],UzDds[Pos]) =
- TDSetupD(x[Pos],y[Pos],z[Pos],B,Dn,Dss,Dds,nu,p2,e12,
- UxDn[Pos],UxDss[Pos],UxDds[Pos],
- UyDn[Pos],UyDss[Pos],UyDds[Pos],
- UzDn[Pos],UzDss[Pos],UzDds[Pos]); 
+(UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds) =
+ TDSetupD(x,y,z,B,Dn,Dss,Dds,nu,p2,e12,
+ UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds,Pos); 
 # Calculate third angular dislocation contribution
-(UxDn[Pos],UxDss[Pos],UxDds[Pos],
- UyDn[Pos],UyDss[Pos],UyDds[Pos],
- UzDn[Pos],UzDss[Pos],UzDds[Pos]) =
- TDSetupD(x[Pos],y[Pos],z[Pos],C,Dn,Dss,Dds,nu,p3,e23,
- UxDn[Pos],UxDss[Pos],UxDds[Pos],
- UyDn[Pos],UyDss[Pos],UyDds[Pos],
- UzDn[Pos],UzDss[Pos],UzDds[Pos]);
+(UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds) =
+ TDSetupD(x,y,z,C,Dn,Dss,Dds,nu,p3,e23,
+ UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds,Pos);
  
 # Calculate first angular dislocation contribution NEG
-(UxDn[Neg],UxDss[Neg],UxDds[Neg],
- UyDn[Neg],UyDss[Neg],UyDds[Neg],
- UzDn[Neg],UzDss[Neg],UzDds[Neg]) =
- TDSetupD(x[Neg],y[Neg],z[Neg],A,Dn,Dss,Dds,nu,p1,e13,
- UxDn[Neg],UxDss[Neg],UxDds[Neg],
- UyDn[Neg],UyDss[Neg],UyDds[Neg],
- UzDn[Neg],UzDss[Neg],UzDds[Neg]);
+(UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds) =
+ TDSetupD(x,y,z,A,Dn,Dss,Dds,nu,p1,e13,
+ UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds,Neg);
 # Calculate second angular dislocation contribution
-(UxDn[Neg],UxDss[Neg],UxDds[Neg],
- UyDn[Neg],UyDss[Neg],UyDds[Neg],
- UzDn[Neg],UzDss[Neg],UzDds[Neg]) = 
- TDSetupD(x[Neg],y[Neg],z[Neg],B,Dn,Dss,Dds,nu,p2,-e12,
- UxDn[Neg],UxDss[Neg],UxDds[Neg],
- UyDn[Neg],UyDss[Neg],UyDds[Neg],
- UzDn[Neg],UzDss[Neg],UzDds[Neg]);
+(UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds) = 
+ TDSetupD(x,y,z,B,Dn,Dss,Dds,nu,p2,-e12,
+ UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds,Neg);
 # Calculate third angular dislocation contribution
-(UxDn[Neg],UxDss[Neg],UxDds[Neg],
- UyDn[Neg],UyDss[Neg],UyDds[Neg],
- UzDn[Neg],UzDss[Neg],UzDds[Neg]) =
- TDSetupD(x[Neg],y[Neg],z[Neg],C,Dn,Dss,Dds,nu,p3,-e23,
- UxDn[Neg],UxDss[Neg],UxDds[Neg],
- UyDn[Neg],UyDss[Neg],UyDds[Neg],
- UzDn[Neg],UzDss[Neg],UzDds[Neg]);	
+(UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds) =
+ TDSetupD(x,y,z,C,Dn,Dss,Dds,nu,p3,-e23,
+ UxDn,UxDss,UxDds,
+ UyDn,UyDss,UyDds,
+ UzDn,UzDss,UzDds,Neg);	
  
 
  
@@ -366,9 +364,9 @@ end
 
 
 # Transform the complete displacement vector components from TDCS into EFCS
-(UxDn, UyDn, UzDn) =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0,0,0,Vnorm,Vstrike,Vdip)
-(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0,0,0,Vnorm,Vstrike,Vdip)
-(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0,0,0,Vnorm,Vstrike,Vdip)
+(UxDn, UyDn, UzDn) =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0.,0.,0.,Vnorm,Vstrike,Vdip)
+(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0.,0.,0.,Vnorm,Vstrike,Vdip)
+(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0.,0.,0.,Vnorm,Vstrike,Vdip)
 
 #Flip sign if flat tri 
 if ImageFlag==1; #This means we are computing the iamge dislocation	
@@ -424,16 +422,16 @@ function CalculateLocalTriCoords(P1,P2,P3)
 # downward, the strike and dip vectors point Southward and Westward, 
 # respectively.
 
-eY = [0;1;0];
-eZ = [0;0;1];
+eY = [0.;1.;0.];
+eZ = [0.;0.;1.];
 
 Vnorm = cross(P2-P1,P3-P1);
-Vnorm = Vnorm/norm(Vnorm);
+Vnorm = Vnorm/sqrt(Vnorm[1]^2+Vnorm[2]^2+Vnorm[3]^2)
 Vstrike = cross(eZ,Vnorm);
 if norm(Vstrike)==0
 	Vstrike = eY*Vnorm[3];
 end
-Vstrike = Vstrike/norm(Vstrike);
+Vstrike = Vstrike/sqrt(Vstrike[1]^2+Vstrike[2]^2+Vstrike[3]^2);
 Vdip = cross(Vnorm,Vstrike);
 
 return(Vnorm,Vstrike,Vdip)
@@ -542,12 +540,10 @@ end
 return(casepLog,casenLog,casezLog)
 end
 
-
-
 function TDSetupD(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec,
  UxDn,UxDss,UxDds,
  UyDn,UyDss,UyDds,
- UzDn,UzDss,UzDds)
+ UzDn,UzDss,UzDds,Index)
 # TDSetupD transforms coordinates of the calculation points as well as 
 # slip vector components from ADCS into TDCS. It then calculates the 
 # displacements in ADCS and transforms them into TDCS.
@@ -555,12 +551,10 @@ function TDSetupD(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec,
 Ct=SideVec[3];
 St=SideVec[2];
 
-# Transform coordinates of the calculation points from TDCS into ADCS
-(y,z)  =RotateObject2D!(y,z,TriVertex[2],TriVertex[3],Ct,St)
 #Here we compute slip vectors for a unit dislocation (of the given magnitude) (StrikeSlip and Dipslip separately)
 # Transform the in-plane slip vector components from TDCS into ADCS
-(Dss1,Dds0)=RotateObject2D(Dss,0.,0,0,Ct,St)
-(Dss0,Dds1)=RotateObject2D(0.,Dds,0,0,Ct,St)
+(Dss1,Dds0)=RotateObject2D(Dss,0.,0.,0.,Ct,St)
+(Dss0,Dds1)=RotateObject2D(0.,Dds,0.,0.,Ct,St)
 
 
 #Init arrays
@@ -577,23 +571,28 @@ sinADE1=sinA/8/pi/(1-nu);
 Dn8p=Dn/8/pi;
  
 # Calculate displacements associated with an angular dislocation in ADCS
-for i=eachindex(x) #1:length(x)
+for i=eachindex(Index) #1:length(x)
 	
-	(ux,uy,uz,vx,vy,vz,wx,wy,wz) = AngDisDisp(x[i],y[i],z[i],cosA,sinA,E1,E2,cosA2,sinADE1);
-
+	Y=y[Index[i]];
+	Z=z[Index[i]];
+	
+	# Transform coordinates of the calculation points from TDCS into ADCS
+	(Y,Z)  =RotateObject2D!(Y,Z,TriVertex[2],TriVertex[3],Ct,St)
+	
+	(ux,uy,uz,vx,vy,vz,wx,wy,wz) = AngDisDisp(x[Index[i]],Y,Z,cosA,sinA,E1,E2,cosA2,sinADE1);
 	
 	if Dn!=0 #Only doing if needed
 		#Ux is in global coords:
 		#components due to opening
-		UxDn[i]=UxDn[i]+(Dn8p/E1*ux);
+		UxDn[Index[i]]=UxDn[Index[i]]+(Dn8p/E1*ux);
 		#Comp Uy and Uz in the current coords
 		uyDn=(Dn8p/E1*vx);
 		uzDn=(Dn8p/E1*wx);
 		#Rotate to global coords			
-		(uyDn, uzDn)= RotateObject2D!(uyDn, uzDn ,0,0,Ct,-St)
+		(uyDn, uzDn)= RotateObject2D!(uyDn, uzDn ,0.,0.,Ct,-St)
 		#Add these to the total vector 
-		UyDn[i]=UyDn[i]+uyDn;
-		UzDn[i]=UzDn[i]+uzDn;		
+		UyDn[Index[i]]=UyDn[Index[i]]+uyDn;
+		UzDn[Index[i]]=UzDn[Index[i]]+uzDn;		
 	end
 	
 	#For Dss and Dds the local coordinates mean these must be combined 
@@ -601,38 +600,32 @@ for i=eachindex(x) #1:length(x)
 	
 	if Dss!=0 #Only doing if needed
 		#Ux is in global coords
-		UxDss[i]=UxDss[i]+(Dss1/8/pi/E1*uy)+(Dds0*sinADE1*uz)
+		UxDss[Index[i]]=UxDss[Index[i]]+(Dss1/8/pi/E1*uy)+(Dds0*sinADE1*uz)
 		#Comp Uy and Uz in the current coords 	
-		uyDss=(Dss1*x[i]/8/pi/E1*vy)+(Dds0*x[i]*sinADE1*vz)	
-		uzDss=(Dss1*x[i]/8/pi/E1*wy)+(Dds0*x[i]*sinADE1*wz)
+		uyDss=(Dss1*x[Index[i]]/8/pi/E1*vy)+(Dds0*x[Index[i]]*sinADE1*vz)	
+		uzDss=(Dss1*x[Index[i]]/8/pi/E1*wy)+(Dds0*x[Index[i]]*sinADE1*wz)
 		#Rotate to global coords			
-		(uyDss,uzDss)=RotateObject2D!(uyDss,uzDss,0,0,Ct,-St) 
+		(uyDss,uzDss)=RotateObject2D!(uyDss,uzDss,0.,0.,Ct,-St) 
 		#Add these to the total vector 		
-		UyDss[i]=UyDss[i]+uyDss;
-		UzDss[i]=UzDss[i]+uzDss;
+		UyDss[Index[i]]=UyDss[Index[i]]+uyDss;
+		UzDss[Index[i]]=UzDss[Index[i]]+uzDss;
 	end		
 		
 	if Dds!=0 #Only doing if needed
 		#Ux is in global coords
-		UxDds[i]=UxDds[i]+(Dss0/8/pi/E1*uy)+(Dds1*sinADE1*uz)
+		UxDds[Index[i]]=UxDds[Index[i]]+(Dss0/8/pi/E1*uy)+(Dds1*sinADE1*uz)
 		#Comp Uy and Uz in the current coords		
-		uyDds=(Dss0*x[i]/8/pi/E1*vy)+(Dds1*x[i]*sinADE1*vz)		
-		uzDds=(Dss0*x[i]/8/pi/E1*wy)+(Dds1*x[i]*sinADE1*wz)
+		uyDds=(Dss0*x[Index[i]]/8/pi/E1*vy)+(Dds1*x[Index[i]]*sinADE1*vz)		
+		uzDds=(Dss0*x[Index[i]]/8/pi/E1*wy)+(Dds1*x[Index[i]]*sinADE1*wz)
 		#Rotate to global coords		
-		(uyDds,uzDds)=RotateObject2D!(uyDds,uzDds,0,0,Ct,-St) 
+		(uyDds,uzDds)=RotateObject2D!(uyDds,uzDds,0.,0.,Ct,-St) 
 		#Add these to the total vector 		
-		UyDds[i]=UyDds[i]+uyDds;
-		UzDds[i]=UzDds[i]+uzDds;
+		UyDds[Index[i]]=UyDds[Index[i]]+uyDds;
+		UzDds[Index[i]]=UzDds[Index[i]]+uzDds;
 	end
 
 	
 end
-
-
-## Transform coordinates of the calculation points from ADCS into TDCS
-(y,z)  =RotateObject2D!(y,z,0,0,Ct,-St)
-y.=y.-TriVertex[2];
-z.=z.-TriVertex[3];
 
 return( UxDn,UxDss,UxDds,
 		UyDn,UyDss,UyDds,
@@ -640,8 +633,10 @@ return( UxDn,UxDss,UxDds,
 end
 
 
-
-function AngDisDisp(x,y,z,cosA,sinA,E1,E2,cosA2,sinADE1)
+function AngDisDisp(x::Float64,y::Float64,z::Float64,
+					cosA::Float64,sinA::Float64,
+					E1::Float64,E2::Float64,
+					cosA2::Float64,sinADE1::Float64)
 # AngDisDisp calculates the "incomplete" displacements (without the 
 # Burgers' function contribution) associated with an angular dislocation in
 # an elastic full-space.
@@ -678,7 +673,9 @@ wz = cosA/rMzeta-z/r/rMzeta;													#bz*x*sinADE1*
 
 
 #Export individual components
-return(ux[1],uy[1],uz[1],vx[1],vy[1],vz[1],wx[1],wy[1],wz[1])
+return( ux::Float64,uy::Float64,uz::Float64,
+		vx::Float64,vy::Float64,vz::Float64,
+		wx::Float64,wy::Float64,wz::Float64)
 end
 
 function TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,
@@ -739,38 +736,75 @@ function AngSetupDispFSC(X,Y,Z,PA,PB,nu,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 if abs(beta)<eps() || abs(pi-beta)<eps()
 	#Simply add nothing to the values coming in
 else
-    (I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
-    
-	#Inverse rot mat
-	VxR=[ey1[1],ey2[1],ey3[1]];
-	VyR=[ey1[2],ey2[2],ey3[2]];
-	VzR=[ey1[3],ey2[3],ey3[3]];
 
+	#ALL ALLOCS BETWEEN HERE
+	#println("reduce between here")
+	###############################
+    #(I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
+    
+	ey1=zeros(3);
+	ey1[1:2] = SideVec[1:2];	
+	ey1 = ey1/sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)  #could use :norm(ey1);
+	ey3 = -eZ;
+	ey2 = cross(ey3,ey1);
+	
+	# Transform coordinates from EFCS to the second ADCS
+	(y1B,y2B,y3B)=RotateObject3DNewCoords!(SideVec[1],SideVec[2],SideVec[3],0.,0.,0.,ey1,ey2,ey3)
+	#y1B = y1A.-y1B;
+	#y2B = y2A.-y2B;
+	#y3B = y3A.-y3B;
+
+	#Inverse rot mat
+	VxR=zeros(3,1);VyR=zeros(3,1);VzR=zeros(3,1)
+	VxR[1]=ey1[1];VyR[1]=ey1[2];VzR[1]=ey1[3];
+	VxR[2]=ey2[1];VyR[2]=ey2[2];VzR[2]=ey2[3];
+	VxR[3]=ey3[1];VyR[3]=ey3[2];VzR[3]=ey3[3];
+	
+	#println("Add the stuff above into loop, dont split the loop into two (Indx and indxf) instead just define beta in two ways at top.")
+	###############################
+	
+	
 	#Here we compute slip vectors for a unit dislocation (of the given magnitude) (Normal, StrikeSlip and Dipslip separately)	
 	# Transform slip vector components from TDCS into EFCS
-	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
-	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0,0,0,Vnorm,Vstrike,Vdip);
-	(Dn0ds,Dss0ds,Dds1__) = RotateObject3DNewCoords(0.,0.,Dds,0,0,0,Vnorm,Vstrike,Vdip);
+	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0., 0.,0.,0.,Vnorm,Vstrike,Vdip);
+	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0.,0.,0.,Vnorm,Vstrike,Vdip);
+	(Dn0ds,Dss0ds,Dds1__) = RotateObject3DNewCoords(0.,0.,Dds,0.,0.,0.,Vnorm,Vstrike,Vdip);
 	# Transform slip vector components from EFCS to ADCS
-	(Dn1__,Dss0n_,Dds0n_)=RotateObject3DNewCoords(Dn1__,Dss0n_,Dds0n_,0,0,0,ey1,ey2,ey3)
-	(Dn0ss,Dss1__,Dds1ss)=RotateObject3DNewCoords(Dn0ss,Dss1__,Dds1ss,0,0,0,ey1,ey2,ey3)
-	(Dn0ds,Dss0ds,Dds1__)=RotateObject3DNewCoords(Dn0ds,Dss0ds,Dds1__,0,0,0,ey1,ey2,ey3)
-
-	Iflp=.!I; #Invert the bool
-
-	indx=findall(I);
-	indxf=findall(Iflp);
-	b=-pi+beta;
+	(Dn1__,Dss0n_,Dds0n_)=RotateObject3DNewCoords!(Dn1__,Dss0n_,Dds0n_,0.,0.,0.,ey1,ey2,ey3)
+	(Dn0ss,Dss1__,Dds1ss)=RotateObject3DNewCoords!(Dn0ss,Dss1__,Dds1ss,0.,0.,0.,ey1,ey2,ey3)
+	(Dn0ds,Dss0ds,Dds1__)=RotateObject3DNewCoords!(Dn0ds,Dss0ds,Dds1__,0.,0.,0.,ey1,ey2,ey3);
+	
+	#indx=findall(I);
+	pib=-pi+beta;
+	sinPib = sin(pib);
+	cosPib = cos(pib);
+	cotPib = cot(pib);
+	cotPib2=cot(pib/2);
+	
+	#Invert the bool
+	#indxf=findall(.!I);
+	b=beta;
 	sinB = sin(b);
 	cosB = cos(b);
 	cotB = cot(b);
 	cotB2=cot(b/2);
-	# Configuration I
-	for i=eachindex(indx)
 	
+	# Configuration I
+	for i=eachindex(X)
+	
+		x=X[i];
+		y=Y[i];
+		z=Z[i];
+		# Transform coordinates from EFCS to the first ADCS
+		(x,y,z)=RotateObject3DNewCoords!(x,y,z,PA[1],PA[2],PA[3],ey1,ey2,ey3)
+		Bx=beta*x;
+		if Bx>=0;
 		#Call func that does the work
-		(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(y1A[indx[i]],y2A[indx[i]],y3A[indx[i]],cosB,sinB,cotB,cotB2,nu,-PA[3]);
-		
+		#if I[i] == 1
+			(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(x,y,z,cosPib,sinPib,cotPib,cotPib2,nu,-PA[3]);
+		else 
+			(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(x,y,z,cosB,sinB,cotB,cotB2,nu,-PA[3]);
+		end
 		
 		#The local coordinates are such that the components must be combined 
 		#to get the global contribution for these parts.
@@ -790,9 +824,14 @@ else
 			uzDds=-((Dn0ds/4/pi/(1-nu)*wxA)+(Dss0ds/4/pi/(1-nu)*wyA)+(Dds1__/4/pi/(1-nu)*wzA))
 		end			
 		
-		#Call func that does the work		
-		(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(y1B[indx[i]],y2B[indx[i]],y3B[indx[i]],cosB,sinB,cotB,cotB2,nu,-PB[3]);
-		
+		if Bx>=0;
+		#Call func that does the work
+		#if I[i] == 1		
+			#Call func that does the work		
+			(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(x-y1B,y-y2B,z-y3B,cosPib,sinPib,cotPib,cotPib2,nu,-PB[3]);
+		else
+			(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(x-y1B,y-y2B,z-y3B,cosB,sinB,cotB,cotB2,nu,-PB[3]);
+		end
 
 		if Dn!=0		
 			#Add to the current value this part		
@@ -800,11 +839,11 @@ else
 			uyDn  =uyDn  + ((Dn1__/4/pi/(1-nu)*vxB)+(Dss0n_/4/pi/(1-nu)*vyB)+(Dds0n_/4/pi/(1-nu)*vzB))		
 			uzDn  =uzDn  + ((Dn1__/4/pi/(1-nu)*wxB)+(Dss0n_/4/pi/(1-nu)*wyB)+(Dds0n_/4/pi/(1-nu)*wzB))
 			#Rotate to global coords	
-			(uxDn, uyDn, uzDn) =RotateObject3DNewCoords!(uxDn, uyDn, uzDn ,0,0,0,VxR,VyR,VzR)	
+			(uxDn, uyDn, uzDn) =RotateObject3DNewCoords!(uxDn, uyDn, uzDn ,0.,0.,0.,VxR,VyR,VzR)	
 			#Add these to the total vector				
-			UxDn[indx[i]]  =UxDn[indx[i]]  + uxDn;		
-			UyDn[indx[i]]  =UyDn[indx[i]]  + uyDn;
-			UzDn[indx[i]]  =UzDn[indx[i]]  + uzDn;			
+			UxDn[i]  =UxDn[i]  + uxDn;		
+			UyDn[i]  =UyDn[i]  + uyDn;
+			UzDn[i]  =UzDn[i]  + uzDn;			
 		end
 		if  Dss!=0
 			#Add to the current value this part			
@@ -812,11 +851,11 @@ else
 			uyDss =uyDss + ((Dn0ss/4/pi/(1-nu)*vxB)+(Dss1__/4/pi/(1-nu)*vyB)+(Dds1ss/4/pi/(1-nu)*vzB))	
 			uzDss =uzDss + ((Dn0ss/4/pi/(1-nu)*wxB)+(Dss1__/4/pi/(1-nu)*wyB)+(Dds1ss/4/pi/(1-nu)*wzB))
 			#Rotate to global coords		
-			(uxDss,uyDss,uzDss)=RotateObject3DNewCoords!(uxDss,uyDss,uzDss,0,0,0,VxR,VyR,VzR)	
+			(uxDss,uyDss,uzDss)=RotateObject3DNewCoords!(uxDss,uyDss,uzDss,0.,0.,0.,VxR,VyR,VzR)	
 			#Add these to the total vector				
-			UxDss[indx[i]] =UxDss[indx[i]] + uxDss;
-			UyDss[indx[i]] =UyDss[indx[i]] + uyDss;		
-			UzDss[indx[i]] =UzDss[indx[i]] + uzDss;			
+			UxDss[i] =UxDss[i] + uxDss;
+			UyDss[i] =UyDss[i] + uyDss;		
+			UzDss[i] =UzDss[i] + uzDss;			
 		end
 		if  Dds!=0		
 			#Add to the current value this part			
@@ -824,87 +863,14 @@ else
 			uyDds =uyDds + ((Dn0ds/4/pi/(1-nu)*vxB)+(Dss0ds/4/pi/(1-nu)*vyB)+(Dds1__/4/pi/(1-nu)*vzB))
 			uzDds =uzDds + ((Dn0ds/4/pi/(1-nu)*wxB)+(Dss0ds/4/pi/(1-nu)*wyB)+(Dds1__/4/pi/(1-nu)*wzB))
 			#Rotate to global coords			
-			(uxDds,uyDds,uzDds)=RotateObject3DNewCoords!(uxDds,uyDds,uzDds,0,0,0,VxR,VyR,VzR)
+			(uxDds,uyDds,uzDds)=RotateObject3DNewCoords!(uxDds,uyDds,uzDds,0.,0.,0.,VxR,VyR,VzR)
 			#Add these to the total vector			
-			UxDds[indx[i]] =UxDds[indx[i]] + uxDds;
-			UyDds[indx[i]] =UyDds[indx[i]] + uyDds;
-			UzDds[indx[i]] =UzDds[indx[i]] + uzDds;			
+			UxDds[i] =UxDds[i] + uxDds;
+			UyDds[i] =UyDds[i] + uyDds;
+			UzDds[i] =UzDds[i] + uzDds;			
 		end			
 		
 	end
-	
-	
-	b=beta;
-	sinB = sin(b);
-	cosB = cos(b);
-	cotB = cot(b);
-	cotB2=cot(b/2);
-	# Configuration II
-	for i=eachindex(indxf)
-	
-		#Call func that does the work	
-		(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(y1A[indxf[i]],y2A[indxf[i]],y3A[indxf[i]],cosB,sinB,cotB,cotB2,nu,-PA[3]);
-		
-		#The local coordinates are such that the components must be combined 
-		#to get the global contribution for these parts.
-		if Dn!=0		
-			uxDn = -((Dn1__/4/pi/(1-nu)*uxA)+(Dss0n_/4/pi/(1-nu)*uyA)+(Dds0n_/4/pi/(1-nu)*uzA))
-			uyDn = -((Dn1__/4/pi/(1-nu)*vxA)+(Dss0n_/4/pi/(1-nu)*vyA)+(Dds0n_/4/pi/(1-nu)*vzA))	
-			uzDn = -((Dn1__/4/pi/(1-nu)*wxA)+(Dss0n_/4/pi/(1-nu)*wyA)+(Dds0n_/4/pi/(1-nu)*wzA))
-		end
-		if Dss!=0			
-			uxDss= -((Dn0ss/4/pi/(1-nu)*uxA)+(Dss1__/4/pi/(1-nu)*uyA)+(Dds1ss/4/pi/(1-nu)*uzA))
-			uyDss= -((Dn0ss/4/pi/(1-nu)*vxA)+(Dss1__/4/pi/(1-nu)*vyA)+(Dds1ss/4/pi/(1-nu)*vzA))		
-			uzDss= -((Dn0ss/4/pi/(1-nu)*wxA)+(Dss1__/4/pi/(1-nu)*wyA)+(Dds1ss/4/pi/(1-nu)*wzA))
-		end		
-		if Dds!=0	
-			uxDds= -((Dn0ds/4/pi/(1-nu)*uxA)+(Dss0ds/4/pi/(1-nu)*uyA)+(Dds1__/4/pi/(1-nu)*uzA))
-			uyDds= -((Dn0ds/4/pi/(1-nu)*vxA)+(Dss0ds/4/pi/(1-nu)*vyA)+(Dds1__/4/pi/(1-nu)*vzA))
-			uzDds= -((Dn0ds/4/pi/(1-nu)*wxA)+(Dss0ds/4/pi/(1-nu)*wyA)+(Dds1__/4/pi/(1-nu)*wzA))	
-		end
-		
-		#Call func that does the work			
-		(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(y1B[indxf[i]],y2B[indxf[i]],y3B[indxf[i]],cosB,sinB,cotB,cotB2,nu,-PB[3]);
-		
-		if Dn!=0		
-			#Add to the current value this part		
-			uxDn  =uxDn  + ((Dn1__/4/pi/(1-nu)*uxB)+(Dss0n_/4/pi/(1-nu)*uyB)+(Dds0n_/4/pi/(1-nu)*uzB))
-			uyDn  =uyDn  + ((Dn1__/4/pi/(1-nu)*vxB)+(Dss0n_/4/pi/(1-nu)*vyB)+(Dds0n_/4/pi/(1-nu)*vzB))	
-			uzDn  =uzDn  + ((Dn1__/4/pi/(1-nu)*wxB)+(Dss0n_/4/pi/(1-nu)*wyB)+(Dds0n_/4/pi/(1-nu)*wzB))
-			#Rotate to global coords	
-			(uxDn, uyDn, uzDn) =RotateObject3DNewCoords!(uxDn, uyDn, uzDn ,0,0,0,VxR,VyR,VzR)
-			#Add these to the total vector				
-			UxDn[indxf[i]]  =UxDn[indxf[i]]  + uxDn;		
-			UyDn[indxf[i]]  =UyDn[indxf[i]]  + uyDn;
-			UzDn[indxf[i]]  =UzDn[indxf[i]]  + uzDn;			
-		end
-		if Dss!=0		
-			#Add to the current value this part		
-			uxDss =uxDss + ((Dn0ss/4/pi/(1-nu)*uxB)+(Dss1__/4/pi/(1-nu)*uyB)+(Dds1ss/4/pi/(1-nu)*uzB))
-			uyDss =uyDss + ((Dn0ss/4/pi/(1-nu)*vxB)+(Dss1__/4/pi/(1-nu)*vyB)+(Dds1ss/4/pi/(1-nu)*vzB))
-			uzDss =uzDss + ((Dn0ss/4/pi/(1-nu)*wxB)+(Dss1__/4/pi/(1-nu)*wyB)+(Dds1ss/4/pi/(1-nu)*wzB))
-			#Rotate to global coords	
-			(uxDss,uyDss,uzDss)=RotateObject3DNewCoords!(uxDss,uyDss,uzDss,0,0,0,VxR,VyR,VzR)
-			#Add these to the total vector				
-			UxDss[indxf[i]]  =UxDss[indxf[i]]  + uxDss;		
-			UyDss[indxf[i]]  =UyDss[indxf[i]]  + uyDss;
-			UzDss[indxf[i]]  =UzDss[indxf[i]]  + uzDss;			
-		end
-		
-		if Dds!=0		
-			#Add to the current value this part		
-			uxDds =uxDds + ((Dn0ds/4/pi/(1-nu)*uxB)+(Dss0ds/4/pi/(1-nu)*uyB)+(Dds1__/4/pi/(1-nu)*uzB))
-			uyDds =uyDds + ((Dn0ds/4/pi/(1-nu)*vxB)+(Dss0ds/4/pi/(1-nu)*vyB)+(Dds1__/4/pi/(1-nu)*vzB))
-			uzDds =uzDds + ((Dn0ds/4/pi/(1-nu)*wxB)+(Dss0ds/4/pi/(1-nu)*wyB)+(Dds1__/4/pi/(1-nu)*wzB))
-			#Rotate to global coords	
-			(uxDds,uyDds,uzDds)=RotateObject3DNewCoords!(uxDds,uyDds,uzDds,0,0,0,VxR,VyR,VzR)
-			#Add these to the total vector				
-			UxDds[indxf[i]]  =UxDds[indxf[i]]  + uxDds;		
-			UyDds[indxf[i]]  =UyDds[indxf[i]]  + uyDds;
-			UzDds[indxf[i]]  =UzDds[indxf[i]]  + uzDds;			
-		end		
-		
-    end
 
 end	#if statement
 
@@ -918,9 +884,10 @@ function CalcSideVec(PA,PB)
 # Calculate TD side vector and the angle of the angular dislocation pair
 
 SideVec = PB-PA;
-eZ = [0;0;1];
+eZ = [0.;0.;1.];
 
-G=-SideVec'*eZ/norm(SideVec);
+
+G=-SideVec'*eZ/sqrt(SideVec[1]^2+SideVec[2]^2+SideVec[3]^2) 
 beta = acos(G[1]);
 
 return(SideVec,eZ,beta)
@@ -929,8 +896,8 @@ end
 function CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
 #Calculate the Slip vector in dislocation coordinates
 
-ey1 = [SideVec[1:2];0];
-ey1 = ey1/norm(ey1);
+ey1 = [SideVec[1:2];0.];
+ey1 = ey1/sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)
 ey3 = -eZ;
 ey2 = cross(ey3,ey1);
 
@@ -938,7 +905,7 @@ ey2 = cross(ey3,ey1);
 (y1A,y2A,y3A)=RotateObject3DNewCoords(X,Y,Z,PA[1],PA[2],PA[3],ey1,ey2,ey3)
 
 # Transform coordinates from EFCS to the second ADCS
-(y1AB,y2AB,y3AB)=RotateObject3DNewCoords(SideVec[1],SideVec[2],SideVec[3],0,0,0,ey1,ey2,ey3)
+(y1AB,y2AB,y3AB)=RotateObject3DNewCoords(SideVec[1],SideVec[2],SideVec[3],0.,0.,0.,ey1,ey2,ey3)
 y1B = y1A.-y1AB;
 y2B = y2A.-y2AB;
 y3B = y3A.-y3AB;
@@ -951,7 +918,9 @@ return(I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)
 end
 
 
-function AngDisDispFSC(y1,y2,y3,cosB,sinB,cotB,cotB2,nu,a)
+function AngDisDispFSC( y1::Float64,y2::Float64,y3::Float64,
+						cosB::Float64,sinB::Float64,cotB::Float64,cotB2::Float64,
+						nu::Float64,a::Float64)
 # AngDisDispFSC calculates the harmonic function contribution to the 
 # displacements associated with an angular dislocation in an elastic 
 # half-space.
@@ -1028,7 +997,9 @@ wz = (2*(1 -nu)*Fib+2*(1 -nu)*(y2*sinB/(rb+z3b)*(cosB+
     z3b)*(cosB+a/rb)+a*y3b/rb^2));  #b3/4/pi/(1 -nu)*
 
 #Export individual components
-return(ux[1],uy[1],uz[1],vx[1],vy[1],vz[1],wx[1],wy[1],wz[1])
+return( ux::Float64,uy::Float64,uz::Float64,
+		vx::Float64,vy::Float64,vz::Float64,
+		wx::Float64,wy::Float64,wz::Float64)
 
 end
 
@@ -1071,59 +1042,59 @@ Pos=findall(Pos);
 Neg=findall(Neg)
 
 # Calculate first angular dislocation contribution POS
-(ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
- ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
- ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]) =
- TDSetupS(x[Pos],y[Pos],z[Pos],A,Dn,Dss,Dds,nu,p1,-e13,
- ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
- ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
- ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]);
+(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) =
+ TDSetupS(x,y,z,A,Dn,Dss,Dds,nu,p1,-e13,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Pos);
  
 # Calculate second angular dislocation contribution
-(ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
- ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
- ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]) =
- TDSetupS(x[Pos],y[Pos],z[Pos],B,Dn,Dss,Dds,nu,p2,e12,
- ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
- ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
- ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]); 
+(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) =
+ TDSetupS(x,y,z,B,Dn,Dss,Dds,nu,p2,e12,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Pos); 
  
 # Calculate third angular dislocation contribution
-(ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
- ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
- ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]) =
- TDSetupS(x[Pos],y[Pos],z[Pos],C,Dn,Dss,Dds,nu,p3,e23,
- ExxDn[Pos], EyyDn[Pos], EzzDn[Pos], ExyDn[Pos], ExzDn[Pos], EyzDn[Pos],
- ExxDss[Pos],EyyDss[Pos],EzzDss[Pos],ExyDss[Pos],ExzDss[Pos],EyzDss[Pos],
- ExxDds[Pos],EyyDds[Pos],EzzDds[Pos],ExyDds[Pos],ExzDds[Pos],EyzDds[Pos]);
+(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) =
+ TDSetupS(x,y,z,C,Dn,Dss,Dds,nu,p3,e23,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Pos);
 
 
 # Calculate first angular dislocation contribution NEG
-(ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
- ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
- ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]) =
- TDSetupS(x[Neg],y[Neg],z[Neg],A,Dn,Dss,Dds,nu,p1,e13,
- ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
- ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
- ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]);
+(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) =
+ TDSetupS(x,y,z,A,Dn,Dss,Dds,nu,p1,e13,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Neg);
  
 # Calculate second angular dislocation contribution
-(ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
- ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
- ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]) = 
- TDSetupS(x[Neg],y[Neg],z[Neg],B,Dn,Dss,Dds,nu,p2,-e12,
- ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
- ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
- ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]);
+(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = 
+ TDSetupS(x,y,z,B,Dn,Dss,Dds,nu,p2,-e12,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Neg);
  
 # Calculate third angular dislocation contribution 
-(ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
- ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
- ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]) = 
- TDSetupS(x[Neg],y[Neg],z[Neg],C,Dn,Dss,Dds,nu,p3,-e23,
- ExxDn[Neg], EyyDn[Neg], EzzDn[Neg], ExyDn[Neg], ExzDn[Neg], EyzDn[Neg],
- ExxDss[Neg],EyyDss[Neg],EzzDss[Neg],ExyDss[Neg],ExzDss[Neg],EyzDss[Neg],
- ExxDds[Neg],EyyDds[Neg],EzzDds[Neg],ExyDds[Neg],ExzDds[Neg],EyzDds[Neg]);	
+(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = 
+ TDSetupS(x,y,z,C,Dn,Dss,Dds,nu,p3,-e23,
+ ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+ ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Neg);	
 		
 # Calculate the strain tensor components in TDCS
 for i=eachindex(x)
@@ -1178,20 +1149,18 @@ end
 function TDSetupS(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec,
 				 ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
 				 ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-				 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds)
+				 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Index)
 # TDSetupS transforms coordinates of the calculation points as well as 
 # slip vector components from ADCS into TDCS. It then calculates the 
 # strains in ADCS and transforms them into TDCS.
 
 Ct=SideVec[3];
 St=SideVec[2];
-# Transform coordinates of the calculation points from TDCS into ADCS
-(y,z)  =RotateObject2D!(y,z,TriVertex[2],TriVertex[3],Ct,St)
 
 #Here we compute slip vectors for a unit dislocation (of the given magnitude) (StrikeSlip and Dipslip separately)	
 # Transform the in-plane slip vector components from TDCS into ADCS
-(Dss1,Dds0)=RotateObject2D(Dss,0.,0,0,Ct,St)
-(Dss0,Dds1)=RotateObject2D(0.,Dds,0,0,Ct,St)
+(Dss1,Dds0)=RotateObject2D(Dss,0.,0.,0.,Ct,St)
+(Dss0,Dds1)=RotateObject2D(0.,Dds,0.,0.,Ct,St)
 
 #Init arrays
 Ang=-pi+alpha;
@@ -1212,10 +1181,18 @@ E5Dss0=Dss0/8/pi/E1;
 
 
 # Transform strains from ADCS into TDCS 
-B=[[1   0   0 ]; [0  Ct  St ]; [0  -St  Ct]]	 # 3x3 Transformation matrix
+#B=[[1. 0. 0.];[0. Ct St];[0. -St Ct]]	 # 3x3 Transformation matrix
+B=zeros(1,9); #Single alloc here!
+B[1]=1.; B[5]=Ct; B[6]=-St; B[8]=St; B[9]=Ct; #Col wise indexing
 
 # Calculate strains associated with an angular dislocation in ADCS
-for i=eachindex(x)
+for i=eachindex(Index)
+
+	Y=y[Index[i]];
+	Z=z[Index[i]];
+	
+	# Transform coordinates of the calculation points from TDCS into ADCS
+	(Y,Z)  =RotateObject2D!(Y,Z,TriVertex[2],TriVertex[3],Ct,St)
 
 	(exxDn,exxDss,exxDds,
 	 eyyDn,eyyDss,eyyDds,
@@ -1224,7 +1201,7 @@ for i=eachindex(x)
 	 exzDn,exzDss,exzDds,
 	 eyzDn,eyzDss,eyzDds,
 	 rFi_rx,rFi_ry,rFi_rz) =
-	 AngDisStrain(x[i],y[i],z[i],cosA,sinA,nu,E2,sinADE1)
+	 AngDisStrain(x[Index[i]],Y,Z,cosA,sinA,nu,E2,sinADE1)
 
 	if Dn!=0 #Only doing if needed
 		exxdn= Dn*(rFi_rx)+E3* exxDn
@@ -1237,66 +1214,60 @@ for i=eachindex(x)
 		(exxdn,eyydn,ezzdn,exydn,exzdn,eyzdn) = 
 		TensorTransformation3D!(exxdn,eyydn,ezzdn,exydn,exzdn,eyzdn,B);
 		#Add to total vector
-		ExxDn[i] 	= ExxDn[i] +exxdn;
-		EyyDn[i] 	= EyyDn[i] +eyydn
-		EzzDn[i] 	= EzzDn[i] +ezzdn
-		ExyDn[i] 	= ExyDn[i] +exydn
-		ExzDn[i] 	= ExzDn[i] +exzdn
-		EyzDn[i] 	= EyzDn[i] +eyzdn
+		ExxDn[Index[i]] 	= ExxDn[Index[i]] +exxdn;
+		EyyDn[Index[i]] 	= EyyDn[Index[i]] +eyydn
+		EzzDn[Index[i]] 	= EzzDn[Index[i]] +ezzdn
+		ExyDn[Index[i]] 	= ExyDn[Index[i]] +exydn
+		ExzDn[Index[i]] 	= ExzDn[Index[i]] +exzdn
+		EyzDn[Index[i]] 	= EyzDn[Index[i]] +eyzdn
 	end		
 	
 	#For Dss and Dds the local coordinates mean these must be combined 
 	#to get the global contribution for these parts.
-	
 	if Dss!=0 #Only doing if needed
 		#A constant
-		E4Dss1=Dss1*x[i]/8/pi/E1;	
+		E4Dss1=Dss1*x[Index[i]]/8/pi/E1;	
 		#Comp mixed components (in the current coords)
-		exxdss= (-E4Dss1* exxDss)  +  (Dds0*x[i]*sinADE1* exxDds);
-		eyydss= (Dss1*(rFi_ry)-E4Dss1* eyyDss)  +  (Dds0*x[i]*sinADE1* eyyDds);
-		ezzdss= (-E4Dss1* ezzDss) + (Dds0*(rFi_rz)+Dds0*x[i]*sinADE1* ezzDds); 
+		exxdss= (-E4Dss1* exxDss)  +  (Dds0*x[Index[i]]*sinADE1* exxDds);
+		eyydss= (Dss1*(rFi_ry)-E4Dss1* eyyDss)  +  (Dds0*x[Index[i]]*sinADE1* eyyDds);
+		ezzdss= (-E4Dss1* ezzDss) + (Dds0*(rFi_rz)+Dds0*x[Index[i]]*sinADE1* ezzDds); 
 		exydss= (Dss1*(rFi_rx)/2+E5Dss1* exyDss)  -  (Dds0*sinADE1* exyDds);
 		exzdss= (E5Dss1* exzDss) + (Dds0*(rFi_rx)/2-Dds0*sinADE1*exzDds) ; 
-		eyzdss= (Dss1*(rFi_rz)/2-E4Dss1* eyzDss) + (Dds0*(rFi_ry)/2-Dds0*x[i]*sinADE1* eyzDds);
+		eyzdss= (Dss1*(rFi_rz)/2-E4Dss1* eyzDss) + (Dds0*(rFi_ry)/2-Dds0*x[Index[i]]*sinADE1* eyzDds);
 		#Rotate to global coords		
 		(exxdss,eyydss,ezzdss,exydss,exzdss,eyzdss) = 
 		TensorTransformation3D!(exxdss,eyydss,ezzdss,exydss,exzdss,eyzdss,B);	
 		#Add to total vector		
-		ExxDss[i] 	= ExxDss[i] +exxdss;
-		EyyDss[i] 	= EyyDss[i] +eyydss
-		EzzDss[i] 	= EzzDss[i] +ezzdss
-		ExyDss[i] 	= ExyDss[i] +exydss
-		ExzDss[i] 	= ExzDss[i] +exzdss
-		EyzDss[i] 	= EyzDss[i] +eyzdss
+		ExxDss[Index[i]] 	= ExxDss[Index[i]] +exxdss;
+		EyyDss[Index[i]] 	= EyyDss[Index[i]] +eyydss
+		EzzDss[Index[i]] 	= EzzDss[Index[i]] +ezzdss
+		ExyDss[Index[i]] 	= ExyDss[Index[i]] +exydss
+		ExzDss[Index[i]] 	= ExzDss[Index[i]] +exzdss
+		EyzDss[Index[i]] 	= EyzDss[Index[i]] +eyzdss
 	end		
 		
 	if Dds!=0 #Only doing if needed	
 		#A constant
-		E4Dss0=Dss0*x[i]/8/pi/E1;
+		E4Dss0=Dss0*x[Index[i]]/8/pi/E1;
 		#Comp mixed components (in the current coords)		
-		exxdds= (-E4Dss0* exxDss)  +  (Dds1*x[i]*sinADE1* exxDds);
-		eyydds= (Dss0*(rFi_ry)-E4Dss0* eyyDss)  +  (Dds1*x[i]*sinADE1* eyyDds);
-		ezzdds= (-E4Dss0* ezzDss) + (Dds1*(rFi_rz)+Dds1*x[i]*sinADE1* ezzDds); 
+		exxdds= (-E4Dss0* exxDss)  +  (Dds1*x[Index[i]]*sinADE1* exxDds);
+		eyydds= (Dss0*(rFi_ry)-E4Dss0* eyyDss)  +  (Dds1*x[Index[i]]*sinADE1* eyyDds);
+		ezzdds= (-E4Dss0* ezzDss) + (Dds1*(rFi_rz)+Dds1*x[Index[i]]*sinADE1* ezzDds); 
 		exydds= (Dss0*(rFi_rx)/2+E5Dss0* exyDss)  -  (Dds1*sinADE1* exyDds);	
 		exzdds= (E5Dss0* exzDss) + (Dds1*(rFi_rx)/2-Dds1*sinADE1*exzDds);
-		eyzdds= (Dss0*(rFi_rz)/2-E4Dss0* eyzDss) + (Dds1*(rFi_ry)/2-Dds1*x[i]*sinADE1* eyzDds);		  
+		eyzdds= (Dss0*(rFi_rz)/2-E4Dss0* eyzDss) + (Dds1*(rFi_ry)/2-Dds1*x[Index[i]]*sinADE1* eyzDds);		  
 		#Rotate to global coords
 		(exxdds,eyydds,ezzdds,exydds,exzdds,eyzdds) = 
 		TensorTransformation3D!(exxdds,eyydds,ezzdds,exydds,exzdds,eyzdds,B);
 		#Add to total vector		
-		ExxDds[i] 	= ExxDds[i] +exxdds
-		EyyDds[i] 	= EyyDds[i] +eyydds
-		EzzDds[i] 	= EzzDds[i] +ezzdds
-		ExyDds[i] 	= ExyDds[i] +exydds
-		ExzDds[i] 	= ExzDds[i] +exzdds
-		EyzDds[i] 	= EyzDds[i] +eyzdds
+		ExxDds[Index[i]] 	= ExxDds[Index[i]] +exxdds
+		EyyDds[Index[i]] 	= EyyDds[Index[i]] +eyydds
+		EzzDds[Index[i]] 	= EzzDds[Index[i]] +ezzdds
+		ExyDds[Index[i]] 	= ExyDds[Index[i]] +exydds
+		ExzDds[Index[i]] 	= ExzDds[Index[i]] +exzdds
+		EyzDds[Index[i]] 	= EyzDds[Index[i]] +eyzdds
 	end		
 end	
-
-## Transform coordinates of the calculation points from ADCS into TDCS
-(y,z)  =RotateObject2D!(y,z,0,0,Ct,-St)
-y.=y.-TriVertex[2];
-z.=z.-TriVertex[3];
 
 return(	ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
 		ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
@@ -1304,7 +1275,9 @@ return(	ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
 end
 
 
-function AngDisStrain(x,y,z,cosA,sinA,nu,E2,sinADE1)
+function AngDisStrain(x::Float64,y::Float64,z::Float64,
+					  cosA::Float64,sinA::Float64,
+					  nu::Float64,E2::Float64,sinADE1::Float64)
 # AngDisStrain calculates the strains associated with an angular 
 # dislocation in an elastic full-space.
 
@@ -1370,13 +1343,13 @@ EyzBx = (y2/r3-nu/r-nu*cosA*C+nu*sinA*S+eta*sinA*cosA/W2-eta*(y*cosA+z*sinA)/W2r
 EyzBy = (y/r3+sinA*cosA^2/W2-cosA*(y*cosA+z*sinA)/W2r+y*z*cosA/W2r2-y*z*cosA/Wr3); #by*(rFi_rz)/2-E4*
 EyzBz =	(y*z/Wr3-sinA*cosA/W2+(y*cosA+z*sinA)/W2r-y*z/W2r2); #bz*(rFi_ry)/2-bz*x*sinADE1*
 
-return(ExxBx,ExxBy,ExxBz,
-	   EyyBx,EyyBy,EyyBz,
-	   EzzBx,EzzBy,EzzBz,
-	   ExyBx,ExyBy,ExyBz,
-	   ExzBx,ExzBy,ExzBz,
-	   EyzBx,EyzBy,EyzBz,
-	   rFi_rx,rFi_ry,rFi_rz)
+return(ExxBx::Float64,ExxBy::Float64,ExxBz::Float64,
+	   EyyBx::Float64,EyyBy::Float64,EyyBz::Float64,
+	   EzzBx::Float64,EzzBy::Float64,EzzBz::Float64,
+	   ExyBx::Float64,ExyBy::Float64,ExyBz::Float64,
+	   ExzBx::Float64,ExzBy::Float64,ExzBz::Float64,
+	   EyzBx::Float64,EyzBy::Float64,EyzBz::Float64,
+	   rFi_rx::Float64,rFi_ry::Float64,rFi_rz::Float64)
 end
 
 
@@ -1446,157 +1419,97 @@ function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,mu,lambda,nu,Vnorm,Vstrike,Vdi
 if abs(beta)<eps() || abs(pi-beta)<eps()
     #Inputs come out the same (we add 0...)
 else
-    (I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
+    #(I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
+    
+	ey1=zeros(3);
+	ey1[1:2] = SideVec[1:2];	
+	ey1 = ey1/sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)  #could use :norm(ey1);
+	ey3 = -eZ;
+	ey2 = cross(ey3,ey1);
+	
 
-	AFlip = [ey1[1] ey1[2] ey1[3] ey2[1] ey2[2]  ey2[3]  ey3[1] ey3[2]  ey3[3]]; # Transformation matrix
+
+	# Transform coordinates from EFCS to the second ADCS
+	(y1B,y2B,y3B)=RotateObject3DNewCoords!(SideVec[1],SideVec[2],SideVec[3],0.,0.,0.,ey1,ey2,ey3)
+
+	#Inverse rot mat
+	AFlip=zeros(1,9);
+	AFlip[1]=ey1[1];AFlip[2]=ey1[2];AFlip[3]=ey1[3];
+	AFlip[4]=ey2[1];AFlip[5]=ey2[2];AFlip[6]=ey2[3];
+	AFlip[7]=ey3[1];AFlip[8]=ey3[2];AFlip[9]=ey3[3];
+	#AFlip = [ey1[1] ey1[2] ey1[3] ey2[1] ey2[2] ey2[3] ey3[1] ey3[2] ey3[3]]; # Transformation matri
+	
+	#Inverse rot mat
+	VxR=zeros(3,1);VyR=zeros(3,1);VzR=zeros(3,1)
+	VxR[1]=ey1[1];VyR[1]=ey1[2];VzR[1]=ey1[3];
+	VxR[2]=ey2[1];VyR[2]=ey2[2];VzR[2]=ey2[3];
+	VxR[3]=ey3[1];VyR[3]=ey3[2];VzR[3]=ey3[3];
+	
 	
 	#Here we compute slip vectors for a unit dislocation (of the given magnitude) (Normal, StrikeSlip and Dipslip separately)		
 	## Transform slip vector components from TDCS into EFCS
-	(Dn1__,Dss0n_,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0.,0,0,0,Vnorm,Vstrike,Vdip);
-	(Dn0ss,Dss1__,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0,0,0,Vnorm,Vstrike,Vdip);
-	(Dn0ds,Dss0ds,Dds1__) = RotateObject3DNewCoords(0.,0.,Dds,0,0,0,Vnorm,Vstrike,Vdip);
+	(Dn1__i,Dss0n_i,Dds0n_) = RotateObject3DNewCoords(Dn,0.,0., 0.,0.,0.,Vnorm,Vstrike,Vdip);
+	(Dn0ssi,Dss1__i,Dds1ss) = RotateObject3DNewCoords(0.,Dss,0.,0.,0.,0.,Vnorm,Vstrike,Vdip);
+	(Dn0dsi,Dss0dsi,Dds1__) = RotateObject3DNewCoords(0.,0.,Dds,0.,0.,0.,Vnorm,Vstrike,Vdip);
 	# Transform slip vector components from EFCS to ADCS
-	(Dn1__,Dss0n_,Dds0n_)=RotateObject3DNewCoords(Dn1__,Dss0n_,Dds0n_,0,0,0,ey1,ey2,ey3)
-	(Dn0ss,Dss1__,Dds1ss)=RotateObject3DNewCoords(Dn0ss,Dss1__,Dds1ss,0,0,0,ey1,ey2,ey3)
-	(Dn0ds,Dss0ds,Dds1__)=RotateObject3DNewCoords(Dn0ds,Dss0ds,Dds1__,0,0,0,ey1,ey2,ey3)
-	
-	
-    Iflp=.!I; #Invert the bool
-	indx=findall(I);
-	indxf=findall(Iflp);
+	(Dn1__i,Dss0n_i,Dds0n_)=RotateObject3DNewCoords(Dn1__i,Dss0n_i,Dds0n_,0.,0.,0.,ey1,ey2,ey3)
+	(Dn0ssi,Dss1__i,Dds1ss)=RotateObject3DNewCoords(Dn0ssi,Dss1__i,Dds1ss,0.,0.,0.,ey1,ey2,ey3)
+	(Dn0dsi,Dss0dsi,Dds1__)=RotateObject3DNewCoords(Dn0dsi,Dss0dsi,Dds1__,0.,0.,0.,ey1,ey2,ey3)
     
 	#Init some vars
-	b=pi-beta;
+	#indx=findall(I);
+	pib=pi-beta;
+	sinPib = sin(pib);
+	cosPib = cos(pib);
+	cotPib = cot(pib);
+	
+	#Invert the bool
+	#indxf=findall(.!I);
+	b=beta;
 	sinB = sin(b);
 	cosB = cos(b);
 	cotB = cot(b);
 	
     # Configuration I
-	for i=eachindex(indx)
+	for i=eachindex(X)
 	
+		x=X[i];
+		y=Y[i];
+		z=Z[i];
+		# Transform coordinates from EFCS to the first ADCS
+		(x,y,z)=RotateObject3DNewCoords!(x,y,z,PA[1],PA[2],PA[3],ey1,ey2,ey3)
+		Bx=beta*x;
+		if Bx>=0;
 		#Call func that does the work		
-		 #xx    yy    zz    xy    xz    yz
-		(v11Ax,v22Ax,v33Ax,v12Ax,v13Ax,v23Ax,  #Dn
-	     v11Ay,v22Ay,v33Ay,v12Ay,v13Ay,v23Ay,  #Dss
-	     v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(-y1A[indx[i]],-y2A[indx[i]],y3A[indx[i]],cosB,sinB,cotB,nu,-PA[3]);
-		 
-		v13Ax = -v13Ax;
-		v13Ay = -v13Ay;
-		v13Az = -v13Az;
-		v23Ax = -v23Ax;
-		v23Ay = -v23Ay;
-		v23Az = -v23Az;
-		
-
-		#For configuration 1 Dn and Dss are flipped
-		
-		#The local coordinates are such that the components must be combined 
-		#to get the global contribution for these parts.
-		if Dn!=0			
-			exxDn = -((-Dn1__*v11Ax)+(-Dss0n_*v11Ay)+(Dds0n_*v11Az))
-			eyyDn = -((-Dn1__*v22Ax)+(-Dss0n_*v22Ay)+(Dds0n_*v22Az))
-			ezzDn = -((-Dn1__*v33Ax)+(-Dss0n_*v33Ay)+(Dds0n_*v33Az))
-			exyDn = -((-Dn1__/2*v12Ax)+(-Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
-			exzDn = -((-Dn1__/2*v13Ax)+(-Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
-			eyzDn = -((-Dn1__/2*v23Ax)+(-Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
+		#if I[i] == 1		
+			 #xx    yy    zz    xy    xz    yz
+			(v11Ax,v22Ax,v33Ax,v12Ax,v13Ax,v23Ax,  #Dn
+			 v11Ay,v22Ay,v33Ay,v12Ay,v13Ay,v23Ay,  #Dss
+			 v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(-x,-y,z,cosPib,sinPib,cotPib,nu,-PA[3]);
+			v13Ax = -v13Ax;
+			v13Ay = -v13Ay;
+			v13Az = -v13Az;
+			v23Ax = -v23Ax;
+			v23Ay = -v23Ay;
+			v23Az = -v23Az;
+			Dn1__=-Dn1__i;
+			Dn0ss=-Dn0ssi;
+			Dn0ds=-Dn0dsi;
+			Dss0n_=-Dss0n_i;
+			Dss1__=-Dss1__i;
+			Dss0ds=-Dss0dsi;
+		else
+			 #xx    yy    zz    xy    xz    yz
+			(v11Ax,v22Ax,v33Ax,v12Ax,v13Ax,v23Ax,  #Dn
+			 v11Ay,v22Ay,v33Ay,v12Ay,v13Ay,v23Ay,  #Dss
+			 v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(x,y,z,cosB,sinB,cotB,nu,-PA[3]);		
+			Dn1__=Dn1__i;
+			Dn0ss=Dn0ssi;
+			Dn0ds=Dn0dsi;
+			Dss0n_=Dss0n_i;
+			Dss1__=Dss1__i;
+			Dss0ds=Dss0dsi;		
 		end
-		if Dss!=0			
-			exxDss= -((-Dn0ss*v11Ax)+(-Dss1__*v11Ay)+(Dds1ss*v11Az))
-			eyyDss= -((-Dn0ss*v22Ax)+(-Dss1__*v22Ay)+(Dds1ss*v22Az))
-			ezzDss= -((-Dn0ss*v33Ax)+(-Dss1__*v33Ay)+(Dds1ss*v33Az))
-			exyDss= -((-Dn0ss/2*v12Ax)+(-Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
-			exzDss= -((-Dn0ss/2*v13Ax)+(-Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
-			eyzDss= -((-Dn0ss/2*v23Ax)+(-Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
-		end
-		if Dds!=0		
-			exxDds= -((-Dn0ds*v11Ax)+(-Dss0ds*v11Ay)+(Dds1__*v11Az))		
-			eyyDds= -((-Dn0ds*v22Ax)+(-Dss0ds*v22Ay)+(Dds1__*v22Az))
-			ezzDds= -((-Dn0ds*v33Ax)+(-Dss0ds*v33Ay)+(Dds1__*v33Az))
-			exyDds= -((-Dn0ds/2*v12Ax)+(-Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
-			exzDds= -((-Dn0ds/2*v13Ax)+(-Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))				
-			eyzDds= -((-Dn0ds/2*v23Ax)+(-Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
-		end	
-		
-		(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
-	     v11By,v22By,v33By,v12By,v13By,v23By,
-	     v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(-y1B[indx[i]],-y2B[indx[i]],y3B[indx[i]],cosB,sinB,cotB,nu,-PB[3]);
-		 
-		 
-		v13Bx = -v13Bx;
-		v13By = -v13By;
-		v13Bz = -v13Bz;
-		v23Bx = -v23Bx;
-		v23By = -v23By;
-		v23Bz = -v23Bz;
-		
-		if Dn!=0		
-			#Add to the current value this part			
-			exxDn = exxDn + ((-Dn1__*v11Bx)+(-Dss0n_*v11By)+(Dds0n_*v11Bz))
-			eyyDn = eyyDn + ((-Dn1__*v22Bx)+(-Dss0n_*v22By)+(Dds0n_*v22Bz))
-			ezzDn = ezzDn + ((-Dn1__*v33Bx)+(-Dss0n_*v33By)+(Dds0n_*v33Bz))
-			exyDn = exyDn + ((-Dn1__/2*v12Bx)+(-Dss0n_/2*v12By)+(Dds0n_/2*v12Bz))
-			exzDn = exzDn + ((-Dn1__/2*v13Bx)+(-Dss0n_/2*v13By)+(Dds0n_/2*v13Bz))
-			eyzDn = eyzDn + ((-Dn1__/2*v23Bx)+(-Dss0n_/2*v23By)+(Dds0n_/2*v23Bz))
-			#transform to global coords				
-			(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn) = TensorTransformation3D!(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn,AFlip);
-			#Add these to the total vector		
-			ExxDn[indx[i]] = ExxDn[indx[i]] +exxDn;
-			EyyDn[indx[i]] = EyyDn[indx[i]] +eyyDn;
-			EzzDn[indx[i]] = EzzDn[indx[i]] +ezzDn;
-			ExyDn[indx[i]] = ExyDn[indx[i]] +exyDn;
-			ExzDn[indx[i]] = ExzDn[indx[i]] +exzDn;
-			EyzDn[indx[i]] = EyzDn[indx[i]] +eyzDn;		
-		end			
-		if Dss!=0		
-			#Add to the current value this part			
-			exxDss= exxDss+ ((-Dn0ss*v11Bx)+(-Dss1__*v11By)+(Dds1ss*v11Bz))
-			eyyDss= eyyDss+ ((-Dn0ss*v22Bx)+(-Dss1__*v22By)+(Dds1ss*v22Bz))
-			ezzDss= ezzDss+ ((-Dn0ss*v33Bx)+(-Dss1__*v33By)+(Dds1ss*v33Bz))
-			exyDss= exyDss+ ((-Dn0ss/2*v12Bx)+(-Dss1__/2*v12By)+(Dds1ss/2*v12Bz))
-			exzDss= exzDss+ ((-Dn0ss/2*v13Bx)+(-Dss1__/2*v13By)+(Dds1ss/2*v13Bz))
-			eyzDss= eyzDss+ ((-Dn0ss/2*v23Bx)+(-Dss1__/2*v23By)+(Dds1ss/2*v23Bz))
-			#transform to global coords	
-			(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss) = TensorTransformation3D!(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss,AFlip);
-			#Add these to the total vector	
-			ExxDss[indx[i]]= ExxDss[indx[i]]+exxDss;
-			EyyDss[indx[i]]= EyyDss[indx[i]]+eyyDss;	
-			EzzDss[indx[i]]= EzzDss[indx[i]]+ezzDss;
-			ExyDss[indx[i]]= ExyDss[indx[i]]+exyDss;		
-			ExzDss[indx[i]]= ExzDss[indx[i]]+exzDss;	
-			EyzDss[indx[i]]= EyzDss[indx[i]]+eyzDss;			
-		end
-		if Dds!=0	
-			#Add to the current value this part			
-			exxDds= exxDds+ ((-Dn0ds*v11Bx)+(-Dss0ds*v11By)+(Dds1__*v11Bz))		
-			eyyDds= eyyDds+ ((-Dn0ds*v22Bx)+(-Dss0ds*v22By)+(Dds1__*v22Bz))		
-			ezzDds= ezzDds+ ((-Dn0ds*v33Bx)+(-Dss0ds*v33By)+(Dds1__*v33Bz))	
-			exyDds= exyDds+ ((-Dn0ds/2*v12Bx)+(-Dss0ds/2*v12By)+(Dds1__/2*v12Bz))	
-			exzDds= exzDds+ ((-Dn0ds/2*v13Bx)+(-Dss0ds/2*v13By)+(Dds1__/2*v13Bz))	
-			eyzDds= eyzDds+ ((-Dn0ds/2*v23Bx)+(-Dss0ds/2*v23By)+(Dds1__/2*v23Bz))	
-			#transform to global coords			
-			(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds) = TensorTransformation3D!(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds,AFlip);	
-			#Add these to the total vector				
-			ExxDds[indx[i]]= ExxDds[indx[i]]+exxDds;	
-			EyyDds[indx[i]]= EyyDds[indx[i]]+eyyDds;
-			EzzDds[indx[i]]= EzzDds[indx[i]]+ezzDds;
-			ExyDds[indx[i]]= ExyDds[indx[i]]+exyDds;	
-			ExzDds[indx[i]]= ExzDds[indx[i]]+exzDds;		
-			EyzDds[indx[i]]= EyzDds[indx[i]]+eyzDds;	
-		end
-	end
-    
-	b=beta;
-	sinB = sin(b);
-	cosB = cos(b);
-	cotB = cot(b);
-    # Configuration II
-	for i=eachindex(indxf)
-	
-
-		#Call func that does the work	
-		(v11Ax,v22Ax,v33Ax,v12Ax,v13Ax,v23Ax,
-	     v11Ay,v22Ay,v33Ay,v12Ay,v13Ay,v23Ay,
-	     v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(y1A[indxf[i]],y2A[indxf[i]],y3A[indxf[i]],cosB,sinB,cotB,nu,-PA[3]);
 		 
 		#The local coordinates are such that the components must be combined 
 		#to get the global contribution for these parts.
@@ -1623,12 +1536,25 @@ else
 			exyDds= -((Dn0ds/2*v12Ax)+(Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
 			exzDds= -((Dn0ds/2*v13Ax)+(Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))				
 			eyzDds= -((Dn0ds/2*v23Ax)+(Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
-		end	
-		 
-		
-		(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
-	     v11By,v22By,v33By,v12By,v13By,v23By,
-	     v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(y1B[indxf[i]],y2B[indxf[i]],y3B[indxf[i]],cosB,sinB,cotB,nu,-PB[3]);
+		end		
+
+		if Bx>=0;
+		#Call func that does the work		
+		#if I[i] == 1
+			(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
+			 v11By,v22By,v33By,v12By,v13By,v23By,
+			 v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(-x+y1B,-y+y2B,z-y3B,cosPib,sinPib,cotPib,nu,-PB[3]);
+			v13Bx = -v13Bx;
+			v13By = -v13By;
+			v13Bz = -v13Bz;
+			v23Bx = -v23Bx;
+			v23By = -v23By;
+			v23Bz = -v23Bz;			
+		else
+			(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
+			 v11By,v22By,v33By,v12By,v13By,v23By,
+			 v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(x-y1B,y-y2B,z-y3B,cosB,sinB,cotB,nu,-PB[3]);
+		end			 
 		 
 		if Dn!=0		
 			#Add to the current value this part			
@@ -1641,12 +1567,12 @@ else
 			#transform to global coords				
 			(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn) = TensorTransformation3D!(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn,AFlip);
 			#Add these to the total vector		
-			ExxDn[indxf[i]] = ExxDn[indxf[i]] +exxDn;
-			EyyDn[indxf[i]] = EyyDn[indxf[i]] +eyyDn;
-			EzzDn[indxf[i]] = EzzDn[indxf[i]] +ezzDn;
-			ExyDn[indxf[i]] = ExyDn[indxf[i]] +exyDn;
-			ExzDn[indxf[i]] = ExzDn[indxf[i]] +exzDn;
-			EyzDn[indxf[i]] = EyzDn[indxf[i]] +eyzDn;		
+			ExxDn[i] = ExxDn[i] +exxDn;
+			EyyDn[i] = EyyDn[i] +eyyDn;
+			EzzDn[i] = EzzDn[i] +ezzDn;
+			ExyDn[i] = ExyDn[i] +exyDn;
+			ExzDn[i] = ExzDn[i] +exzDn;
+			EyzDn[i] = EyzDn[i] +eyzDn;		
 		end			
 		if Dss!=0		
 			#Add to the current value this part			
@@ -1659,12 +1585,12 @@ else
 			#transform to global coords	
 			(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss) = TensorTransformation3D!(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss,AFlip);
 			#Add these to the total vector	
-			ExxDss[indxf[i]]= ExxDss[indxf[i]]+exxDss;
-			EyyDss[indxf[i]]= EyyDss[indxf[i]]+eyyDss;	
-			EzzDss[indxf[i]]= EzzDss[indxf[i]]+ezzDss;
-			ExyDss[indxf[i]]= ExyDss[indxf[i]]+exyDss;		
-			ExzDss[indxf[i]]= ExzDss[indxf[i]]+exzDss;	
-			EyzDss[indxf[i]]= EyzDss[indxf[i]]+eyzDss;			
+			ExxDss[i]= ExxDss[i]+exxDss;
+			EyyDss[i]= EyyDss[i]+eyyDss;	
+			EzzDss[i]= EzzDss[i]+ezzDss;
+			ExyDss[i]= ExyDss[i]+exyDss;		
+			ExzDss[i]= ExzDss[i]+exzDss;	
+			EyzDss[i]= EyzDss[i]+eyzDss;			
 		end
 		if Dds!=0	
 			#Add to the current value this part			
@@ -1677,18 +1603,23 @@ else
 			#transform to global coords			
 			(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds) = TensorTransformation3D!(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds,AFlip);	
 			#Add these to the total vector				
-			ExxDds[indxf[i]]= ExxDds[indxf[i]]+exxDds;	
-			EyyDds[indxf[i]]= EyyDds[indxf[i]]+eyyDds;
-			EzzDds[indxf[i]]= EzzDds[indxf[i]]+ezzDds;
-			ExyDds[indxf[i]]= ExyDds[indxf[i]]+exyDds;	
-			ExzDds[indxf[i]]= ExzDds[indxf[i]]+exzDds;		
-			EyzDds[indxf[i]]= EyzDds[indxf[i]]+eyzDds;	
+			ExxDds[i]= ExxDds[i]+exxDds;	
+			EyyDds[i]= EyyDds[i]+eyyDds;
+			EzzDds[i]= EzzDds[i]+ezzDds;
+			ExyDds[i]= ExyDds[i]+exyDds;	
+			ExzDds[i]= ExzDds[i]+exzDds;		
+			EyzDds[i]= EyzDds[i]+eyzDds;	
 		end
 	end
-		
+    
 		
 end
 
+# # Transform coordinates from the first ADCS to EFCS
+# (X,Y,Z)=RotateObject3DNewCoords!(X,Y,Z,0.,0.,0.,VxR,VyR,VzR)	
+# X.=X.+PA[1];
+# Y.=Y.+PA[2];
+# Z.=Z.+PA[3];
 
 return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
 		ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
@@ -1696,7 +1627,9 @@ return(	ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
 end
 
 
-function AngDisStrainFSC(y1,y2,y3,cosB,sinB,cotB,nu,a)
+function AngDisStrainFSC(y1::Float64,y2::Float64,y3::Float64,
+						 cosB::Float64,sinB::Float64,cotB::Float64,
+						 nu::Float64,a::Float64)
 #AngDisStrainFSC calculates the harmonic function contribution to the
 #strains associated with an angular dislocation in an elastic half-space
 
@@ -2079,7 +2012,7 @@ v23z = (1/4*(N1*(-sinB*W3/W7+y1/W6^2*(1+a/rb)*(y3b/rb+1)+
     W2/rb*y2-W1/W7*a/rb^3*y2-2*a*y3b/rb2^2*y2))/pi/(1-nu));
 	
 
-return(v11x[1],v22x[1],v33x[1],v12x[1],v13x[1],v23x[1],
-	   v11y[1],v22y[1],v33y[1],v12y[1],v13y[1],v23y[1],
-	   v11z[1],v22z[1],v33z[1],v12z[1],v13z[1],v23z[1])
+return(v11x::Float64,v22x::Float64,v33x::Float64,v12x::Float64,v13x::Float64,v23x::Float64,
+	   v11y::Float64,v22y::Float64,v33y::Float64,v12y::Float64,v13y::Float64,v23y::Float64,
+	   v11z::Float64,v22z::Float64,v33z::Float64,v12z::Float64,v13z::Float64,v23z::Float64)
 end

@@ -17,7 +17,7 @@ Dds=2.;  #2
 Dn=0.6; #0.6
 Dss=0.5;#0.5
 #Elastic cons
-nu=0.25;
+const nu=0.25;
 
 
 ###Section - arranging the fault surface for the TDE solution
@@ -36,17 +36,17 @@ Y=(Y./2).*Length;
 (X,Y,Z)=MyModule.RotateObject3DNewCoords(X,Y,Z,0,0,0,DipSlipCosine,StrikeSlipCosine,FaceNormalVector)
 Drop=maximum(Z);
 Z=Z.-Drop.-TipDepth; #Move fault down
-P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]]
-P2=[X[5] Y[5] Z[5];X[4] Y[4] Z[4]]
-P3=[X[3] Y[3] Z[3];X[6] Y[6] Z[6]]
+const P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]]
+const P2=[X[5] Y[5] Z[5];X[4] Y[4] Z[4]]
+const P3=[X[3] Y[3] Z[3];X[6] Y[6] Z[6]]
 
-println("Repeating array if you want to test with more tris (not the soltion vs okada, just speed)")
+#Repeating array if you want to test with more tris (not the solution vs okada, just speed)
 #P1=repeat(P1,50,1)
 #P2=repeat(P2,50,1)
 #P3=repeat(P3,50,1)
-DssVec=repeat([Dss],size(P1,1),1)
-DdsVec=repeat([Dds],size(P1,1),1)
-DnVec=repeat([Dn],size(P1,1),1)
+const DssVec=repeat([Dss],size(P1,1),1)
+const DdsVec=repeat([Dds],size(P1,1),1)
+const DnVec=repeat([Dn],size(P1,1),1)
 
 #= draw fault
 using PyPlot
@@ -55,26 +55,26 @@ cbar = colorbar()
 =#
 
 # Start some vectors (spaced points)
-x = range(-10,stop=10,length=50); #linspace deprecated
-(x,y)=MyModule.meshgrid(x,x);
-z=ones(size(x))*-0; #Ground surface
+xx = range(-10,stop=10,length=50); #linspace deprecated
+(xx,yy)=MyModule.meshgrid(xx,xx);
+zz=ones(size(xx))*-0; #Ground surface
 
 #Get lengths (for reshapes later)
-dimx,dimy = size(x);
+dimx,dimy = size(xx);
 #Turn to col vectors
-x=reshape(x,length(x),1);
-y=reshape(y,length(y),1);
-z=reshape(z,length(z),1);
+const x=reshape(xx,length(xx),1);
+const y=reshape(yy,length(yy),1);
+const z=reshape(zz,length(zz),1);
 
-DispFlag=1;
-StressFlag=1;
-HSflag=1;
-mu=1.;
+const DispFlag=1;
+const StressFlag=1;
+const HSflag=1;
+const mu=1.;
 
 TotalSlip=sqrt(Dds.^2+Dss.^2);
 Rake=90-atand(Dss/Dds); #degrees
 
-println("Vars created -> to TD func1")
+println("Vars created -> to TD func")
 
 
 #using BenchmarkTools
@@ -154,7 +154,7 @@ end
 println("Test P1 Passed")
 
 
-println("Test P2 Off for now...")
+#println("Test P2 Off for now...")
 println("Now checking that when we are for only one component e.g. dipslip we only get values in those matricies")
 ##Checking that there are no runaway components
 (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
