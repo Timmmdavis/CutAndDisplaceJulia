@@ -768,7 +768,6 @@ else
 	#ALL ALLOCS BETWEEN HERE
 	#println("reduce between here")
 	###############################
-    #(I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
     
 	ey1=zeros(3);
 	ey1[1:2] = SideVec[1:2];	
@@ -916,30 +915,6 @@ G=-SideVec'*eZ/sqrt(SideVec[1]^2+SideVec[2]^2+SideVec[3]^2)
 beta = acos(G[1]);
 
 return(SideVec,eZ,beta)
-end
-
-function CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
-#Calculate the Slip vector in dislocation coordinates
-
-ey1 = [SideVec[1:2];0.];
-ey1 = ey1/sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)
-ey3 = -eZ;
-ey2 = cross(ey3,ey1);
-
-# Transform coordinates from EFCS to the first ADCS
-(y1A,y2A,y3A)=RotateObject3DNewCoords(X,Y,Z,PA[1],PA[2],PA[3],ey1,ey2,ey3)
-
-# Transform coordinates from EFCS to the second ADCS
-(y1AB,y2AB,y3AB)=RotateObject3DNewCoords(SideVec[1],SideVec[2],SideVec[3],0.,0.,0.,ey1,ey2,ey3)
-y1B = y1A.-y1AB;
-y2B = y2A.-y2AB;
-y3B = y3A.-y3AB;
-
-# Determine the best arteact-free configuration for the calculation
-# points near the free furface
-I = (beta.*y1A).>=0;
-
-return(I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)
 end
 
 
@@ -1404,7 +1379,6 @@ function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,mu,lambda,nu,Vnorm,Vstrike,Vdi
 if abs(beta)<eps() || abs(pi-beta)<eps()
     #Inputs come out the same (we add 0...)
 else
-    #(I,y1A,y2A,y3A,y1B,y2B,y3B,ey1,ey2,ey3)=CalcSlipVectorDiscCoords(SideVec,eZ,X,Y,Z,PA,beta)
     
 	ey1=zeros(3);
 	ey1[1:2] = SideVec[1:2];	
