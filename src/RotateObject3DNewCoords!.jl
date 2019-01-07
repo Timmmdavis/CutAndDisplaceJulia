@@ -54,7 +54,8 @@ Y=y;
 return(X,Y,Z)
 end
 
-@inline @fastmath function RotateObject3DNewCoords!(X::Array,Y::Array,Z::Array,Pa,Pb,Pc,Ax1,Ax2,Ax3)
+#AbstractArray is the parent of both Array and SubArray (made with @view)
+@inline @fastmath function RotateObject3DNewCoords!(X::AbstractArray,Y::AbstractArray,Z::AbstractArray,Pa,Pb,Pc,Ax1,Ax2,Ax3)
 	#For multiple values
 @simd for i=1:length(X)
 	#Rotate to new axes Ax Ay Az
@@ -68,3 +69,4 @@ end
 
 return(X,Y,Z)
 end
+

@@ -39,4 +39,8 @@ include("RotateObject2D!.jl")
 #Drawing 
 include("contourfill.jl")
 
+#LinearAlgebra funcs
+include("cross!.jl")
+
+include("tests.jl")
 end

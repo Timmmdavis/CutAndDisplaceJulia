@@ -5,8 +5,8 @@
 # coordinates of e1,e2 and e3 in A must be given in x2y2z2 The transpose 
 # of A (ie, A') does the transformation from x2y2z2 into x1y1z
 
-
-@inline function TensorTransformation3D!(Txx::Array,Tyy::Array,Tzz::Array,Txy::Array,Txz::Array,Tyz::Array,A)
+#AbstractArray is the parent of both Array and SubArray (made with @view)
+@inline function TensorTransformation3D!(Txx::AbstractArray,Tyy::AbstractArray,Tzz::AbstractArray,Txy::AbstractArray,Txz::AbstractArray,Tyz::AbstractArray,A)
 @fastmath @simd for i=1:length(Txx)
 
 	txx = A[1]^2 *Txx[i] +2*A[1]*A[4]*Txy[i] +2*A[1]*A[7]*Txz[i] +2*A[4]*A[7]*Tyz[i]+A[4]^2 *Tyy[i]+A[7]^2 *Tzz[i];
@@ -30,6 +30,7 @@
 end
 return(Txx,Tyy,Tzz,Txy,Txz,Tyz)
 end
+
 
 @inline function TensorTransformation3D!(Txx::Float64,Tyy::Float64,Tzz::Float64,Txy::Float64,Txz::Float64,Tyz::Float64,A)
 

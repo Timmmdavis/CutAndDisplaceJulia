@@ -55,3 +55,7 @@ make sure multilines the + - * etc are on the right hand side of the upper line.
 nanmax --->  Xmx=maximum(filter(!isnan, X));
 Dont just say a=b...
 a=[1, 2, 3, 4, 5]; b=a; !pop(b); a=[1, 2, 3, 4]; use b=copy(a)
+
+Checking alloctions:
+XX=@allocated MyFunc()
+println(XX)
