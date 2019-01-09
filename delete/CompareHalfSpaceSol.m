@@ -1,3 +1,5 @@
+clear
+
 %Fault geom
 Strike=60;
 Dip=45;
@@ -45,10 +47,10 @@ P1=[X(1) Y(1) Z(1);X(2) Y(2) Z(2)];
 P2=[X(5) Y(5) Z(5);X(4) Y(4) Z(4)];
 P3=[X(3) Y(3) Z(3);X(6) Y(6) Z(6)];
 
-% disp('increasing no of tris')
-% P1=repmat(P1,50,1);
-% P2=repmat(P2,50,1);
-% P3=repmat(P3,50,1);
+%disp('increasing no of tris')
+%P1=repmat(P1,50,1);
+%P2=repmat(P2,50,1);
+%P3=repmat(P3,50,1);
 
 % Start some vectors (spaced points)
 x = linspace(-10,10,50);
@@ -62,19 +64,28 @@ x=reshape(x,numel(x),1);
 y=reshape(y,numel(y),1);
 z=reshape(z,numel(z),1);
 
-DisplacementXYZ=zeros(size(x));
+halfspace=1;
+FD=0;
+
+X=x(:);
+Y=y(:);
+Z=z(:);
+
 tic
-for i=1:size(P1,1)
-[DisplacementXYZ1]=TDstrainHS(x,y,z,P1(i,:),P2(i,:),P3(i,:),Dss,Dds,Dn,mu,lambda);
-%[DisplacementXYZ1]=TDdispHS(x,y,z,P1(i,:),P2(i,:),P3(i,:),Dss,Dds,Dn,nu);
-%DisplacementXYZ=DisplacementXYZ+DisplacementXYZ1;
-end
+NUM=size(X,1);
+Stressinfmatrix = zeros(NUM,6); 
+Dispinfmatrix=[];
+Dss=1;  
+Dds=0;  
+Dn=0; 
+[Dssinfmatrix,DssDisplacementXYZ]=CreateCoeffsLoop3d(Stressinfmatrix,Dispinfmatrix,...
+NUM,X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,halfspace,FD);
 toc
 
 
 
-x=reshape(x,dimx,dimy);
-y=reshape(y,dimx,dimy);
-z=reshape(z,dimx,dimy);
-ux=reshape(DisplacementXYZ(:,1),dimx,dimy);
-contourf(x,y,ux);
+% x=reshape(x,dimx,dimy);
+% y=reshape(y,dimx,dimy);
+% z=reshape(z,dimx,dimy);
+% ux=reshape(DisplacementXYZ(:,1),dimx,dimy);
+% contourf(x,y,ux);

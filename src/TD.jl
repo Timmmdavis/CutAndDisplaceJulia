@@ -125,6 +125,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 
 	#Allocate outside of funcs (using @view we just assign a pointer). 
 	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
+	if DispFlag==1
 	UxDnI  = view(UxDn,:,i); #only 48bytes alloc, note its the same as @view UxDn[:,i];
 	UyDnI  = view(UyDn,:,i);
 	UzDnI  = view(UzDn,:,i);
@@ -134,6 +135,8 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	UxDdsI = view(UxDds,:,i);
 	UyDdsI = view(UyDds,:,i);
 	UzDdsI = view(UzDds,:,i);
+	end
+	if StrainFlag==1
 	ExxDnI  = view(ExxDn,:,i);
 	EyyDnI  = view(EyyDn,:,i);
 	EzzDnI  = view(EzzDn,:,i);
@@ -152,7 +155,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	ExyDdsI = view(ExyDds,:,i);
 	ExzDdsI = view(ExzDds,:,i);
 	EyzDdsI = view(EyzDds,:,i);
-	
+	end
 	P1=view(P1List,i,:);
 	P2=view(P2List,i,:);
 	P3=view(P3List,i,:);
