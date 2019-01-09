@@ -18,6 +18,10 @@ legend MATLAB-FS Julia-FS MATLAB-HS Julia-HS
 
 FS.Relative=FS.MATLAB./FS.Julia
 HS.Relative=HS.MATLAB./HS.Julia
+figure
 hold on
-plot(FS.NoTris,FS.Julia)
-plot(HS.NoTris,HS.MATLAB)
+plot(FS.NoTris,FS.Relative)
+plot(HS.NoTris,HS.Relative)
+xlabel('NoTris')
+ylabel('Relative speed')
+legend FullSpace HalfSpace
