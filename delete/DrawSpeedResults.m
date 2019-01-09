@@ -15,3 +15,9 @@ loglog(HS.NoTris,HS.Julia)
 xlabel('NoTris')
 ylabel('Time(s)')
 legend MATLAB-FS Julia-FS MATLAB-HS Julia-HS
+
+FS.Relative=FS.MATLAB./FS.Julia
+HS.Relative=HS.MATLAB./HS.Julia
+hold on
+plot(FS.NoTris,FS.Julia)
+plot(HS.NoTris,HS.MATLAB)
