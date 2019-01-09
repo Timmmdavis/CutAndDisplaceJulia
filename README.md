@@ -36,8 +36,8 @@ For commit 25dffe8 in terms of speed for TD.jl compared to MATLAB (CompareHalfSp
 
 In terms of speed for TD.jl against FS MATLAB (CompareHalfSpaceSol.m with HS=0;)
 
-| No of Tris    | No of obs Points | MATLAB (seconds)  | Julia (seconds) | Relative speedup (MATLAB(s)/Julia(s)) |
-| ------------- |:----------------:| -----------------:| -------------:  | -----------------------------------:  |
+| No of Tris    | No of obs Points | MATLAB (seconds)  | Julia (seconds) | Relative speedup |
+| ------------- |:----------------:| -----------------:| -------------:  | --------------:  |
 | 2     | 50*50   |  0.013 | 0.005 | 2.599 | 
 | 10    | 50*50   |  0.072 | 0.013 | 5.538 | 
 | 100   | 50*50   |  0.907 | 0.104 | 8.721 |
@@ -47,4 +47,5 @@ In terms of speed for TD.jl against FS MATLAB (CompareHalfSpaceSol.m with HS=0;)
 | 100   | 50*50   |  0.907 | 0.104 | 8.721 |
 | 100   | 100*100 |  3.155 | 0.413 | 7.639 |
 
-Remember that for both these TD.jl produces all 3 inf matricies so is technically doing 3 times more (3x faster still).  
+Relative speedup being the times from MATLAB(secs)/Julia(secs).
+TD.jl produces all 3 inf matricies so is technically doing 3 times more (3x faster than reported above).  
