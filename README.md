@@ -166,9 +166,12 @@ then in MATLAB using the system cmd call (In the dir of the script)
  a ...
  ' '...
  b])
+```
 and output will be your result (as a string)
-Alternativly load the matrix
+Alternativly load the matrix in MATLAB
+```
 >> load('PythonOutput.mat');
+```
 where Mat2NumpyStr.m:
 ```
 function [str]=Mat2NumpyStr(mat)  
