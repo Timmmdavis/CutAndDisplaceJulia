@@ -249,23 +249,45 @@ end #Over all els
 	
 	
 if DispFlag==0
-	return(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-		   ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-		   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds)
-elseif StrainFlag==0
-	return(UxDn,UyDn,UzDn,
-		   UxDss,UyDss,UzDss,
-		   UxDds,UyDds,UzDds)
-else
-
-	return(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-		   ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-		   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
-		   UxDn,UyDn,UzDn,
-		   UxDss,UyDss,UzDss,
-		   UxDds,UyDds,UzDds)
-	
+	UxDn  = [];
+	UyDn  = [];
+	UzDn  = [];
+	UxDss = [];
+	UyDss = [];
+	UzDss = [];
+	UxDds = [];
+	UyDds = [];
+	UzDds = [];
 end
+if StrainFlag==0
+	ExxDn  = []; 
+	EyyDn  = []; 
+	EzzDn  = [];
+	ExyDn  = []; 
+	ExzDn  = []; 
+	EyzDn  = [];
+	ExxDss = []; 
+	EyyDss = []; 
+	EzzDss = [];
+	ExyDss = []; 
+	ExzDss = []; 
+	EyzDss = [];
+	ExxDds = []; 
+	EyyDds = []; 
+	EzzDds = [];
+	ExyDds = []; 
+	ExzDds = []; 
+	EyzDds = [];
+end
+
+return(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+	   ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
+	   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
+	   UxDn,UyDn,UzDn,
+	   UxDss,UyDss,UzDss,
+	   UxDds,UyDds,UzDds)
+	
+
 end
 
 
