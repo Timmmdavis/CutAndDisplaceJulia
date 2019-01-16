@@ -120,6 +120,15 @@ if StrainFlag==1
 	EyzDds = zeros(length(X),SzCmp);
 end
 
+P1iList=copy(P1List);
+P2iList=copy(P2List);
+P3iList=copy(P3List);
+for i=1:SzCmp
+	P1iList[i,3] = -P1iList[i,3]
+	P2iList[i,3] = -P2iList[i,3]
+	P3iList[i,3] = -P3iList[i,3]
+end
+
 Threads.@threads for i=1:SzCmp #For every element (multithreaded) 
 	#println("Multithreading off")
 
@@ -156,21 +165,34 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	ExzDdsI = view(ExzDds,:,i);
 	EyzDdsI = view(EyzDds,:,i);
 	end
+
 	P1=view(P1List,i,:);
 	P2=view(P2List,i,:);
 	P3=view(P3List,i,:);
-
-	#Compute some variables we use repeated times inside the functions.
-	##Reducing Allocs further in these would be good!
-	(Vnorm,Vstrike,Vdip)=CalculateLocalTriCoords(P1,P2,P3);
-	(p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog)=
-	GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip)
+	P1i=view(P1iList,i,:);
+	P2i=view(P2iList,i,:);
+	P3i=view(P3iList,i,:);
 
 	if HSflag==1
 		if any(Z .>0) | any(P1[3] .>0) | any(P2[3] .>0) | any(P3[3] .>0)
 			error("Half-space solution: Z coordinates must be negative!")
 		end
 	end
+	
+	#Compute some variables we use repeated times inside the functions.
+	##Reducing Allocs further in these would be good!
+	(Vnorm,Vstrike,Vdip)=CalculateLocalTriCoords(P1,P2,P3);
+	(Vnormi,Vstrikei,Vdipi)=CalculateLocalTriCoords(P1i,P2i,P3i);
+	(p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog)=
+	GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip)
+	(p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
+	GlobalToTDECoords(P1i,P2i,P3i,X,Y,Z,Vnormi,Vstrikei,Vdipi)
+
+
+
+
+
+
 
 	if DispFlag==1
 
@@ -189,18 +211,19 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 			UxDssI,UyDssI,UzDssI,
 			UxDdsI,UyDdsI,UzDdsI);
 					
-			P1[3] = -P1[3];
-			P2[3] = -P2[3];
-			P3[3] = -P3[3];
+
+
+
 			# Calculate image dislocation contribution to displacements
-			TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,1,Vnorm,Vstrike,Vdip,
-			p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+			TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],nu,1,Vnormi,Vstrikei,Vdipi,
+			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+
 			UxDnI, UyDnI, UzDnI,
 			UxDssI,UyDssI,UzDssI,
 			UxDdsI,UyDdsI,UzDdsI);
-			P1[3] = -P1[3];
-			P2[3] = -P2[3];
-			P3[3] = -P3[3];
+
+
+
 		
 		
 		end #HsFlag
@@ -227,18 +250,19 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 			ExxDssI,EyyDssI,EzzDssI,ExyDssI,ExzDssI,EyzDssI,
 			ExxDdsI,EyyDdsI,EzzDdsI,ExyDdsI,ExzDdsI,EyzDdsI);	
 		
-			P1[3] = -P1[3];
-			P2[3] = -P2[3];
-			P3[3] = -P3[3];
+
+
+
 			# Calculate image dislocation contribution to strains 
-			TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,1,Vnorm,Vstrike,Vdip,
-			p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,nu,1,Vnormi,Vstrikei,Vdipi,
+			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+
 			ExxDnI, EyyDnI, EzzDnI, ExyDnI, ExzDnI, EyzDnI,
 			ExxDssI,EyyDssI,EzzDssI,ExyDssI,ExzDssI,EyzDssI,
 			ExxDdsI,EyyDdsI,EzzDdsI,ExyDdsI,ExzDdsI,EyzDdsI);
-			P1[3] = -P1[3];
-			P2[3] = -P2[3];
-			P3[3] = -P3[3];
+
+
+
 		
 			
 		end #HS flag
@@ -297,11 +321,12 @@ function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,ImageFlag,Vnorm,Vstrike,Vdip,
 				UxDss,UyDss,UzDss,
 				UxDds,UyDds,UzDds)
 
+
 if ImageFlag==1; #This means we are computing the iamge dislocation
-	#Zcomps face other way
-	Vnorm[3]=-Vnorm[3];
-	Vdip[3]=-Vdip[3];
-	
+
+
+
+
 	#Inverse rot mat
 	VxR=zeros(size(Vnorm));#Single alloc here!
 	VyR=zeros(size(Vnorm));
@@ -309,12 +334,12 @@ if ImageFlag==1; #This means we are computing the iamge dislocation
 	VxR[1]=Vnorm[1]; VxR[2]=Vstrike[1]; VxR[3]=Vdip[1];
 	VyR[1]=Vnorm[2]; VyR[2]=Vstrike[2]; VyR[3]=Vdip[2];
 	VzR[1]=Vnorm[3]; VzR[2]=Vstrike[3]; VzR[3]=Vdip[3];
-	
+
 	# Transform the complete displacement vector EFCS to TDCS 
 	(UxDn, UyDn, UzDn) =RotateObject3DNewCoords!(UxDn, UyDn, UzDn ,0.,0.,0.,VxR,VyR,VzR)
 	(UxDss,UyDss,UzDss)=RotateObject3DNewCoords!(UxDss,UyDss,UzDss,0.,0.,0.,VxR,VyR,VzR)
 	(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0.,0.,0.,VxR,VyR,VzR)
-	
+
 	#Flip these so we add component
 	if P1[3]==0 && P2[3]==0 && P3[3]==0
 		UzDn  = -UzDn;
@@ -409,9 +434,9 @@ end
 
 #Flip sign if flat tri 
 if ImageFlag==1; #This means we are computing the iamge dislocation	
-	#Flip Z comps back before leaving func
-	Vnorm[3]=-Vnorm[3];
-	Vdip[3]=-Vdip[3];
+
+
+
 
 	if P1[3]==0 && P2[3]==0 && P3[3]==0
 		UxDn  = -UxDn;
@@ -1038,11 +1063,12 @@ function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,ImageFlag,Vnorm,Vstri
 # Calculates stresses and strains associated with a triangular dislocation 
 # in an elastic full-space.
 
+
 if ImageFlag==1; #This means we are computing the iamge dislocation
 
-	#Zcomps face other way
-	Vnorm[3]=-Vnorm[3];
-	Vdip[3]=-Vdip[3];
+
+
+
 
 	RotInvMat=zeros(1,9); #Single alloc here!
 	RotInvMat[1]=Vnorm[1]; RotInvMat[2]=Vstrike[1]; RotInvMat[3]=Vdip[1];
@@ -1138,9 +1164,9 @@ RotMat[1:3]=Vnorm; RotMat[4:6]=Vstrike; RotMat[7:9]=Vdip;
 
 if ImageFlag==1; #This means we are computing the iamge dislocation
 
-	#Flip Z comps back
-	Vnorm[3]=-Vnorm[3];
-	Vdip[3]=-Vdip[3];
+
+
+
 
 	if P1[3]==0 && P2[3]==0 && P3[3]==0
 		ExzDn = -ExzDn;
