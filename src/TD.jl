@@ -142,9 +142,8 @@ VdipiList  	= zeros(SzCmp,3);
 #Some allocations out of loop
 eY = [0.;1.;0.];
 eZ = [0.;0.;1.];
-FillA=zeros(3);
-FillB=zeros(3);
-
+FillAList= zeros(SzCmp,3); ;
+FillBList= zeros(SzCmp,3); 
 
 Threads.@threads for i=1:SzCmp #For every element (multithreaded) 
 	#println("Multithreading off")
@@ -162,6 +161,9 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	Vnormi=	view(VnormiList,i,:);
 	Vstrikei=view(VstrikeiList,i,:);
 	Vdipi=	view(VdipiList,i,:);
+	
+	FillA=view(FillAList,i,:);
+	FillB=view(FillBList,i,:);
 	
 	CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,FillA,FillB);
 	CalculateLocalTriCoords!(P1i,P2i,P3i,Vnormi,Vstrikei,Vdipi,eY,eZ,FillA,FillB);
