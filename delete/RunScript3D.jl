@@ -4,7 +4,7 @@ println("creating func vars")
 # Comment - start some vectors (spaced points)
 x = [-3:0.02:3;];
 y = [-3:0.02:3;];
-x,y=MyModule.meshgrid(x,y);
+x,y=CutAndDisplaceJulia.meshgrid(x,y);
 z=ones(size(x))*0;
 #Get lengths (for reshapes later)
 dimx,dimy = size(x);
@@ -46,24 +46,24 @@ Exz=zeros(size(x));
 Eyz=zeros(size(x));
 
 #Timing
-@time (ue,un,uv)=MyModule.TDdispHS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
-#@time (Exx,Eyy,Ezz,Exy,Exz,Eyz)=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);un=Exx;
+@time (ue,un,uv)=CutAndDisplaceJulia.TDdispHS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+#@time (Exx,Eyy,Ezz,Exy,Exz,Eyz)=CutAndDisplaceJulia.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);un=Exx;
 
 #using Profile
-#@profile  (Exx,Eyy,Ezz,Exy,Exz,Eyz)=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
+#@profile  (Exx,Eyy,Ezz,Exy,Exz,Eyz)=CutAndDisplaceJulia.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
 #Profile.print(format=:filefuncline )
 #Profile.print(format=:flat)
 #Profile.print(sortedby=:count)
 
-#using MyModule
+#using CutAndDisplaceJulia
 #using Traceur
-#@trace MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+#@trace CutAndDisplaceJulia.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
 
 #=
 tic=time()
 Threads.@threads for i=1:100 #
-	#(ue[:,1],un[:,1],uv[:,1])=MyModule.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
-	(Exx[:,1],Eyy[:,1],Ezz[:,1],Exy[:,1],Exz[:,1],Eyz[:,1])=MyModule.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
+	#(ue[:,1],un[:,1],uv[:,1])=CutAndDisplaceJulia.TDdispFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,nu);
+	(Exx[:,1],Eyy[:,1],Ezz[:,1],Exy[:,1],Exz[:,1],Eyz[:,1])=CutAndDisplaceJulia.TDstrainFS(x,y,z,P1,P2,P3,Ss,Ds,Ts,mu,lambda);
 	#println(i)
 end
 toc=time()

@@ -35,7 +35,7 @@
 # using PyPlot
 # plot_wireframe(X,Y,Z, color="red")
 # #flip Y and Z axes
-# (x,y,z)=MyModule.RotateObject3DNewCoords(X,Y,Z,0,0,0,[1;0;0],[0;-1;0],[0;0;1])
+# (x,y,z)=CutAndDisplaceJulia.RotateObject3DNewCoords(X,Y,Z,0,0,0,[1;0;0],[0;-1;0],[0;0;1])
 # plot_wireframe(x,y,z, color="blue")
 #
 #  Author: Tim Davis

@@ -4,7 +4,7 @@ println("creating func vars")
 # Comment - start some vectors (spaced points)
 x = [-2:0.005:2;];
 y = [-4:0.05:0;];
-x,y=MyModule.meshgrid(x,y);
+x,y=CutAndDisplaceJulia.meshgrid(x,y);
 #Get lengths (for reshapes later)
 dimx,dimy = size(x);
 #Turn to col vectors
@@ -22,7 +22,7 @@ nu=0.25;
 E=1;
 
 #Just calling by self
-#(Sxx,Syy,Sxy)=MyModule.LDstressHS(x,y,xe,ye,a,Beta,Ds,Dn,nu,E);
+#(Sxx,Syy,Sxy)=CutAndDisplaceJulia.LDstressHS(x,y,xe,ye,a,Beta,Ds,Dn,nu,E);
 #println(Sxx)
 
 println("Vars created -> to func")
@@ -36,11 +36,11 @@ Sxy= Array{Float64}(undef, 1,length(x));
 ###Run Func Pre profile
 x2=[2;2;2;2]; y2=[2;2;2;2]; 
 Sxx2= Array{Float64}(undef, 1,length(x));Syy2=Sxx2;Szz2=Sxx2;
-(Sxx2,Syy2,Sxy2)=MyModule.LDstressHS(x2,y2,xe,ye,a,Beta,Ds,Dn,nu,E);
+(Sxx2,Syy2,Sxy2)=CutAndDisplaceJulia.LDstressHS(x2,y2,xe,ye,a,Beta,Ds,Dn,nu,E);
 
 using Profile
  #Threads.@threads
- @profile Sxx[1,:],Syy[1,:],Sxy[1,:]=MyModule.LDstressHS(x,y,xe,ye,a,Beta,Ds,Dn,nu,E)
+ @profile Sxx[1,:],Syy[1,:],Sxy[1,:]=CutAndDisplaceJulia.LDstressHS(x,y,xe,ye,a,Beta,Ds,Dn,nu,E)
 Profile.print()
 Profile.print(format=:flat)
 
@@ -49,7 +49,7 @@ Profile.print(format=:flat)
 tic=time()
 Threads.@threads for i=1:500 #
 
-	(Sxx[1,:],Syy[1,:],Sxy[1,:])=MyModule.LDstressHS(x,y,xe,ye,a,Beta,Ds,Dn,nu,E);
+	(Sxx[1,:],Syy[1,:],Sxy[1,:])=CutAndDisplaceJulia.LDstressHS(x,y,xe,ye,a,Beta,Ds,Dn,nu,E);
 
 	#@show i
 end

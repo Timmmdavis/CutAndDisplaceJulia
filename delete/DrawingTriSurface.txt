@@ -5,7 +5,7 @@ y0 = square[3]; y1= square[4]
 h=0.5
 
 ######################################Func create grid
-(x,y) = MyModule.meshgrid([x0:h:x1;],[y0:h:y1;])
+(x,y) = CutAndDisplaceJulia.meshgrid([x0:h:x1;],[y0:h:y1;])
 ######################################Func create grid
 
 ######################################Func create triangulation on grid

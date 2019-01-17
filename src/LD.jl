@@ -46,7 +46,7 @@ function LD(x,y,xe,ye,a,Beta,Ds,Dn,nu,Mu,DispFlag,StressFlag,HSflag)
 # # Example usage (creating infMats):
 # x = [-2:0.5:2;];
 # y = [-4:0.5:0;];
-# x,y=MyModule.meshgrid(x,y);
+# x,y=CutAndDisplaceJulia.meshgrid(x,y);
 # dimx,dimy = size(x);
 # x=reshape(x,length(x),1);
 # y=reshape(y,length(y),1);
@@ -57,7 +57,7 @@ function LD(x,y,xe,ye,a,Beta,Ds,Dn,nu,Mu,DispFlag,StressFlag,HSflag)
 # HSflag=0;
 # Ds=ones(size(xe));
 # Dn=ones(size(xe));
-#(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn)=MyModule.LD(x,y,xe,ye,ones(size(x))*0.01,zeros(size(x)),0.25,1,Ds,Dn,DispFlag,StressFlag,HSflag);
+#(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn)=CutAndDisplaceJulia.LD(x,y,xe,ye,ones(size(x))*0.01,zeros(size(x)),0.25,1,Ds,Dn,DispFlag,StressFlag,HSflag);
 
 CorrectDimsFlg= size(xe)==size(ye) 	&&
 				size(xe)==size(a) 	&&
