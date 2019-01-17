@@ -5,7 +5,7 @@ function LD_sum(SxxDs,SxxDn,SyyDs,
 #Simply sums the different modes of dislocations. (Safer than always writing this out)
 #Could be written more elegantly 
 
-if isempty(Sxx)
+if isempty(SxxDs)
 	Sxx=SxxDs;
 	Syy=SyyDs;
 	Sxy=SxyDs;
@@ -15,7 +15,7 @@ else
 	Sxy=sum(SxyDs.+SxyDn,dims=2);
 end
 
-if isempty(Sxx)
+if isempty(UxDs)
 	Ux=UxDs;
 	Uy=UyDs;
 else
