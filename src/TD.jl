@@ -129,9 +129,44 @@ for i=1:SzCmp
 	P3iList[i,3] = -P3iList[i,3]
 end
 
+
+#Comp FaceNormalVector...
+
+VnormList  	= zeros(SzCmp,3); 
+VstrikeList = zeros(SzCmp,3); 
+VdipList  	= zeros(SzCmp,3); 
+VnormiList  	= zeros(SzCmp,3); 
+VstrikeiList = zeros(SzCmp,3); 
+VdipiList  	= zeros(SzCmp,3); 
+
+#Some allocations out of loop
+eY = [0.;1.;0.];
+eZ = [0.;0.;1.];
+FillA=zeros(3);
+FillB=zeros(3);
+
+
 Threads.@threads for i=1:SzCmp #For every element (multithreaded) 
 	#println("Multithreading off")
 
+	P1=view(P1List,i,:);
+	P2=view(P2List,i,:);
+	P3=view(P3List,i,:);
+	P1i=view(P1iList,i,:);
+	P2i=view(P2iList,i,:);
+	P3i=view(P3iList,i,:);
+
+	Vnorm=	view(VnormList,i,:);
+	Vstrike=view(VstrikeList,i,:);
+	Vdip=	view(VdipList,i,:);
+	Vnormi=	view(VnormiList,i,:);
+	Vstrikei=view(VstrikeiList,i,:);
+	Vdipi=	view(VdipiList,i,:);
+	
+	CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,FillA,FillB);
+	CalculateLocalTriCoords!(P1i,P2i,P3i,Vnormi,Vstrikei,Vdipi,eY,eZ,FillA,FillB);
+	#error("Stop here, also add back in threads and ! funcs no output. ")
+	
 	#Allocate outside of funcs (using @view we just assign a pointer). 
 	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
 	if DispFlag==1
@@ -166,13 +201,6 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 		EyzDdsI = view(EyzDds,:,i);
 	end
 
-	P1=view(P1List,i,:);
-	P2=view(P2List,i,:);
-	P3=view(P3List,i,:);
-	P1i=view(P1iList,i,:);
-	P2i=view(P2iList,i,:);
-	P3i=view(P3iList,i,:);
-
 	if HSflag==1
 		if any(Z .>0) | any(P1[3] .>0) | any(P2[3] .>0) | any(P3[3] .>0)
 			error("Half-space solution: Z coordinates must be negative!")
@@ -181,8 +209,6 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	
 	#Compute some variables we use repeated times inside the functions.
 	##Reducing Allocs further in these would be good!
-	(Vnorm,Vstrike,Vdip)=CalculateLocalTriCoords(P1,P2,P3);
-	(Vnormi,Vstrikei,Vdipi)=CalculateLocalTriCoords(P1i,P2i,P3i);
 	(p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog)=
 	GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip)
 	(p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
@@ -290,6 +316,26 @@ return(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
 	   UxDss,UyDss,UzDss,
 	   UxDds,UyDds,UzDds)
 	
+
+end
+
+function CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,P1P2,P3P1)
+# Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
+# as an exception, if the normal vector points upward, the strike and dip 
+# vectors point Northward and Westward, whereas if the normal vector points
+# downward, the strike and dip vectors point Southward and Westward, 
+# respectively.
+
+P1P2.=P2.-P1;
+P3P1.=P3.-P1;
+cross!(P1P2,P3P1,Vnorm);
+Vnorm.= Vnorm./sqrt(Vnorm[1]^2+Vnorm[2]^2+Vnorm[3]^2)
+cross!(eZ,Vnorm,Vstrike);
+if norm(Vstrike)==0
+	Vstrike.= eY.*Vnorm[3];
+end
+Vstrike.= Vstrike./sqrt(Vstrike[1]^2+Vstrike[2]^2+Vstrike[3]^2);
+cross!(Vnorm,Vstrike,Vdip);
 
 end
 
