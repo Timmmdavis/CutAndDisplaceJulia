@@ -120,9 +120,9 @@ if StrainFlag==1
 	EyzDds = zeros(length(X),SzCmp);
 end
 
-P1iList=copy(P1List);
-P2iList=copy(P2List);
-P3iList=copy(P3List);
+P1iList=deepcopy(P1List);
+P2iList=deepcopy(P2List);
+P3iList=deepcopy(P3List);
 for i=1:SzCmp
 	P1iList[i,3] = -P1iList[i,3]
 	P2iList[i,3] = -P2iList[i,3]
@@ -135,35 +135,35 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	#Allocate outside of funcs (using @view we just assign a pointer). 
 	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
 	if DispFlag==1
-	UxDnI  = view(UxDn,:,i); #only 48bytes alloc, note its the same as @view UxDn[:,i];
-	UyDnI  = view(UyDn,:,i);
-	UzDnI  = view(UzDn,:,i);
-	UxDssI = view(UxDss,:,i);
-	UyDssI = view(UyDss,:,i);
-	UzDssI = view(UzDss,:,i);
-	UxDdsI = view(UxDds,:,i);
-	UyDdsI = view(UyDds,:,i);
-	UzDdsI = view(UzDds,:,i);
+		UxDnI  = view(UxDn,:,i); #only 48bytes alloc, note its the same as @view UxDn[:,i];
+		UyDnI  = view(UyDn,:,i);
+		UzDnI  = view(UzDn,:,i);
+		UxDssI = view(UxDss,:,i);
+		UyDssI = view(UyDss,:,i);
+		UzDssI = view(UzDss,:,i);
+		UxDdsI = view(UxDds,:,i);
+		UyDdsI = view(UyDds,:,i);
+		UzDdsI = view(UzDds,:,i);
 	end
 	if StrainFlag==1
-	ExxDnI  = view(ExxDn,:,i);
-	EyyDnI  = view(EyyDn,:,i);
-	EzzDnI  = view(EzzDn,:,i);
-	ExyDnI  = view(ExyDn,:,i);
-	ExzDnI  = view(ExzDn,:,i);
-	EyzDnI  = view(EyzDn,:,i);
-	ExxDssI = view(ExxDss,:,i);
-	EyyDssI = view(EyyDss,:,i);
-	EzzDssI = view(EzzDss,:,i);
-	ExyDssI = view(ExyDss,:,i);
-	ExzDssI = view(ExzDss,:,i);
-	EyzDssI = view(EyzDss,:,i);
-	ExxDdsI = view(ExxDds,:,i);
-	EyyDdsI = view(EyyDds,:,i);
-	EzzDdsI = view(EzzDds,:,i);
-	ExyDdsI = view(ExyDds,:,i);
-	ExzDdsI = view(ExzDds,:,i);
-	EyzDdsI = view(EyzDds,:,i);
+		ExxDnI  = view(ExxDn,:,i);
+		EyyDnI  = view(EyyDn,:,i);
+		EzzDnI  = view(EzzDn,:,i);
+		ExyDnI  = view(ExyDn,:,i);
+		ExzDnI  = view(ExzDn,:,i);
+		EyzDnI  = view(EyzDn,:,i);
+		ExxDssI = view(ExxDss,:,i);
+		EyyDssI = view(EyyDss,:,i);
+		EzzDssI = view(EzzDss,:,i);
+		ExyDssI = view(ExyDss,:,i);
+		ExzDssI = view(ExzDss,:,i);
+		EyzDssI = view(EyzDss,:,i);
+		ExxDdsI = view(ExxDds,:,i);
+		EyyDdsI = view(EyyDds,:,i);
+		EzzDdsI = view(EzzDds,:,i);
+		ExyDdsI = view(ExyDds,:,i);
+		ExzDdsI = view(ExzDds,:,i);
+		EyzDdsI = view(EyzDds,:,i);
 	end
 
 	P1=view(P1List,i,:);
@@ -188,12 +188,6 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	(p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
 	GlobalToTDECoords(P1i,P2i,P3i,X,Y,Z,Vnormi,Vstrikei,Vdipi)
 
-
-
-
-
-
-
 	if DispFlag==1
 
 		# Calculate main dislocation contribution to displacements
@@ -210,22 +204,14 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 			UxDnI, UyDnI, UzDnI,
 			UxDssI,UyDssI,UzDssI,
 			UxDdsI,UyDdsI,UzDdsI);
-					
-
-
 
 			# Calculate image dislocation contribution to displacements
 			TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],nu,1,Vnormi,Vstrikei,Vdipi,
 			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-
 			UxDnI, UyDnI, UzDnI,
 			UxDssI,UyDssI,UzDssI,
 			UxDdsI,UyDdsI,UzDdsI);
-
-
-
-		
-		
+	
 		end #HsFlag
 
 	end#DispFlag 
@@ -250,21 +236,14 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 			ExxDssI,EyyDssI,EzzDssI,ExyDssI,ExzDssI,EyzDssI,
 			ExxDdsI,EyyDdsI,EzzDdsI,ExyDdsI,ExzDdsI,EyzDdsI);	
 		
-
-
-
 			# Calculate image dislocation contribution to strains 
 			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,nu,1,Vnormi,Vstrikei,Vdipi,
 			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-
 			ExxDnI, EyyDnI, EzzDnI, ExyDnI, ExzDnI, EyzDnI,
 			ExxDssI,EyyDssI,EzzDssI,ExyDssI,ExzDssI,EyzDssI,
 			ExxDdsI,EyyDdsI,EzzDdsI,ExyDdsI,ExzDdsI,EyzDdsI);
 
 
-
-		
-			
 		end #HS flag
 		
 	end #Stress flag
@@ -323,9 +302,6 @@ function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,ImageFlag,Vnorm,Vstrike,Vdip,
 
 
 if ImageFlag==1; #This means we are computing the iamge dislocation
-
-
-
 
 	#Inverse rot mat
 	VxR=zeros(size(Vnorm));#Single alloc here!
@@ -434,10 +410,6 @@ end
 
 #Flip sign if flat tri 
 if ImageFlag==1; #This means we are computing the iamge dislocation	
-
-
-
-
 	if P1[3]==0 && P2[3]==0 && P3[3]==0
 		UxDn  = -UxDn;
 		UyDn  = -UyDn;
@@ -493,8 +465,6 @@ function CalculateLocalTriCoords(P1,P2,P3)
 # downward, the strike and dip vectors point Southward and Westward, 
 # respectively.
 
-
-
 eY = [0.;1.;0.];
 eZ = [0.;0.;1.];
 
@@ -509,25 +479,6 @@ Vdip = cross(Vnorm,Vstrike);
 
 return(Vnorm,Vstrike,Vdip)
 
-# Vnorm = cross!(P2-P1,P3-P1,Vnorm);
-# Vnorm = Vnorm/sqrt(Vnorm[1]^2+Vnorm[2]^2+Vnorm[3]^2)
-
-# Vdip.=Vdip.*0; #reset to zeros (no allocs)
-# #eY = [0.0;1.0;0.0];
-# #eZ = [0.0;0.0;1.0];
-
-# Vdip[3]=1.0; #eZ
-# Vstrike = cross!(Vdip,Vnorm,Vstrike);
-# Vdip[3]=0.0; #reset
-# Vdip[2]=1.0; #eY
-# if sqrt(Vstrike[1]^2+Vstrike[2]^2+Vstrike[3]^2)==0
-	# Vstrike = Vdip*Vnorm[3];
-# end
-# Vstrike = Vstrike/sqrt(Vstrike[1]^2+Vstrike[2]^2+Vstrike[3]^2);
-
-# Vdip = cross!(Vnorm,Vstrike,Vdip);
-
-# return(Vnorm,Vstrike,Vdip)
 
 end
 
@@ -555,10 +506,8 @@ e23=e23/sqrt(e23[1]^2+e23[2]^2+e23[3]^2);
 #A=e12'*e13;
 A=(e12[1]*e13[1])+(e12[2]*e13[2])+(e12[3]*e13[3]);
 A=acos(A);
-#B=-e12'*e23;
 B=(-e12[1]*e23[1])+(-e12[2]*e23[2])+(-e12[3]*e23[3]);
 B=acos(B);
-#C=e23'*e13;
 C=(e23[1]*e13[1])+(e23[2]*e13[2])+(e23[3]*e13[3]);
 C=acos(C);
 
@@ -827,9 +776,6 @@ else
 	
 	# Transform coordinates from EFCS to the second ADCS
 	(y1B,y2B,y3B)=RotateObject3DNewCoords!(SideVec[1],SideVec[2],SideVec[3],0.,0.,0.,ey1,ey2,ey3)
-	#y1B = y1A.-y1B;
-	#y2B = y2A.-y2B;
-	#y3B = y3A.-y3B;
 
 	#Inverse rot mat
 	VxR=zeros(3,1);VyR=zeros(3,1);VzR=zeros(3,1)
@@ -1065,11 +1011,6 @@ function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,ImageFlag,Vnorm,Vstri
 
 
 if ImageFlag==1; #This means we are computing the iamge dislocation
-
-
-
-
-
 	RotInvMat=zeros(1,9); #Single alloc here!
 	RotInvMat[1]=Vnorm[1]; RotInvMat[2]=Vstrike[1]; RotInvMat[3]=Vdip[1];
 	RotInvMat[4]=Vnorm[2]; RotInvMat[5]=Vstrike[2]; RotInvMat[6]=Vdip[2];
