@@ -1,5 +1,5 @@
 authors = ["timmmdavis <r01tjd16@abdn.ac.uk>"]
-name = "MyModule"
+name = "CutAndDisplaceJulia"
 uuid = "71562590-f7e6-11e8-1c31-fbd4b268be1c"
 version = "0.1.0"
 

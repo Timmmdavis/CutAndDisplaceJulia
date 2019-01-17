@@ -40,16 +40,16 @@ HSflag=1;
 
 println("Vars created -> to LD func")
 
-(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=MyModule.LD(x,z,0,-MidDepth,a,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=CutAndDisplaceJulia.LD(x,z,0,-MidDepth,a,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
 #Accumulating arrays
-(sXX,sZZ,sXZ,uX,uZ)=MyModule.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
-(eXX,eZZ,eXZ)=MyModule.HookesLaw2dStress2Strain( sXX,sZZ,sXZ,E,nu )
+(sXX,sZZ,sXZ,uX,uZ)=CutAndDisplaceJulia.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
+(eXX,eZZ,eXZ)=CutAndDisplaceJulia.HookesLaw2dStress2Strain( sXX,sZZ,sXZ,E,nu )
 println("Out of func, too Okada")
 
 
 println("Into Okada func")
-(Ux,Uy,Uz,exx,eyy,ezz,exy,exz,eyz)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
-(sxx,szz,sxz)=MyModule.HookesLaw2dStrain2Stress( exx,ezz,exz,E,nu,mu )
+(Ux,Uy,Uz,exx,eyy,ezz,exy,exz,eyz)=CutAndDisplaceJulia.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
+(sxx,szz,sxz)=CutAndDisplaceJulia.HookesLaw2dStrain2Stress( exx,ezz,exz,E,nu,mu )
 println("Out of func, drawing time, start by reshape")
 
 UxRes=maximum(Ux[:].-uX[:]);

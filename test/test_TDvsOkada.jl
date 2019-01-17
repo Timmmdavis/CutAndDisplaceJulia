@@ -31,9 +31,9 @@ Z=[ 0  0  0  0 0 0];
 X=(X./2).*Width;
 Y=(Y./2).*Length;
 #Getting the direction cosines for the actual plane
-(StrikeSlipCosine,DipSlipCosine,FaceNormalVector)=MyModule.CreateDirectionCosinesFromStrikeAndDip(Strike,Dip)
+(StrikeSlipCosine,DipSlipCosine,FaceNormalVector)=CutAndDisplaceJulia.CreateDirectionCosinesFromStrikeAndDip(Strike,Dip)
 #Now rotate the flat plane to the correct location. 
-(X,Y,Z)=MyModule.RotateObject3DNewCoords(X,Y,Z,0,0,0,DipSlipCosine,StrikeSlipCosine,FaceNormalVector)
+(X,Y,Z)=CutAndDisplaceJulia.RotateObject3DNewCoords(X,Y,Z,0,0,0,DipSlipCosine,StrikeSlipCosine,FaceNormalVector)
 Drop=maximum(Z);
 Z=Z.-Drop.-TipDepth; #Move fault down
 P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]] #const 
@@ -56,7 +56,7 @@ cbar = colorbar()
 
 # Start some vectors (spaced points)
 xx = range(-10,stop=10,length=50); #linspace deprecated
-(xx,yy)=MyModule.meshgrid(xx,xx);
+(xx,yy)=CutAndDisplaceJulia.meshgrid(xx,xx);
 zz=ones(size(xx))*-0; #Ground surface
 
 #Get lengths (for reshapes later)
@@ -86,11 +86,11 @@ println("Vars created -> to TD func")
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,nu,mu,DispFlag,StressFlag,HSflag)
+ CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,nu,mu,DispFlag,StressFlag,HSflag)
  
 
  (Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
- MyModule.TD_sum(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
+ CutAndDisplaceJulia.TD_sum(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
  ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
 	   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
 	   UxDn,UyDn,UzDn,
@@ -102,7 +102,7 @@ println("Out of func, too Okada")
 MidDeptha=sind(Dip)*Width;
 MidDepth=MidDeptha/2+TipDepth;
 println("Into Okada func")
-(uX,uY,uZ,exx,eyy,ezz,exy,exz,eyz)=MyModule.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,TotalSlip,Dn,nu);
+(uX,uY,uZ,exx,eyy,ezz,exy,exz,eyz)=CutAndDisplaceJulia.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,TotalSlip,Dn,nu);
 
 println("Out of func, drawing time, start by reshape")
 
@@ -163,7 +163,7 @@ println("Now checking that when we are for only one component e.g. dipslip we on
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,[1. 1.],[0. 0.],[0. 0.],nu,mu,DispFlag,StressFlag,HSflag)
+ CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[1. 1.],[0. 0.],[0. 0.],nu,mu,DispFlag,StressFlag,HSflag)
 uux=UxDn+UxDds;#
 uuy=UyDn+UyDds;
 uuz=UzDn+UzDds;
@@ -193,7 +193,7 @@ end
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,[0. 0.],[1. 1.],[0. 0.],nu,mu,DispFlag,StressFlag,HSflag)
+ CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[0. 0.],[1. 1.],[0. 0.],nu,mu,DispFlag,StressFlag,HSflag)
 uux=UxDn+UxDss;#
 uuy=UyDn+UyDss;
 uuz=UzDn+UzDss;
@@ -223,7 +223,7 @@ end
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- MyModule.TD(x,y,z,P1,P2,P3,[0. 0.],[0. 0.],[1. 1.],nu,mu,DispFlag,StressFlag,HSflag)
+ CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[0. 0.],[0. 0.],[1. 1.],nu,mu,DispFlag,StressFlag,HSflag)
 uux=UxDss+UxDds;#
 uuy=UyDss+UyDds;
 uuz=UzDss+UzDds;

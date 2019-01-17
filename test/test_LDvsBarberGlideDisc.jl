@@ -10,7 +10,7 @@ mu = 500;
 spacing=0.1;
 minx=-4; maxx=4;
 x = [minx:spacing:maxx;];
-(X,Y) = MyModule.meshgrid(x,x);
+(X,Y) = CutAndDisplaceJulia.meshgrid(x,x);
 #Get lengths (for reshapes later)
 dimx,dimy = size(X);
 
@@ -30,13 +30,13 @@ HSflag=0;
 
 println("Vars created -> to LD func")
 
-(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=MyModule.LD(X[:],Y[:],xe,ye,hlflen,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=CutAndDisplaceJulia.LD(X[:],Y[:],xe,ye,hlflen,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
 #Accumulating arrays
-(sXX,sYY,sXY,uX,uY)=MyModule.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
+(sXX,sYY,sXY,uX,uY)=CutAndDisplaceJulia.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
 
 println("Out of func, too Barber1992_GlideDislocation")
 
-(X,Y,Sxx,Syy,Sxy,Ux,Uy)=MyModule.Barber1992_GlideDislocation(k,mu,X[:],Y[:],a,Ds[1],nu)
+(X,Y,Sxx,Syy,Sxy,Ux,Uy)=CutAndDisplaceJulia.Barber1992_GlideDislocation(k,mu,X[:],Y[:],a,Ds[1],nu)
 
 
 println("Out of func, drawing time, start by reshape")
