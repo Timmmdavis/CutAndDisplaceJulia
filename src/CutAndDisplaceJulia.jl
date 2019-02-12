@@ -2,6 +2,14 @@ module CutAndDisplaceJulia
 using LinearAlgebra
 using Profile
 
+#New Guys 07/02/2019
+include("CalculateNormalTraction3d.jl")
+include("TractionVectorCartesianComponents3d.jl")
+include("CalculateTractionInChosenDirection3d.jl")
+include("HookesLaw3dStrain2Stress.jl")
+include("CreateMidPoint.jl")
+
+
 #Creates Meshgrid
 include("meshgrid.jl")
 include("normr.jl")
