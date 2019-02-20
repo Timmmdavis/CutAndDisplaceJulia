@@ -1,20 +1,37 @@
-#Dependencies
+#
+# Correctness Tests
+#
+
 using Test 
-using LinearAlgebra
-#Add CutAndDisplaceJulia
 using CutAndDisplaceJulia
 
-println("Starting Test 1")
-##Test 1, Check the TDE's match Okada dislocations (displacement HS). Need to add strain!!!
-include("test_TDvsOkada.jl")
-println("Test 1 passed")
+fatalerrors = length(ARGS) > 0 && ARGS[1] == "-f"
+quiet = length(ARGS) > 0 && ARGS[1] == "-q"
+anyerrors = false
 
-println("Starting Test 2")
-##Test 2, Check the LD's match glide dislocation formulas
-include("test_LDvsBarberGlideDisc.jl")
-println("Test 2 passed")
+my_tests = ["test_TDvsOkada.jl",
+            "test_LDvsBarberGlideDisc.jl",
+			"test_LDvsOkada.jl"]
+			
+			
+println("Running tests:")
 
-println("Starting Test 3")
-##Test 2, Check the LD's match half space surface displacement and strain of Okada
-include("test_LDvsOkada.jl")
-println("Test 3 passed")
+for my_test in my_tests
+    try
+        include(my_test)
+        println("\t\033[1m\033[32mPASSED\033[0m: $(my_test)")
+    catch e
+        global anyerrors = true
+        println("\t\033[1m\033[31mFAILED\033[0m: $(my_test)")
+        if fatalerrors
+            rethrow(e)
+        elseif !quiet
+            showerror(stdout, e, backtrace())
+            println()
+        end
+    end
+end
+
+if anyerrors
+    throw("Tests failed")
+end
