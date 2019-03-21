@@ -39,13 +39,17 @@ function CalculateSSandDSDirs(CosAx,CosAy,CosAz)
 #direction of each triangle. This is rotated so it represents right hand rule i.e.. strike
 #is 90 deg to the right of the dip azimuth. 
 #Just the 2D components of the normal vector (looking from above)
+n=size(CosAx,1);
 Res2D=[CosAx CosAy zeros(size(CosAx))];
 #Normalise these (each row)
 Res2D=normr(Res2D);
 
 #Find vector that is 90 to this in 2D (XY)
-StrikeSlipCosine=[-Res2D[:,2] Res2D[:,1] zeros(size(CosAx))];
-
+if n==1
+	StrikeSlipCosine=[-Res2D[2,1] Res2D[1,:] zeros(size(CosAx))];
+else
+	StrikeSlipCosine=[-Res2D[:,2] Res2D[:,1] zeros(size(CosAx))];
+end
 
 #Dipslip
 #Creating direction cosines for a vector pointing down the DipSlip
