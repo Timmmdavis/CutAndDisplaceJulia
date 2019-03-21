@@ -11,7 +11,9 @@ anyerrors = false
 
 my_tests = ["test_TDvsOkada.jl",
             "test_LDvsBarberGlideDisc.jl",
-			"test_LDvsOkada.jl"]
+			"test_ElasticConstantsCheck.jl",
+			"test_LDvsOkada.jl",
+			"test_TDTraction.jl"]
 			
 			
 println("Running tests:")

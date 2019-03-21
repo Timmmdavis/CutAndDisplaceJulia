@@ -2,9 +2,10 @@
 println("creating func vars")
 
 #Inputs
-nu = 0.25;
-k = 3-(4*nu); 
-mu = 500;
+G=ShearModulus(500.); 
+ν=PoissonsRatio(0.25);
+(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
+
 
 #create x and y
 spacing=0.1;
@@ -30,13 +31,13 @@ HSflag=0;
 
 println("Vars created -> to LD func")
 
-(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=CutAndDisplaceJulia.LD(X[:],Y[:],xe,ye,hlflen,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=CutAndDisplaceJulia.LD(X[:],Y[:],xe,ye,hlflen,Beta,Ds,Dn,ν,G,DispFlag,StressFlag,HSflag)
 #Accumulating arrays
 (sXX,sYY,sXY,uX,uY)=CutAndDisplaceJulia.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
 
 println("Out of func, too Barber1992_GlideDislocation")
 
-(X,Y,Sxx,Syy,Sxy,Ux,Uy)=CutAndDisplaceJulia.Barber1992_GlideDislocation(k,mu,X[:],Y[:],a,Ds[1],nu)
+(X,Y,Sxx,Syy,Sxy,Ux,Uy)=CutAndDisplaceJulia.Barber1992_GlideDislocation(G,X[:],Y[:],a,Ds[1],ν)
 
 
 println("Out of func, drawing time, start by reshape")

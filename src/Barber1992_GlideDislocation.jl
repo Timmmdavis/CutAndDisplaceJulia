@@ -1,4 +1,4 @@
-function Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu)
+function Barber1992_GlideDislocation(mu,X,Y,a,b,nu)
 # Barber1992_GlideDislocation: Returns Cartesian displacements and stresses
 #              at grid points for a displacement discontinuity with a unit
 #              Burger's vector (B=1) and unit half length (a=1). The
@@ -17,7 +17,6 @@ function Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu)
 # Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu);
 #
 # Arguments: (input)
-#       k     - Kolosov's constant for plane strain.
 #
 #       mu    - Shear Modulus.
 #
@@ -64,6 +63,8 @@ function Barber1992_GlideDislocation(k,mu,X,Y,a,b,nu)
 #  Author: Tim Davis
 #  Copyright 2017, Tim Davis, Potsdam University\The University of Aberdeen
 #  Modified from Steve Martel's fracture mechanics homework
+
+k = 3-(4*nu);#KolosovsConstant (for plane strain)
 
 Sxx= zeros(length(X),1);
 Syy= zeros(length(X),1);

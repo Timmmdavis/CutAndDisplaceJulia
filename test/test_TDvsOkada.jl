@@ -16,8 +16,7 @@ Rake=90;
 Dds=2.;  #2
 Dn=0.6; #0.6
 Dss=0.5;#0.5
-#Elastic cons
-nu=0.25; #const 
+
 
 
 ###Section - arranging the fault surface for the TDE solution
@@ -69,7 +68,10 @@ z=reshape(zz,length(zz),1); #const
 DispFlag=1; #const 
 StressFlag=1; #const 
 HSflag=1; #const 
-mu=1.; #const 
+
+G=ShearModulus(1.); 
+ν=PoissonsRatio(0.25);
+(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
 
 TotalSlip=sqrt(Dds.^2+Dss.^2);
 Rake=90-atand(Dss/Dds); #degrees
@@ -86,7 +88,7 @@ println("Vars created -> to TD func")
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,nu,mu,DispFlag,StressFlag,HSflag)
+ CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSflag)
  
 
  (Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
@@ -102,7 +104,7 @@ println("Out of func, too Okada")
 MidDeptha=sind(Dip)*Width;
 MidDepth=MidDeptha/2+TipDepth;
 println("Into Okada func")
-(uX,uY,uZ,exx,eyy,ezz,exy,exz,eyz)=CutAndDisplaceJulia.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,TotalSlip,Dn,nu);
+(uX,uY,uZ,exx,eyy,ezz,exy,exz,eyz)=CutAndDisplaceJulia.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,TotalSlip,Dn,ν);
 
 println("Out of func, drawing time, start by reshape")
 
@@ -163,7 +165,7 @@ println("Now checking that when we are for only one component e.g. dipslip we on
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[1. 1.],[0. 0.],[0. 0.],nu,mu,DispFlag,StressFlag,HSflag)
+ CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[1. 1.],[0. 0.],[0. 0.],ν,G,DispFlag,StressFlag,HSflag)
 uux=UxDn+UxDds;#
 uuy=UyDn+UyDds;
 uuz=UzDn+UzDds;
@@ -193,7 +195,7 @@ end
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[0. 0.],[1. 1.],[0. 0.],nu,mu,DispFlag,StressFlag,HSflag)
+ CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[0. 0.],[1. 1.],[0. 0.],ν,G,DispFlag,StressFlag,HSflag)
 uux=UxDn+UxDss;#
 uuy=UyDn+UyDss;
 uuz=UzDn+UzDss;
@@ -223,7 +225,7 @@ end
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[0. 0.],[0. 0.],[1. 1.],nu,mu,DispFlag,StressFlag,HSflag)
+ CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[0. 0.],[0. 0.],[1. 1.],ν,G,DispFlag,StressFlag,HSflag)
 uux=UxDss+UxDds;#
 uuy=UyDss+UyDds;
 uuz=UzDss+UzDds;

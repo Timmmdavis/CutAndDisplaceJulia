@@ -17,9 +17,9 @@ Dds=0.1;
 Dn=0.1;
 Dss=0;
 #Elastic cons
-nu=0.25;
-mu=5;
-E = mu*(2*(1+nu)) ; #Young's Mod
+G=ShearModulus(5.); 
+ν=PoissonsRatio(0.25);
+(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
 
 #Dip relative to X-axis
 Beta=deg2rad(180-Dip);
@@ -40,16 +40,16 @@ HSflag=1;
 
 println("Vars created -> to LD func")
 
-(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=CutAndDisplaceJulia.LD(x,z,0,-MidDepth,a,Beta,Ds,Dn,nu,mu,DispFlag,StressFlag,HSflag)
+(SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=CutAndDisplaceJulia.LD(x,z,0,-MidDepth,a,Beta,Ds,Dn,ν,G,DispFlag,StressFlag,HSflag)
 #Accumulating arrays
 (sXX,sZZ,sXZ,uX,uZ)=CutAndDisplaceJulia.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
-(eXX,eZZ,eXZ)=CutAndDisplaceJulia.HookesLaw2dStress2Strain( sXX,sZZ,sXZ,E,nu )
+(eXX,eZZ,eXZ)=CutAndDisplaceJulia.HookesLaw2dStress2Strain( sXX,sZZ,sXZ,E,ν )
 println("Out of func, too Okada")
 
 
 println("Into Okada func")
-(Ux,Uy,Uz,exx,eyy,ezz,exy,exz,eyz)=CutAndDisplaceJulia.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,nu);
-(sxx,szz,sxz)=CutAndDisplaceJulia.HookesLaw2dStrain2Stress( exx,ezz,exz,E,nu,mu )
+(Ux,Uy,Uz,exx,eyy,ezz,exy,exz,eyz)=CutAndDisplaceJulia.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,ν);
+(sxx,szz,sxz)=CutAndDisplaceJulia.HookesLaw2dStrain2Stress( exx,ezz,exz,E,ν,G )
 println("Out of func, drawing time, start by reshape")
 
 UxRes=maximum(Ux[:].-uX[:]);

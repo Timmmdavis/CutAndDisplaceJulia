@@ -2,13 +2,28 @@ module CutAndDisplaceJulia
 using LinearAlgebra
 using Profile
 
+#Init some types
+struct PoissonsRatio; 	ν::Float64;		end 
+struct ShearModulus; 	G::Float64;		end
+struct BulkModulus; 	K::Float64;		end
+struct YoungsModulus; 	E::Float64;		end
+struct LamesConstant; 	λ::Float64;	end
+export
+    ShearModulus,
+	PoissonsRatio,
+	BulkModulus,
+	YoungsModulus,
+	LamesConstant
+
+
 #New Guys 07/02/2019
 include("CalculateNormalTraction3d.jl")
 include("TractionVectorCartesianComponents3d.jl")
 include("CalculateTractionInChosenDirection3d.jl")
+include("CreateTriangleNormal.jl")
 include("HookesLaw3dStrain2Stress.jl")
 include("CreateMidPoint.jl")
-
+include("ElasticConstantsCheck.jl")
 
 #Creates Meshgrid
 include("meshgrid.jl")
