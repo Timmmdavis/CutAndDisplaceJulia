@@ -1,94 +1,71 @@
-#Test case comparing Okada dislocations with TDs (displacement)
+#Test case comparing to Penny shaped crack
 
 #Start creating vars for function: 
 println("creating func vars")
 
-#Inputs
+#Load triangles and points from file (mesh)
+ModuleDir=pathof(CutAndDisplaceJulia);
+ModuleDir=splitdir(ModuleDir); #remove file name
+ModuleDir=ModuleDir[1];
+ModuleDir=splitdir(ModuleDir); #out of src
+ModuleDir=ModuleDir[1];
+if Sys.iswindows()
+    SurfaceDir=string(ModuleDir,"\\test\\CircleMesh_1a_500Faces.ts")
+else
+	SurfaceDir=string(ModuleDir,"/test/CircleMesh_1a_500Faces.ts")
+end
+(Points,Triangles)=CutAndDisplaceJulia.GoCadAsciiReader(SurfaceDir)
 
-#Fault geom
-Strike=60;
-Dip=45;
-Length=5;
-Width=5;
-TipDepth=1;
-Rake=90;
-#Fault slip
-Dds=2.;  #2
-Dn=0.6; #0.6
-Dss=0.5;#0.5
+#Compute triangle properties
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+n=length(Triangles[:,1]);
+n2=length(Points[:,1]);
 
+(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
-###Section - arranging the fault surface for the TDE solution
-#Arranged as so
-#P1=[-1  1 0 ; 1 -1 0]; #top left and bottom right
-#P2=[-1 -1 0 ;-1 -1 0]; #bottom left
-#P3=[ 1  1 0 ; 1  1 0]; #top right
-X=[-1  1 -1 -1 1 1];
-Y=[ 1 -1 -1 -1 1 1];
-Z=[ 0  0  0  0 0 0];
-X=(X./2).*Width;
-Y=(Y./2).*Length;
-#Getting the direction cosines for the actual plane
-(StrikeSlipCosine,DipSlipCosine,FaceNormalVector)=CutAndDisplaceJulia.CreateDirectionCosinesFromStrikeAndDip(Strike,Dip)
-#Now rotate the flat plane to the correct location. 
-(X,Y,Z)=CutAndDisplaceJulia.RotateObject3DNewCoords(X,Y,Z,0,0,0,DipSlipCosine,StrikeSlipCosine,FaceNormalVector)
-Drop=maximum(Z);
-Z=Z.-Drop.-TipDepth; #Move fault down
-P1=[X[1] Y[1] Z[1];X[2] Y[2] Z[2]] #const 
-P2=[X[5] Y[5] Z[5];X[4] Y[4] Z[4]] #const 
-P3=[X[3] Y[3] Z[3];X[6] Y[6] Z[6]] #const 
-
-#Repeating array if you want to test with more tris (not the solution vs okada, just speed)
-#P1=repeat(P1,50,1)
-#P2=repeat(P2,50,1)
-#P3=repeat(P3,50,1)
-DssVec=repeat([Dss],size(P1,1),1) #const 
-DdsVec=repeat([Dds],size(P1,1),1) #const 
-DnVec=repeat([Dn],size(P1,1),1) #const 
-
-#= draw fault
-using PyPlot
-scatter(X,Y,abs.(Z),Z)
-cbar = colorbar()
-=#
-
-# Start some vectors (spaced points)
-xx = range(-10,stop=10,length=50); #linspace deprecated
-(xx,yy)=CutAndDisplaceJulia.meshgrid(xx,xx);
-zz=ones(size(xx))*-0; #Ground surface
-
-#Get lengths (for reshapes later)
-dimx,dimy = size(xx);
-#Turn to col vectors
-x=reshape(xx,length(xx),1); #const 
-y=reshape(yy,length(yy),1); #const 
-z=reshape(zz,length(zz),1); #const 
-
-DispFlag=1; #const 
-StressFlag=1; #const 
-HSflag=1; #const 
-
-
-TotalSlip=sqrt(Dds.^2+Dss.^2);
-Rake=90-atand(Dss/Dds); #degrees
-
+#Elastic constants
 G=ShearModulus(1.); 
 ν=PoissonsRatio(0.25);
 (K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
 
+
+#Repeating array if you want to test with more tris (not the solution vs okada, just speed)
+DssVec	=ones(n,1); #const 
+DdsVec	=ones(n,1); #const 
+DnVec	=ones(n,1); #const 
+
+# Start some vectors (spaced points)
+CosAx =  FaceNormalVector[:,1];  
+CosAy =  FaceNormalVector[:,2];   
+CosAz =  FaceNormalVector[:,3];  
+x=zeros(n,1);
+y=zeros(n,1);
+z=zeros(n,1); 
+x[:]=MidPoint[:,1]-(CosAx*1e-12);
+y[:]=MidPoint[:,2]-(CosAy*1e-12);
+z[:]=MidPoint[:,3]-(CosAz*1e-12);
+
+# What bits we want to compute
+DispFlag=1; #const 
+StressFlag=1; #const 
+HSflag=1; #const 
+
+#Traction vector
+Tn=zeros(n,1);
+Tds=ones(n,1);
+Tss=zeros(n,1);
+
 println("Vars created -> to TD func")
 
-
-#using BenchmarkTools
-#@btime (No output when you use it)
-
-@time (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
+(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
  ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
  ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
- UxDn,UyDn,UzDn,
- UxDss,UyDss,UzDss,
- UxDds,UyDds,UzDds)=
+ DnUx,DnUy,DnUz,
+ DssUx,DssUy,DssUz,
+ DdsUx,DdsUy,DdsUz)=
  CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSflag)
+ 
+println("Out of TD func") 
  
 #Converting this to stress tensor influences. 
 #Uses Hooke's Law to convert strain to stress. Equation 7.131 and 7.132 in David Pollards Book. 
@@ -96,13 +73,47 @@ println("Vars created -> to TD func")
 (SxxDds,SyyDds,SzzDds,SxyDds,SxzDds,SyzDds) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,λ,G);
 (SxxDn,SyyDn,SzzDn,SxyDn,SxzDn,SyzDn) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,λ,G);
 
+#Normal traction
+DssTn=CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDss,SyyDss,SzzDss,SxyDss,SxzDss,SyzDss,CosAx,CosAy,CosAz )
+DdsTn=CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDds,SyyDds,SzzDds,SxyDds,SxzDds,SyzDds,CosAx,CosAy,CosAz )
+DnTn =CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDn,SyyDn,SzzDn,SxyDn,SxzDn,SyzDn,CosAx,CosAy,CosAz )
 
-CosAx=FaceNormalVector[:,1];
-CosAy=FaceNormalVector[:,2];
-CosAz=FaceNormalVector[:,3];
-CutAndDisplaceJulia.CreateTriangleNormal(P1,P2,P3)
+#Cart components of traction vector
+(DssT1x,DssT2y,DssT3z ) =CutAndDisplaceJulia.TractionVectorCartesianComponents3d(SxxDss,SyyDss,SzzDss,SxyDss,SxzDss,SyzDss,CosAx,CosAy,CosAz)
+(DdsT1x,DdsT2y,DdsT3z ) =CutAndDisplaceJulia.TractionVectorCartesianComponents3d(SxxDds,SyyDds,SzzDds,SxyDds,SxzDds,SyzDds,CosAx,CosAy,CosAz)
+(DnT1x,DnT2y,DnT3z ) =CutAndDisplaceJulia.TractionVectorCartesianComponents3d(SxxDn,SyyDn,SzzDn,SxyDn,SxzDn,SyzDn,CosAx,CosAy,CosAz)
 
-#error("CheckOutput")
-#DssTn=CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDss,SyyDss,SzzDss,SxyDss,SxzDss,SyzDss,CosAx,CosAy,CosAz )
-#DdsTn=CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDds,SyyDds,SzzDds,SxyDds,SxzDds,SyzDds,CosAx,CosAy,CosAz )
-#DnTn =CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDn,SyyDn,SzzDn,SxyDn,SxzDn,SyzDn,CosAx,CosAy,CosAz )
+
+#Calculates the directions of the dipslip and ss directions
+(StrikeSlipCosine,DipSlipCosine) = CutAndDisplaceJulia.CalculateSSandDSDirs( CosAx,CosAy,CosAz );
+
+#Calculates the directions of the dipslip and ss directions
+#StrikeSlipDisplacement_TractionStrikeSlip
+( DssTss ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DssT1x,DssT2y,DssT3z,CosAx,CosAy,CosAz,StrikeSlipCosine );
+#DipSlipDisplacement_TractionStrikeSlip
+( DdsTss ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DdsT1x,DdsT2y,DdsT3z,CosAx,CosAy,CosAz,StrikeSlipCosine );
+#TensileDisplacement_TractionStrikeSlip
+( DnTss  ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DnT1x,DnT2y,DnT3z,CosAx,CosAy,CosAz,StrikeSlipCosine );
+
+#StrikeSlipDisplacement_TractionDipSlip
+( DssTds ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DssT1x,DssT2y,DssT3z,CosAx,CosAy,CosAz,DipSlipCosine );
+#DipSlipDisplacement_TractionDipSlip
+( DdsTds ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DdsT1x,DdsT2y,DdsT3z,CosAx,CosAy,CosAz,DipSlipCosine );
+#TensileDisplacement_TractionDipSlip  
+( DnTds  ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DnT1x,DnT2y,DnT3z,CosAx,CosAy,CosAz,DipSlipCosine );
+
+#Now putting influence matricies inside a predefined structure
+StressInfMats = StressInf(DnTn,DnTss,DnTds, DssTn,DssTss,DssTds, DdsTn,DdsTss,DdsTds);
+DispInfMats   = DispInf(DnUx,DnUy,DnUz,	DssUx,DssUy,DssUz,	DdsUx,DdsUy,DdsUz);
+
+#Concatenate ready for equation 
+Atn  = [-StressInfMats.DnTn  -StressInfMats.DssTn -StressInfMats.DdsTn ];     
+Atss = [-StressInfMats.DnTss -StressInfMats.DssTss -StressInfMats.DdsTss];     
+Atds = [-StressInfMats.DnTds -StressInfMats.DssTds -StressInfMats.DdsTds];     
+A= [Atn;Atss;Atds];  
+
+#Prep traction vector
+b=[Tn; Tss; Tds];
+
+#Do Equation
+D=A\b;

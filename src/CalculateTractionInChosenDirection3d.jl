@@ -44,8 +44,8 @@ function CalculateTractionInChosenDirection3d( Tx,Ty,Tz,CosAx,CosAy,CosAz,Chosen
 
 
 #Init vector to fill
-TractionInDirection=zeros(size(Pxx));
-for i=1:size(Pxx,1) #On each col
+TractionInDirection=zeros(size(Tx));
+for i=1:size(Tx,1) #On each col
 
 	CosAx2=1-(CosAx[i].^2);
 	CosAy2=1-(CosAy[i].^2);
@@ -54,12 +54,12 @@ for i=1:size(Pxx,1) #On each col
 	CosAyz=CosAy[i]*CosAz[i];
 	CosAzx=CosAz[i]*CosAx[i];
 
-	for j=1:size(Pxx,2) #Running through the rows..
+	for j=1:size(Tx,2) #Running through the rows..
 
 		#Split up the equation into seperate parts (each line in the book):
-		A=(Tx[i,j]* CosAx2 - Ty[i,j]*CosAxy -Tz[i,j]*CosAxz)*ChosenDirectionCos[i,1];
+		A=(Tx[i,j]* CosAx2 - Ty[i,j]*CosAxy -Tz[i,j]*CosAzx)*ChosenDirectionCos[i,1];
 		B=(Tx[i,j]*-CosAxy + Ty[i,j]*CosAy2 -Tz[i,j]*CosAyz)*ChosenDirectionCos[i,2];
-		C=(Tx[i,j]*-CosAzx - Ty[i,j]*CosAzy +Tz[i,j]*CosAz2)*ChosenDirectionCos[i,3];
+		C=(Tx[i,j]*-CosAzx - Ty[i,j]*CosAyz +Tz[i,j]*CosAz2)*ChosenDirectionCos[i,3];
 		#Sum the parts of the equation
 		TractionInDirection[i,j]=A+B+C; 
 		

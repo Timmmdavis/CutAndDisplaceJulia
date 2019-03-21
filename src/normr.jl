@@ -8,7 +8,7 @@ if size(A,1)==1
 else
 	
 	for i=1:size(A,1)
-		B[i,:]=normalize.(A[i,:],2)
+		B[i,:]=normalize(A[i,:],2)
 	end
 end
 
