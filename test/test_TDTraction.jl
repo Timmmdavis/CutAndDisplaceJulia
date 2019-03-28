@@ -53,7 +53,7 @@ BoundaryConditions=Tractions(Tn,Tss,Tds)
 TotalShearing = sqrt.((Dss).^2 .+(Dds).^2);
 
 #Finding distance from 0,0 for code midpoints for plotting. 
-(θ,ρ) = CutAndDisplaceJulia.cart2pol(x,y);
+(θ,ρ) = CutAndDisplaceJulia.cart2pol(MidPoint[:,1],MidPoint[:,2]);
 
 #Compute analytical solution for shearing of cracks walls
 a=1.0; #Radius of penny

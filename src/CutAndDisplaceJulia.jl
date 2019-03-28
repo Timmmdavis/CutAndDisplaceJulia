@@ -56,7 +56,10 @@ include("CreateMidPoint.jl")
 include("ElasticConstantsCheck.jl")
 include("CreateFaceNormalAndMidPoint.jl")
 include("CreateP1P2P3.jl")
+
 include("SlipCalculator3D.jl")
+include("RepeatStruct.jl")
+include("SetupTractionVector.jl")
 
 #Surface loading functions
 include("GoCadAsciiReader.jl")

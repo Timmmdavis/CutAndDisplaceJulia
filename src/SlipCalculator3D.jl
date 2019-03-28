@@ -34,7 +34,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,DispFlag,St
 	println("Out of TD func") 
 
 	#Converting strains to stress tensor influences  
-	@time (σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,λ,G);
+	(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,λ,G);
 	(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,λ,G);
 	(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn) 		= CutAndDisplaceJulia.HookesLaw3dStrain2Stress(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,λ,G);
 
@@ -66,10 +66,10 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,DispFlag,St
 	DispInfMats   = DispInf(	DnUx,DnUy,DnUz,		DssUx,DssUy,DssUz,		DdsUx,DdsUy,DdsUz);
 
 	#Concatenate influence matrix ready for equation 
-	Atn  = [-TractionInfMats.DnTn  -TractionInfMats.DssTn  -TractionInfMats.DdsTn ];     
-	Atss = [-TractionInfMats.DnTss -TractionInfMats.DssTss -TractionInfMats.DdsTss];     
-	Atds = [-TractionInfMats.DnTds -TractionInfMats.DssTds -TractionInfMats.DdsTds];     
-	A= [Atn;Atss;Atds];  
+	Atn  = [TractionInfMats.DnTn  TractionInfMats.DssTn  TractionInfMats.DdsTn ];     
+	Atss = [TractionInfMats.DnTss TractionInfMats.DssTss TractionInfMats.DdsTss];     
+	Atds = [TractionInfMats.DnTds TractionInfMats.DssTds TractionInfMats.DdsTds];     
+	A= -[Atn;Atss;Atds];  
 
 	#Prep traction vector
 	b=[Tn; Tss; Tds];
@@ -86,79 +86,3 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,DispFlag,St
 
 end
 
-#Setup the traction vector depending on the input type 
-function SetupTractionVector(BoundaryConditions::Stresses,FaceNormalVector,λ,G,n)
-
-	if typeof(BoundaryConditions.σxx) == Float64 || Int64
-		RepeatStruct(BoundaryConditions,n)
-	end
-
-	( Tn,Tds,Tss ) = CalculateNormalAndShearTractions3d( BoundaryConditions,FaceNormalVector);
-	return Tn, Tds, Tss
-
-end
-
-function SetupTractionVector(BoundaryConditions::Strains,FaceNormalVector,λ,G,n)
-
-	if typeof(BoundaryConditions.εxx) == Float64 || Int64
-		RepeatStruct(BoundaryConditions,n)
-	end
-
-	#Convert to stress
-	(StressTensor) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(BoundaryConditions,FaceNormalVector,λ,G);
-	( Tn,Tds,Tss )=SetupTractionVector(BoundaryConditions)
-	return Tn, Tds, Tss
-
-end
-
-function SetupTractionVector(BoundaryConditions::Tractions,FaceNormalVector,λ,G,n)
-
-	if typeof(BoundaryConditions.Tn) == Float64 || Int64
-		RepeatStruct(BoundaryConditions,n)
-	end
-
-	Tn=BoundaryConditions.Tn;
-	Tss=BoundaryConditions.Tss;
-	Tds=BoundaryConditions.Tds;
-	return Tn, Tds, Tss
-
-end
-
-function SetupTractionVector(BoundaryConditions::MixedBoundaryConditions,FaceNormalVector,λ,G,n)
-
-	(σTn,σTds,σTss)=SetupTractionVector(BoundaryConditions.Stresses)
-	(Tn,Tds,Tss)=SetupTractionVector(BoundaryConditions.Tractions)
-	Tn=	Tn.+σTn;
-	Tds=Tds.+σTds;	
-	Tss=Tss.+σTss;
-
-	return Tn, Tds, Tss
-
-end
-
-
-#Repeat values in structures to match a given size (assuming your structures are mutable)
-#This assumes you only want to repeat the array along a single dimension
-function RepeatStruct(Structure,Size)
-
-	#Get fields in structure
-	FieldsInStruct=fieldnames(typeof(Structure));
-	
-	for i=1:length(FieldsInStruct)
-		#Check field i
-		Value=getfield(Structure, FieldsInStruct[i])
-		#If field is a float then we repeat it
-		if typeof(Value) == Float64 || Int64
-			#repeat to predefined size
-			Value=repeat([Value],Size[1])
-			#Put back in structure
-			setfield!(Structure,FieldsInStruct[i],Value)
-		else
-		#Call the function again for inner structure
-			RepeatStruct(Value,Size)
-		end
-	end
-
-	return Structure
-
-end
