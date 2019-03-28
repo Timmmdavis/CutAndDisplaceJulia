@@ -2,6 +2,7 @@ module CutAndDisplaceJulia
 using LinearAlgebra
 using Profile
 using DelimitedFiles
+using Statistics
 
 #Init some types for elastics (ElasticConstantsCheck)
 struct PoissonsRatio; 	ν::Float64;		end 
@@ -55,6 +56,7 @@ include("normr.jl")
 #Analytical functions (not sped these up)
 include("Barber1992_GlideDislocation.jl")
 include("Okada1985RectangularDislocation.jl")
+include("Eshelby1957_PennyCrackSlipProfile.jl")
 
 #Continuum mechanics funcs
 include("CalculateSSandDSDirs.jl")
@@ -85,9 +87,13 @@ include("RotateObject2D!.jl")
 #Drawing 
 include("contourfill.jl")
 
+#Simple handy functions
+include("BAsPercentOfA.jl")
+
 #LinearAlgebra funcs
 include("cross!.jl")
 
-include("tests.jl")
+#Mirrors of some MATLAB functions
+include("cart2pol.jl")
 
 end

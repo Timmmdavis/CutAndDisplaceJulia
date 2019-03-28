@@ -48,65 +48,58 @@ z[:]=MidPoint[:,3]-(CosAz*1e-12);
 # What bits we want to compute
 DispFlag=1; #const 
 StressFlag=1; #const 
-HSflag=1; #const 
+HSflag=0; #const 
 
 #Traction vector
 Tn=zeros(n,1);
-Tds=ones(n,1);
-Tss=zeros(n,1);
+Tds=zeros(n,1);
+Tss=ones(n,1);
 
 println("Vars created -> to TD func")
 
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
- ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
- ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
+(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
+ εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+ εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
  DnUx,DnUy,DnUz,
  DssUx,DssUy,DssUz,
  DdsUx,DdsUy,DdsUz)=
  CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSflag)
  
 println("Out of TD func") 
- 
-#Converting this to stress tensor influences. 
-#Uses Hooke's Law to convert strain to stress. Equation 7.131 and 7.132 in David Pollards Book. 
-(SxxDss,SyyDss,SzzDss,SxyDss,SxzDss,SyzDss) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,λ,G);
-(SxxDds,SyyDds,SzzDds,SxyDds,SxzDds,SyzDds) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,λ,G);
-(SxxDn,SyyDn,SzzDn,SxyDn,SxzDn,SyzDn) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,λ,G);
 
-#Normal traction
-DssTn=CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDss,SyyDss,SzzDss,SxyDss,SxzDss,SyzDss,CosAx,CosAy,CosAz )
-DdsTn=CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDds,SyyDds,SzzDds,SxyDds,SxzDds,SyzDds,CosAx,CosAy,CosAz )
-DnTn =CutAndDisplaceJulia.CalculateNormalTraction3d( SxxDn,SyyDn,SzzDn,SxyDn,SxzDn,SyzDn,CosAx,CosAy,CosAz )
+#Converting strains to stress tensor influences  
+(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,λ,G);
+(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds) = CutAndDisplaceJulia.HookesLaw3dStrain2Stress(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,λ,G);
+(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn) 		= CutAndDisplaceJulia.HookesLaw3dStrain2Stress(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,λ,G);
+
+#Compute normal traction
+DssTn=CutAndDisplaceJulia.CalculateNormalTraction3d( σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss,CosAx,CosAy,CosAz )
+DdsTn=CutAndDisplaceJulia.CalculateNormalTraction3d( σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds,CosAx,CosAy,CosAz )
+DnTn =CutAndDisplaceJulia.CalculateNormalTraction3d( σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn,CosAx,CosAy,CosAz )
 
 #Cart components of traction vector
-(DssT1x,DssT2y,DssT3z ) =CutAndDisplaceJulia.TractionVectorCartesianComponents3d(SxxDss,SyyDss,SzzDss,SxyDss,SxzDss,SyzDss,CosAx,CosAy,CosAz)
-(DdsT1x,DdsT2y,DdsT3z ) =CutAndDisplaceJulia.TractionVectorCartesianComponents3d(SxxDds,SyyDds,SzzDds,SxyDds,SxzDds,SyzDds,CosAx,CosAy,CosAz)
-(DnT1x,DnT2y,DnT3z ) =CutAndDisplaceJulia.TractionVectorCartesianComponents3d(SxxDn,SyyDn,SzzDn,SxyDn,SxzDn,SyzDn,CosAx,CosAy,CosAz)
-
+(DssT1x,DssT2y,DssT3z ) =CutAndDisplaceJulia.TractionVectorCartesianComponents3d(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss,CosAx,CosAy,CosAz)
+(DdsT1x,DdsT2y,DdsT3z ) =CutAndDisplaceJulia.TractionVectorCartesianComponents3d(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds,CosAx,CosAy,CosAz)
+(DnT1x,DnT2y,DnT3z ) 	=CutAndDisplaceJulia.TractionVectorCartesianComponents3d(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn,CosAx,CosAy,CosAz)
 
 #Calculates the directions of the dipslip and ss directions
 (StrikeSlipCosine,DipSlipCosine) = CutAndDisplaceJulia.CalculateSSandDSDirs( CosAx,CosAy,CosAz );
 
-#Calculates the directions of the dipslip and ss directions
-#StrikeSlipDisplacement_TractionStrikeSlip
+#Compute strike slip traction
 ( DssTss ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DssT1x,DssT2y,DssT3z,CosAx,CosAy,CosAz,StrikeSlipCosine );
-#DipSlipDisplacement_TractionStrikeSlip
 ( DdsTss ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DdsT1x,DdsT2y,DdsT3z,CosAx,CosAy,CosAz,StrikeSlipCosine );
-#TensileDisplacement_TractionStrikeSlip
 ( DnTss  ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DnT1x,DnT2y,DnT3z,CosAx,CosAy,CosAz,StrikeSlipCosine );
 
-#StrikeSlipDisplacement_TractionDipSlip
+#Compute dip slip traction
 ( DssTds ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DssT1x,DssT2y,DssT3z,CosAx,CosAy,CosAz,DipSlipCosine );
-#DipSlipDisplacement_TractionDipSlip
 ( DdsTds ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DdsT1x,DdsT2y,DdsT3z,CosAx,CosAy,CosAz,DipSlipCosine );
-#TensileDisplacement_TractionDipSlip  
 ( DnTds  ) = CutAndDisplaceJulia.CalculateTractionInChosenDirection3d( DnT1x,DnT2y,DnT3z,CosAx,CosAy,CosAz,DipSlipCosine );
 
 #Now putting influence matricies inside a predefined structure
-StressInfMats = StressInf(DnTn,DnTss,DnTds, DssTn,DssTss,DssTds, DdsTn,DdsTss,DdsTds);
-DispInfMats   = DispInf(DnUx,DnUy,DnUz,	DssUx,DssUy,DssUz,	DdsUx,DdsUy,DdsUz);
+StressInfMats = StressInf(	DnTn,DnTss,DnTds, 	DssTn,DssTss,DssTds, 	DdsTn,DdsTss,DdsTds);
+DispInfMats   = DispInf(	DnUx,DnUy,DnUz,		DssUx,DssUy,DssUz,		DdsUx,DdsUy,DdsUz);
 
-#Concatenate ready for equation 
+#Concatenate influence matrix ready for equation 
 Atn  = [-StressInfMats.DnTn  -StressInfMats.DssTn -StressInfMats.DdsTn ];     
 Atss = [-StressInfMats.DnTss -StressInfMats.DssTss -StressInfMats.DdsTss];     
 Atds = [-StressInfMats.DnTds -StressInfMats.DssTds -StressInfMats.DdsTds];     
@@ -115,5 +108,32 @@ A= [Atn;Atss;Atds];
 #Prep traction vector
 b=[Tn; Tss; Tds];
 
-#Do Equation
+#Do linear equation
 D=A\b;
+
+#Extract arrays
+Dn=D[1:n];
+Dss=D[n+1:2*n];
+Dds=D[n*2+1:3*n];
+
+#Compute total shearing
+TotalShearing = sqrt.((Dss).^2 .+(Dds).^2);
+
+#Finding distance from 0,0 for code midpoints for plotting. 
+(θ,ρ) = CutAndDisplaceJulia.cart2pol(x,y);
+
+#Compute analytical solution for shearing of cracks walls
+a=1.0; #Radius of penny
+(us)=CutAndDisplaceJulia.Eshelby1957_PennyCrackSlipProfile(G,ν,0.0,1.0,ρ,a)#Shearing
+(ut)=CutAndDisplaceJulia.Eshelby1957_PennyCrackSlipProfile(G,ν,1.0,0.0,ρ,a)#Opening
+
+#Compute the percent error between analytical and numerical
+ResidualPercent=CutAndDisplaceJulia.BAsPercentOfA(us,TotalShearing);
+
+#Test this has not changed 
+using Statistics
+if maximum(ResidualPercent)>0.012 || Statistics.mean(ResidualPercent)>0.0055
+	error("Residual is too high")
+end
+
+println("Test Passed")
