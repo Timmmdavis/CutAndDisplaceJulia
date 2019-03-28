@@ -1,4 +1,4 @@
-function CalculateNormalTraction3d( Pxx,Pyy,Pzz,Pxy,Pxz,Pyz,CosAx,CosAy,CosAz )
+function CalculateNormalTraction3D( Pxx,Pyy,Pzz,Pxy,Pxz,Pyz,CosAx,CosAy,CosAz )
 # CalculateNormalTraction3d: Calculates normal traction on a given 3D plane
 #                   with Cartesian stress tensor components defined.
 #                   Based on Equation 6.49 in Pollard, D.D. and Fletcher,

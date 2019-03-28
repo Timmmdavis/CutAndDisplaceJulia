@@ -4,16 +4,7 @@
 println("creating func vars")
 
 #Load triangles and points from file (mesh)
-ModuleDir=pathof(CutAndDisplaceJulia);
-ModuleDir=splitdir(ModuleDir); #remove file name
-ModuleDir=ModuleDir[1];
-ModuleDir=splitdir(ModuleDir); #out of src
-ModuleDir=ModuleDir[1];
-if Sys.iswindows()
-    SurfaceDir=string(ModuleDir,"\\test\\CircleMesh_1a_500Faces.ts")
-else
-	SurfaceDir=string(ModuleDir,"/test/CircleMesh_1a_500Faces.ts")
-end
+SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"CircleMesh_1a_500Faces.ts")
 (Points,Triangles)=CutAndDisplaceJulia.GoCadAsciiReader(SurfaceDir)
 
 #Compute triangle properties
@@ -29,15 +20,16 @@ G=ShearModulus(1.);
 (K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
 
 
-# What bits we want to compute
-DispFlag=1; #const 
-StressFlag=1; #const 
-HSFlag=0; #const 
+# Which bits we want to compute
+HSFlag=1; #const 
+
 
 #Traction vector
 Tn=zeros(n,1);
 Tds=zeros(n,1);
 Tss=ones(n,1);
+
+FixedEls=zeros(n,1);
 
 Tn=0.0;
 Tds=0.0;
@@ -47,7 +39,7 @@ Tss=1.0;
 BoundaryConditions=Tractions(Tn,Tss,Tds)
 
 #Calculate slip on faces
-(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,DispFlag,StressFlag,HSFlag,BoundaryConditions);
+(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 
 #Compute total shearing
 TotalShearing = sqrt.((Dss).^2 .+(Dds).^2);

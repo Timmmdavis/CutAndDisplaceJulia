@@ -1,4 +1,4 @@
-function TractionVectorCartesianComponents3d(Pxx,Pyy,Pzz,Pxy,Pxz,Pyz,CosAx,CosAy,CosAz)
+function TractionVectorCartesianComponents3D(Pxx,Pyy,Pzz,Pxy,Pxz,Pyz,CosAx,CosAy,CosAz)
 # TractionVectorCartesianComponents3d: Calculates the Cartesian components
 #                   of the traction vector for 3D data from the tensors and
 #                   direction cosines.

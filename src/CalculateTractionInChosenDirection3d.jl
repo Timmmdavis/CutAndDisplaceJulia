@@ -1,4 +1,4 @@
-function CalculateTractionInChosenDirection3d( Tx,Ty,Tz,CosAx,CosAy,CosAz,ChosenDirectionCos )
+function CalculateTractionInChosenDirection3D( Tx,Ty,Tz,CosAx,CosAy,CosAz,ChosenDirectionCos )
 # CalculateTractionInChosenDirection3d: Calculates traction on a plane in 
 #                   any direction the user chooses. The user just needs to
 #                   supply the direction cosines of the direction they want

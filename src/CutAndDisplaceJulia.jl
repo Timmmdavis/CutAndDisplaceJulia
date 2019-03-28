@@ -29,13 +29,13 @@ export
 	MixedBoundaryConditions
 
 #Init some types for influence matricies
-struct TractionInf; 	
+mutable struct TractionInf; 	
 	DnTn;	DnTss;	DnTds	
 	DssTn;	DssTss;	DssTds
 	DdsTn;	DdsTss;	DdsTds
 	
 end 	
-struct DispInf; 	
+mutable struct DispInf; 	
 	DnUx;	DnUy;	DnUz	
 	DssUx;	DssUy;	DssUz
 	DdsUx;	DdsUy; 	DdsUz
@@ -47,9 +47,9 @@ export
 
 
 #New Guys 07/02/2019
-include("CalculateNormalTraction3d.jl")
-include("TractionVectorCartesianComponents3d.jl")
-include("CalculateTractionInChosenDirection3d.jl")
+include("CalculateNormalTraction3D.jl")
+include("TractionVectorCartesianComponents3D.jl")
+include("CalculateTractionInChosenDirection3D.jl")
 include("CreateTriangleNormal.jl")
 include("HookesLaw3dStrain2Stress.jl")
 include("CreateMidPoint.jl")
@@ -60,6 +60,9 @@ include("CreateP1P2P3.jl")
 include("SlipCalculator3D.jl")
 include("RepeatStruct.jl")
 include("SetupTractionVector.jl")
+include("LoadData.jl")
+include("DataAppender3D.jl")
+include("CalculateInfluenceMatrices3D.jl")
 
 #Surface loading functions
 include("GoCadAsciiReader.jl")
@@ -73,6 +76,7 @@ include("normr.jl")
 include("Barber1992_GlideDislocation.jl")
 include("Okada1985RectangularDislocation.jl")
 include("Eshelby1957_PennyCrackSlipProfile.jl")
+include("Mogi1958_SphericalCavity.jl")
 
 #Continuum mechanics funcs
 include("CalculateSSandDSDirs.jl")

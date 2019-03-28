@@ -1,5 +1,5 @@
 #Setup the traction vector boundary condition depending on the input type 
-function SetupTractionVector(BoundaryConditions::Stresses,FaceNormalVector,λ,G,n)
+function SetupTractionVector(BoundaryConditions::Stresses,FaceNormalVector,n,G,λ)
 
 	if typeof(BoundaryConditions.σxx) == Float64 || Int64
 		RepeatStruct(BoundaryConditions,n)
@@ -10,7 +10,7 @@ function SetupTractionVector(BoundaryConditions::Stresses,FaceNormalVector,λ,G,
 
 end
 
-function SetupTractionVector(BoundaryConditions::Strains,FaceNormalVector,λ,G,n)
+function SetupTractionVector(BoundaryConditions::Strains,FaceNormalVector,n,G,λ)
 
 	if typeof(BoundaryConditions.εxx) == Float64 || Int64
 		RepeatStruct(BoundaryConditions,n)
@@ -23,7 +23,7 @@ function SetupTractionVector(BoundaryConditions::Strains,FaceNormalVector,λ,G,n
 
 end
 
-function SetupTractionVector(BoundaryConditions::Tractions,FaceNormalVector,λ,G,n)
+function SetupTractionVector(BoundaryConditions::Tractions,FaceNormalVector,n,G,λ)
 
 	if typeof(BoundaryConditions.Tn) == Float64 || Int64
 		RepeatStruct(BoundaryConditions,n)
@@ -36,7 +36,7 @@ function SetupTractionVector(BoundaryConditions::Tractions,FaceNormalVector,λ,G
 
 end
 
-function SetupTractionVector(BoundaryConditions::MixedBoundaryConditions,FaceNormalVector,λ,G,n)
+function SetupTractionVector(BoundaryConditions::MixedBoundaryConditions,FaceNormalVector,n,G,λ)
 
 	(σTn,σTds,σTss)=SetupTractionVector(BoundaryConditions.Stresses)
 	(Tn,Tds,Tss)=SetupTractionVector(BoundaryConditions.Tractions)
