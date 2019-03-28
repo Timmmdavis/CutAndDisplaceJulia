@@ -16,9 +16,20 @@ export
 	BulkModulus,
 	YoungsModulus,
 	LamesConstant
-	
+
+#Types to contain boundary conditions
+mutable struct Stresses;	σxx;σyy;σzz;σxy;σxz;σyz; end
+mutable struct Strains;		εxx;εyy;εzz;εxy;εxz;εyz; end 
+mutable struct Tractions;	Tn;Tss;Tds; 			 end 	
+mutable struct MixedBoundaryConditions;Stresses;Tractions;  end
+export
+    Stresses,
+	Strains,
+	Tractions,
+	MixedBoundaryConditions
+
 #Init some types for influence matricies
-struct StressInf; 	
+struct TractionInf; 	
 	DnTn;	DnTss;	DnTds	
 	DssTn;	DssTss;	DssTds
 	DdsTn;	DdsTss;	DdsTds
@@ -29,6 +40,7 @@ struct DispInf;
 	DssUx;	DssUy;	DssUz
 	DdsUx;	DdsUy; 	DdsUz
 end 
+
 export
     StressInf,
 	DispInf
@@ -44,6 +56,7 @@ include("CreateMidPoint.jl")
 include("ElasticConstantsCheck.jl")
 include("CreateFaceNormalAndMidPoint.jl")
 include("CreateP1P2P3.jl")
+include("SlipCalculator3D.jl")
 
 #Surface loading functions
 include("GoCadAsciiReader.jl")

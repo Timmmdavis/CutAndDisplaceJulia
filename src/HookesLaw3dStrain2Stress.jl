@@ -53,3 +53,13 @@ return(Sxx,Syy,Szz,Sxy,Sxz,Syz)
 
 end
 
+
+
+#Multiple dispatch - working within structures
+function HookesLaw3dStrain2Stress( StrainTensor::Strains,λ,G )
+
+	(σxx,σyy,σzz,σxy,σxz,σyz)=HookesLaw3dStrain2Stress( StrainTensor.εxx,StrainTensor.εyy,StrainTensor.εzz,StrainTensor.εxy,StrainTensor.εxz,StrainTensor.εyz,λ,G )
+	StressTensor=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
+	return(StressTensor) 
+
+end
