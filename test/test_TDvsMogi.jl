@@ -8,7 +8,7 @@ SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SphereUniformDistri
 
 SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SphereFix4.ts")
 (PointsF,TrianglesF)=CutAndDisplaceJulia.GoCadAsciiReader(SurfaceDir)
-
+PointsF[:,2:4]=PointsF[:,2:4].*3;
 #Append to the two meshes
 (Points,Triangles,FixedEls) = CutAndDisplaceJulia.DataAppender3D( Points,PointsF,Triangles,TrianglesF);
 
@@ -43,7 +43,7 @@ Tss=0.0;
 BoundaryConditions=Tractions(Tn,Tss,Tds);
 
 #Calculate slip on faces
-(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
+(Dn, Dss, Dds,A2)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 
 println("PutInFunc")
 #Get logical flag of bits to keep
@@ -57,7 +57,6 @@ MidPoint=MidPoint[FD,:];
 P1=P1[FD,:];
 P2=P2[FD,:];
 P3=P3[FD,:];
-@info size(P1)
 
 
 
@@ -76,7 +75,7 @@ X=reshape(X,length(X),1);
 Y=reshape(Y,length(Y),1);
 Z=reshape(Z,length(Z),1);
 
-@info X
+
 
 #Compute analytical result
 (UxAn,UyAn,UzAn)=CutAndDisplaceJulia.Mogi1958_SphericalCavity(Depth,X,Y,Radius,P,ν,G)
@@ -91,8 +90,6 @@ DnVec=Dn;
 DispFlag=1;
 StressFlag=0;
 
-@info size(P1,1); 
-@info length(Dds) 
 
 
 (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,

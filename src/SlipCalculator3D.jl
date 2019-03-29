@@ -39,7 +39,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	Dss=D[n+1:2*n];
 	Dds=D[n*2+1:3*n];
 
-	return Dn, Dss, Dds
+	return Dn, Dss, Dds,A
 
 end
 

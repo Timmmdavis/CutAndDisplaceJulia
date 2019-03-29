@@ -71,11 +71,12 @@ function DataAppender3D( PntsInput1,PntsInput2,TrisInput1,TrisInput2 )
 
 (AppendedPoints,AppendedTriangles,Sz1,Sz2)=GetSizesAndAppendLists( PntsInput1,PntsInput2,TrisInput1,TrisInput2 )
 #Zero CV
-Flag=zeros(Sz1,1);
+Flag=zeros(Sz1);
 Value=1;    
 FlagAppend=zeros(Sz2,1);
 #Vaues of 2nd input are now n. 
 Flag=[Flag;FlagAppend.+Value];
+
 return AppendedPoints,AppendedTriangles,Flag 
 end
 
@@ -84,7 +85,7 @@ end
 function DataAppender3D( PntsInput1,PntsInput2,TrisInput1,TrisInput2,Flag,Value )
 (AppendedPoints,AppendedTriangles,Sz1,Sz2)=GetSizesAndAppendLists( PntsInput1,PntsInput2,TrisInput1,TrisInput2 )
 #Zero CV 
-FlagAppend=zeros(Sz2,1);
+FlagAppend=zeros(Sz2);
 #Vaues of 2nd input are now n. 
 Flag=[Flag;FlagAppend.+Value];
 return AppendedPoints,AppendedTriangles,Flag 

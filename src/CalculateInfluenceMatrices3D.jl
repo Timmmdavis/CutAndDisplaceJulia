@@ -2,43 +2,41 @@
 function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ,FixedEls,HSFlag,n)
 
 	(x,y,z,DssVec,DdsVec,DnVec,StressFlag,CosAx,CosAy,CosAz)=SetupCollationPoints(FaceNormalVector,MidPoint,n)
-	
+
+
 	#Computing for fixed els
 	FixedFlag=FixedEls.==1
 	NotFixedFlag=FixedEls.!=1;
 	if any(FixedFlag)
 
-
 		#Compute displacement on fixed elements
 		xFix=x[FixedFlag];
 		yFix=y[FixedFlag];
 		zFix=z[FixedFlag];
-		xFix=reshape(xFix,length(xFix),1)
-		yFix=reshape(yFix,length(yFix),1)
-		zFix=reshape(zFix,length(zFix),1)
-
 		DispFlag=1;
 		StressFlag=0;
+
 		(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
 		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
 		 DnUx,DnUy,DnUz,
 		 DssUx,DssUy,DssUz,
-		 DdsUx,DdsUy,DdsUz)=TD(xFix,yFix,zFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)
+		 DdsUx,DdsUy,DdsUz)=
+		TD(xFix,yFix,zFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)		
+
+
 		#Compute stress on non fixed elements
 		xNoFix=x[NotFixedFlag];
 		yNoFix=y[NotFixedFlag];
 		zNoFix=z[NotFixedFlag];	
-		xNoFix=reshape(xNoFix,length(xNoFix),1)
-		yNoFix=reshape(yNoFix,length(yNoFix),1)
-		zNoFix=reshape(zNoFix,length(zNoFix),1)
-
 		DispFlag=0;
 		StressFlag=1;
 		(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
 		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds)=
 		 TD(xNoFix,yNoFix,zNoFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag);
+
+
 		 
 		TractionInfMats=ConvertInfMatsToTraction(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
 				 								  εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
@@ -142,13 +140,12 @@ function PutDispInfsIntoInfMat(TractionInfMat,DispInfMat,TractionFlag,DispFlag,n
 	count=0;
 	for j=1:length(TractionFlag)
 		if TractionFlag[j]==true		
-			count+=1;			
+			count+=1;		
 			for i=1:n
 				FullInfMat[j,i]=TractionInfMat[count,i]
 			end
 		end
 	end	
-
 	#Needs to be a single vector
 	TractionFlag=reshape(TractionFlag,length(TractionFlag))
 	#Now remove cols that we dont need
