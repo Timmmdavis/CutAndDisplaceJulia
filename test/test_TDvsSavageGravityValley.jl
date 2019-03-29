@@ -118,17 +118,38 @@ end
 
 #=
 #Draw
-min = minimum(σxyAn[:]);
-max = maximum(σxyAn[:]);
-Value=reshape(σxz,size(xobs))
-x=xobs;
-y=yobs;
-using NaNMath
-steps=10; #Steps from centre to top. 
-Spacing=(max-min)./10;
-levels = [min:Spacing:max;]
-using PyPlot
-close()
-contourf(x,y,Value, levels=levels);
-cbar = colorbar()
+struct PlotAn;	σxx;σyy;σxy; end
+struct PlotNum;	σxx;σyy;σxy; end
+AnalyticalResults=PlotAn(σxxAn,σyyAn,σxyAn)
+NumericalResults=PlotNum(σxx,σzz,σxz)
+#Get fields in structure
+FieldsInStructAn=fieldnames(typeof(AnalyticalResults));
+FieldsInStructNum=fieldnames(typeof(NumericalResults));
+for i=1:length(FieldsInStructAn)
+	AnStr=FieldsInStructAn[i];
+	NumStr=FieldsInStructNum[i];
+	println(AnStr)
+	AnVal=getfield(AnalyticalResults, FieldsInStructAn[i])
+	NumVal=getfield(NumericalResults, FieldsInStructNum[i])
+	min = minimum(AnVal[:]);
+	max = maximum(AnVal[:]);
+	NumValue=reshape(NumVal,size(xobs))
+	AnValue=reshape(AnVal,size(xobs))
+	x=xobs;
+	y=yobs;
+	using NaNMath
+	steps=10; #Steps from centre to top. 
+	Spacing=(max-min)./10;
+	levels = [min:Spacing:max;]
+	using PyPlot
+	figure()
+	plt.subplot(211)
+	contourf(x,y,NumValue, levels=levels);
+	cbar = colorbar();
+	plt.title("Numerical Result $AnStr");
+	plt.subplot(212)
+	contourf(x,y,AnValue, levels=levels);
+	cbar = colorbar();
+	plt.title("Analytical Result $NumStr")
+end
  =#
