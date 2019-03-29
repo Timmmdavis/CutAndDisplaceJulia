@@ -9,7 +9,7 @@ function RepeatStruct(Structure,Size)
 		#Check field i
 		Value=getfield(Structure, FieldsInStruct[i])
 		#If field is a float then we repeat it
-		if typeof(Value) == Float64 || Int64
+		if typeof(Value) == Float64 || typeof(Value) == Int64
 			#repeat to predefined size
 			Value=repeat([Value],Size[1])
 			#Put back in structure

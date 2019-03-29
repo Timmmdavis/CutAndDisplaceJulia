@@ -43,13 +43,13 @@ println("Vars created -> to LD func")
 (SxxDs,SyyDs,SxyDs,SxxDn,SyyDn,SxyDn,UxDs,UxDn,UyDs,UyDn)=CutAndDisplaceJulia.LD(x,z,0,-MidDepth,a,Beta,Ds,Dn,ν,G,DispFlag,StressFlag,HSflag)
 #Accumulating arrays
 (sXX,sZZ,sXZ,uX,uZ)=CutAndDisplaceJulia.LD_sum(SxxDs,SxxDn,SyyDs,SyyDn,SxyDs,SxyDn,UxDs,UxDn,UyDs,UyDn)
-(eXX,eZZ,eXZ)=CutAndDisplaceJulia.HookesLaw2dStress2Strain( sXX,sZZ,sXZ,E,ν )
+(eXX,eZZ,eXZ)=CutAndDisplaceJulia.HookesLaw2DStress2Strain( sXX,sZZ,sXZ,E,ν )
 println("Out of func, too Okada")
 
 
 println("Into Okada func")
 (Ux,Uy,Uz,exx,eyy,ezz,exy,exz,eyz)=CutAndDisplaceJulia.Okada1985RectangularDislocation(x,y,MidDepth,Strike,Dip,Length,Width,Rake,Dds,Dn,ν);
-(sxx,szz,sxz)=CutAndDisplaceJulia.HookesLaw2dStrain2Stress( exx,ezz,exz,E,ν,G )
+(sxx,szz,sxz)=CutAndDisplaceJulia.HookesLaw2DStrain2Stress( exx,ezz,exz,E,ν,G )
 println("Out of func, drawing time, start by reshape")
 
 UxRes=maximum(Ux[:].-uX[:]);
@@ -58,12 +58,6 @@ UzRes=maximum(Uz[:].-uZ[:]);
 ExxRes=maximum(exx[:].-eXX[:]);
 EzzRes=maximum(ezz[:].-eZZ[:]); #Ezz in reality
 ExzRes=maximum(exz[:].-eXZ[:]); #Ezz in reality
-
-
-#using PyPlot
-#close()
-#scatter(x,sXZ)
-#scatter(x,sxz)
 
 #Check LD solution is also traction free
 maxSxx=maximum(sXX);

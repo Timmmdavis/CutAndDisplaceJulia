@@ -1,4 +1,4 @@
-function HookesLaw3dStrain2Stress( Exx,Eyy,Ezz,Exy,Exz,Eyz,λ,G )
+function HookesLaw3DStrain2Stress( Exx,Eyy,Ezz,Exy,Exz,Eyz,λ,G )
 # HookesLaw3dStrain2Stress: Using 3D Hooke's law
 #                   Converting the strain tensors to stress tensors using
 #                   the Young's modulus, shear modulus and Poisson's ratio.

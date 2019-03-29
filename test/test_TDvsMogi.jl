@@ -45,20 +45,8 @@ BoundaryConditions=Tractions(Tn,Tss,Tds);
 #Calculate slip on faces
 (Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 
-println("PutInFunc")
-#Get logical flag of bits to keep
-FD=FixedEls.==0;
-#Needs to be a single vector
-FD=reshape(FD,length(FD))
-#Remove bits. 
-Triangles=Triangles[FD,:];
-FaceNormalVector=FaceNormalVector[FD,:];
-MidPoint=MidPoint[FD,:];
-P1=P1[FD,:];
-P2=P2[FD,:];
-P3=P3[FD,:];
-
-
+(FixedEls,Triangles,FaceNormalVector,MidPoint,P1,P2,P3)=
+CutAndDisplaceJulia.RemoveFixedElements3D(FixedEls,Triangles,FaceNormalVector,MidPoint,P1,P2,P3)
 
 Difference=maximum(Dn)-minimum(Dn);
 @info Difference
@@ -81,24 +69,22 @@ Z=reshape(Z,length(Z),1);
 (UxAn,UyAn,UzAn)=CutAndDisplaceJulia.Mogi1958_SphericalCavity(Depth,X,Y,Radius,P,ν,G)
 
 
-
-
 DispFlag=1;
 StressFlag=0;
 #Compute displacements
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
- ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
- ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
+(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
+ εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+ εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
  CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,G,DispFlag,StressFlag,HSFlag)
  
-
-(Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
-CutAndDisplaceJulia.TD_sum(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-	   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
+ println("COMPUTE INTERNALLY!")
+(εxx,εyy,εzz,εxy,εxz,εyz,Ux,Uy,Uz)=
+CutAndDisplaceJulia.TD_sum(εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+	   εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
 	   UxDn,UyDn,UzDn,
 	   UxDss,UyDss,UzDss,
        UxDds,UyDds,UzDds)
@@ -120,9 +106,10 @@ end
 
 println("Test Passed")
 
-
+#=
 #To Draw
-# using Plots
-# gr()
-# y=[UxAn.+UyAn.+UzAn Ux.+Uy.+Uz];
-# scatter(X,y,title="X vs TotalDisp, An=y1 BEM=y2")
+using Plots
+gr()
+y=[UxAn.+UyAn.+UzAn Ux.+Uy.+Uz];
+scatter(X,y,title="X vs TotalDisp, An=y1 BEM=y2")
+=#

@@ -1,4 +1,4 @@
-function  HookesLaw2dStrain2Stress( Exx,Eyy,Exy,E,nu,mu )
+function  HookesLaw2DStrain2Stress( Exx,Eyy,Exy,E,nu,mu )
 # HookesLaw2dStrain2Stress: Using Plane strain 2d Hooke's law
 #                   Converting the strain tensors to stress tensors using
 #                   the Young's modulus, shear modulus and Poisson's ratio.

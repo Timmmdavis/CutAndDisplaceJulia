@@ -74,8 +74,10 @@ end
 
 println("Test Passed")
 
+#=
 #To Draw
-#using Plots
-#gr()
-#y=[us TotalShearing];
-#scatter(ρ,y,title="R vs Disp, An=y1 BEM=y2")
+using Plots
+gr()
+y=[us TotalShearing];
+scatter(ρ,y,title="R vs Disp, An=y1 BEM=y2")
+=#

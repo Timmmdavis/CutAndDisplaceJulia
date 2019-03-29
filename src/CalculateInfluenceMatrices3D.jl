@@ -95,9 +95,9 @@ function ConvertInfMatsToTraction(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
 								  εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
 								  λ,G,CosAx,CosAy,CosAz)
 	#Converting strains to stress tensor influences  
-	(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = HookesLaw3dStrain2Stress(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,λ,G);
-	(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds) = HookesLaw3dStrain2Stress(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,λ,G);
-	(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn) 		= HookesLaw3dStrain2Stress(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,λ,G);
+	(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = HookesLaw3DStrain2Stress(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,λ,G);
+	(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds) = HookesLaw3DStrain2Stress(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,λ,G);
+	(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn) 		= HookesLaw3DStrain2Stress(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,λ,G);
 	#Compute normal traction
 	DssTn=CalculateNormalTraction3D( σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss,CosAx,CosAy,CosAz )
 	DdsTn=CalculateNormalTraction3D( σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds,CosAx,CosAy,CosAz )

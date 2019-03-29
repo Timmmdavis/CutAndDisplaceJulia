@@ -1,7 +1,6 @@
 function KnockOutFixedRows(FixedEls,Tn,Tds,Tss)
 
 	FixedFlag=FixedEls.==1
-	NotFixedFlag=FixedEls.!=1
 	if any(FixedFlag)
 		#Computing for fixed els
 		for j=1:length(FixedFlag)
@@ -15,3 +14,4 @@ function KnockOutFixedRows(FixedEls,Tn,Tds,Tss)
 
 	return Tn,Tds,Tss
 end
+
