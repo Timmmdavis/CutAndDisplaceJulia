@@ -63,6 +63,7 @@ include("SetupTractionVector.jl")
 include("LoadData.jl")
 include("DataAppender3D.jl")
 include("CalculateInfluenceMatrices3D.jl")
+include("KnockOutFixedRows.jl")
 
 #Surface loading functions
 include("GoCadAsciiReader.jl")

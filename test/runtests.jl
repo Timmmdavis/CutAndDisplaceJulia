@@ -13,7 +13,8 @@ my_tests = ["test_TDvsOkada.jl",
             "test_LDvsBarberGlideDisc.jl",
 			"test_ElasticConstantsCheck.jl",
 			"test_LDvsOkada.jl",
-			"test_TDvsEshelbyPennyCrack.jl"]
+			"test_TDvsEshelbyPennyCrack.jl",
+            "test_TDvsMogi.jl"]
 			
 			
 println("Running tests:")

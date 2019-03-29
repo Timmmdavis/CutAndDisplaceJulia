@@ -1,4 +1,4 @@
-function TD(X::Array{Float64,2},Y::Array{Float64,2},Z::Array{Float64,2},
+function TD(X::Array{Float64},Y::Array{Float64},Z::Array{Float64},
 		    P1List::Array{Float64,2},P2List::Array{Float64,2},P3List::Array{Float64,2},
 			Dss::Array,Dds::Array,Dn::Array,nu::Float64,mu::Float64,
 			DispFlag::Int64,StrainFlag::Int64,HSflag::Int64)

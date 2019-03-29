@@ -43,7 +43,7 @@ Tss=0.0;
 BoundaryConditions=Tractions(Tn,Tss,Tds);
 
 #Calculate slip on faces
-(Dn, Dss, Dds,A2)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
+(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 
 println("PutInFunc")
 #Get logical flag of bits to keep
@@ -82,23 +82,17 @@ Z=reshape(Z,length(Z),1);
 
 
 
-println("PUT ME IN A FUNC")
-#X=convert(Array{Float64,2},X)
-DssVec=Dss;
-DdsVec=Dds;
-DnVec=Dn;
+
 DispFlag=1;
 StressFlag=0;
-
-
-
+#Compute displacements
 (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
  ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
  ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)
+ CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,G,DispFlag,StressFlag,HSFlag)
  
 
 (Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
@@ -109,12 +103,26 @@ ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
 	   UxDss,UyDss,UzDss,
        UxDds,UyDds,UzDds)
 
-UxRes=Ux.-UxAn;
-UyRes=Uy.-UyAn;
-UzRes=Uz.-UzAn;
 
-if any(UxRes.>3e-5) | any(UyRes.>2e-8) | any(UzRes.>6e-5)
-	error("Displacement at surface too high!")
+#Compute the percent error between analytical and numerical
+ResidualPercentUx=CutAndDisplaceJulia.BAsPercentOfA(UxAn,Ux);
+ResidualPercentUy=CutAndDisplaceJulia.BAsPercentOfA(UyAn,Uy);
+ResidualPercentUz=CutAndDisplaceJulia.BAsPercentOfA(UzAn,Uz);
+
+@info ResidualPercentUx
+@info ResidualPercentUy
+@info ResidualPercentUz
+
+lim=20; #Percent error limit
+if any((abs.(ResidualPercentUx.-100)).>lim) | any((abs.(ResidualPercentUy.-100)).>lim)  | any((abs.(ResidualPercentUz.-100)).>lim) 
+ 	error("Residual displacement too high, some over $lim%")
 end
 
 println("Test Passed")
+
+
+#To Draw
+# using Plots
+# gr()
+# y=[UxAn.+UyAn.+UzAn Ux.+Uy.+Uz];
+# scatter(X,y,title="X vs TotalDisp, An=y1 BEM=y2")

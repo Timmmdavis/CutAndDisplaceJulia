@@ -7,6 +7,9 @@ println("creating func vars")
 SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"CircleMesh_1a_500Faces.ts")
 (Points,Triangles)=CutAndDisplaceJulia.GoCadAsciiReader(SurfaceDir)
 
+##TestWithSlightDip
+#Points[:,4]=Points[:,2].*1e-9;
+
 #Compute triangle properties
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 n=length(Triangles[:,1]);
@@ -21,7 +24,7 @@ G=ShearModulus(1.);
 
 
 # Which bits we want to compute
-HSFlag=1; #const 
+HSFlag=0; #const 
 
 
 #Traction vector
@@ -55,10 +58,24 @@ a=1.0; #Radius of penny
 #Compute the percent error between analytical and numerical
 ResidualPercent=CutAndDisplaceJulia.BAsPercentOfA(us,TotalShearing);
 
+
+@info ResidualPercent
+
+#Only check values that are not within 10% of the tipline
+Good=ρ.<0.9;
+ResidualPercent=ResidualPercent[Good];
+@info ResidualPercent
+
 #Test this has not changed 
-using Statistics
-if maximum(ResidualPercent)>0.012 || Statistics.mean(ResidualPercent)>0.0055
-	error("Residual is too high")
+lim=10; #Percent error limit
+if any((abs.(ResidualPercent.-100)).>lim) 
+ 	error("Residual displacement too high, some over $lim%")
 end
 
 println("Test Passed")
+
+#To Draw
+#using Plots
+#gr()
+#y=[us TotalShearing];
+#scatter(ρ,y,title="R vs Disp, An=y1 BEM=y2")

@@ -3,7 +3,7 @@ function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ
 
 	(x,y,z,DssVec,DdsVec,DnVec,StressFlag,CosAx,CosAy,CosAz)=SetupCollationPoints(FaceNormalVector,MidPoint,n)
 
-
+	println("Calling TD")
 	#Computing for fixed els
 	FixedFlag=FixedEls.==1
 	NotFixedFlag=FixedEls.!=1;
@@ -15,7 +15,6 @@ function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ
 		zFix=z[FixedFlag];
 		DispFlag=1;
 		StressFlag=0;
-
 		(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
 		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
@@ -23,8 +22,6 @@ function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ
 		 DssUx,DssUy,DssUz,
 		 DdsUx,DdsUy,DdsUz)=
 		TD(xFix,yFix,zFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)		
-
-
 		#Compute stress on non fixed elements
 		xNoFix=x[NotFixedFlag];
 		yNoFix=y[NotFixedFlag];
@@ -66,6 +63,7 @@ function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ
 		return TractionInfMats 
 
 	end
+
 
 end
 
@@ -124,8 +122,9 @@ end
 
 
 function PutDispInfsIntoInfMat(TractionInfMat,DispInfMat,TractionFlag,DispFlag,n)
-#Fills disp rows in correct place.
-
+#Fills disp rows in correct place with the traction influence matrix.
+	
+	#This is allocated here. Pre allocated INF mats could be passed into TD if we were concerned with speed here. 
 	FullInfMat=zeros(n,n);
 
 	count=0;
