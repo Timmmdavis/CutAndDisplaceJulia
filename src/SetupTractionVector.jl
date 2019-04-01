@@ -32,8 +32,8 @@ end
 
 function SetupTractionVector(BoundaryConditions::MixedBoundaryConditions,FaceNormalVector,n,G,λ)
 
-	(σTn,σTds,σTss)=SetupTractionVector(BoundaryConditions.Stresses)
-	(Tn,Tds,Tss)=SetupTractionVector(BoundaryConditions.Tractions)
+	(σTn,σTds,σTss)=SetupTractionVector(BoundaryConditions.Stresses,FaceNormalVector,n,G,λ)
+	(Tn,Tds,Tss)=SetupTractionVector(BoundaryConditions.Tractions,FaceNormalVector,n,G,λ)
 	Tn=	Tn.+σTn;
 	Tds=Tds.+σTds;	
 	Tss=Tss.+σTss;

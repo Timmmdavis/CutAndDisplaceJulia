@@ -3,6 +3,7 @@ using LinearAlgebra
 using Profile
 using DelimitedFiles
 using Statistics
+using FischerNewton
 
 #Init some types for elastics (ElasticConstantsCheck)
 struct PoissonsRatio; 	ν::Float64;		end 
@@ -21,12 +22,17 @@ export
 mutable struct Stresses;	σxx;σyy;σzz;σxy;σxz;σyz; end
 mutable struct Strains;		εxx;εyy;εzz;εxy;εxz;εyz; end 
 mutable struct Tractions;	Tn;Tss;Tds; 			 end 	
+mutable struct FrictionParameters; µ;Sf;  		     end
 mutable struct MixedBoundaryConditions;Stresses;Tractions;  end
+mutable struct MixedBoundaryConditionsFriction;Stresses;Tractions;FrictionParameters;  end
+
 export
     Stresses,
 	Strains,
 	Tractions,
-	MixedBoundaryConditions
+	FrictionParameters,
+	MixedBoundaryConditions,
+	MixedBoundaryConditionsFriction
 
 #Init some types for influence matricies
 mutable struct TractionInf; 	
@@ -58,6 +64,7 @@ include("CreateFaceNormalAndMidPoint.jl")
 include("CreateP1P2P3.jl")
 include("CalculateNormalAndShearTractions3D.jl")
 include("RemoveFixedElements3D.jl")
+include("AreaOfTriangle3D.jl")
 
 
 include("SlipCalculator3D.jl")
@@ -83,6 +90,10 @@ include("Eshelby1957_PennyCrackSlipProfile.jl")
 include("Mogi1958_SphericalCavity.jl")
 include("Savage1984_GravityValleyStress.jl")
 
+include("PollardSegall1987_FractureSlipProfile.jl")
+include("Burgmann1994_FractureLinearFrictionSlipProfile.jl")
+
+
 #Continuum mechanics funcs
 include("CalculateSSandDSDirs.jl")
 include("RotateCosine3D.jl")
@@ -92,7 +103,6 @@ include("HookesLaw2DStrain2Stress.jl")
 include("HookesLaw2DStress2Strain.jl")
 include("TensorTransformation3D.jl")
 include("TensorTransformation2D.jl")
-
 include("TensorTransformation3D!.jl")
 
 #Normal line dislocation funcs

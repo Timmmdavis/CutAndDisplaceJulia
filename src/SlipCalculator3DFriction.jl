@@ -1,4 +1,4 @@
-function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
+function SlipCalculator3DFriction(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls,µ,Sf)
 
 	#Compute the tractions acting on the crack
 	n=length(FaceNormalVector[:,1]);
@@ -13,7 +13,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	Atn  = [TractionInfMats.DnTn  TractionInfMats.DssTn  TractionInfMats.DdsTn ];     
 	Atss = [TractionInfMats.DnTss TractionInfMats.DssTss TractionInfMats.DdsTss];     
 	Atds = [TractionInfMats.DnTds TractionInfMats.DssTds TractionInfMats.DdsTds];     
-	A= -[Atn;Atss;Atds]; 
+	A= -[Atn;Atss;Atds];  
 
 	#Prep traction vector
 	b=[Tn; Tss; Tds];
@@ -22,43 +22,11 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	D=A\b;
 	println("LinearEqDone")	
 
-	n=sum(FixedEls.==0)
-	#Extract arrays
-	Dn=D[1:n];
-	Dss=D[n+1:2*n];
-	Dds=D[n*2+1:3*n];
-
-	return Dn, Dss, Dds, A, b
-
-end
-
-#Friction:
-function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions::MixedBoundaryConditionsFriction,FixedEls)
-
-	#Compute the tractions acting on the crack
-	n=length(FaceNormalVector[:,1]);
-
-	#Extract params and repackage
-	µ=BoundaryConditions.FrictionParameters.µ;
-	Sf=BoundaryConditions.FrictionParameters.Sf;
-	Stress=BoundaryConditions.Stresses;
-	Traction=BoundaryConditions.Tractions;
-	BoundaryConditions=MixedBoundaryConditions(Stress,Traction);
-	#Call default slip calc to get inf matrix and displacements due to BoundaryConditions
-	(Dn, Dss, Dds, A, b)=SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
-
-	#Adding some scaling parameters (Improves Friction Solver performance). 
-	#We scale by the average triangle size and the shear mod. 
-	(Area,HalfPerimeter ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-	Scl=(mean(HalfPerimeter)/G); 
-	A=A.*Scl;  
-
+	#Invert matrix:
 	#Therefore each col in [C] represents how much each 
 	#element must displace to cause a traction
 	#of one unit at element i.
 	C = inv(A);	
-
-	D=C*b;
 
 	# Construct a and b for the equation [y]=[a][x]+[b] where
 	#  [y]  = |+Dn|     and [x] = |-tn|   
@@ -114,9 +82,9 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 		 (2*dµ)                           ZE     -ID     ZE ZE];
 
 	# Construct column vector [b].
-	b =	[D[L1]-CDnTss*Sf-CDnTds*Sf; 
-		 D[L2]-CDssTss*Sf-CDssTds*Sf;
-		 D[L3]-CDdsTss*Sf-CDdsTds*Sf;
+	b =	[D[L1,:]-CDnTss*Sf-CDnTds*Sf; 
+		 D[L2,:]-CDssTss*Sf-CDssTds*Sf;
+		 D[L3,:]-CDdsTss*Sf-CDdsTds*Sf;
 		 2*Sf; 
 		 2*Sf];
 
@@ -165,10 +133,6 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	#This the remote stress left over once stress induced by the slip
 	#from the boundary has been removed
 
-	#Scaling back the data. 
-	Dn=Dn.*Scl;
-	Dss=Dss.*Scl;
-	Dds=Dds.*Scl;
 
 	return Dn,Dss,Dds
 
