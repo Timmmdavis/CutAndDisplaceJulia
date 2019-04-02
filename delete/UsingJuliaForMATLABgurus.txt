@@ -56,6 +56,27 @@ nanmax --->  Xmx=maximum(filter(!isnan, X));
 Dont just say a=b...
 a=[1, 2, 3, 4, 5]; b=a; !pop(b); a=[1, 2, 3, 4]; use b=copy(a)
 
+bsxfun = loop
+Tn = (bsxfun(@times,Tx,CosAx))+(bsxfun(@times,Ty,CosAy));
+Ts = (bsxfun(@times,-Tx,CosAy))+(bsxfun(@times,Ty,CosAx));
+To:
+Tn=zeros(size(Tx))
+Ts=zeros(size(Tx))
+for i=1:length(Tx)
+    Tn[i,:]=( Tx[i,:].*CosAx[i])+(Ty[i,:].*CosAy[i]);
+    Ts[i,:]=(-Tx[i,:].*CosAy[i])+(Ty[i,:].*CosAx[i]);
+end
+
+diag (from vector µ):
+dµ = diagm(0 => µ);
+#Identity matrix of size n
+ID = Matrix{Float64}(I,n,n)
+
+#nan (Creating matrix of NaNs)
+FeLe=Array{Float64,2}(undef, n,1);FeLe=fill!(FeLe, NaN)
+
+
 Checking alloctions:
 XX=@allocated MyFunc()
 println(XX)
+

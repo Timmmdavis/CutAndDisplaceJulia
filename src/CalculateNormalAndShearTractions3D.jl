@@ -34,9 +34,15 @@ function CalculateNormalAndShearTractions3D( σxx,σyy,σzz,σxy,σxz,σyz,FaceN
 
 #Splitting the face normal vector into its direction cosines. Note these
 #are kept as radians not degrees.
-CosAx=FaceNormalVector[:,1]; 
-CosAy=FaceNormalVector[:,2];
-CosAz=FaceNormalVector[:,3];
+if typeof(FaceNormalVector)!=Array{Float64,1}
+	CosAx=FaceNormalVector[:,1]; 
+	CosAy=FaceNormalVector[:,2];
+	CosAz=FaceNormalVector[:,3];
+else
+	CosAx=FaceNormalVector[1]; 
+	CosAy=FaceNormalVector[2];
+	CosAz=FaceNormalVector[3];
+end
 #Calling function to calculate directions (function)
 ( StrikeSlipCosine,DipSlipCosine ) = CalculateSSandDSDirs( CosAx,CosAy,CosAz ) ;  
 

@@ -22,9 +22,11 @@ export
 mutable struct Stresses;	σxx;σyy;σzz;σxy;σxz;σyz; end
 mutable struct Strains;		εxx;εyy;εzz;εxy;εxz;εyz; end 
 mutable struct Tractions;	Tn;Tss;Tds; 			 end 	
-mutable struct FrictionParameters; µ;Sf;  		     end
+mutable struct FrictionParameters; 	   µ;Sf;  		     	end
 mutable struct MixedBoundaryConditions;Stresses;Tractions;  end
-mutable struct MixedBoundaryConditionsFriction;Stresses;Tractions;FrictionParameters;  end
+mutable struct MixedBoundaryConditionsFriction;Stresses;Tractions;FrictionParameters;	end
+
+mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3; 	end
 
 export
     Stresses,
@@ -32,15 +34,16 @@ export
 	Tractions,
 	FrictionParameters,
 	MixedBoundaryConditions,
-	MixedBoundaryConditionsFriction
+	MixedBoundaryConditionsFriction,
+	TriangleEdges
 
 #Init some types for influence matricies
 mutable struct TractionInf; 	
 	DnTn;	DnTss;	DnTds	
 	DssTn;	DssTss;	DssTds
 	DdsTn;	DdsTss;	DdsTds
-	
 end 	
+
 mutable struct DispInf; 	
 	DnUx;	DnUy;	DnUz	
 	DssUx;	DssUy;	DssUz
@@ -65,6 +68,12 @@ include("CreateP1P2P3.jl")
 include("CalculateNormalAndShearTractions3D.jl")
 include("RemoveFixedElements3D.jl")
 include("AreaOfTriangle3D.jl")
+include("GetCrackTipElements3D.jl")
+include("EdgeConstraints.jl")
+include("RotateObject3DAllignVectors.jl")
+include("StressIntensity3D.jl")
+include("CalculateNormalShearTraction2D.jl")
+include("Tada_StrIntInclinedPennyTension.jl")
 
 
 include("SlipCalculator3D.jl")
@@ -89,7 +98,6 @@ include("Okada1985RectangularDislocation.jl")
 include("Eshelby1957_PennyCrackSlipProfile.jl")
 include("Mogi1958_SphericalCavity.jl")
 include("Savage1984_GravityValleyStress.jl")
-
 include("PollardSegall1987_FractureSlipProfile.jl")
 include("Burgmann1994_FractureLinearFrictionSlipProfile.jl")
 

@@ -33,7 +33,7 @@ Triangles=1:length(Points[:,1]);
 #Triangles=convert(Array{Float64},Triangles)
 Sz2=length(Triangles)/3;
 Sz2=convert(Int64,Sz2)
-Triangles=reshape(Triangles,Sz2,:);
+Triangles=reshape(Triangles,:,Sz2)';
 
 #Convert to proper type
 Points=convert(Array{Float64,2},Points)

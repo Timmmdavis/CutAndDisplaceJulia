@@ -2,8 +2,12 @@ function normr(A)
 #using LinearAlgebra
 #inputs like:    Res2D=[CosAx CosAy zeros(size(CosAx))];
 
+#@info A
+
+#B=normalize(vec(A))
+
 B= Array{Float64}(undef, size(A)); 
-if size(A,1)==1
+if size(A,1)==1 
 	B=normalize(vec(A))
 else
 	
