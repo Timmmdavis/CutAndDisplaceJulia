@@ -19,12 +19,12 @@ export
 	LamesConstant
 
 #Types to contain boundary conditions
-mutable struct Stresses;	σxx;σyy;σzz;σxy;σxz;σyz; end
-mutable struct Strains;		εxx;εyy;εzz;εxy;εxz;εyz; end 
+struct Stresses;	σxx;σyy;σzz;σxy;σxz;σyz; end
+struct Strains;		εxx;εyy;εzz;εxy;εxz;εyz; end 
 mutable struct Tractions;	Tn;Tss;Tds; 			 end 	
-mutable struct FrictionParameters; 	   µ;Sf;  		     	end
-mutable struct MixedBoundaryConditions;Stresses;Tractions;  end
-mutable struct MixedBoundaryConditionsFriction;Stresses;Tractions;FrictionParameters;	end
+struct FrictionParameters; 	   µ;Sf;  		     	end
+struct MixedBoundaryConditions;Stresses;Tractions;  end
+struct MixedBoundaryConditionsFriction;Stresses;Tractions;FrictionParameters;	end
 
 mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3; 	end
 
@@ -61,6 +61,7 @@ include("TractionVectorCartesianComponents3D.jl")
 include("CalculateTractionInChosenDirection3D.jl")
 include("CreateTriangleNormal.jl")
 include("HookesLaw3DStrain2Stress.jl")
+include("HookesLaw3DStrain2Stress!.jl")
 include("CreateMidPoint.jl")
 include("ElasticConstantsCheck.jl")
 include("CreateFaceNormalAndMidPoint.jl")

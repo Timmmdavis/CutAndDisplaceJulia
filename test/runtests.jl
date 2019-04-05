@@ -17,7 +17,8 @@ my_tests = ["test_TDvsOkada.jl",
             "test_TDvsMogi.jl",
             "test_TDvsSavageGravityValley.jl",
             "test_TDvsBurgmannLinearFrictionCrack.jl",
-            "test_TDvsStressIntensity.jl"]
+            "test_TDvsStressIntensity.jl",
+            "test_TractionFreeSurface.jl"]
 			
 			
 println("Running tests:")

@@ -1,4 +1,4 @@
-function HookesLaw3DStrain2Stress( Exx,Eyy,Ezz,Exy,Exz,Eyz,λ,G )
+function HookesLaw3DStrain2Stress!( Exx,Eyy,Ezz,Exy,Exz,Eyz,λ,G )
 # HookesLaw3dStrain2Stress: Using 3D Hooke's law
 #                   Converting the strain tensors to stress tensors using
 #                   the Young's modulus, shear modulus and Poisson's ratio.
@@ -41,14 +41,26 @@ function HookesLaw3DStrain2Stress( Exx,Eyy,Ezz,Exy,Exz,Eyz,λ,G )
 #  Author: Tim Davis
 #  Copyright 2017, Tim Davis, Potsdam University\The University of Aberdeen
 
-#Equation 7.131 and 7.132 in Pollard and Fletcher 2005 Book. 
-Sxx = 2*G.*Exx.+(λ.*(Exx.+Eyy.+Ezz)); 
-Syy = 2*G.*Eyy.+(λ.*(Exx.+Eyy.+Ezz));
-Szz = 2*G.*Ezz.+(λ.*(Exx.+Eyy.+Ezz));
-Sxy = 2*G.*Exy;  
-Sxz = 2*G.*Exz;
-Syz = 2*G.*Eyz;     
-
+#Preassign
+Sxx=copy(Exx)
+Syy=copy(Sxx);
+Szz=Ezz;
+Sxy=Exy;
+Sxz=Exz;
+Syz=Eyz;
+G2=2*G
+for i=1:size(Sxx,1)
+	for j=1:size(Sxx,2)
+		#Equation 7.131 and 7.132 in Pollard and Fletcher 2005 Book. 
+		cons=λ*(Exx[i,j]+Eyy[i,j]+Ezz[i,j]);
+		Sxx[i,j]= G2*Exx[i,j]+cons; 
+		Syy[i,j]= G2*Eyy[i,j]+cons;
+		Szz[i,j]= G2*Ezz[i,j]+cons;
+		Sxy[i,j]= G2*Exy[i,j];  
+		Sxz[i,j]= G2*Exz[i,j];
+		Syz[i,j]= G2*Eyz[i,j];     
+	end
+end
 return(Sxx,Syy,Szz,Sxy,Sxz,Syz) 
 
 end
@@ -56,9 +68,9 @@ end
 
 
 #Multiple dispatch - working within structures
-function HookesLaw3DStrain2Stress( StrainTensor::Strains,λ,G )
+function HookesLaw3DStrain2Stress!( StrainTensor::Strains,λ,G )
 
-	(σxx,σyy,σzz,σxy,σxz,σyz)=HookesLaw3DStrain2Stress( StrainTensor.εxx,StrainTensor.εyy,StrainTensor.εzz,StrainTensor.εxy,StrainTensor.εxz,StrainTensor.εyz,λ,G )
+	(σxx,σyy,σzz,σxy,σxz,σyz)=HookesLaw3DStrain2Stress!( StrainTensor.εxx,StrainTensor.εyy,StrainTensor.εzz,StrainTensor.εxy,StrainTensor.εxz,StrainTensor.εyz,λ,G )
 	StressTensor=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 	return(StressTensor) 
 

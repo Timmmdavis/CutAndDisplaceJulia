@@ -35,9 +35,9 @@ G=ShearModulus(1.);
 HSFlag=1; #const 
 
 #Traction vector
-Tn=1.0;
-Tds=0.0;
-Tss=0.0;
+Tn=ones(n);
+Tds=zeros(n);
+Tss=zeros(n);
 
 #Set BoundaryConditions
 BoundaryConditions=Tractions(Tn,Tss,Tds);
@@ -54,7 +54,7 @@ if Difference>(0.05)/G
 	error("Residual is too high")
 end
 
-P=Tn;
+P=Tn[1];
 Radius=1;
 X =[0.0:1:100.0;]
 Y=zeros(size(X));

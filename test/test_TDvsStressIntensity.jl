@@ -35,12 +35,12 @@ G=ShearModulus(5.);
 (K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
 
 #Set BoundaryConditions
-σxx = 0;	
-σzz = 1;	
-σyy = 0;	
-σxy = 0;    
-σxz = 0;
-σyz = 0;
+σxx = zeros(n);	
+σzz = ones(n);	
+σyy = zeros(n);	
+σxy = zeros(n);    
+σxz = zeros(n);
+σyz = zeros(n);
 BoundaryConditions=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 
 FixedEls=zeros(n,1);
@@ -67,11 +67,8 @@ K1=[FeP1P2S.K1[FeP1P2S.FreeFlg];FeP1P3S.K1[FeP1P3S.FreeFlg];FeP2P3S.K1[FeP2P3S.F
 K2=[FeP1P2S.K2[FeP1P2S.FreeFlg];FeP1P3S.K2[FeP1P3S.FreeFlg];FeP2P3S.K2[FeP2P3S.FreeFlg]];
 K3=[FeP1P2S.K3[FeP1P2S.FreeFlg];FeP1P3S.K3[FeP1P3S.FreeFlg];FeP2P3S.K3[FeP2P3S.FreeFlg]];
 
-
-# Norm and Shr Tract 
-( Tn,Tds,Tss ) = CutAndDisplaceJulia.CalculateNormalAndShearTractions3D( σxx,σyy,σzz,σxy,σxz,σyz,FaceNormalVector[1,:] );
 #Compute across each theta
-(K1an,K2an,K3an) = CutAndDisplaceJulia.Tada_StrIntInclinedPennyTension(σzz,Beta,θ,1,ν);
+(K1an,K2an,K3an) = CutAndDisplaceJulia.Tada_StrIntInclinedPennyTension(σzz[1],Beta,θ,1,ν);
 
 #Compute the percent error between analytical and numerical
 ResidualPercentK1=CutAndDisplaceJulia.BAsPercentOfA(K1an,K1);

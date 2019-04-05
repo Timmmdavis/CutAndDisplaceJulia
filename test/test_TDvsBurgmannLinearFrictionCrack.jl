@@ -29,18 +29,18 @@ G=ShearModulus(1.);
 HSFlag=0; #const 
 		
 #Traction vector
-σxx = 0.0;	
-σyy = -0.05*SclCrck;#force faces closed	
-σzz = 0.0;	
-σxy = 1*SclCrck;	
-σxz = 0.0;
-σyz = 0.0;
+σxx = zeros(n);	
+σyy = fill(-0.05*SclCrck,n);#force faces closed	
+σzz = zeros(n);	
+σxy = fill(SclCrck,n);	
+σxz = zeros(n);
+σyz = zeros(n);
 
 ###########WithFriction###################
 Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 FixedEls=zeros(n,1);
 #Set BoundaryConditions
-Traction=Tractions(0.0,0.0,0.0)
+Traction=Tractions(zeros(n),zeros(n),zeros(n))
 #Friction parameters
 µ=0.0;
 Sf  = abs.(MidPoint[:,1]); 
@@ -56,7 +56,7 @@ BoundaryConditions=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 
 
 #Driving Traction
-Ts=abs.(σxy);
+Ts=abs.(σxy[1]);
 a = SclCrck;  #Unit half length 
 x=MidPoint[:,1]; #Along x axis
 Good=abs.(MidPoint[:,3]).<(SclCrck); #Remove points that are not close to crack centre
@@ -131,20 +131,20 @@ G=ShearModulus(1.);
 
 # Which bits we want to compute
 HSFlag=0; #const 
-		
+
 #Traction vector
-σxx = 0.0;	
-σyy = 0.0;#force faces closed	
-σzz = -0.05*SclCrck;	
-σxy = 0.0;	
-σxz = 1*SclCrck;
-σyz = 0.0;
+σxx = zeros(n);	
+σyy = zeros(n);#force faces closed	
+σzz = fill(-0.05*SclCrck,n);	
+σxy = zeros(n);	
+σxz = fill(1*SclCrck,n);
+σyz = zeros(n);
 
 ###########WithFriction###################
 Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 FixedEls=zeros(n,1);
 #Set BoundaryConditions
-Traction=Tractions(0.0,0.0,0.0)
+Traction=Tractions(zeros(n),zeros(n),zeros(n))
 #Friction parameters
 µ=0.0;
 Sf  = abs.(MidPoint[:,1]); 
@@ -160,7 +160,7 @@ BoundaryConditions=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 
 
 #Driving Traction
-Ts=abs.(σxz);
+Ts=abs.(σxz[1]);
 a = SclCrck;  #Unit half length 
 x=MidPoint[:,1]; #Along x axis
 Good=abs.(MidPoint[:,2]).<(SclCrck); #Remove points that are not close to crack centre

@@ -40,9 +40,9 @@ Tectsx=0; 	#Tectonic stress (xx)
 σxx = ((ν/(1-ν))*P*g*.+MidPoint[:,3]).+Tectsx;	#Equation 1b, Martel and Muller
 σzz = P*g*.+MidPoint[:,3];			#Equation 1a, Martel and Muller
 σyy = ν*(σxx.+σzz);					#Plane strain conditions
-σxy = 0;          					#Positive is right lateral movement
-σxz = 0;
-σyz = 0;
+σxy = zeros(size(σxx));          					#Positive is right lateral movement
+σxz = zeros(size(σxx));
+σyz = zeros(size(σxx));
 BoundaryConditions=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 
 #Calculate slip on faces
