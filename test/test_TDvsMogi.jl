@@ -68,32 +68,19 @@ Z=reshape(Z,length(Z),1);
 #Compute analytical result
 (UxAn,UyAn,UzAn)=CutAndDisplaceJulia.Mogi1958_SphericalCavity(Depth,X,Y,Radius,P,ν,G)
 
-
 DispFlag=1;
-StressFlag=0;
-#Compute displacements
-(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
- εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
- εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
- UxDn,UyDn,UzDn,
- UxDss,UyDss,UzDss,
- UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,G,DispFlag,StressFlag,HSFlag)
- 
- println("COMPUTE INTERNALLY!")
-(εxx,εyy,εzz,εxy,εxz,εyz,Ux,Uy,Uz)=
-CutAndDisplaceJulia.TD_sum(εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
-εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-	   εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-	   UxDn,UyDn,UzDn,
-	   UxDss,UyDss,UzDss,
-       UxDds,UyDds,UzDds)
+StrainFlag=0;
+
+StrainInfVector=Strains([],[],[],[],[],[]);
+DispInfVector=Disps([],[],[]);
+(StrainAtInfPoints,DispAtInfPoints)= 
+CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,G,DispFlag,StrainFlag,HSFlag,StrainInfVector,DispInfVector)
 
 
 #Compute the percent error between analytical and numerical
-ResidualPercentUx=CutAndDisplaceJulia.BAsPercentOfA(UxAn,Ux);
-ResidualPercentUy=CutAndDisplaceJulia.BAsPercentOfA(UyAn,Uy);
-ResidualPercentUz=CutAndDisplaceJulia.BAsPercentOfA(UzAn,Uz);
+ResidualPercentUx=CutAndDisplaceJulia.BAsPercentOfA(UxAn,DispAtInfPoints.Ux);
+ResidualPercentUy=CutAndDisplaceJulia.BAsPercentOfA(UyAn,DispAtInfPoints.Uy);
+ResidualPercentUz=CutAndDisplaceJulia.BAsPercentOfA(UzAn,DispAtInfPoints.Uz);
 
 @info ResidualPercentUx
 @info ResidualPercentUy

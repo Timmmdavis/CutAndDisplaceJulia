@@ -21,6 +21,7 @@ export
 #Types to contain boundary conditions
 struct Stresses;	σxx;σyy;σzz;σxy;σxz;σyz; end
 struct Strains;		εxx;εyy;εzz;εxy;εxz;εyz; end 
+struct Disps;		Ux;	Uy;	Uz; end 
 struct Tractions;	Tn;Tss;Tds; 			 end 	
 struct FrictionParameters; 	   µ;Sf;  		     	end
 struct MixedBoundaryConditions;Stresses;Tractions;  end
@@ -32,6 +33,7 @@ mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;
 export
     Stresses,
 	Strains,
+	Disps,
 	Tractions,
 	FrictionParameters,
 	MixedBoundaryConditions,
@@ -46,6 +48,12 @@ mutable struct TractionInf;
 	DdsTn;	DdsTss;	DdsTds
 end 	
 
+struct StrainInf; 	
+	εxxDn;	εyyDn; 	εzzDn;	εxyDn; 	εxzDn;	εyzDn 
+	εxxDss;	εyyDss; εzzDss;	εxyDss; εxzDss;	εyzDss 
+	εxxDds;	εyyDds; εzzDds;	εxyDds; εxzDds;	εyzDds 
+end 	
+
 struct DispInf; 	
 	DnUx;	DnUy;	DnUz	
 	DssUx;	DssUy;	DssUz
@@ -53,8 +61,9 @@ struct DispInf;
 end 
 
 export
-    StressInf,
-	DispInf
+    TractionInf,
+	DispInf,
+	StrainInf
 
 
 #New Guys 07/02/2019

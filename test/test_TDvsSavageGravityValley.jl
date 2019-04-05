@@ -68,35 +68,25 @@ X=xobs[:].+50;
 Y=zeros(size(X));
 Z=yobs[:];
 DispFlag=1;
-StressFlag=1;
-#Compute stresses
-(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
- εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
- εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
- DnUx,DnUy,DnUz,
- DssUx,DssUy,DssUz,
- DdsUx,DdsUy,DdsUz)= 
-CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,G,DispFlag,StressFlag,HSFlag);
+StrainFlag=1;
 
-(εxx,εyy,εzz,εxy,εxz,εyz,Ux,Uy,Uz)=
-CutAndDisplaceJulia.TD_sum(εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
-							εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-							εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-							DnUx,DnUy,DnUz,
-							DssUx,DssUy,DssUz,
-							DdsUx,DdsUy,DdsUz);
+Ux=zeros(size(X));
+StrainInfVector=Strains([],[],[],[],[],[]);
+DispInfVector=Disps([],[],[]);
+(StrainAtInfPoints,DispAtInfPoints)= 
+CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,G,DispFlag,StrainFlag,HSFlag,StrainInfVector,DispInfVector)
 
 #Converting strains to stress tensor influences  
-(σxx,σyy,σzz,σxy,σxz,σyz) = CutAndDisplaceJulia.HookesLaw3DStrain2Stress(εxx,εyy,εzz,εxy,εxz,εyz,λ,G);
+(Stress) = CutAndDisplaceJulia.HookesLaw3DStrain2Stress(StrainAtInfPoints,λ,G);
 
 
 #Adding vertical Stress profile: 
 σxxGrav = (ν/(1-ν))*P*g.*Z;	#Equation 1b, Martel and Muller
 σzzGrav = P*g.*Z;				#Equation 1a, Martel and Muller
 σxzGrav =zeros(size(σxxGrav));
-σxx=σxxGrav.+σxx;
-σzz=σzzGrav.+σzz;
-σxz=σxzGrav.+σxz;
+σxx=σxxGrav.+Stress.σxx;
+σzz=σzzGrav.+Stress.σzz;
+σxz=σxzGrav.+Stress.σxz;
 
 
 #Printing results (residual) - NOTE THE DIFFERENCT COORDINATE SYSTEMS 2D vs 3D

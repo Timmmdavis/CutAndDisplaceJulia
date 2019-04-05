@@ -15,35 +15,20 @@ function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ
 		zFix=z[FixedFlag];
 		DispFlag=1;
 		StressFlag=0;
-		(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
-		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-		 DnUx,DnUy,DnUz,
-		 DssUx,DssUy,DssUz,
-		 DdsUx,DdsUy,DdsUz)=
-		TD(xFix,yFix,zFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)		
+		(StrainInfMat,DispInfMat)=TD(xFix,yFix,zFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)		
 		#Compute stress on non fixed elements
 		xNoFix=x[NotFixedFlag];
 		yNoFix=y[NotFixedFlag];
 		zNoFix=z[NotFixedFlag];	
 		DispFlag=0;
 		StressFlag=1;
-		(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
-		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds)=
-		 TD(xNoFix,yNoFix,zNoFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag);
-
-
+		(StrainInfMat,~)=TD(xNoFix,yNoFix,zNoFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag);
 		 
-		TractionInfMats=ConvertInfMatsToTraction(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
-				 								  εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-				 								  εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-				 								  λ,G,CosAx,CosAy,CosAz);
+		TractionInfMats=ConvertInfMatsToTraction(StrainInfMat,λ,G,CosAx,CosAy,CosAz);
 
-		DispInfMats = DispInf(DnUx,DnUy,DnUz,DssUx,DssUy,DssUz,DdsUx,DdsUy,DdsUz);
 
 		#Now Putting DispInfMats into TractionInfMats
-		TractionInfMats=ConcatInfMats(TractionInfMats,DispInfMats,NotFixedFlag,FixedFlag,n)
+		TractionInfMats=ConcatInfMats(TractionInfMats,DispInfMat,NotFixedFlag,FixedFlag,n)
 
 		return TractionInfMats 
 
@@ -51,14 +36,9 @@ function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ
 
 		DispFlag=0;
 		#Call TDE function
-		(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
-		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds)= TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)
-		 
-		 TractionInfMats=ConvertInfMatsToTraction(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
-				 								  εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-				 								  εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-				 								  λ,G,CosAx,CosAy,CosAz)
+		(StrainInfMat,DispInfMat)=TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)
+
+		 TractionInfMats=ConvertInfMatsToTraction(StrainInfMat,λ,G,CosAx,CosAy,CosAz)
 
 		return TractionInfMats 
 
@@ -90,14 +70,12 @@ function SetupCollationPoints(FaceNormalVector,MidPoint,n)
 	return x,y,z,DssVec,DdsVec,DnVec,StressFlag,CosAx,CosAy,CosAz
 end
 
-function ConvertInfMatsToTraction(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
-								  εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-								  εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-								  λ,G,CosAx,CosAy,CosAz)
+function ConvertInfMatsToTraction(SIM,λ,G,CosAx,CosAy,CosAz)
+
 	#Converting strains to stress tensor influences  
-	(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = HookesLaw3DStrain2Stress(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,λ,G);
-	(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds) = HookesLaw3DStrain2Stress(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,λ,G);
-	(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn) 		= HookesLaw3DStrain2Stress(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,λ,G);
+	(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = HookesLaw3DStrain2Stress(SIM.εxxDss,SIM.εyyDss,SIM.εzzDss,SIM.εxyDss,SIM.εxzDss,SIM.εyzDss,λ,G);
+	(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds) = HookesLaw3DStrain2Stress(SIM.εxxDds,SIM.εyyDds,SIM.εzzDds,SIM.εxyDds,SIM.εxzDds,SIM.εyzDds,λ,G);
+	(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn) 		= HookesLaw3DStrain2Stress(SIM.εxxDn,SIM.εyyDn,SIM.εzzDn,SIM.εxyDn,SIM.εxzDn,SIM.εyzDn,λ,G);
 	#Compute normal traction
 	DssTn=CalculateNormalTraction3D( σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss,CosAx,CosAy,CosAz )
 	DdsTn=CalculateNormalTraction3D( σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds,CosAx,CosAy,CosAz )

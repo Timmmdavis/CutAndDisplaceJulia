@@ -9,26 +9,15 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 
 
 	DispFlag=0;
-	StressFlag=1;
-	#Compute stresses
-	(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,
-	εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-	εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-	DnUx,DnUy,DnUz,
-	DssUx,DssUy,DssUz,
-	DdsUx,DdsUy,DdsUz)= 
-	CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,G,DispFlag,StressFlag,HSFlag);
+	StrainFlag=1;
 
-	(εxx,εyy,εzz,εxy,εxz,εyz,Ux,Uy,Uz)=
-	CutAndDisplaceJulia.TD_sum(εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
-						εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-						εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-						DnUx,DnUy,DnUz,
-						DssUx,DssUy,DssUz,
-						DdsUx,DdsUy,DdsUz);
+	StrainInfVector=Strains([],[],[],[],[],[]);
+	DispInfVector=Disps([],[],[]);
+	(StrainAtInfPoints,DispAtInfPoints)= 
+	CutAndDisplaceJulia.TD(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,G,DispFlag,StrainFlag,HSFlag,StrainInfVector,DispInfVector)
 
 	#Converting strains to stress tensor influences  
-	(σxx,σyy,σzz,σxy,σxz,σyz) = CutAndDisplaceJulia.HookesLaw3DStrain2Stress(εxx,εyy,εzz,εxy,εxz,εyz,λ,G);
+	(Stress) = CutAndDisplaceJulia.HookesLaw3DStrain2Stress(StrainAtInfPoints,λ,G);
 
 	#Extract remote stresses
 	if typeof(BoundaryConditions)==MixedBoundaryConditionsFriction
@@ -41,12 +30,12 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 	σxz∞=BoundaryConditions.σxz;
 	σyz∞=BoundaryConditions.σyz;
 	#Add these to vector
-	σxx=σxx.+σxx∞[1];
-	σyy=σyy.+σyy∞[1];
-	σzz=σzz.+σzz∞[1];
-	σxy=σxy.+σxy∞[1];
-	σxz=σxz.+σxz∞[1];
-	σyz=σyz.+σyz∞[1];
+	σxx=Stress.σxx.+σxx∞[1];
+	σyy=Stress.σyy.+σyy∞[1];
+	σzz=Stress.σzz.+σzz∞[1];
+	σxy=Stress.σxy.+σxy∞[1];
+	σxz=Stress.σxz.+σxz∞[1];
+	σyz=Stress.σyz.+σyz∞[1];
 
 	( Tn,Tds,Tss) = CutAndDisplaceJulia.CalculateNormalAndShearTractions3D( σxx,σyy,σzz,σxy,σxz,σyz,FaceNormalVector);
 

@@ -1,7 +1,3 @@
-function TD(X::Array{Float64},Y::Array{Float64},Z::Array{Float64},
-		    P1List::Array{Float64,2},P2List::Array{Float64,2},P3List::Array{Float64,2},
-			Dss::Array,Dds::Array,Dn::Array,nu::Float64,mu::Float64,
-			DispFlag::Int64,StrainFlag::Int64,HSflag::Int64)
 # TD 
 # Julia version of Mehdi's triangular dislocation functions, creates influence matrices. 
 #
@@ -30,7 +26,7 @@ function TD(X::Array{Float64},Y::Array{Float64},Z::Array{Float64},
 # the same Uyit as Ss, Ds and Ts in the inputs.
 # 
 # 
-# Example: Calculate and plot the first component of displacement vector 
+# εxample: Calculate and plot the first component of displacement vector 
 # on a regular grid.
 #
 # Reference jthenal article: 
@@ -76,6 +72,140 @@ function TD(X::Array{Float64},Y::Array{Float64},Z::Array{Float64},
 # mehdi.nikkhoo@gfz-potsdam.de 
 # mehdi.nikkhoo@gmail.com
 
+
+#If Inf mats are not defined
+function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,
+			DispFlag,StrainFlag,HSflag)
+
+SzCmp=size(P1List,1); if length(P1List)==3; SzCmp=1; end
+
+#Allocate some arrays of zeros that will be taken through the following loops with the results appended
+if DispFlag==1
+	DnUx  = zeros(length(X),SzCmp); 
+	DnUy  = zeros(length(X),SzCmp); 
+	DnUz  = zeros(length(X),SzCmp); 
+	DssUx = zeros(length(X),SzCmp); 
+	DssUy = zeros(length(X),SzCmp); 
+	DssUz = zeros(length(X),SzCmp); 
+	DdsUx = zeros(length(X),SzCmp); 
+	DdsUy = zeros(length(X),SzCmp); 
+	DdsUz = zeros(length(X),SzCmp); 
+	DispInfMat=DispInf(DnUx,DnUy,DnUz, DssUx,DssUy,DssUz, DdsUx,DdsUy,DdsUz)	
+else
+	DispInfMat=DispInf( 	
+		[],	[], [], 
+		[],	[], [], 
+		[],	[], []);
+end
+if StrainFlag==1
+	εxxDn  = zeros(length(X),SzCmp); 
+	εyyDn  = zeros(length(X),SzCmp); 
+	εzzDn  = zeros(length(X),SzCmp);
+	εxyDn  = zeros(length(X),SzCmp); 
+	εxzDn  = zeros(length(X),SzCmp); 
+	εyzDn  = zeros(length(X),SzCmp);
+	εxxDss = zeros(length(X),SzCmp); 
+	εyyDss = zeros(length(X),SzCmp); 
+	εzzDss = zeros(length(X),SzCmp);
+	εxyDss = zeros(length(X),SzCmp); 
+	εxzDss = zeros(length(X),SzCmp); 
+	εyzDss = zeros(length(X),SzCmp);
+	εxxDds = zeros(length(X),SzCmp); 
+	εyyDds = zeros(length(X),SzCmp); 
+	εzzDds = zeros(length(X),SzCmp);
+	εxyDds = zeros(length(X),SzCmp); 
+	εxzDds = zeros(length(X),SzCmp); 
+	εyzDds = zeros(length(X),SzCmp);
+	StrainInfMat=StrainInf( 	
+		εxxDn,	εyyDn, 	εzzDn,	εxyDn, 	εxzDn,	εyzDn, 
+		εxxDss,	εyyDss, εzzDss,	εxyDss, εxzDss,	εyzDss, 
+		εxxDds,	εyyDds, εzzDds,	εxyDds, εxzDds,	εyzDds) 	
+else
+	StrainInfMat=StrainInf( 	
+		[],	[], [],	[], [],	[], 
+		[],	[], [],	[], [],	[], 
+		[],	[], [],	[], [],	[]);
+end
+
+TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,
+			DispFlag,StrainFlag,HSflag,StrainInfMat,DispInfMat)
+
+end
+
+function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,
+			DispFlag,StrainFlag,HSflag,StrainInfMat::StrainInf,DispInfMat::DispInf)
+
+(SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+eY,eZ,FillAList,FillBList,lambda)=
+PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,nu,mu)
+
+Threads.@threads for i=1:SzCmp #For every element (multithreaded)  
+	#println("Multithreading off")
+
+	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
+	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
+	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z)
+	#Allocate outside of funcs (using @view we just assign a pointer). 
+	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
+	if DispFlag==1
+		UxDnI  = view(DispInfMat.DnUx,:,i); #only 48bytes alloc, note its the same as @view UxDn[:,i];
+		UyDnI  = view(DispInfMat.DnUy,:,i);
+		UzDnI  = view(DispInfMat.DnUz,:,i);
+		UxDssI = view(DispInfMat.DssUx,:,i);
+		UyDssI = view(DispInfMat.DssUy,:,i);
+		UzDssI = view(DispInfMat.DssUz,:,i);
+		UxDdsI = view(DispInfMat.DdsUx,:,i);
+		UyDdsI = view(DispInfMat.DdsUy,:,i);
+		UzDdsI = view(DispInfMat.DdsUz,:,i);
+
+		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				UxDnI, UyDnI, UzDnI,
+				UxDssI,UyDssI,UzDssI,
+				UxDdsI,UyDdsI,UzDdsI)		
+	end
+	if StrainFlag==1
+		εxxDnI  = view(StrainInfMat.εxxDn,:,i);
+		εyyDnI  = view(StrainInfMat.εyyDn,:,i);
+		εzzDnI  = view(StrainInfMat.εzzDn,:,i);
+		εxyDnI  = view(StrainInfMat.εxyDn,:,i);
+		εxzDnI  = view(StrainInfMat.εxzDn,:,i);
+		εyzDnI  = view(StrainInfMat.εyzDn,:,i);
+		εxxDssI = view(StrainInfMat.εxxDss,:,i);
+		εyyDssI = view(StrainInfMat.εyyDss,:,i);
+		εzzDssI = view(StrainInfMat.εzzDss,:,i);
+		εxyDssI = view(StrainInfMat.εxyDss,:,i);
+		εxzDssI = view(StrainInfMat.εxzDss,:,i);
+		εyzDssI = view(StrainInfMat.εyzDss,:,i);
+		εxxDdsI = view(StrainInfMat.εxxDds,:,i);
+		εyyDdsI = view(StrainInfMat.εyyDds,:,i);
+		εzzDdsI = view(StrainInfMat.εzzDds,:,i);
+		εxyDdsI = view(StrainInfMat.εxyDds,:,i);
+		εxzDdsI = view(StrainInfMat.εxzDds,:,i);
+		εyzDdsI = view(StrainInfMat.εyzDds,:,i);
+
+		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)		
+
+	end
+
+end
+return(StrainInfMat,DispInfMat)
+end
+
+#Predefined inf mats
+function PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,nu,mu)
+
 SzCmp=size(P1List,1); if length(P1List)==3; SzCmp=1; end
 
 CorrectDimsFlg= SzCmp==size(P2List,1) &&
@@ -87,38 +217,6 @@ if CorrectDimsFlg!=1
 	error("Element size inputs must be the same dimensions")
 end
 
-#Allocate some arrays of zeros that will be taken through the following loops with the results appended
-if DispFlag==1
-	UxDn  = zeros(length(X),SzCmp); 
-	UyDn  = zeros(length(X),SzCmp); 
-	UzDn  = zeros(length(X),SzCmp); 
-	UxDss = zeros(length(X),SzCmp); 
-	UyDss = zeros(length(X),SzCmp); 
-	UzDss = zeros(length(X),SzCmp); 
-	UxDds = zeros(length(X),SzCmp); 
-	UyDds = zeros(length(X),SzCmp); 
-	UzDds = zeros(length(X),SzCmp); 
-end
-if StrainFlag==1
-	ExxDn  = zeros(length(X),SzCmp); 
-	EyyDn  = zeros(length(X),SzCmp); 
-	EzzDn  = zeros(length(X),SzCmp);
-	ExyDn  = zeros(length(X),SzCmp); 
-	ExzDn  = zeros(length(X),SzCmp); 
-	EyzDn  = zeros(length(X),SzCmp);
-	ExxDss = zeros(length(X),SzCmp); 
-	EyyDss = zeros(length(X),SzCmp); 
-	EzzDss = zeros(length(X),SzCmp);
-	ExyDss = zeros(length(X),SzCmp); 
-	ExzDss = zeros(length(X),SzCmp); 
-	EyzDss = zeros(length(X),SzCmp);
-	ExxDds = zeros(length(X),SzCmp); 
-	EyyDds = zeros(length(X),SzCmp); 
-	EzzDds = zeros(length(X),SzCmp);
-	ExyDds = zeros(length(X),SzCmp); 
-	ExzDds = zeros(length(X),SzCmp); 
-	EyzDds = zeros(length(X),SzCmp);
-end
 
 P1iList=deepcopy(P1List);
 P2iList=deepcopy(P2List);
@@ -135,18 +233,28 @@ end
 VnormList  	= zeros(SzCmp,3); 
 VstrikeList = zeros(SzCmp,3); 
 VdipList  	= zeros(SzCmp,3); 
-VnormiList  	= zeros(SzCmp,3); 
-VstrikeiList = zeros(SzCmp,3); 
+VnormiList  = zeros(SzCmp,3); 
+VstrikeiList= zeros(SzCmp,3); 
 VdipiList  	= zeros(SzCmp,3); 
 
 #Some allocations out of loop
 eY = [0.;1.;0.];
 eZ = [0.;0.;1.];
-FillAList= zeros(SzCmp,3); ;
+FillAList= zeros(SzCmp,3);
 FillBList= zeros(SzCmp,3); 
 
-Threads.@threads for i=1:SzCmp #For every element (multithreaded) 
-	#println("Multithreading off")
+#Elastic con
+lambda=(2*mu*nu)/(1-(2*nu));
+
+return SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+eY,eZ,FillAList,FillBList,lambda
+
+end
+
+
+function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
+					VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+					FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z)
 
 	P1=view(P1List,i,:);
 	P2=view(P2List,i,:);
@@ -167,41 +275,326 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	
 	CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,FillA,FillB);
 	CalculateLocalTriCoords!(P1i,P2i,P3i,Vnormi,Vstrikei,Vdipi,eY,eZ,FillA,FillB);
-	#error("Stop here, also add back in threads and ! funcs no output. ")
+
+	#Compute some variables we use repeated times inside the functions.
+	##Reducing Allocs further in these would be good!
+	(p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog)=
+	GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip)
+	(p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
+	GlobalToTDECoords(P1i,P2i,P3i,X,Y,Z,Vnormi,Vstrikei,Vdipi)
+
+	if HSflag==1
+		if any(Z .>0) | any(P1[3] .>0) | any(P2[3] .>0) | any(P3[3] .>0)
+			error("Half-space solution: Z coordinates must be negative!")
+		end
+	end
+
+	return P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi
+
+end
+
+	
+
+
+function ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				UxDnI, UyDnI, UzDnI,
+				UxDssI,UyDssI,UzDssI,
+				UxDdsI,UyDdsI,UzDdsI)
+	
+
+	# Calculate main dislocation contribution to displacements
+	TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,0,Vnorm,Vstrike,Vdip,
+	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+	UxDnI, UyDnI, UzDnI,
+	UxDssI,UyDssI,UzDssI,
+	UxDdsI,UyDdsI,UzDdsI);
+	 
+	if HSflag==1
+		
+		# Calculate harmonic function contribution to displacements
+		TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,Vnorm,Vstrike,Vdip,
+		UxDnI, UyDnI, UzDnI,
+		UxDssI,UyDssI,UzDssI,
+		UxDdsI,UyDdsI,UzDdsI);
+
+		# Calculate image dislocation contribution to displacements
+		TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],nu,1,Vnormi,Vstrikei,Vdipi,
+		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+		UxDnI, UyDnI, UzDnI,
+		UxDssI,UyDssI,UzDssI,
+		UxDdsI,UyDdsI,UzDdsI);
+
+	end #HsFlag
+
+end
+
+function ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)
+
+
+		# Calculate main dislocation contribution to strains
+		TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,0,Vnorm,Vstrike,Vdip,
+		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+		εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+		εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+		εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);	
+		
+		if HSflag==1
+		
+			# Calculate harmonic function contribution to strains
+			TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,Vnorm,Vstrike,Vdip,
+			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);	
+
+			# Calculate image dislocation contribution to strains 
+			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,nu,1,Vnormi,Vstrikei,Vdipi,
+			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);
+
+
+		end #HS flag
+
+end
+
+	
+
+
+#Summing results
+function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,
+			DispFlag,StrainFlag,HSflag,StrainInfVector::Strains,DispInfVector::Disps)
+
+if DispFlag==1
+	Ux  = zeros(size(X));
+	Uy  = zeros(size(X));
+	Uz  = zeros(size(X));
+end
+if StrainFlag==1
+	εxx  = zeros(size(X));
+	εyy  = zeros(size(X));
+	εzz  = zeros(size(X));
+	εxy  = zeros(size(X));
+	εxz  = zeros(size(X));
+	εyz  = zeros(size(X));
+end
+
+(SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+eY,eZ,FillAList,FillBList,lambda)=
+PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,nu,mu)
+
+for i=1:SzCmp #For every element (multithreaded)  Threads.@threads 
+	#println("Multithreading off")
+
+	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
+	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
+	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z)
+
+	if DispFlag==1
+		UxDnI  = zeros(size(X)); 
+		UyDnI  = zeros(size(X));
+		UzDnI  = zeros(size(X));
+		UxDssI = zeros(size(X));
+		UyDssI = zeros(size(X));
+		UzDssI = zeros(size(X));
+		UxDdsI = zeros(size(X));
+		UyDdsI = zeros(size(X));
+		UzDdsI = zeros(size(X));
+
+		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				UxDnI, UyDnI, UzDnI,
+				UxDssI,UyDssI,UzDssI,
+				UxDdsI,UyDdsI,UzDdsI)	
+
+				Ux.+=UxDnI.+UxDssI.+UxDdsI;
+				Uy.+=UyDnI.+UyDssI.+UyDdsI;
+				Uz.+=UzDnI.+UzDssI.+UzDdsI;
+	end
+	if StrainFlag==1
+		εxxDnI  = zeros(size(X));
+		εyyDnI  = zeros(size(X));
+		εzzDnI  = zeros(size(X));
+		εxyDnI  = zeros(size(X));
+		εxzDnI  = zeros(size(X));
+		εyzDnI  = zeros(size(X));
+		εxxDssI = zeros(size(X));
+		εyyDssI = zeros(size(X));
+		εzzDssI = zeros(size(X));
+		εxyDssI = zeros(size(X));
+		εxzDssI = zeros(size(X));
+		εyzDssI = zeros(size(X));
+		εxxDdsI = zeros(size(X));
+		εyyDdsI = zeros(size(X));
+		εzzDdsI = zeros(size(X));
+		εxyDdsI = zeros(size(X));
+		εxzDdsI = zeros(size(X));
+		εyzDdsI = zeros(size(X));
+
+		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)	
+
+				εxx.+=εxxDnI.+εxxDssI.+εxxDdsI;
+				εyy.+=εyyDnI.+εyyDssI.+εyyDdsI;
+				εzz.+=εzzDnI.+εzzDssI.+εzzDdsI;
+				εxy.+=εxyDnI.+εxyDssI.+εxyDdsI;
+				εxz.+=εxzDnI.+εxzDssI.+εxzDdsI;
+				εyz.+=εyzDnI.+εyzDssI.+εyzDdsI;					
+
+	end
+
+end
+if StrainFlag==1
+	StrainInfVector=Strains(εxx,εyy,εzz,εxy,εxz,εyz);
+	
+else
+	StrainInfVector=Strains([],[],[],[],[],[]);
+end
+if DispFlag==1
+	DispInfVector=Disps(Ux,	Uy,	Uz);
+else
+	DispInfVector=Disps([],	[],	[])
+end
+return(StrainInfVector,DispInfVector)
+end
+
+
+#=SzCmp=size(P1List,1); if length(P1List)==3; SzCmp=1; end
+
+CorrectDimsFlg= SzCmp==size(P2List,1) &&
+				SzCmp==size(P3List,1) &&
+				SzCmp==length(Dds) &&
+				SzCmp==length(Dss) &&
+				SzCmp==length(Dn);
+if CorrectDimsFlg!=1
+	error("Element size inputs must be the same dimensions")
+end
+
+
+P1iList=deepcopy(P1List);
+P2iList=deepcopy(P2List);
+P3iList=deepcopy(P3List);
+for i=1:SzCmp
+	P1iList[i,3] = -P1iList[i,3]
+	P2iList[i,3] = -P2iList[i,3]
+	P3iList[i,3] = -P3iList[i,3]
+end
+
+
+#Comp FaceNormalVector...
+
+VnormList  	= zeros(SzCmp,3); 
+VstrikeList = zeros(SzCmp,3); 
+VdipList  	= zeros(SzCmp,3); 
+VnormiList  = zeros(SzCmp,3); 
+VstrikeiList= zeros(SzCmp,3); 
+VdipiList  	= zeros(SzCmp,3); 
+
+#Some allocations out of loop
+eY = [0.;1.;0.];
+eZ = [0.;0.;1.];
+FillAList= zeros(SzCmp,3);
+FillBList= zeros(SzCmp,3);
+
+
+#Allocate outside of funcs (using @view we just assign a pointer). 
+#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
+if DispFlag==1
+	Ux  = DispInfVector.Ux
+	Uy  = DispInfVector.Uy
+	Uz  = DispInfVector.Uz
+end
+if StrainFlag==1
+	εxx  = StrainInfVector.εxx
+	εyy  = StrainInfVector.εyy
+	εzz  = StrainInfVector.εzz
+	εxy  = StrainInfVector.εxy
+	εxz  = StrainInfVector.εxz
+	εyz  = StrainInfVector.εyz
+end
+
+#Elastic con
+lambda=(2*mu*nu)/(1-(2*nu));
+println("Multithreading off")
+for i=1:SzCmp #For every element (multithreaded) Threads.@threads 
+
+
+	P1=view(P1List,i,:);
+	P2=view(P2List,i,:);
+	P3=view(P3List,i,:);
+	P1i=view(P1iList,i,:);
+	P2i=view(P2iList,i,:);
+	P3i=view(P3iList,i,:);
+
+	Vnorm=	view(VnormList,i,:);
+	Vstrike=view(VstrikeList,i,:);
+	Vdip=	view(VdipList,i,:);
+	Vnormi=	view(VnormiList,i,:);
+	Vstrikei=view(VstrikeiList,i,:);
+	Vdipi=	view(VdipiList,i,:);
+	
+	FillA=view(FillAList,i,:);
+	FillB=view(FillBList,i,:);
 	
 	#Allocate outside of funcs (using @view we just assign a pointer). 
 	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
 	if DispFlag==1
-		UxDnI  = view(UxDn,:,i); #only 48bytes alloc, note its the same as @view UxDn[:,i];
-		UyDnI  = view(UyDn,:,i);
-		UzDnI  = view(UzDn,:,i);
-		UxDssI = view(UxDss,:,i);
-		UyDssI = view(UyDss,:,i);
-		UzDssI = view(UzDss,:,i);
-		UxDdsI = view(UxDds,:,i);
-		UyDdsI = view(UyDds,:,i);
-		UzDdsI = view(UzDds,:,i);
+		UxDnI  = zeros(size(Ux)); #only 48bytes alloc, note its the same as @view UxDn[:,i];
+		UyDnI  = zeros(size(Ux));
+		UzDnI  = zeros(size(Ux));
+		UxDssI = zeros(size(Ux));
+		UyDssI = zeros(size(Ux));
+		UzDssI = zeros(size(Ux));
+		UxDdsI = zeros(size(Ux));
+		UyDdsI = zeros(size(Ux));
+		UzDdsI = zeros(size(Ux));
 	end
 	if StrainFlag==1
-		ExxDnI  = view(ExxDn,:,i);
-		EyyDnI  = view(EyyDn,:,i);
-		EzzDnI  = view(EzzDn,:,i);
-		ExyDnI  = view(ExyDn,:,i);
-		ExzDnI  = view(ExzDn,:,i);
-		EyzDnI  = view(EyzDn,:,i);
-		ExxDssI = view(ExxDss,:,i);
-		EyyDssI = view(EyyDss,:,i);
-		EzzDssI = view(EzzDss,:,i);
-		ExyDssI = view(ExyDss,:,i);
-		ExzDssI = view(ExzDss,:,i);
-		EyzDssI = view(EyzDss,:,i);
-		ExxDdsI = view(ExxDds,:,i);
-		EyyDdsI = view(EyyDds,:,i);
-		EzzDdsI = view(EzzDds,:,i);
-		ExyDdsI = view(ExyDds,:,i);
-		ExzDdsI = view(ExzDds,:,i);
-		EyzDdsI = view(EyzDds,:,i);
+		εxxDnI  = zeros(size(εxx));
+		εyyDnI  = zeros(size(εxx));
+		εzzDnI  = zeros(size(εxx));
+		εxyDnI  = zeros(size(εxx));
+		εxzDnI  = zeros(size(εxx));
+		εyzDnI  = zeros(size(εxx));
+		εxxDssI = zeros(size(εxx));
+		εyyDssI = zeros(size(εxx));
+		εzzDssI = zeros(size(εxx));
+		εxyDssI = zeros(size(εxx));
+		εxzDssI = zeros(size(εxx));
+		εyzDssI = zeros(size(εxx));
+		εxxDdsI = zeros(size(εxx));
+		εyyDdsI = zeros(size(εxx));
+		εzzDdsI = zeros(size(εxx));
+		εxyDdsI = zeros(size(εxx));
+		εxzDdsI = zeros(size(εxx));
+		εyzDdsI = zeros(size(εxx));
 	end
+
+	CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,FillA,FillB);
+	CalculateLocalTriCoords!(P1i,P2i,P3i,Vnormi,Vstrikei,Vdipi,eY,eZ,FillA,FillB);
+	#error("Stop here, also add back in threads and ! funcs no output. ")
+	
 
 	if HSflag==1
 		if any(Z .>0) | any(P1[3] .>0) | any(P2[3] .>0) | any(P3[3] .>0)
@@ -242,84 +635,66 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	
 		end #HsFlag
 
+		Ux.+=UxDnI.+UxDssI.+UxDdsI;
+		Uy.+=UyDnI.+UyDssI.+UyDdsI;
+		Uz.+=UzDnI.+UzDssI.+UzDdsI;
+
 	end#DispFlag 
 
 	if StrainFlag==1
-
-		#Elastic con
-		lambda=(2*mu*nu)/(1-(2*nu));
 		
 		# Calculate main dislocation contribution to strains
 		TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,0,Vnorm,Vstrike,Vdip,
 		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-		ExxDnI, EyyDnI, EzzDnI, ExyDnI, ExzDnI, EyzDnI,
-		ExxDssI,EyyDssI,EzzDssI,ExyDssI,ExzDssI,EyzDssI,
-		ExxDdsI,EyyDdsI,EzzDdsI,ExyDdsI,ExzDdsI,EyzDdsI);	
+		εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+		εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+		εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);	
 		
 		if HSflag==1
 		
 			# Calculate harmonic function contribution to strains
 			TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,Vnorm,Vstrike,Vdip,
-			ExxDnI, EyyDnI, EzzDnI, ExyDnI, ExzDnI, EyzDnI,
-			ExxDssI,EyyDssI,EzzDssI,ExyDssI,ExzDssI,EyzDssI,
-			ExxDdsI,EyyDdsI,EzzDdsI,ExyDdsI,ExzDdsI,EyzDdsI);	
+			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);	
 		
 			# Calculate image dislocation contribution to strains 
 			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,nu,1,Vnormi,Vstrikei,Vdipi,
 			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-			ExxDnI, EyyDnI, EzzDnI, ExyDnI, ExzDnI, EyzDnI,
-			ExxDssI,EyyDssI,EzzDssI,ExyDssI,ExzDssI,EyzDssI,
-			ExxDdsI,EyyDdsI,EzzDdsI,ExyDdsI,ExzDdsI,EyzDdsI);
+			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);
 
 
 		end #HS flag
 		
-	end #Stress flag
+		εxx.+=εxxDnI.+εxxDssI.+εxxDdsI;
+		εyy.+=εyyDnI.+εyyDssI.+εyyDdsI;
+		εzz.+=εzzDnI.+εzzDssI.+εzzDdsI;
+		εxy.+=εxyDnI.+εxyDssI.+εxyDdsI;
+		εxz.+=εxzDnI.+εxzDssI.+εxzDdsI;
+		εyz.+=εyzDnI.+εyzDssI.+εyzDdsI;
+
+	end #Strain flag
 	
 end #Over all els
-	
-	
-if DispFlag==0
-	UxDn  = [];
-	UyDn  = [];
-	UzDn  = [];
-	UxDss = [];
-	UyDss = [];
-	UzDss = [];
-	UxDds = [];
-	UyDds = [];
-	UzDds = [];
-end
-if StrainFlag==0
-	ExxDn  = []; 
-	EyyDn  = []; 
-	EzzDn  = [];
-	ExyDn  = []; 
-	ExzDn  = []; 
-	EyzDn  = [];
-	ExxDss = []; 
-	EyyDss = []; 
-	EzzDss = [];
-	ExyDss = []; 
-	ExzDss = []; 
-	EyzDss = [];
-	ExxDds = []; 
-	EyyDds = []; 
-	EzzDds = [];
-	ExyDds = []; 
-	ExzDds = []; 
-	EyzDds = [];
-end
 
-return(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-	   ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-	   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
-	   UxDn,UyDn,UzDn,
-	   UxDss,UyDss,UzDss,
-	   UxDds,UyDds,UzDds)
+if StrainFlag==1
+	StrainInfVector=Strains(εxx,εyy,εzz,εxy,εxz,εyz);
 	
-
+else
+	StrainInfVector=Strains([],[],[],[],[],[]);
 end
+if DispFlag==1
+	DispInfVector=Disps(Ux,	Uy,	Uz);
+else
+	DispInfVector=Disps([],	[],	[])
+end
+return(StrainInfVector,DispInfVector)
+end
+=#
+
+
 
 function CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,P1P2,P3P1)
 # Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
@@ -333,7 +708,7 @@ P3P1.=P3.-P1;
 cross!(P1P2,P3P1,Vnorm);
 Vnorm.= Vnorm./sqrt(Vnorm[1]^2+Vnorm[2]^2+Vnorm[3]^2)
 cross!(eZ,Vnorm,Vstrike);
-if norm(Vstrike)==0
+if norm(Vstrike)==0.0
 	Vstrike.= eY.*Vnorm[3];
 end
 Vstrike.= Vstrike./sqrt(Vstrike[1]^2+Vstrike[2]^2+Vstrike[3]^2);
@@ -365,7 +740,7 @@ if ImageFlag==1; #This means we are computing the iamge dislocation
 	(UxDds,UyDds,UzDds)=RotateObject3DNewCoords!(UxDds,UyDds,UzDds,0.,0.,0.,VxR,VyR,VzR)
 
 	#Flip these so we add component
-	if P1[3]==0 && P2[3]==0 && P3[3]==0
+	if P1[3]==0.0 && P2[3]==0.0 && P3[3]==0.0
 		UzDn  = -UzDn;
 		UzDss = -UzDss;
 		UzDds = -UzDds;
@@ -439,7 +814,7 @@ for i=eachindex(x)
 	ac=a1*c1+a2*c2+a3*c3;
 	bc=b1*c1+b2*c2+b3*c3;
 	two=na*nb*nc+ab*nc+ac*nb+bc*na;
-	Fi = -2*atan(one,two)/4/pi; 
+	Fi = -2.0*atan(one,two)/4.0/pi; 
 	
 	# Calculate the complete displacement vector components in TDCS
 	UxDn[i]  = Dn*Fi+UxDn[i];
@@ -458,7 +833,7 @@ end
 
 #Flip sign if flat tri 
 if ImageFlag==1; #This means we are computing the iamge dislocation	
-	if P1[3]==0 && P2[3]==0 && P3[3]==0
+	if P1[3]==0.0 && P2[3]==0.0 && P3[3]==0.0
 		UxDn  = -UxDn;
 		UyDn  = -UyDn;
 		UzDn  = -UzDn;
@@ -519,7 +894,7 @@ eZ = [0.;0.;1.];
 Vnorm = cross(P2-P1,P3-P1);
 Vnorm = Vnorm/sqrt(Vnorm[1]^2+Vnorm[2]^2+Vnorm[3]^2)
 Vstrike = cross(eZ,Vnorm);
-if norm(Vstrike)==0
+if norm(Vstrike)==0.0
 	Vstrike = eY*Vnorm[3];
 end
 Vstrike = Vstrike/sqrt(Vstrike[1]^2+Vstrike[2]^2+Vstrike[3]^2);
@@ -650,11 +1025,11 @@ Ang=-pi+alpha;
 cosA = cos(Ang);
 sinA = sin(Ang);
 
-#Extra defs out of loop to speed it up
+#εxtra defs out of loop to speed it up
 E1=(1.0-nu); #Elastic cons
 E2=(1.0-2.0*nu);
 cosA2=cosA^2;
-sinADE1=sinA/8.0/pi/(1-nu);
+sinADE1=sinA/8.0/pi/(1.0-nu);
 
 Dn8p=Dn/8.0/pi;
 
@@ -671,7 +1046,7 @@ for i=eachindex(Index) #1:length(x)
 	(ux,uy,uz,vx,vy,vz,wx,wy,wz) = AngDisDisp(x[Index[i]],Y,Z,cosA,sinA,E1,E2,cosA2,sinADE1);
 
 	
-	if Dn!=0 #Only doing if needed
+	if Dn!=0.0 #Only doing if needed
 		#Ux is in global coords:
 		#components due to opening
 		UxDn[Index[i]]=UxDn[Index[i]]+(Dn8p/E1*ux);
@@ -688,7 +1063,7 @@ for i=eachindex(Index) #1:length(x)
 	#For Dss and Dds the local coordinates mean these must be combined 
 	#to get the global contribution for these parts.
 	
-	if Dss!=0 #Only doing if needed
+	if Dss!=0.0 #Only doing if needed
 		#Ux is in global coords
 		UxDss[Index[i]]=UxDss[Index[i]]+(Dss1/8.0/pi/E1*uy)+(Dds0*sinADE1*uz)
 		#Comp Uy and Uz in the current coords 	
@@ -701,7 +1076,7 @@ for i=eachindex(Index) #1:length(x)
 		UzDss[Index[i]]=UzDss[Index[i]]+uzDss;
 	end		
 		
-	if Dds!=0 #Only doing if needed
+	if Dds!=0.0 #Only doing if needed
 		#Ux is in global coords
 		UxDds[Index[i]]=UxDds[Index[i]]+(Dss0/8.0/pi/E1*uy)+(Dds1*sinADE1*uz)
 		#Comp Uy and Uz in the current coords		
@@ -760,7 +1135,7 @@ vz = sinA/rMzeta-y/r/rMzeta;													#bz*x*sinADE1*
 wz = cosA/rMzeta-z/r/rMzeta;													#bz*x*sinADE1*
 
 
-#Export individual components
+#εxport individual components
 return( ux::Float64,uy::Float64,uz::Float64,
 		vx::Float64,vy::Float64,vz::Float64,
 		wx::Float64,wy::Float64,wz::Float64)
@@ -869,7 +1244,7 @@ else
 		# Transform coordinates from EFCS to the first ADCS
 		(x,y,z)=RotateObject3DNewCoords!(x,y,z,PA[1],PA[2],PA[3],ey1,ey2,ey3)
 		Bx=beta*x;
-		if Bx>=0;
+		if Bx>=0.0;
 		#Call func that does the work
 		#if I[i] == 1
 			(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(x,y,z,cosPib,sinPib,cotPib,cotPib2,nu,-PA[3]);
@@ -879,23 +1254,23 @@ else
 		
 		#The local coordinates are such that the components must be combined 
 		#to get the global contribution for these parts.
-		if Dn!=0
-			uxDn =-((Dn1__/4/pi/(1-nu)*uxA)+(Dss0n_/4/pi/(1-nu)*uyA)+(Dds0n_/4/pi/(1-nu)*uzA))
-			uyDn =-((Dn1__/4/pi/(1-nu)*vxA)+(Dss0n_/4/pi/(1-nu)*vyA)+(Dds0n_/4/pi/(1-nu)*vzA))	
-			uzDn =-((Dn1__/4/pi/(1-nu)*wxA)+(Dss0n_/4/pi/(1-nu)*wyA)+(Dds0n_/4/pi/(1-nu)*wzA))
+		if Dn!=0.0
+			uxDn =-((Dn1__/4.0/pi/(1-nu)*uxA)+(Dss0n_/4.0/pi/(1-nu)*uyA)+(Dds0n_/4.0/pi/(1-nu)*uzA))
+			uyDn =-((Dn1__/4.0/pi/(1-nu)*vxA)+(Dss0n_/4.0/pi/(1-nu)*vyA)+(Dds0n_/4.0/pi/(1-nu)*vzA))	
+			uzDn =-((Dn1__/4.0/pi/(1-nu)*wxA)+(Dss0n_/4.0/pi/(1-nu)*wyA)+(Dds0n_/4.0/pi/(1-nu)*wzA))
 		end			
-		if Dss!=0		
-			uxDss=-((Dn0ss/4/pi/(1-nu)*uxA)+(Dss1__/4/pi/(1-nu)*uyA)+(Dds1ss/4/pi/(1-nu)*uzA))
-			uyDss=-((Dn0ss/4/pi/(1-nu)*vxA)+(Dss1__/4/pi/(1-nu)*vyA)+(Dds1ss/4/pi/(1-nu)*vzA))	
-			uzDss=-((Dn0ss/4/pi/(1-nu)*wxA)+(Dss1__/4/pi/(1-nu)*wyA)+(Dds1ss/4/pi/(1-nu)*wzA))
+		if Dss!=0.0		
+			uxDss=-((Dn0ss/4.0/pi/(1-nu)*uxA)+(Dss1__/4.0/pi/(1-nu)*uyA)+(Dds1ss/4.0/pi/(1-nu)*uzA))
+			uyDss=-((Dn0ss/4.0/pi/(1-nu)*vxA)+(Dss1__/4.0/pi/(1-nu)*vyA)+(Dds1ss/4.0/pi/(1-nu)*vzA))	
+			uzDss=-((Dn0ss/4.0/pi/(1-nu)*wxA)+(Dss1__/4.0/pi/(1-nu)*wyA)+(Dds1ss/4.0/pi/(1-nu)*wzA))
 		end
-		if Dds!=0			
-			uxDds=-((Dn0ds/4/pi/(1-nu)*uxA)+(Dss0ds/4/pi/(1-nu)*uyA)+(Dds1__/4/pi/(1-nu)*uzA))
-			uyDds=-((Dn0ds/4/pi/(1-nu)*vxA)+(Dss0ds/4/pi/(1-nu)*vyA)+(Dds1__/4/pi/(1-nu)*vzA))
-			uzDds=-((Dn0ds/4/pi/(1-nu)*wxA)+(Dss0ds/4/pi/(1-nu)*wyA)+(Dds1__/4/pi/(1-nu)*wzA))
+		if Dds!=0.0			
+			uxDds=-((Dn0ds/4.0/pi/(1-nu)*uxA)+(Dss0ds/4.0/pi/(1-nu)*uyA)+(Dds1__/4.0/pi/(1-nu)*uzA))
+			uyDds=-((Dn0ds/4.0/pi/(1-nu)*vxA)+(Dss0ds/4.0/pi/(1-nu)*vyA)+(Dds1__/4.0/pi/(1-nu)*vzA))
+			uzDds=-((Dn0ds/4.0/pi/(1-nu)*wxA)+(Dss0ds/4.0/pi/(1-nu)*wyA)+(Dds1__/4.0/pi/(1-nu)*wzA))
 		end			
 		
-		if Bx>=0;
+		if Bx>=0.0;
 		#Call func that does the work
 		#if I[i] == 1		
 			#Call func that does the work		
@@ -904,11 +1279,11 @@ else
 			(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(x-y1B,y-y2B,z-y3B,cosB,sinB,cotB,cotB2,nu,-PB[3]);
 		end
 
-		if Dn!=0		
+		if Dn!=0.0		
 			#Add to the current value this part		
-			uxDn  =uxDn  + ((Dn1__/4/pi/(1-nu)*uxB)+(Dss0n_/4/pi/(1-nu)*uyB)+(Dds0n_/4/pi/(1-nu)*uzB))
-			uyDn  =uyDn  + ((Dn1__/4/pi/(1-nu)*vxB)+(Dss0n_/4/pi/(1-nu)*vyB)+(Dds0n_/4/pi/(1-nu)*vzB))		
-			uzDn  =uzDn  + ((Dn1__/4/pi/(1-nu)*wxB)+(Dss0n_/4/pi/(1-nu)*wyB)+(Dds0n_/4/pi/(1-nu)*wzB))
+			uxDn  =uxDn  + ((Dn1__/4.0/pi/(1-nu)*uxB)+(Dss0n_/4.0/pi/(1-nu)*uyB)+(Dds0n_/4.0/pi/(1-nu)*uzB))
+			uyDn  =uyDn  + ((Dn1__/4.0/pi/(1-nu)*vxB)+(Dss0n_/4.0/pi/(1-nu)*vyB)+(Dds0n_/4.0/pi/(1-nu)*vzB))		
+			uzDn  =uzDn  + ((Dn1__/4.0/pi/(1-nu)*wxB)+(Dss0n_/4.0/pi/(1-nu)*wyB)+(Dds0n_/4.0/pi/(1-nu)*wzB))
 			#Rotate to global coords	
 			(uxDn, uyDn, uzDn) =RotateObject3DNewCoords!(uxDn, uyDn, uzDn ,0.,0.,0.,VxR,VyR,VzR)	
 			#Add these to the total vector				
@@ -916,11 +1291,11 @@ else
 			UyDn[i]  =UyDn[i]  + uyDn;
 			UzDn[i]  =UzDn[i]  + uzDn;			
 		end
-		if  Dss!=0
+		if  Dss!=0.0
 			#Add to the current value this part			
-			uxDss =uxDss + ((Dn0ss/4/pi/(1-nu)*uxB)+(Dss1__/4/pi/(1-nu)*uyB)+(Dds1ss/4/pi/(1-nu)*uzB))
-			uyDss =uyDss + ((Dn0ss/4/pi/(1-nu)*vxB)+(Dss1__/4/pi/(1-nu)*vyB)+(Dds1ss/4/pi/(1-nu)*vzB))	
-			uzDss =uzDss + ((Dn0ss/4/pi/(1-nu)*wxB)+(Dss1__/4/pi/(1-nu)*wyB)+(Dds1ss/4/pi/(1-nu)*wzB))
+			uxDss =uxDss + ((Dn0ss/4.0/pi/(1-nu)*uxB)+(Dss1__/4.0/pi/(1-nu)*uyB)+(Dds1ss/4.0/pi/(1-nu)*uzB))
+			uyDss =uyDss + ((Dn0ss/4.0/pi/(1-nu)*vxB)+(Dss1__/4.0/pi/(1-nu)*vyB)+(Dds1ss/4.0/pi/(1-nu)*vzB))	
+			uzDss =uzDss + ((Dn0ss/4.0/pi/(1-nu)*wxB)+(Dss1__/4.0/pi/(1-nu)*wyB)+(Dds1ss/4.0/pi/(1-nu)*wzB))
 			#Rotate to global coords		
 			(uxDss,uyDss,uzDss)=RotateObject3DNewCoords!(uxDss,uyDss,uzDss,0.,0.,0.,VxR,VyR,VzR)	
 			#Add these to the total vector				
@@ -928,11 +1303,11 @@ else
 			UyDss[i] =UyDss[i] + uyDss;		
 			UzDss[i] =UzDss[i] + uzDss;			
 		end
-		if  Dds!=0		
+		if  Dds!=0.0	
 			#Add to the current value this part			
-			uxDds =uxDds + ((Dn0ds/4/pi/(1-nu)*uxB)+(Dss0ds/4/pi/(1-nu)*uyB)+(Dds1__/4/pi/(1-nu)*uzB))
-			uyDds =uyDds + ((Dn0ds/4/pi/(1-nu)*vxB)+(Dss0ds/4/pi/(1-nu)*vyB)+(Dds1__/4/pi/(1-nu)*vzB))
-			uzDds =uzDds + ((Dn0ds/4/pi/(1-nu)*wxB)+(Dss0ds/4/pi/(1-nu)*wyB)+(Dds1__/4/pi/(1-nu)*wzB))
+			uxDds =uxDds + ((Dn0ds/4.0/pi/(1-nu)*uxB)+(Dss0ds/4.0/pi/(1-nu)*uyB)+(Dds1__/4.0/pi/(1-nu)*uzB))
+			uyDds =uyDds + ((Dn0ds/4.0/pi/(1-nu)*vxB)+(Dss0ds/4.0/pi/(1-nu)*vyB)+(Dds1__/4.0/pi/(1-nu)*vzB))
+			uzDds =uzDds + ((Dn0ds/4.0/pi/(1-nu)*wxB)+(Dss0ds/4.0/pi/(1-nu)*wyB)+(Dds1__/4.0/pi/(1-nu)*wzB))
 			#Rotate to global coords			
 			(uxDds,uyDds,uzDds)=RotateObject3DNewCoords!(uxDds,uyDds,uzDds,0.,0.,0.,VxR,VyR,VzR)
 			#Add these to the total vector			
@@ -973,74 +1348,75 @@ function AngDisDispFSC( y1::Float64,y2::Float64,y3::Float64,
 #cosB = cos(beta);
 #cotB = cot(beta);
 #cotB2= cot(beta/2);
-y3b = y3 +2*a;
+y3b = y3 +2.0*a;
 z1b = y1*cosB+y3b*sinB;
 z3b = -y1*sinB+y3b*cosB;
 r2b = y1 ^2 +y2 ^2 +y3b^2;
 rb = sqrt(r2b);
-
+c1=(1 -2*nu);
+c2=(1 -nu);
 Fib = 2*atan(-y2 /(-(rb+y3b)*cotB2+y1)); # The Burgers' function
 
-ux = (-2*(1 -nu)*(1 -2*nu)*Fib*cotB^2 +(1 -2*nu)*y2 /
-    (rb+y3b)*((1 -2*nu-a/rb)*cotB-y1 /(rb+y3b)*(nu+a/rb))+(1 -2*nu)*
+ux = (-2.0*c2*c1*Fib*cotB^2 +c1*y2 /
+    (rb+y3b)*((1.0 -2.0*nu-a/rb)*cotB-y1 /(rb+y3b)*(nu+a/rb))+c1*
     y2 *cosB*cotB/(rb+z3b)*(cosB+a/rb)+a*y2 *(y3b-a)*cotB/rb^3 +y2 *
-    (y3b-a)/(rb*(rb+y3b))*(-(1 -2*nu)*cotB+y1 /(rb+y3b)*(2*nu+a/rb)+
+    (y3b-a)/(rb*(rb+y3b))*(-c1*cotB+y1 /(rb+y3b)*(2.0*nu+a/rb)+
     a*y1 /rb^2)+y2 *(y3b-a)/(rb*(rb+z3b))*(cosB/(rb+z3b)*((rb*
-    cosB+y3b)*((1 -2*nu)*cosB-a/rb)*cotB+2*(1 -nu)*(rb*sinB-y1)*cosB)-
-    a*y3b*cosB*cotB/rb^2)); #b1/4/pi/(1 -nu)*
+    cosB+y3b)*(c1*cosB-a/rb)*cotB+2.0*c2*(rb*sinB-y1)*cosB)-
+    a*y3b*cosB*cotB/rb^2)); #b1/4.0/pi/c2*
 
-vx = ((1 -2*nu)*((2*(1 -nu)*cotB^2 -nu)*log(rb+y3b)-(2*
-    (1 -nu)*cotB^2 +1 -2*nu)*cosB*log(rb+z3b))-(1 -2*nu)/(rb+y3b)*(y1*
-    cotB*(1 -2*nu-a/rb)+nu*y3b-a+y2 ^2 /(rb+y3b)*(nu+a/rb))-(1 -2*
+vx = (c1*((2.0*c2*cotB^2 -nu)*log(rb+y3b)-(2.0*
+    c2*cotB^2 +1.0 -2.0*nu)*cosB*log(rb+z3b))-c1/(rb+y3b)*(y1*
+    cotB*(1.0 -2.0*nu-a/rb)+nu*y3b-a+y2 ^2 /(rb+y3b)*(nu+a/rb))-(1.0 -2.0*
     nu)*z1b*cotB/(rb+z3b)*(cosB+a/rb)-a*y1 *(y3b-a)*cotB/rb^3 +
-    (y3b-a)/(rb+y3b)*(-2*nu+1 /rb*((1 -2*nu)*y1*cotB-a)+y2 ^2 /(rb*
-    (rb+y3b))*(2*nu+a/rb)+a*y2 ^2 /rb^3)+(y3b-a)/(rb+z3b)*(cosB^2 -
-    1 /rb*((1 -2*nu)*z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^3 -1 /(rb*
-    (rb+z3b))*(y2 ^2*cosB^2 -a*z1b*cotB/rb*(rb*cosB+y3b)))); #b1/4/pi/(1 -nu)*
+    (y3b-a)/(rb+y3b)*(-2.0*nu+1.0 /rb*(c1*y1*cotB-a)+y2 ^2 /(rb*
+    (rb+y3b))*(2.0*nu+a/rb)+a*y2 ^2 /rb^3)+(y3b-a)/(rb+z3b)*(cosB^2 -
+    1.0 /rb*(c1*z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^3 -1.0 /(rb*
+    (rb+z3b))*(y2 ^2*cosB^2 -a*z1b*cotB/rb*(rb*cosB+y3b)))); #b1/4.0/pi/c2*
 
-wx = (2*(1 -nu)*(((1 -2*nu)*Fib*cotB)+(y2 /(rb+y3b)*(2*
-    nu+a/rb))-(y2*cosB/(rb+z3b)*(cosB+a/rb)))+y2 *(y3b-a)/rb*(2*
-    nu/(rb+y3b)+a/rb^2)+y2 *(y3b-a)*cosB/(rb*(rb+z3b))*(1 -2*nu-
-    (rb*cosB+y3b)/(rb+z3b)*(cosB+a/rb)-a*y3b/rb^2));  #b1/4/pi/(1 -nu)*
+wx = (2.0*c2*((c1*Fib*cotB)+(y2 /(rb+y3b)*(2.0*
+    nu+a/rb))-(y2*cosB/(rb+z3b)*(cosB+a/rb)))+y2 *(y3b-a)/rb*(2.0*
+    nu/(rb+y3b)+a/rb^2)+y2 *(y3b-a)*cosB/(rb*(rb+z3b))*(1.0 -2.0*nu-
+    (rb*cosB+y3b)/(rb+z3b)*(cosB+a/rb)-a*y3b/rb^2));  #b1/4.0/pi/c2*
 
-uy = ((1 -2*nu)*((2*(1 -nu)*cotB^2 +nu)*log(rb+y3b)-(2*
-    (1 -nu)*cotB^2 +1)*cosB*log(rb+z3b))+(1 -2*nu)/(rb+y3b)*(-(1 -2*nu)*
-    y1*cotB+nu*y3b-a+a*y1*cotB/rb+y1 ^2 /(rb+y3b)*(nu+a/rb))-(1 -2*
+uy = (c1*((2.0*c2*cotB^2 +nu)*log(rb+y3b)-(2.0*
+    c2*cotB^2 +1.0)*cosB*log(rb+z3b))+c1/(rb+y3b)*(-c1*
+    y1*cotB+nu*y3b-a+a*y1*cotB/rb+y1 ^2 /(rb+y3b)*(nu+a/rb))-(1.0 -2.0*
     nu)*cotB/(rb+z3b)*(z1b*cosB-a*(rb*sinB-y1)/(rb*cosB))-a*y1 *
-    (y3b-a)*cotB/rb^3 +(y3b-a)/(rb+y3b)*(2*nu+1 /rb*((1 -2*nu)*y1*
-    cotB+a)-y1 ^2 /(rb*(rb+y3b))*(2*nu+a/rb)-a*y1 ^2 /rb^3)+(y3b-a)*
+    (y3b-a)*cotB/rb^3 +(y3b-a)/(rb+y3b)*(2.0*nu+1.0 /rb*(c1*y1*
+    cotB+a)-y1 ^2 /(rb*(rb+y3b))*(2.0*nu+a/rb)-a*y1 ^2 /rb^3)+(y3b-a)*
     cotB/(rb+z3b)*(-cosB*sinB+a*y1 *y3b/(rb^3*cosB)+(rb*sinB-y1)/
-    rb*(2*(1 -nu)*cosB-(rb*cosB+y3b)/(rb+z3b)*(1 +a/(rb*cosB))))); #b2/4/pi/(1 -nu)*
+    rb*(2.0*c2*cosB-(rb*cosB+y3b)/(rb+z3b)*(1.0 +a/(rb*cosB))))); #b2/4.0/pi/c2*
                 
-vy = (2*(1 -nu)*(1 -2*nu)*Fib*cotB^2 +(1 -2*nu)*y2 /
-    (rb+y3b)*(-(1 -2*nu-a/rb)*cotB+y1 /(rb+y3b)*(nu+a/rb))-(1 -2*nu)*
-    y2*cotB/(rb+z3b)*(1 +a/(rb*cosB))-a*y2 *(y3b-a)*cotB/rb^3 +y2 *
-    (y3b-a)/(rb*(rb+y3b))*((1 -2*nu)*cotB-2*nu*y1 /(rb+y3b)-a*y1 /rb*
-    (1 /rb+1 /(rb+y3b)))+y2 *(y3b-a)*cotB/(rb*(rb+z3b))*(-2*(1 -nu)*
-    cosB+(rb*cosB+y3b)/(rb+z3b)*(1 +a/(rb*cosB))+a*y3b/(rb^2*cosB))); #b2/4/pi/(1 -nu)*
+vy = (2.0*c2*c1*Fib*cotB^2 +c1*y2 /
+    (rb+y3b)*(-(1.0 -2.0*nu-a/rb)*cotB+y1 /(rb+y3b)*(nu+a/rb))-c1*
+    y2*cotB/(rb+z3b)*(1.0 +a/(rb*cosB))-a*y2 *(y3b-a)*cotB/rb^3 +y2 *
+    (y3b-a)/(rb*(rb+y3b))*(c1*cotB-2.0*nu*y1 /(rb+y3b)-a*y1 /rb*
+    (1.0 /rb+1.0 /(rb+y3b)))+y2 *(y3b-a)*cotB/(rb*(rb+z3b))*(-2.0*c2*
+    cosB+(rb*cosB+y3b)/(rb+z3b)*(1.0 +a/(rb*cosB))+a*y3b/(rb^2*cosB))); #b2/4.0/pi/c2*
                 
-wy = (-2*(1 -nu)*(1 -2*nu)*cotB*(log(rb+y3b)-cosB*
-    log(rb+z3b))-2*(1 -nu)*y1 /(rb+y3b)*(2*nu+a/rb)+2*(1 -nu)*z1b/(rb+
-    z3b)*(cosB+a/rb)+(y3b-a)/rb*((1 -2*nu)*cotB-2*nu*y1 /(rb+y3b)-a*
+wy = (-2*c2*c1*cotB*(log(rb+y3b)-cosB*
+    log(rb+z3b))-2.0*c2*y1 /(rb+y3b)*(2.0*nu+a/rb)+2.0*c2*z1b/(rb+
+    z3b)*(cosB+a/rb)+(y3b-a)/rb*(c1*cotB-2.0*nu*y1 /(rb+y3b)-a*
     y1 /rb^2)-(y3b-a)/(rb+z3b)*(cosB*sinB+(rb*cosB+y3b)*cotB/rb*
-    (2*(1 -nu)*cosB-(rb*cosB+y3b)/(rb+z3b))+a/rb*(sinB-y3b*z1b/
-    rb^2 -z1b*(rb*cosB+y3b)/(rb*(rb+z3b)))));  #b2/4/pi/(1 -nu)*
+    (2.0*c2*cosB-(rb*cosB+y3b)/(rb+z3b))+a/rb*(sinB-y3b*z1b/
+    rb^2 -z1b*(rb*cosB+y3b)/(rb*(rb+z3b)))));  #b2/4.0/pi/c2*
 
-uz = ((1 -2*nu)*(y2 /(rb+y3b)*(1 +a/rb)-y2*cosB/(rb+
-    z3b)*(cosB+a/rb))-y2 *(y3b-a)/rb*(a/rb^2 +1 /(rb+y3b))+y2 *
+uz = (c1*(y2 /(rb+y3b)*(1.0 +a/rb)-y2*cosB/(rb+
+    z3b)*(cosB+a/rb))-y2 *(y3b-a)/rb*(a/rb^2 +1.0 /(rb+y3b))+y2 *
     (y3b-a)*cosB/(rb*(rb+z3b))*((rb*cosB+y3b)/(rb+z3b)*(cosB+a/
-    rb)+a*y3b/rb^2)); #b3/4/pi/(1 -nu)*
+    rb)+a*y3b/rb^2)); #b3/4.0/pi/c2*
                 
-vz = ((1 -2*nu)*(-sinB*log(rb+z3b)-y1 /(rb+y3b)*(1 +a/
-    rb)+z1b/(rb+z3b)*(cosB+a/rb))+y1 *(y3b-a)/rb*(a/rb^2 +1 /(rb+
+vz = (c1*(-sinB*log(rb+z3b)-y1 /(rb+y3b)*(1.0 +a/
+    rb)+z1b/(rb+z3b)*(cosB+a/rb))+y1 *(y3b-a)/rb*(a/rb^2 +1.0 /(rb+
     y3b))-(y3b-a)/(rb+z3b)*(sinB*(cosB-a/rb)+z1b/rb*(1 +a*y3b/
-    rb^2)-1 /(rb*(rb+z3b))*(y2 ^2*cosB*sinB-a*z1b/rb*(rb*cosB+y3b)))); #b3/4/pi/(1 -nu)*
+    rb^2)-1.0 /(rb*(rb+z3b))*(y2 ^2*cosB*sinB-a*z1b/rb*(rb*cosB+y3b)))); #b3/4.0/pi/c2*
                 
-wz = (2*(1 -nu)*Fib+2*(1 -nu)*(y2*sinB/(rb+z3b)*(cosB+
-    a/rb))+y2 *(y3b-a)*sinB/(rb*(rb+z3b))*(1 +(rb*cosB+y3b)/(rb+
-    z3b)*(cosB+a/rb)+a*y3b/rb^2));  #b3/4/pi/(1 -nu)*
+wz = (2.0*c2*Fib+2.0*c2*(y2*sinB/(rb+z3b)*(cosB+
+    a/rb))+y2 *(y3b-a)*sinB/(rb*(rb+z3b))*(1.0 +(rb*cosB+y3b)/(rb+
+    z3b)*(cosB+a/rb)+a*y3b/rb^2));  #b3/4.0/pi/c2*
 
-#Export individual components
+#εxport individual components
 return( ux::Float64,uy::Float64,uz::Float64,
 		vx::Float64,vy::Float64,vz::Float64,
 		wx::Float64,wy::Float64,wz::Float64)
@@ -1050,9 +1426,9 @@ end
 
 function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,ImageFlag,Vnorm,Vstrike,Vdip,
 					p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,Pos,Neg,casezLog,
-		 ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-		 ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-		 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds)
+		 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds)
 # TDstressFS 
 # Calculates stresses and strains associated with a triangular dislocation 
 # in an elastic full-space.
@@ -1064,92 +1440,92 @@ if ImageFlag==1; #This means we are computing the iamge dislocation
 	RotInvMat[4]=Vnorm[2]; RotInvMat[5]=Vstrike[2]; RotInvMat[6]=Vdip[2];
 	RotInvMat[7]=Vnorm[3]; RotInvMat[8]=Vstrike[3]; RotInvMat[9]=Vdip[3];
 	# Transform the strain tensor components from TDCS into EFCS
-	(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,RotInvMat);
-	(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,RotInvMat);
-	(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,RotInvMat);
+	(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn) = TensorTransformation3D!(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,RotInvMat);
+	(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss) = TensorTransformation3D!(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,RotInvMat);
+	(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds) = TensorTransformation3D!(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,RotInvMat);
 	#We flip here and flip lower down (essentially taking away the components computed between these flips)
 	if P1[3]==0 && P2[3]==0 && P3[3]==0
-		ExzDn = -ExzDn;
-		EyzDn = -EyzDn;
-		ExzDss = -ExzDss;
-		EyzDss = -EyzDss;
-		ExzDds = -ExzDds;
-		EyzDds = -EyzDds;
+		εxzDn = -εxzDn;
+		εyzDn = -εyzDn;
+		εxzDss = -εxzDss;
+		εyzDss = -εyzDss;
+		εxzDds = -εxzDds;
+		εyzDds = -εyzDds;
 	end
 end
 
 # Calculate first angular dislocation contribution POS
 e13.=.-e13;
 TDSetupS(x,y,z,A,Dn,Dss,Dds,nu,p1,e13,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Pos); e13.=.-e13; #3allocs
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos); e13.=.-e13; #3allocs
  
 # Calculate second angular dislocation contribution
 TDSetupS(x,y,z,B,Dn,Dss,Dds,nu,p2,e12,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Pos); 
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos); 
  
 # Calculate third angular dislocation contribution
 TDSetupS(x,y,z,C,Dn,Dss,Dds,nu,p3,e23,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Pos);
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos);
 
 
 # Calculate first angular dislocation contribution NEG
 TDSetupS(x,y,z,A,Dn,Dss,Dds,nu,p1,e13,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Neg);
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg);
 
 # Calculate second angular dislocation contribution
 e12.=.-e12;
 TDSetupS(x,y,z,B,Dn,Dss,Dds,nu,p2,e12,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Neg); e12.=.-e12;
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg); e12.=.-e12;
  
 # Calculate third angular dislocation contribution 
 e23.=.-e23;
 TDSetupS(x,y,z,C,Dn,Dss,Dds,nu,p3,e23,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Neg); e23.=.-e23;
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg); e23.=.-e23;
 		
 # Calculate the strain tensor components in TDCS
 for i=eachindex(x)
 	if casezLog[i] == 1; 
-		ExxDn[i] = NaN;
-		EyyDn[i] = NaN;
-		EzzDn[i] = NaN;
-		ExyDn[i] = NaN;
-		ExzDn[i] = NaN;
-		EyzDn[i] = NaN;
+		εxxDn[i] = NaN;
+		εyyDn[i] = NaN;
+		εzzDn[i] = NaN;
+		εxyDn[i] = NaN;
+		εxzDn[i] = NaN;
+		εyzDn[i] = NaN;
 		
-		ExxDss[i] = NaN;
-		EyyDss[i] = NaN;
-		EzzDss[i] = NaN;
-		ExyDss[i] = NaN;
-		ExzDss[i] = NaN;
-		EyzDss[i] = NaN;
+		εxxDss[i] = NaN;
+		εyyDss[i] = NaN;
+		εzzDss[i] = NaN;
+		εxyDss[i] = NaN;
+		εxzDss[i] = NaN;
+		εyzDss[i] = NaN;
 
-		ExxDds[i] = NaN;
-		EyyDds[i] = NaN;
-		EzzDds[i] = NaN;
-		ExyDds[i] = NaN;
-		ExzDds[i] = NaN;
-		EyzDds[i] = NaN;
+		εxxDds[i] = NaN;
+		εyyDds[i] = NaN;
+		εzzDds[i] = NaN;
+		εxyDds[i] = NaN;
+		εxzDds[i] = NaN;
+		εyzDds[i] = NaN;
 	end
 end
 
 RotMat=zeros(1,9); #Single alloc here!
 RotMat[1:3]=Vnorm; RotMat[4:6]=Vstrike; RotMat[7:9]=Vdip; 
 # Transform the strain tensor components from TDCS into EFCS
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn) = TensorTransformation3D!(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,RotMat);
-(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss) = TensorTransformation3D!(ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,RotMat);
-(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds) = TensorTransformation3D!(ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,RotMat);
+(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn) = TensorTransformation3D!(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,RotMat);
+(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss) = TensorTransformation3D!(εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,RotMat);
+(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds) = TensorTransformation3D!(εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,RotMat);
 
 if ImageFlag==1; #This means we are computing the iamge dislocation
 
@@ -1158,12 +1534,12 @@ if ImageFlag==1; #This means we are computing the iamge dislocation
 
 
 	if P1[3]==0 && P2[3]==0 && P3[3]==0
-		ExzDn = -ExzDn;
-		EyzDn = -EyzDn;
-		ExzDss = -ExzDss;
-		EyzDss = -EyzDss;
-		ExzDds = -ExzDds;
-		EyzDds = -EyzDds;
+		εxzDn = -εxzDn;
+		εyzDn = -εyzDn;
+		εxzDss = -εxzDss;
+		εyzDss = -εyzDss;
+		εxzDds = -εxzDds;
+		εyzDds = -εyzDds;
 	end
 end
  
@@ -1171,9 +1547,9 @@ end
 
 
 function TDSetupS(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec,
-				 ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-				 ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-				 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,Index)
+				 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+				 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+				 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Index)
 # TDSetupS transforms coordinates of the calculation points as well as 
 # slip vector components from ADCS into TDCS. It then calculates the 
 # strains in ADCS and transforms them into TDCS.
@@ -1191,9 +1567,9 @@ Ang=-pi+alpha;
 cosA = cos(Ang);
 sinA = sin(Ang);
 
-#Extra defs out of loop to speed it up
-E1=(1-nu); #Elastic cons
-E2=(2*nu+1);
+#εxtra defs out of loop to speed it up
+E1=(1.0-nu); #Elastic cons
+E2=(2.0*nu+1.0);
 cosA2=cosA^2;
 sinADE1=sinA/8/pi/(1-nu);
 
@@ -1238,12 +1614,12 @@ for i=eachindex(Index)
 		(exxdn,eyydn,ezzdn,exydn,exzdn,eyzdn) = 
 		TensorTransformation3D!(exxdn,eyydn,ezzdn,exydn,exzdn,eyzdn,B);
 		#Add to total vector
-		ExxDn[Index[i]] 	= ExxDn[Index[i]] +exxdn;
-		EyyDn[Index[i]] 	= EyyDn[Index[i]] +eyydn
-		EzzDn[Index[i]] 	= EzzDn[Index[i]] +ezzdn
-		ExyDn[Index[i]] 	= ExyDn[Index[i]] +exydn
-		ExzDn[Index[i]] 	= ExzDn[Index[i]] +exzdn
-		EyzDn[Index[i]] 	= EyzDn[Index[i]] +eyzdn
+		εxxDn[Index[i]] 	= εxxDn[Index[i]] +exxdn;
+		εyyDn[Index[i]] 	= εyyDn[Index[i]] +eyydn
+		εzzDn[Index[i]] 	= εzzDn[Index[i]] +ezzdn
+		εxyDn[Index[i]] 	= εxyDn[Index[i]] +exydn
+		εxzDn[Index[i]] 	= εxzDn[Index[i]] +exzdn
+		εyzDn[Index[i]] 	= εyzDn[Index[i]] +eyzdn
 	end		
 	
 	#For Dss and Dds the local coordinates mean these must be combined 
@@ -1262,12 +1638,12 @@ for i=eachindex(Index)
 		(exxdss,eyydss,ezzdss,exydss,exzdss,eyzdss) = 
 		TensorTransformation3D!(exxdss,eyydss,ezzdss,exydss,exzdss,eyzdss,B);	
 		#Add to total vector		
-		ExxDss[Index[i]] 	= ExxDss[Index[i]] +exxdss;
-		EyyDss[Index[i]] 	= EyyDss[Index[i]] +eyydss
-		EzzDss[Index[i]] 	= EzzDss[Index[i]] +ezzdss
-		ExyDss[Index[i]] 	= ExyDss[Index[i]] +exydss
-		ExzDss[Index[i]] 	= ExzDss[Index[i]] +exzdss
-		EyzDss[Index[i]] 	= EyzDss[Index[i]] +eyzdss
+		εxxDss[Index[i]] 	= εxxDss[Index[i]] +exxdss;
+		εyyDss[Index[i]] 	= εyyDss[Index[i]] +eyydss
+		εzzDss[Index[i]] 	= εzzDss[Index[i]] +ezzdss
+		εxyDss[Index[i]] 	= εxyDss[Index[i]] +exydss
+		εxzDss[Index[i]] 	= εxzDss[Index[i]] +exzdss
+		εyzDss[Index[i]] 	= εyzDss[Index[i]] +eyzdss
 	end		
 		
 	if Dds!=0 #Only doing if needed	
@@ -1284,12 +1660,12 @@ for i=eachindex(Index)
 		(exxdds,eyydds,ezzdds,exydds,exzdds,eyzdds) = 
 		TensorTransformation3D!(exxdds,eyydds,ezzdds,exydds,exzdds,eyzdds,B);
 		#Add to total vector		
-		ExxDds[Index[i]] 	= ExxDds[Index[i]] +exxdds
-		EyyDds[Index[i]] 	= EyyDds[Index[i]] +eyydds
-		EzzDds[Index[i]] 	= EzzDds[Index[i]] +ezzdds
-		ExyDds[Index[i]] 	= ExyDds[Index[i]] +exydds
-		ExzDds[Index[i]] 	= ExzDds[Index[i]] +exzdds
-		EyzDds[Index[i]] 	= EyzDds[Index[i]] +eyzdds
+		εxxDds[Index[i]] 	= εxxDds[Index[i]] +exxdds
+		εyyDds[Index[i]] 	= εyyDds[Index[i]] +eyydds
+		εzzDds[Index[i]] 	= εzzDds[Index[i]] +ezzdds
+		εxyDds[Index[i]] 	= εxyDds[Index[i]] +exydds
+		εxzDds[Index[i]] 	= εxzDds[Index[i]] +exzdds
+		εyzDds[Index[i]] 	= εyzDds[Index[i]] +eyzdds
 	end		
 end	
 
@@ -1328,56 +1704,56 @@ C = (r*cosA-z)/Wr;
 S = (r*sinA-y)/Wr;
 
 # Partial derivatives of the Burgers' function
-rFi_rx = (eta/r/(r-zeta)-y/r/rmz)/4/pi;
-rFi_ry = (x/r/rmz-cosA*x/r/(r-zeta))/4/pi;
-rFi_rz = (sinA*x/r/(r-zeta))/4/pi;
+rFi_rx = (eta/r/(r-zeta)-y/r/rmz)/4.0/pi;
+rFi_ry = (x/r/rmz-cosA*x/r/(r-zeta))/4.0/pi;
+rFi_rz = (sinA*x/r/(r-zeta))/4.0/pi;
 
 #Split up parts, commented are Mehdis original parts. 
 
-#Exx = 	
-ExxBx = (eta/Wr+eta*x2/W2r2-eta*x2/Wr3+y/rz-x2*y/r2z2-x2*y/r3z); #bx*(rFi_rx)+E3*
-ExxBy = ((E2/Wr+x2/W2r2-x2/Wr3)*cosA+E2/rz-x2/r2z2-x2/r3z); #-E4*
-ExxBz =	(E2/Wr+x2/W2r2-x2/Wr3); #bz*x*sinADE1*
+#εxx = 	
+εxxBx = (eta/Wr+eta*x2/W2r2-eta*x2/Wr3+y/rz-x2*y/r2z2-x2*y/r3z); #bx*(rFi_rx)+E3*
+εxxBy = ((E2/Wr+x2/W2r2-x2/Wr3)*cosA+E2/rz-x2/r2z2-x2/r3z); #-E4*
+εxxBz =	(E2/Wr+x2/W2r2-x2/Wr3); #bz*x*sinADE1*
 		
-#Eyy = 	
-EyyBx = ((1/Wr+S^2-y2/Wr3)*eta+E2*y/rz-y^3/r2z2-y^3/r3z-2*nu*cosA*S); #E3*
-EyyBy = (1/rz-y2/r2z2-y2/r3z+(1/Wr+S^2-y2/Wr3)*cosA); #by*(rFi_ry)-E4*!
-EyyBz = (1/Wr+S^2-y2/Wr3);#bz*x*sinADE1*
+#εyy = 	
+εyyBx = ((1.0/Wr+S^2-y2/Wr3)*eta+E2*y/rz-y^3/r2z2-y^3/r3z-2*nu*cosA*S); #E3*
+εyyBy = (1.0/rz-y2/r2z2-y2/r3z+(1.0/Wr+S^2-y2/Wr3)*cosA); #by*(rFi_ry)-E4*!
+εyyBz = (1.0/Wr+S^2-y2/Wr3);#bz*x*sinADE1*
 
-#Ezz = 
-EzzBx = (eta/W/r+eta*C^2-eta*z2/Wr3+y*z/r3+2*nu*sinA*C); #E3*
-EzzBy = ((1/Wr+C^2-z2/Wr3)*cosA+z/r3); #-E4*
-EzzBz = (1/Wr+C^2-z2/Wr3); #bz*(rFi_rz)+bz*x*sinADE1*
+#εzz = 
+εzzBx = (eta/W/r+eta*C^2-eta*z2/Wr3+y*z/r3+2.0*nu*sinA*C); #E3*
+εzzBy = ((1.0/Wr+C^2-z2/Wr3)*cosA+z/r3); #-E4*
+εzzBz = (1.0/Wr+C^2-z2/Wr3); #bz*(rFi_rz)+bz*x*sinADE1*
 	
-#Exy = 	
-ExyBx = (x*y2/r2z2-nu*x/rz+x*y2/r3z-nu*x*cosA/Wr+eta*x*S/Wr+eta*x*y/Wr3); #bx*(rFi_ry)/2-E3*
-ExyBy = (x2*y/r2z2-nu*y/rz+x2*y/r3z+nu*cosA*S+x2*y*cosA/Wr3+x2*cosA*S/Wr); #by*(rFi_rx)/2+E5*
-ExyBz =	(nu*S+x2*S/Wr+x2*y/Wr3);		#-bz*sinADE1*
+#εxy = 	
+εxyBx = (x*y2/r2z2-nu*x/rz+x*y2/r3z-nu*x*cosA/Wr+eta*x*S/Wr+eta*x*y/Wr3); #bx*(rFi_ry)/2-E3*
+εxyBy = (x2*y/r2z2-nu*y/rz+x2*y/r3z+nu*cosA*S+x2*y*cosA/Wr3+x2*cosA*S/Wr); #by*(rFi_rx)/2+E5*
+εxyBz =	(nu*S+x2*S/Wr+x2*y/Wr3);		#-bz*sinADE1*
 
-#Exz = 		
-ExzBx =	(-x*y/r3+nu*x*sinA/Wr+eta*x*C/Wr+eta*x*z/Wr3); #bx*(rFi_rz)/2-E3*
-ExzBy = (-x2/r3+nu/r+nu*cosA*C+x2*z*cosA/Wr3+x2*cosA*C/Wr);#E5*
-ExzBz = (nu*C+x2*C/Wr+x2*z/Wr3);#    bz*(rFi_rx)/2+bz*sinADE1* (INNY BIT) ;
+#εxz = 		
+εxzBx =	(-x*y/r3+nu*x*sinA/Wr+eta*x*C/Wr+eta*x*z/Wr3); #bx*(rFi_rz)/2-E3*
+εxzBy = (-x2/r3+nu/r+nu*cosA*C+x2*z*cosA/Wr3+x2*cosA*C/Wr);#E5*
+εxzBz = (nu*C+x2*C/Wr+x2*z/Wr3);#    bz*(rFi_rx)/2+bz*sinADE1* (INNY BIT) ;
 
-#Eyz = 
-EyzBx = (y2/r3-nu/r-nu*cosA*C+nu*sinA*S+eta*sinA*cosA/W2-eta*(y*cosA+z*sinA)/W2r+eta*y*z/W2r2-eta*y*z/Wr3);	#E3*
-EyzBy = (y/r3+sinA*cosA^2/W2-cosA*(y*cosA+z*sinA)/W2r+y*z*cosA/W2r2-y*z*cosA/Wr3); #by*(rFi_rz)/2-E4*
-EyzBz =	(y*z/Wr3-sinA*cosA/W2+(y*cosA+z*sinA)/W2r-y*z/W2r2); #bz*(rFi_ry)/2-bz*x*sinADE1*
+#εyz = 
+εyzBx = (y2/r3-nu/r-nu*cosA*C+nu*sinA*S+eta*sinA*cosA/W2-eta*(y*cosA+z*sinA)/W2r+eta*y*z/W2r2-eta*y*z/Wr3);	#E3*
+εyzBy = (y/r3+sinA*cosA^2/W2-cosA*(y*cosA+z*sinA)/W2r+y*z*cosA/W2r2-y*z*cosA/Wr3); #by*(rFi_rz)/2-E4*
+εyzBz =	(y*z/Wr3-sinA*cosA/W2+(y*cosA+z*sinA)/W2r-y*z/W2r2); #bz*(rFi_ry)/2-bz*x*sinADE1*
 
-return(ExxBx::Float64,ExxBy::Float64,ExxBz::Float64,
-	   EyyBx::Float64,EyyBy::Float64,EyyBz::Float64,
-	   EzzBx::Float64,EzzBy::Float64,EzzBz::Float64,
-	   ExyBx::Float64,ExyBy::Float64,ExyBz::Float64,
-	   ExzBx::Float64,ExzBy::Float64,ExzBz::Float64,
-	   EyzBx::Float64,EyzBy::Float64,EyzBz::Float64,
+return(εxxBx::Float64,εxxBy::Float64,εxxBz::Float64,
+	   εyyBx::Float64,εyyBy::Float64,εyyBz::Float64,
+	   εzzBx::Float64,εzzBy::Float64,εzzBz::Float64,
+	   εxyBx::Float64,εxyBy::Float64,εxyBz::Float64,
+	   εxzBx::Float64,εxzBy::Float64,εxzBz::Float64,
+	   εyzBx::Float64,εyzBy::Float64,εyzBz::Float64,
 	   rFi_rx::Float64,rFi_ry::Float64,rFi_rz::Float64)
 end
 
 
 function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,Vnorm,Vstrike,Vdip,
-			 ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-			 ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-			 ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
+			 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+			 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+			 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
 # TDstrain_HarFunc calculates the harmonic function contribution to the
 # strains and stresses associated with a triangular dislocation in a 
 # half-space. The function cancels the surface normal tractions induced by 
@@ -1386,30 +1762,30 @@ function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,Vnorm,Vstrike,V
 # Calculate contribution of angular dislocation pair on each TD side 
 # P1P2
 AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P1,P2,mu,lambda,nu,Vnorm,Vstrike,Vdip,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
  
 # P2P3
 AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P2,P3,mu,lambda,nu,Vnorm,Vstrike,Vdip,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds); 
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds); 
  
  
 # P3P1 
 AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P3,P1,mu,lambda,nu,Vnorm,Vstrike,Vdip,
-ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
+εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
 
 end
 
 
 function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,mu,lambda,nu,Vnorm,Vstrike,Vdip,
-							ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
-							ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
-							ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds);
+							εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
+							εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
+							εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
 # AngSetupFSC_S calculates the Free Surface Correction to strains and 
 # stresses associated with angular dislocation pair on each TD side.
 
@@ -1478,7 +1854,7 @@ else
 		# Transform coordinates from EFCS to the first ADCS
 		(x,y,z)=RotateObject3DNewCoords!(x,y,z,PA[1],PA[2],PA[3],ey1,ey2,ey3)
 		Bx=beta*x;
-		if Bx>=0;
+		if Bx>=0.0;
 		#Call func that does the work		
 		#if I[i] == 1		
 			 #xx    yy    zz    xy    xz    yz
@@ -1512,32 +1888,32 @@ else
 		 
 		#The local coordinates are such that the components must be combined 
 		#to get the global contribution for these parts.
-		if Dn!=0	
+		if Dn!=0.0	
 			exxDn = -((Dn1__*v11Ax)+(Dss0n_*v11Ay)+(Dds0n_*v11Az))
 			eyyDn = -((Dn1__*v22Ax)+(Dss0n_*v22Ay)+(Dds0n_*v22Az))
 			ezzDn = -((Dn1__*v33Ax)+(Dss0n_*v33Ay)+(Dds0n_*v33Az))
-			exyDn = -((Dn1__/2*v12Ax)+(Dss0n_/2*v12Ay)+(Dds0n_/2*v12Az))
-			exzDn = -((Dn1__/2*v13Ax)+(Dss0n_/2*v13Ay)+(Dds0n_/2*v13Az))
-			eyzDn = -((Dn1__/2*v23Ax)+(Dss0n_/2*v23Ay)+(Dds0n_/2*v23Az))
+			exyDn = -((Dn1__/2.0*v12Ax)+(Dss0n_/2.0*v12Ay)+(Dds0n_/2.0*v12Az))
+			exzDn = -((Dn1__/2.0*v13Ax)+(Dss0n_/2.0*v13Ay)+(Dds0n_/2.0*v13Az))
+			eyzDn = -((Dn1__/2.0*v23Ax)+(Dss0n_/2.0*v23Ay)+(Dds0n_/2.0*v23Az))
 		end
-		if Dss!=0			
+		if Dss!=0.0			
 			exxDss= -((Dn0ss*v11Ax)+(Dss1__*v11Ay)+(Dds1ss*v11Az))
 			eyyDss= -((Dn0ss*v22Ax)+(Dss1__*v22Ay)+(Dds1ss*v22Az))
 			ezzDss= -((Dn0ss*v33Ax)+(Dss1__*v33Ay)+(Dds1ss*v33Az))
-			exyDss= -((Dn0ss/2*v12Ax)+(Dss1__/2*v12Ay)+(Dds1ss/2*v12Az))
-			exzDss= -((Dn0ss/2*v13Ax)+(Dss1__/2*v13Ay)+(Dds1ss/2*v13Az))
-			eyzDss= -((Dn0ss/2*v23Ax)+(Dss1__/2*v23Ay)+(Dds1ss/2*v23Az))
+			exyDss= -((Dn0ss/2.0*v12Ax)+(Dss1__/2.0*v12Ay)+(Dds1ss/2.0*v12Az))
+			exzDss= -((Dn0ss/2.0*v13Ax)+(Dss1__/2.0*v13Ay)+(Dds1ss/2.0*v13Az))
+			eyzDss= -((Dn0ss/2.0*v23Ax)+(Dss1__/2.0*v23Ay)+(Dds1ss/2.0*v23Az))
 		end
-		if Dds!=0		
+		if Dds!=0.0		
 			exxDds= -((Dn0ds*v11Ax)+(Dss0ds*v11Ay)+(Dds1__*v11Az))		
 			eyyDds= -((Dn0ds*v22Ax)+(Dss0ds*v22Ay)+(Dds1__*v22Az))
 			ezzDds= -((Dn0ds*v33Ax)+(Dss0ds*v33Ay)+(Dds1__*v33Az))
-			exyDds= -((Dn0ds/2*v12Ax)+(Dss0ds/2*v12Ay)+(Dds1__/2*v12Az))
-			exzDds= -((Dn0ds/2*v13Ax)+(Dss0ds/2*v13Ay)+(Dds1__/2*v13Az))				
-			eyzDds= -((Dn0ds/2*v23Ax)+(Dss0ds/2*v23Ay)+(Dds1__/2*v23Az))
+			exyDds= -((Dn0ds/2.0*v12Ax)+(Dss0ds/2.0*v12Ay)+(Dds1__/2.0*v12Az))
+			exzDds= -((Dn0ds/2.0*v13Ax)+(Dss0ds/2.0*v13Ay)+(Dds1__/2.0*v13Az))				
+			eyzDds= -((Dn0ds/2.0*v23Ax)+(Dss0ds/2.0*v23Ay)+(Dds1__/2.0*v23Az))
 		end		
 
-		if Bx>=0;
+		if Bx>=0.0;
 		#Call func that does the work		
 		#if I[i] == 1
 			(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
@@ -1555,59 +1931,59 @@ else
 			 v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(x-y1B,y-y2B,z-y3B,cosB,sinB,cotB,nu,-PB[3]);
 		end			 
 		 
-		if Dn!=0		
+		if Dn!=0.0		
 			#Add to the current value this part			
 			exxDn = exxDn + ((Dn1__*v11Bx)+(Dss0n_*v11By)+(Dds0n_*v11Bz))
 			eyyDn = eyyDn + ((Dn1__*v22Bx)+(Dss0n_*v22By)+(Dds0n_*v22Bz))
 			ezzDn = ezzDn + ((Dn1__*v33Bx)+(Dss0n_*v33By)+(Dds0n_*v33Bz))
-			exyDn = exyDn + ((Dn1__/2*v12Bx)+(Dss0n_/2*v12By)+(Dds0n_/2*v12Bz))
-			exzDn = exzDn + ((Dn1__/2*v13Bx)+(Dss0n_/2*v13By)+(Dds0n_/2*v13Bz))
-			eyzDn = eyzDn + ((Dn1__/2*v23Bx)+(Dss0n_/2*v23By)+(Dds0n_/2*v23Bz))
+			exyDn = exyDn + ((Dn1__/2.0*v12Bx)+(Dss0n_/2.0*v12By)+(Dds0n_/2.0*v12Bz))
+			exzDn = exzDn + ((Dn1__/2.0*v13Bx)+(Dss0n_/2.0*v13By)+(Dds0n_/2.0*v13Bz))
+			eyzDn = eyzDn + ((Dn1__/2.0*v23Bx)+(Dss0n_/2.0*v23By)+(Dds0n_/2.0*v23Bz))
 			#transform to global coords				
 			(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn) = TensorTransformation3D!(exxDn,eyyDn,ezzDn,exyDn,exzDn,eyzDn,AFlip);
 			#Add these to the total vector		
-			ExxDn[i] = ExxDn[i] +exxDn;
-			EyyDn[i] = EyyDn[i] +eyyDn;
-			EzzDn[i] = EzzDn[i] +ezzDn;
-			ExyDn[i] = ExyDn[i] +exyDn;
-			ExzDn[i] = ExzDn[i] +exzDn;
-			EyzDn[i] = EyzDn[i] +eyzDn;		
+			εxxDn[i] = εxxDn[i] +exxDn;
+			εyyDn[i] = εyyDn[i] +eyyDn;
+			εzzDn[i] = εzzDn[i] +ezzDn;
+			εxyDn[i] = εxyDn[i] +exyDn;
+			εxzDn[i] = εxzDn[i] +exzDn;
+			εyzDn[i] = εyzDn[i] +eyzDn;		
 		end			
-		if Dss!=0		
+		if Dss!=0.0		
 			#Add to the current value this part			
 			exxDss= exxDss+ ((Dn0ss*v11Bx)+(Dss1__*v11By)+(Dds1ss*v11Bz))
 			eyyDss= eyyDss+ ((Dn0ss*v22Bx)+(Dss1__*v22By)+(Dds1ss*v22Bz))
 			ezzDss= ezzDss+ ((Dn0ss*v33Bx)+(Dss1__*v33By)+(Dds1ss*v33Bz))
-			exyDss= exyDss+ ((Dn0ss/2*v12Bx)+(Dss1__/2*v12By)+(Dds1ss/2*v12Bz))
-			exzDss= exzDss+ ((Dn0ss/2*v13Bx)+(Dss1__/2*v13By)+(Dds1ss/2*v13Bz))
-			eyzDss= eyzDss+ ((Dn0ss/2*v23Bx)+(Dss1__/2*v23By)+(Dds1ss/2*v23Bz))
+			exyDss= exyDss+ ((Dn0ss/2.0*v12Bx)+(Dss1__/2.0*v12By)+(Dds1ss/2.0*v12Bz))
+			exzDss= exzDss+ ((Dn0ss/2.0*v13Bx)+(Dss1__/2.0*v13By)+(Dds1ss/2.0*v13Bz))
+			eyzDss= eyzDss+ ((Dn0ss/2.0*v23Bx)+(Dss1__/2.0*v23By)+(Dds1ss/2.0*v23Bz))
 			#transform to global coords	
 			(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss) = TensorTransformation3D!(exxDss,eyyDss,ezzDss,exyDss,exzDss,eyzDss,AFlip);
 			#Add these to the total vector	
-			ExxDss[i]= ExxDss[i]+exxDss;
-			EyyDss[i]= EyyDss[i]+eyyDss;	
-			EzzDss[i]= EzzDss[i]+ezzDss;
-			ExyDss[i]= ExyDss[i]+exyDss;		
-			ExzDss[i]= ExzDss[i]+exzDss;	
-			EyzDss[i]= EyzDss[i]+eyzDss;			
+			εxxDss[i]= εxxDss[i]+exxDss;
+			εyyDss[i]= εyyDss[i]+eyyDss;	
+			εzzDss[i]= εzzDss[i]+ezzDss;
+			εxyDss[i]= εxyDss[i]+exyDss;		
+			εxzDss[i]= εxzDss[i]+exzDss;	
+			εyzDss[i]= εyzDss[i]+eyzDss;			
 		end
-		if Dds!=0	
+		if Dds!=0.0	
 			#Add to the current value this part			
 			exxDds= exxDds+ ((Dn0ds*v11Bx)+(Dss0ds*v11By)+(Dds1__*v11Bz))		
 			eyyDds= eyyDds+ ((Dn0ds*v22Bx)+(Dss0ds*v22By)+(Dds1__*v22Bz))		
 			ezzDds= ezzDds+ ((Dn0ds*v33Bx)+(Dss0ds*v33By)+(Dds1__*v33Bz))	
-			exyDds= exyDds+ ((Dn0ds/2*v12Bx)+(Dss0ds/2*v12By)+(Dds1__/2*v12Bz))	
-			exzDds= exzDds+ ((Dn0ds/2*v13Bx)+(Dss0ds/2*v13By)+(Dds1__/2*v13Bz))	
-			eyzDds= eyzDds+ ((Dn0ds/2*v23Bx)+(Dss0ds/2*v23By)+(Dds1__/2*v23Bz))	
+			exyDds= exyDds+ ((Dn0ds/2.0*v12Bx)+(Dss0ds/2.0*v12By)+(Dds1__/2.0*v12Bz))	
+			exzDds= exzDds+ ((Dn0ds/2.0*v13Bx)+(Dss0ds/2.0*v13By)+(Dds1__/2.0*v13Bz))	
+			eyzDds= eyzDds+ ((Dn0ds/2.0*v23Bx)+(Dss0ds/2.0*v23By)+(Dds1__/2.0*v23Bz))	
 			#transform to global coords			
 			(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds) = TensorTransformation3D!(exxDds,eyyDds,ezzDds,exyDds,exzDds,eyzDds,AFlip);	
 			#Add these to the total vector				
-			ExxDds[i]= ExxDds[i]+exxDds;	
-			EyyDds[i]= EyyDds[i]+eyyDds;
-			EzzDds[i]= EzzDds[i]+ezzDds;
-			ExyDds[i]= ExyDds[i]+exyDds;	
-			ExzDds[i]= ExzDds[i]+exzDds;		
-			EyzDds[i]= EyzDds[i]+eyzDds;	
+			εxxDds[i]= εxxDds[i]+exxDds;	
+			εyyDds[i]= εyyDds[i]+eyyDds;
+			εzzDds[i]= εzzDds[i]+ezzDds;
+			εxyDds[i]= εxyDds[i]+exyDds;	
+			εxzDds[i]= εxzDds[i]+exzDds;		
+			εyzDds[i]= εyzDds[i]+eyzDds;	
 		end
 	end
     
@@ -1628,7 +2004,7 @@ function AngDisStrainFSC(y1::Float64,y2::Float64,y3::Float64,
 #sinB=sin(beta);
 #cosB=cos(beta);
 #cotB=cot(beta);
-y3b=y3+2*a;
+y3b=y3+2.0*a;
 z1b=y1*cosB+y3b*sinB;
 z3b=-y1*sinB+y3b*cosB;
 rb2=y1^2+y2^2+y3b^2;
@@ -1638,369 +2014,369 @@ W1=rb*cosB+y3b;
 W2=cosB+a/rb;
 W3=cosB+y3b/rb;
 W4=nu+a/rb;
-W5=2*nu+a/rb;
+W5=2.0*nu+a/rb;
 W6=rb+y3b;
 W7=rb+z3b;
 W8=y3+a;
-W9=1+a/rb/cosB;
+W9=1.0+a/rb/cosB;
 
-N1=1-2*nu;
+N1=1.0-2.0*nu;
 
 #Partial derivatives of the Burgers' function
 rFib_ry2=z1b/rb/(rb+z3b)-y1/rb/(rb+y3b);#y2=xinADCS
 rFib_ry1=y2/rb/(rb+y3b)-cosB*y2/rb/(rb+z3b);#y1=yinADCS
 rFib_ry3=-sinB*y2/rb/(rb+z3b);#y3=zinADCS
 
-v11x = (1/4*((-2+2*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((1-W5)*cotB-
-    y1/W6*W4)/rb*y1+N1*y2/W6*(a/rb^3*y1*cotB-1/W6*W4+y1^2/
+v11x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((1.0-W5)*cotB-
+    y1/W6*W4)/rb*y1+N1*y2/W6*(a/rb^3*y1*cotB-1.0/W6*W4+y1^2/
     W6^2*W4/rb+y1^2/W6*a/rb^3)-N1*y2*cosB*cotB/W7^2*W2*(y1/
-    rb-sinB)-N1*y2*cosB*cotB/W7*a/rb^3*y1-3*a*y2*W8*cotB/rb^5*
+    rb-sinB)-N1*y2*cosB*cotB/W7*a/rb^3*y1-3.0*a*y2*W8*cotB/rb^5*
     y1-y2*W8/rb^3/W6*(-N1*cotB+y1/W6*W5+a*y1/rb2)*y1-y2*W8/
     rb2/W6^2*(-N1*cotB+y1/W6*W5+a*y1/rb2)*y1+y2*W8/rb/W6*
-    (1/W6*W5-y1^2/W6^2*W5/rb-y1^2/W6*a/rb^3+a/rb2-2*a*y1^
-    2/rb2^2)-y2*W8/rb^3/W7*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+
-    (2-2*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)*y1-y2*W8/rb/
-    W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*
+    (1.0/W6*W5-y1^2/W6^2*W5/rb-y1^2/W6*a/rb^3+a/rb2-2.0*a*y1^
+    2.0/rb2^2)-y2*W8/rb^3/W7*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+
+    (2.0-2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)*y1-y2*W8/rb/
+    W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*
     cosB)-a*y3b*cosB*cotB/rb2)*(y1/rb-sinB)+y2*W8/rb/W7*(-cosB/
-    W7^2*(W1*(N1*cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*cosB)*(y1/
-    rb-sinB)+cosB/W7*(1/rb*cosB*y1*(N1*cosB-a/rb)*cotB+W1*a/rb^
-    3*y1*cotB+(2-2*nu)*(1/rb*sinB*y1-1)*cosB)+2*a*y3b*cosB*cotB/
-    rb2^2*y1))/pi/(1-nu));
-v11y = (1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y1/W6-((2-2*nu)*cotB^2+1)*
+    W7^2*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)*(y1/
+    rb-sinB)+cosB/W7*(1.0/rb*cosB*y1*(N1*cosB-a/rb)*cotB+W1*a/rb^
+    3.0*y1*cotB+(2.0-2.0*nu)*(1.0/rb*sinB*y1-1.0)*cosB)+2.0*a*y3b*cosB*cotB/
+    rb2^2*y1))/pi/(1.0-nu));
+v11y = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2+nu)/rb*y1/W6-((2.0-2.0*nu)*cotB^2+1.0)*
     cosB*(y1/rb-sinB)/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*
     cotB/rb+y1^2/W6*W4)/rb*y1+N1/W6*(-N1*cotB+a*cotB/rb-a*
-    y1^2*cotB/rb^3+2*y1/W6*W4-y1^3/W6^2*W4/rb-y1^3/W6*a/
+    y1^2*cotB/rb^3+2.0*y1/W6*W4-y1^3/W6^2*W4/rb-y1^3/W6*a/
     rb^3)+N1*cotB/W7^2*(z1b*cosB-a*(rb*sinB-y1)/rb/cosB)*(y1/
-    rb-sinB)-N1*cotB/W7*(cosB^2-a*(1/rb*sinB*y1-1)/rb/cosB+a*
-    (rb*sinB-y1)/rb^3/cosB*y1)-a*W8*cotB/rb^3+3*a*y1^2*W8*
-    cotB/rb^5-W8/W6^2*(2*nu+1/rb*(N1*y1*cotB+a)-y1^2/rb/W6*
-    W5-a*y1^2/rb^3)/rb*y1+W8/W6*(-1/rb^3*(N1*y1*cotB+a)*y1+
-    1/rb*N1*cotB-2*y1/rb/W6*W5+y1^3/rb^3/W6*W5+y1^3/rb2/
-    W6^2*W5+y1^3/rb2^2/W6*a-2*a/rb^3*y1+3*a*y1^3/rb^5)-W8*
+    rb-sinB)-N1*cotB/W7*(cosB^2-a*(1.0/rb*sinB*y1-1.0)/rb/cosB+a*
+    (rb*sinB-y1)/rb^3/cosB*y1)-a*W8*cotB/rb^3+3.0*a*y1^2*W8*
+    cotB/rb^5-W8/W6^2*(2.0*nu+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*
+    W5-a*y1^2/rb^3)/rb*y1+W8/W6*(-1.0/rb^3*(N1*y1*cotB+a)*y1+
+    1.0/rb*N1*cotB-2.0*y1/rb/W6*W5+y1^3/rb^3/W6*W5+y1^3/rb2/
+    W6^2*W5+y1^3/rb2^2/W6*a-2.0*a/rb^3*y1+3.0*a*y1^3/rb^5)-W8*
     cotB/W7^2*(-cosB*sinB+a*y1*y3b/rb^3/cosB+(rb*sinB-y1)/rb*
-    ((2-2*nu)*cosB-W1/W7*W9))*(y1/rb-sinB)+W8*cotB/W7*(a*y3b/
-    rb^3/cosB-3*a*y1^2*y3b/rb^5/cosB+(1/rb*sinB*y1-1)/rb*
-    ((2-2*nu)*cosB-W1/W7*W9)-(rb*sinB-y1)/rb^3*((2-2*nu)*cosB-W1/
-    W7*W9)*y1+(rb*sinB-y1)/rb*(-1/rb*cosB*y1/W7*W9+W1/W7^2*
-    W9*(y1/rb-sinB)+W1/W7*a/rb^3/cosB*y1)))/pi/(1-nu));
-v11z= (1/4*(N1*(-y2/W6^2*(1+a/rb)/rb*y1-y2/W6*a/rb^3*y1+y2*
+    ((2.0-2.0*nu)*cosB-W1/W7*W9))*(y1/rb-sinB)+W8*cotB/W7*(a*y3b/
+    rb^3/cosB-3.0*a*y1^2*y3b/rb^5/cosB+(1.0/rb*sinB*y1-1.0)/rb*
+    ((2.0-2.0*nu)*cosB-W1/W7*W9)-(rb*sinB-y1)/rb^3*((2.0-2.0*nu)*cosB-W1/
+    W7*W9)*y1+(rb*sinB-y1)/rb*(-1.0/rb*cosB*y1/W7*W9+W1/W7^2*
+    W9*(y1/rb-sinB)+W1/W7*a/rb^3/cosB*y1)))/pi/(1.0-nu));
+v11z= (1.0/4*(N1*(-y2/W6^2*(1.0+a/rb)/rb*y1-y2/W6*a/rb^3*y1+y2*
     cosB/W7^2*W2*(y1/rb-sinB)+y2*cosB/W7*a/rb^3*y1)+y2*W8/
-    rb^3*(a/rb2+1/W6)*y1-y2*W8/rb*(-2*a/rb2^2*y1-1/W6^2/
+    rb^3*(a/rb2+1.0/W6)*y1-y2*W8/rb*(-2.0*a/rb2^2*y1-1.0/W6^2/
     rb*y1)-y2*W8*cosB/rb^3/W7*(W1/W7*W2+a*y3b/rb2)*y1-y2*W8*
     cosB/rb/W7^2*(W1/W7*W2+a*y3b/rb2)*(y1/rb-sinB)+y2*W8*
-    cosB/rb/W7*(1/rb*cosB*y1/W7*W2-W1/W7^2*W2*(y1/rb-sinB)-
-    W1/W7*a/rb^3*y1-2*a*y3b/rb2^2*y1))/pi/(1-nu));
+    cosB/rb/W7*(1.0/rb*cosB*y1/W7*W2-W1/W7^2*W2*(y1/rb-sinB)-
+    W1/W7*a/rb^3*y1-2.0*a*y3b/rb2^2*y1))/pi/(1.0-nu));
 	
-v22x = (1/4*(N1*(((2-2*nu)*cotB^2-nu)/rb*y2/W6-((2-2*nu)*cotB^2+1-
-    2*nu)*cosB/rb*y2/W7)+N1/W6^2*(y1*cotB*(1-W5)+nu*y3b-a+y2^
-    2/W6*W4)/rb*y2-N1/W6*(a*y1*cotB/rb^3*y2+2*y2/W6*W4-y2^
-    3/W6^2*W4/rb-y2^3/W6*a/rb^3)+N1*z1b*cotB/W7^2*W2/rb*
-    y2+N1*z1b*cotB/W7*a/rb^3*y2+3*a*y2*W8*cotB/rb^5*y1-W8/
-    W6^2*(-2*nu+1/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/
-    rb^3)/rb*y2+W8/W6*(-1/rb^3*(N1*y1*cotB-a)*y2+2*y2/rb/
+v22x = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2-nu)/rb*y2/W6-((2.0-2.0*nu)*cotB^2+1.0-
+    2.0*nu)*cosB/rb*y2/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+nu*y3b-a+y2^
+    2.0/W6*W4)/rb*y2-N1/W6*(a*y1*cotB/rb^3*y2+2.0*y2/W6*W4-y2^
+    3.0/W6^2*W4/rb-y2^3/W6*a/rb^3)+N1*z1b*cotB/W7^2*W2/rb*
+    y2+N1*z1b*cotB/W7*a/rb^3*y2+3.0*a*y2*W8*cotB/rb^5*y1-W8/
+    W6^2*(-2.0*nu+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/
+    rb^3)/rb*y2+W8/W6*(-1.0/rb^3*(N1*y1*cotB-a)*y2+2.0*y2/rb/
     W6*W5-y2^3/rb^3/W6*W5-y2^3/rb2/W6^2*W5-y2^3/rb2^2/W6*
-    a+2*a/rb^3*y2-3*a*y2^3/rb^5)-W8/W7^2*(cosB^2-1/rb*(N1*
-    z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^3-1/rb/W7*(y2^2*cosB^2-
-    a*z1b*cotB/rb*W1))/rb*y2+W8/W7*(1/rb^3*(N1*z1b*cotB+a*
-    cosB)*y2-3*a*y3b*z1b*cotB/rb^5*y2+1/rb^3/W7*(y2^2*cosB^2-
-    a*z1b*cotB/rb*W1)*y2+1/rb2/W7^2*(y2^2*cosB^2-a*z1b*cotB/
-    rb*W1)*y2-1/rb/W7*(2*y2*cosB^2+a*z1b*cotB/rb^3*W1*y2-a*
-    z1b*cotB/rb2*cosB*y2)))/pi/(1-nu));
-v22y = (1/4*((2-2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((W5-1)*cotB+y1/W6*
-    W4)-N1*y2^2/W6^2*((W5-1)*cotB+y1/W6*W4)/rb+N1*y2/W6*(-a/
+    a+2.0*a/rb^3*y2-3.0*a*y2^3/rb^5)-W8/W7^2*(cosB^2-1.0/rb*(N1*
+    z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^3-1.0/rb/W7*(y2^2*cosB^2-
+    a*z1b*cotB/rb*W1))/rb*y2+W8/W7*(1.0/rb^3*(N1*z1b*cotB+a*
+    cosB)*y2-3.0*a*y3b*z1b*cotB/rb^5*y2+1.0/rb^3/W7*(y2^2*cosB^2-
+    a*z1b*cotB/rb*W1)*y2+1.0/rb2/W7^2*(y2^2*cosB^2-a*z1b*cotB/
+    rb*W1)*y2-1.0/rb/W7*(2.0*y2*cosB^2+a*z1b*cotB/rb^3*W1*y2-a*
+    z1b*cotB/rb2*cosB*y2)))/pi/(1.0-nu));
+v22y = (1.0/4*((2.0-2.0*nu)*N1*rFib_ry2*cotB^2+N1/W6*((W5-1.0)*cotB+y1/W6*
+    W4)-N1*y2^2/W6^2*((W5-1.0)*cotB+y1/W6*W4)/rb+N1*y2/W6*(-a/
     rb^3*y2*cotB-y1/W6^2*W4/rb*y2-y2/W6*a/rb^3*y1)-N1*cotB/
     W7*W9+N1*y2^2*cotB/W7^2*W9/rb+N1*y2^2*cotB/W7*a/rb^3/
-    cosB-a*W8*cotB/rb^3+3*a*y2^2*W8*cotB/rb^5+W8/rb/W6*(N1*
-    cotB-2*nu*y1/W6-a*y1/rb*(1/rb+1/W6))-y2^2*W8/rb^3/W6*
-    (N1*cotB-2*nu*y1/W6-a*y1/rb*(1/rb+1/W6))-y2^2*W8/rb2/W6^
-    2*(N1*cotB-2*nu*y1/W6-a*y1/rb*(1/rb+1/W6))+y2*W8/rb/W6*
-    (2*nu*y1/W6^2/rb*y2+a*y1/rb^3*(1/rb+1/W6)*y2-a*y1/rb*
-    (-1/rb^3*y2-1/W6^2/rb*y2))+W8*cotB/rb/W7*((-2+2*nu)*cosB+
-    W1/W7*W9+a*y3b/rb2/cosB)-y2^2*W8*cotB/rb^3/W7*((-2+2*nu)*
-    cosB+W1/W7*W9+a*y3b/rb2/cosB)-y2^2*W8*cotB/rb2/W7^2*((-2+
-    2*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)+y2*W8*cotB/rb/W7*(1/
+    cosB-a*W8*cotB/rb^3+3.0*a*y2^2*W8*cotB/rb^5+W8/rb/W6*(N1*
+    cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-y2^2*W8/rb^3/W6*
+    (N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-y2^2*W8/rb2/W6^
+    2.0*(N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))+y2*W8/rb/W6*
+    (2.0*nu*y1/W6^2/rb*y2+a*y1/rb^3*(1.0/rb+1.0/W6)*y2-a*y1/rb*
+    (-1.0/rb^3*y2-1.0/W6^2/rb*y2))+W8*cotB/rb/W7*((-2.0+2.0*nu)*cosB+
+    W1/W7*W9+a*y3b/rb2/cosB)-y2^2*W8*cotB/rb^3/W7*((-2.0+2.0*nu)*
+    cosB+W1/W7*W9+a*y3b/rb2/cosB)-y2^2*W8*cotB/rb2/W7^2*((-2.0+
+    2.0*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)+y2*W8*cotB/rb/W7*(1.0/
     rb*cosB*y2/W7*W9-W1/W7^2*W9/rb*y2-W1/W7*a/rb^3/cosB*y2-
-    2*a*y3b/rb2^2/cosB*y2))/pi/(1-nu));
-v22z = (1/4*(N1*(-sinB/rb*y2/W7+y2/W6^2*(1+a/rb)/rb*y1+y2/W6*
+    2.0*a*y3b/rb2^2/cosB*y2))/pi/(1.0-nu));
+v22z = (1.0/4*(N1*(-sinB/rb*y2/W7+y2/W6^2*(1.0+a/rb)/rb*y1+y2/W6*
     a/rb^3*y1-z1b/W7^2*W2/rb*y2-z1b/W7*a/rb^3*y2)-y2*W8/
-    rb^3*(a/rb2+1/W6)*y1+y1*W8/rb*(-2*a/rb2^2*y2-1/W6^2/
-    rb*y2)+W8/W7^2*(sinB*(cosB-a/rb)+z1b/rb*(1+a*y3b/rb2)-1/
+    rb^3*(a/rb2+1.0/W6)*y1+y1*W8/rb*(-2.0*a/rb2^2*y2-1.0/W6^2/
+    rb*y2)+W8/W7^2*(sinB*(cosB-a/rb)+z1b/rb*(1.0+a*y3b/rb2)-1.0/
     rb/W7*(y2^2*cosB*sinB-a*z1b/rb*W1))/rb*y2-W8/W7*(sinB*a/
-    rb^3*y2-z1b/rb^3*(1+a*y3b/rb2)*y2-2*z1b/rb^5*a*y3b*y2+
-    1/rb^3/W7*(y2^2*cosB*sinB-a*z1b/rb*W1)*y2+1/rb2/W7^2*
-    (y2^2*cosB*sinB-a*z1b/rb*W1)*y2-1/rb/W7*(2*y2*cosB*sinB+a*
-    z1b/rb^3*W1*y2-a*z1b/rb2*cosB*y2)))/pi/(1-nu));
+    rb^3*y2-z1b/rb^3*(1.0+a*y3b/rb2)*y2-2.0*z1b/rb^5*a*y3b*y2+
+    1.0/rb^3/W7*(y2^2*cosB*sinB-a*z1b/rb*W1)*y2+1.0/rb2/W7^2*
+    (y2^2*cosB*sinB-a*z1b/rb*W1)*y2-1.0/rb/W7*(2.0*y2*cosB*sinB+a*
+    z1b/rb^3*W1*y2-a*z1b/rb2*cosB*y2)))/pi/(1.0-nu));
 
-v33x = (1/4*((2-2*nu)*(N1*rFib_ry3*cotB-y2/W6^2*W5*(y3b/rb+1)-
-    1/2*y2/W6*a/rb^3*2*y3b+y2*cosB/W7^2*W2*W3+1/2*y2*cosB/W7*
-    a/rb^3*2*y3b)+y2/rb*(2*nu/W6+a/rb2)-1/2*y2*W8/rb^3*(2*
-    nu/W6+a/rb2)*2*y3b+y2*W8/rb*(-2*nu/W6^2*(y3b/rb+1)-a/
-    rb2^2*2*y3b)+y2*cosB/rb/W7*(1-2*nu-W1/W7*W2-a*y3b/rb2)-
-    1/2*y2*W8*cosB/rb^3/W7*(1-2*nu-W1/W7*W2-a*y3b/rb2)*2*
-    y3b-y2*W8*cosB/rb/W7^2*(1-2*nu-W1/W7*W2-a*y3b/rb2)*W3+y2*
-    W8*cosB/rb/W7*(-(cosB*y3b/rb+1)/W7*W2+W1/W7^2*W2*W3+1/2*
-    W1/W7*a/rb^3*2*y3b-a/rb2+a*y3b/rb2^2*2*y3b))/pi/(1-nu));
-v33y = (1/4*((-2+2*nu)*N1*cotB*((y3b/rb+1)/W6-cosB*W3/W7)+(2-2*nu)*
-    y1/W6^2*W5*(y3b/rb+1)+1/2*(2-2*nu)*y1/W6*a/rb^3*2*y3b+(2-
-    2*nu)*sinB/W7*W2-(2-2*nu)*z1b/W7^2*W2*W3-1/2*(2-2*nu)*z1b/
-    W7*a/rb^3*2*y3b+1/rb*(N1*cotB-2*nu*y1/W6-a*y1/rb2)-1/2*
-    W8/rb^3*(N1*cotB-2*nu*y1/W6-a*y1/rb2)*2*y3b+W8/rb*(2*nu*
-    y1/W6^2*(y3b/rb+1)+a*y1/rb2^2*2*y3b)-1/W7*(cosB*sinB+W1*
-    cotB/rb*((2-2*nu)*cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*
-    W1/rb/W7))+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2-2*nu)*cosB-W1/
+v33x = (1.0/4*((2.0-2.0*nu)*(N1*rFib_ry3*cotB-y2/W6^2*W5*(y3b/rb+1.0)-
+    1.0/2.0*y2/W6*a/rb^3*2.0*y3b+y2*cosB/W7^2*W2*W3+1.0/2.0*y2*cosB/W7*
+    a/rb^3*2.0*y3b)+y2/rb*(2.0*nu/W6+a/rb2)-1.0/2.0*y2*W8/rb^3*(2.0*
+    nu/W6+a/rb2)*2.0*y3b+y2*W8/rb*(-2.0*nu/W6^2*(y3b/rb+1.0)-a/
+    rb2^2*2.0*y3b)+y2*cosB/rb/W7*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)-
+    1.0/2.0*y2*W8*cosB/rb^3/W7*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)*2.0*
+    y3b-y2*W8*cosB/rb/W7^2*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)*W3+y2*
+    W8*cosB/rb/W7*(-(cosB*y3b/rb+1.0)/W7*W2+W1/W7^2*W2*W3+1.0/2.0*
+    W1/W7*a/rb^3*2.0*y3b-a/rb2+a*y3b/rb2^2*2.0*y3b))/pi/(1.0-nu));
+v33y = (1.0/4*((-2.0+2.0*nu)*N1*cotB*((y3b/rb+1.0)/W6-cosB*W3/W7)+(2.0-2.0*nu)*
+    y1/W6^2*W5*(y3b/rb+1.0)+1.0/2.0*(2.0-2.0*nu)*y1/W6*a/rb^3*2.0*y3b+(2.0-
+    2.0*nu)*sinB/W7*W2-(2.0-2.0*nu)*z1b/W7^2*W2*W3-1.0/2.0*(2.0-2.0*nu)*z1b/
+    W7*a/rb^3*2.0*y3b+1.0/rb*(N1*cotB-2.0*nu*y1/W6-a*y1/rb2)-1.0/2.0*
+    W8/rb^3*(N1*cotB-2.0*nu*y1/W6-a*y1/rb2)*2.0*y3b+W8/rb*(2.0*nu*
+    y1/W6^2*(y3b/rb+1.0)+a*y1/rb2^2*2.0*y3b)-1.0/W7*(cosB*sinB+W1*
+    cotB/rb*((2.0-2.0*nu)*cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*
+    W1/rb/W7))+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2.0-2.0*nu)*cosB-W1/
     W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7))*W3-W8/W7*((cosB*
-    y3b/rb+1)*cotB/rb*((2-2*nu)*cosB-W1/W7)-1/2*W1*cotB/rb^3*
-    ((2-2*nu)*cosB-W1/W7)*2*y3b+W1*cotB/rb*(-(cosB*y3b/rb+1)/W7+
-    W1/W7^2*W3)-1/2*a/rb^3*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7)*
-    2*y3b+a/rb*(-z1b/rb2-y3b*sinB/rb2+y3b*z1b/rb2^2*2*y3b-
-    sinB*W1/rb/W7-z1b*(cosB*y3b/rb+1)/rb/W7+1/2*z1b*W1/rb^3/
-    W7*2*y3b+z1b*W1/rb/W7^2*W3)))/pi/(1-nu));
-v33z =(1/4*((2-2*nu)*rFib_ry3-(2-2*nu)*y2*sinB/W7^2*W2*W3-1/2*
-    (2-2*nu)*y2*sinB/W7*a/rb^3*2*y3b+y2*sinB/rb/W7*(1+W1/W7*
-    W2+a*y3b/rb2)-1/2*y2*W8*sinB/rb^3/W7*(1+W1/W7*W2+a*y3b/
-    rb2)*2*y3b-y2*W8*sinB/rb/W7^2*(1+W1/W7*W2+a*y3b/rb2)*W3+
-    y2*W8*sinB/rb/W7*((cosB*y3b/rb+1)/W7*W2-W1/W7^2*W2*W3-
-    1/2*W1/W7*a/rb^3*2*y3b+a/rb2-a*y3b/rb2^2*2*y3b))/pi/(1-nu));
+    y3b/rb+1.0)*cotB/rb*((2.0-2.0*nu)*cosB-W1/W7)-1.0/2.0*W1*cotB/rb^3*
+    ((2.0-2.0*nu)*cosB-W1/W7)*2.0*y3b+W1*cotB/rb*(-(cosB*y3b/rb+1.0)/W7+
+    W1/W7^2*W3)-1.0/2.0*a/rb^3*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7)*
+    2.0*y3b+a/rb*(-z1b/rb2-y3b*sinB/rb2+y3b*z1b/rb2^2*2.0*y3b-
+    sinB*W1/rb/W7-z1b*(cosB*y3b/rb+1.0)/rb/W7+1.0/2.0*z1b*W1/rb^3/
+    W7*2.0*y3b+z1b*W1/rb/W7^2*W3)))/pi/(1.0-nu));
+v33z =(1.0/4*((2.0-2.0*nu)*rFib_ry3-(2.0-2.0*nu)*y2*sinB/W7^2*W2*W3-1.0/2.0*
+    (2.0-2.0*nu)*y2*sinB/W7*a/rb^3*2.0*y3b+y2*sinB/rb/W7*(1.0+W1/W7*
+    W2+a*y3b/rb2)-1.0/2.0*y2*W8*sinB/rb^3/W7*(1.0+W1/W7*W2+a*y3b/
+    rb2)*2.0*y3b-y2*W8*sinB/rb/W7^2*(1.0+W1/W7*W2+a*y3b/rb2)*W3+
+    y2*W8*sinB/rb/W7*((cosB*y3b/rb+1.0)/W7*W2-W1/W7^2*W2*W3-
+    1.0/2.0*W1/W7*a/rb^3*2.0*y3b+a/rb2-a*y3b/rb2^2*2.0*y3b))/pi/(1.0-nu));
 
-v12x = (1/4*((-2+2*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1-W5)*cotB-y1/
-    W6*W4)-N1*y2^2/W6^2*((1-W5)*cotB-y1/W6*W4)/rb+N1*y2/W6*
+v12x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1.0-W5)*cotB-y1/
+    W6*W4)-N1*y2^2/W6^2*((1.0-W5)*cotB-y1/W6*W4)/rb+N1*y2/W6*
     (a/rb^3*y2*cotB+y1/W6^2*W4/rb*y2+y2/W6*a/rb^3*y1)+N1*
     cosB*cotB/W7*W2-N1*y2^2*cosB*cotB/W7^2*W2/rb-N1*y2^2*cosB*
-    cotB/W7*a/rb^3+a*W8*cotB/rb^3-3*a*y2^2*W8*cotB/rb^5+W8/
+    cotB/W7*a/rb^3+a*W8*cotB/rb^3-3.0*a*y2^2*W8*cotB/rb^5+W8/
     rb/W6*(-N1*cotB+y1/W6*W5+a*y1/rb2)-y2^2*W8/rb^3/W6*(-N1*
     cotB+y1/W6*W5+a*y1/rb2)-y2^2*W8/rb2/W6^2*(-N1*cotB+y1/
     W6*W5+a*y1/rb2)+y2*W8/rb/W6*(-y1/W6^2*W5/rb*y2-y2/W6*
-    a/rb^3*y1-2*a*y1/rb2^2*y2)+W8/rb/W7*(cosB/W7*(W1*(N1*
-    cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/
-    rb2)-y2^2*W8/rb^3/W7*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2-
-    2*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)-y2^2*W8/rb2/
-    W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*
+    a/rb^3*y1-2.0*a*y1/rb2^2*y2)+W8/rb/W7*(cosB/W7*(W1*(N1*
+    cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/
+    rb2)-y2^2*W8/rb^3/W7*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-
+    2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)-y2^2*W8/rb2/
+    W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*
     cosB)-a*y3b*cosB*cotB/rb2)+y2*W8/rb/W7*(-cosB/W7^2*(W1*
-    (N1*cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*cosB)/rb*y2+cosB/
-    W7*(1/rb*cosB*y2*(N1*cosB-a/rb)*cotB+W1*a/rb^3*y2*cotB+(2-2*
-    nu)/rb*sinB*y2*cosB)+2*a*y3b*cosB*cotB/rb2^2*y2))/pi/(1-nu))+
-	(1/4*(N1*(((2-2*nu)*cotB^2-nu)/rb*y1/W6-((2-2*nu)*cotB^2+1-   
-    2*nu)*cosB*(y1/rb-sinB)/W7)+N1/W6^2*(y1*cotB*(1-W5)+nu*y3b-
-    a+y2^2/W6*W4)/rb*y1-N1/W6*((1-W5)*cotB+a*y1^2*cotB/rb^3-
+    (N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)/rb*y2+cosB/
+    W7*(1.0/rb*cosB*y2*(N1*cosB-a/rb)*cotB+W1*a/rb^3*y2*cotB+(2.0-2.0*
+    nu)/rb*sinB*y2*cosB)+2.0*a*y3b*cosB*cotB/rb2^2*y2))/pi/(1.0-nu))+
+	(1.0/4*(N1*(((2.0-2.0*nu)*cotB^2-nu)/rb*y1/W6-((2.0-2.0*nu)*cotB^2+1.0-   
+    2.0*nu)*cosB*(y1/rb-sinB)/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+nu*y3b-
+    a+y2^2/W6*W4)/rb*y1-N1/W6*((1.0-W5)*cotB+a*y1^2*cotB/rb^3-
     y2^2/W6^2*W4/rb*y1-y2^2/W6*a/rb^3*y1)-N1*cosB*cotB/W7*
     W2+N1*z1b*cotB/W7^2*W2*(y1/rb-sinB)+N1*z1b*cotB/W7*a/rb^
-    3*y1-a*W8*cotB/rb^3+3*a*y1^2*W8*cotB/rb^5-W8/W6^2*(-2*
-    nu+1/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/rb^3)/rb*
-    y1+W8/W6*(-1/rb^3*(N1*y1*cotB-a)*y1+1/rb*N1*cotB-y2^2/
+    3.0*y1-a*W8*cotB/rb^3+3.0*a*y1^2*W8*cotB/rb^5-W8/W6^2*(-2.0*
+    nu+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/rb^3)/rb*
+    y1+W8/W6*(-1.0/rb^3*(N1*y1*cotB-a)*y1+1.0/rb*N1*cotB-y2^2/
     rb^3/W6*W5*y1-y2^2/rb2/W6^2*W5*y1-y2^2/rb2^2/W6*a*y1-
-    3*a*y2^2/rb^5*y1)-W8/W7^2*(cosB^2-1/rb*(N1*z1b*cotB+a*
-    cosB)+a*y3b*z1b*cotB/rb^3-1/rb/W7*(y2^2*cosB^2-a*z1b*cotB/
-    rb*W1))*(y1/rb-sinB)+W8/W7*(1/rb^3*(N1*z1b*cotB+a*cosB)*
-    y1-1/rb*N1*cosB*cotB+a*y3b*cosB*cotB/rb^3-3*a*y3b*z1b*cotB/
-    rb^5*y1+1/rb^3/W7*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*y1+1/
-    rb/W7^2*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*(y1/rb-sinB)-1/rb/
+    3.0*a*y2^2/rb^5*y1)-W8/W7^2*(cosB^2-1.0/rb*(N1*z1b*cotB+a*
+    cosB)+a*y3b*z1b*cotB/rb^3-1.0/rb/W7*(y2^2*cosB^2-a*z1b*cotB/
+    rb*W1))*(y1/rb-sinB)+W8/W7*(1.0/rb^3*(N1*z1b*cotB+a*cosB)*
+    y1-1.0/rb*N1*cosB*cotB+a*y3b*cosB*cotB/rb^3-3.0*a*y3b*z1b*cotB/
+    rb^5*y1+1.0/rb^3/W7*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*y1+1.0/
+    rb/W7^2*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*(y1/rb-sinB)-1.0/rb/
     W7*(-a*cosB*cotB/rb*W1+a*z1b*cotB/rb^3*W1*y1-a*z1b*cotB/
-    rb2*cosB*y1)))/pi/(1-nu));
+    rb2*cosB*y1)))/pi/(1.0-nu));
 	
-v12y = (1/4*(N1*(((2-2*nu)*cotB^2+nu)/rb*y2/W6-((2-2*nu)*cotB^2+1)*
+v12y = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2+nu)/rb*y2/W6-((2.0-2.0*nu)*cotB^2+1.0)*
     cosB/rb*y2/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*cotB/rb+
     y1^2/W6*W4)/rb*y2+N1/W6*(-a*y1*cotB/rb^3*y2-y1^2/W6^
-    2*W4/rb*y2-y1^2/W6*a/rb^3*y2)+N1*cotB/W7^2*(z1b*cosB-a*
+    2.0*W4/rb*y2-y1^2/W6*a/rb^3*y2)+N1*cotB/W7^2*(z1b*cosB-a*
     (rb*sinB-y1)/rb/cosB)/rb*y2-N1*cotB/W7*(-a/rb2*sinB*y2/
-    cosB+a*(rb*sinB-y1)/rb^3/cosB*y2)+3*a*y2*W8*cotB/rb^5*y1-
-    W8/W6^2*(2*nu+1/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*y1^2/
-    rb^3)/rb*y2+W8/W6*(-1/rb^3*(N1*y1*cotB+a)*y2+y1^2/rb^
-    3/W6*W5*y2+y1^2/rb2/W6^2*W5*y2+y1^2/rb2^2/W6*a*y2+3*
+    cosB+a*(rb*sinB-y1)/rb^3/cosB*y2)+3.0*a*y2*W8*cotB/rb^5*y1-
+    W8/W6^2*(2.0*nu+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*y1^2/
+    rb^3)/rb*y2+W8/W6*(-1.0/rb^3*(N1*y1*cotB+a)*y2+y1^2/rb^
+    3.0/W6*W5*y2+y1^2/rb2/W6^2*W5*y2+y1^2/rb2^2/W6*a*y2+3.0*
     a*y1^2/rb^5*y2)-W8*cotB/W7^2*(-cosB*sinB+a*y1*y3b/rb^3/
-    cosB+(rb*sinB-y1)/rb*((2-2*nu)*cosB-W1/W7*W9))/rb*y2+W8*cotB/
-    W7*(-3*a*y1*y3b/rb^5/cosB*y2+1/rb2*sinB*y2*((2-2*nu)*cosB-
-    W1/W7*W9)-(rb*sinB-y1)/rb^3*((2-2*nu)*cosB-W1/W7*W9)*y2+(rb*
-    sinB-y1)/rb*(-1/rb*cosB*y2/W7*W9+W1/W7^2*W9/rb*y2+W1/W7*
-    a/rb^3/cosB*y2)))/pi/(1-nu))+
-	(1/4*((2-2*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((W5-1)*cotB+
-    y1/W6*W4)/rb*y1+N1*y2/W6*(-a/rb^3*y1*cotB+1/W6*W4-y1^
-    2/W6^2*W4/rb-y1^2/W6*a/rb^3)+N1*y2*cotB/W7^2*W9*(y1/
-    rb-sinB)+N1*y2*cotB/W7*a/rb^3/cosB*y1+3*a*y2*W8*cotB/rb^
-    5*y1-y2*W8/rb^3/W6*(N1*cotB-2*nu*y1/W6-a*y1/rb*(1/rb+1/
-    W6))*y1-y2*W8/rb2/W6^2*(N1*cotB-2*nu*y1/W6-a*y1/rb*(1/
-    rb+1/W6))*y1+y2*W8/rb/W6*(-2*nu/W6+2*nu*y1^2/W6^2/rb-a/
-    rb*(1/rb+1/W6)+a*y1^2/rb^3*(1/rb+1/W6)-a*y1/rb*(-1/
-    rb^3*y1-1/W6^2/rb*y1))-y2*W8*cotB/rb^3/W7*((-2+2*nu)*
-    cosB+W1/W7*W9+a*y3b/rb2/cosB)*y1-y2*W8*cotB/rb/W7^2*((-2+
-    2*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)*(y1/rb-sinB)+y2*W8*
-    cotB/rb/W7*(1/rb*cosB*y1/W7*W9-W1/W7^2*W9*(y1/rb-sinB)-
-    W1/W7*a/rb^3/cosB*y1-2*a*y3b/rb2^2/cosB*y1))/pi/(1-nu));
+    cosB+(rb*sinB-y1)/rb*((2.0-2.0*nu)*cosB-W1/W7*W9))/rb*y2+W8*cotB/
+    W7*(-3.0*a*y1*y3b/rb^5/cosB*y2+1.0/rb2*sinB*y2*((2.0-2.0*nu)*cosB-
+    W1/W7*W9)-(rb*sinB-y1)/rb^3*((2.0-2.0*nu)*cosB-W1/W7*W9)*y2+(rb*
+    sinB-y1)/rb*(-1.0/rb*cosB*y2/W7*W9+W1/W7^2*W9/rb*y2+W1/W7*
+    a/rb^3/cosB*y2)))/pi/(1.0-nu))+
+	(1.0/4*((2.0-2.0*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((W5-1.0)*cotB+
+    y1/W6*W4)/rb*y1+N1*y2/W6*(-a/rb^3*y1*cotB+1.0/W6*W4-y1^
+    2.0/W6^2*W4/rb-y1^2/W6*a/rb^3)+N1*y2*cotB/W7^2*W9*(y1/
+    rb-sinB)+N1*y2*cotB/W7*a/rb^3/cosB*y1+3.0*a*y2*W8*cotB/rb^
+    5*y1-y2*W8/rb^3/W6*(N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/
+    W6))*y1-y2*W8/rb2/W6^2*(N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/
+    rb+1.0/W6))*y1+y2*W8/rb/W6*(-2.0*nu/W6+2.0*nu*y1^2/W6^2/rb-a/
+    rb*(1.0/rb+1.0/W6)+a*y1^2/rb^3*(1.0/rb+1.0/W6)-a*y1/rb*(-1.0/
+    rb^3*y1-1.0/W6^2/rb*y1))-y2*W8*cotB/rb^3/W7*((-2.0+2.0*nu)*
+    cosB+W1/W7*W9+a*y3b/rb2/cosB)*y1-y2*W8*cotB/rb/W7^2*((-2.0+
+    2.0*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)*(y1/rb-sinB)+y2*W8*
+    cotB/rb/W7*(1.0/rb*cosB*y1/W7*W9-W1/W7^2*W9*(y1/rb-sinB)-
+    W1/W7*a/rb^3/cosB*y1-2.0*a*y3b/rb2^2/cosB*y1))/pi/(1.0-nu));
 	
-v12z = (1/4*(N1*(1/W6*(1+a/rb)-y2^2/W6^2*(1+a/rb)/rb-y2^2/
+v12z = (1.0/4*(N1*(1.0/W6*(1.0+a/rb)-y2^2/W6^2*(1.0+a/rb)/rb-y2^2/
     W6*a/rb^3-cosB/W7*W2+y2^2*cosB/W7^2*W2/rb+y2^2*cosB/W7*
-    a/rb^3)-W8/rb*(a/rb2+1/W6)+y2^2*W8/rb^3*(a/rb2+1/W6)-
-    y2*W8/rb*(-2*a/rb2^2*y2-1/W6^2/rb*y2)+W8*cosB/rb/W7*
+    a/rb^3)-W8/rb*(a/rb2+1.0/W6)+y2^2*W8/rb^3*(a/rb2+1.0/W6)-
+    y2*W8/rb*(-2.0*a/rb2^2*y2-1.0/W6^2/rb*y2)+W8*cosB/rb/W7*
     (W1/W7*W2+a*y3b/rb2)-y2^2*W8*cosB/rb^3/W7*(W1/W7*W2+a*
     y3b/rb2)-y2^2*W8*cosB/rb2/W7^2*(W1/W7*W2+a*y3b/rb2)+y2*
-    W8*cosB/rb/W7*(1/rb*cosB*y2/W7*W2-W1/W7^2*W2/rb*y2-W1/
-    W7*a/rb^3*y2-2*a*y3b/rb2^2*y2))/pi/(1-nu))+  
-    (1/4*(N1*(-sinB*(y1/rb-sinB)/W7-1/W6*(1+a/rb)+y1^2/W6^
-    2*(1+a/rb)/rb+y1^2/W6*a/rb^3+cosB/W7*W2-z1b/W7^2*W2*
-    (y1/rb-sinB)-z1b/W7*a/rb^3*y1)+W8/rb*(a/rb2+1/W6)-y1^2*
-    W8/rb^3*(a/rb2+1/W6)+y1*W8/rb*(-2*a/rb2^2*y1-1/W6^2/
-    rb*y1)+W8/W7^2*(sinB*(cosB-a/rb)+z1b/rb*(1+a*y3b/rb2)-1/
+    W8*cosB/rb/W7*(1.0/rb*cosB*y2/W7*W2-W1/W7^2*W2/rb*y2-W1/
+    W7*a/rb^3*y2-2.0*a*y3b/rb2^2*y2))/pi/(1.0-nu))+  
+    (1.0/4*(N1*(-sinB*(y1/rb-sinB)/W7-1.0/W6*(1.0+a/rb)+y1^2/W6^
+    2.0*(1.0+a/rb)/rb+y1^2/W6*a/rb^3+cosB/W7*W2-z1b/W7^2*W2*
+    (y1/rb-sinB)-z1b/W7*a/rb^3*y1)+W8/rb*(a/rb2+1.0/W6)-y1^2*
+    W8/rb^3*(a/rb2+1.0/W6)+y1*W8/rb*(-2.0*a/rb2^2*y1-1.0/W6^2/
+    rb*y1)+W8/W7^2*(sinB*(cosB-a/rb)+z1b/rb*(1.0+a*y3b/rb2)-1.0/
     rb/W7*(y2^2*cosB*sinB-a*z1b/rb*W1))*(y1/rb-sinB)-W8/W7*
-    (sinB*a/rb^3*y1+cosB/rb*(1+a*y3b/rb2)-z1b/rb^3*(1+a*y3b/
-    rb2)*y1-2*z1b/rb^5*a*y3b*y1+1/rb^3/W7*(y2^2*cosB*sinB-a*
-    z1b/rb*W1)*y1+1/rb/W7^2*(y2^2*cosB*sinB-a*z1b/rb*W1)*
-    (y1/rb-sinB)-1/rb/W7*(-a*cosB/rb*W1+a*z1b/rb^3*W1*y1-a*
-    z1b/rb2*cosB*y1)))/pi/(1-nu));
+    (sinB*a/rb^3*y1+cosB/rb*(1.0+a*y3b/rb2)-z1b/rb^3*(1.0+a*y3b/
+    rb2)*y1-2.0*z1b/rb^5*a*y3b*y1+1.0/rb^3/W7*(y2^2*cosB*sinB-a*
+    z1b/rb*W1)*y1+1.0/rb/W7^2*(y2^2*cosB*sinB-a*z1b/rb*W1)*
+    (y1/rb-sinB)-1.0/rb/W7*(-a*cosB/rb*W1+a*z1b/rb^3*W1*y1-a*
+    z1b/rb2*cosB*y1)))/pi/(1.0-nu));
 
-v13x = (1/4*((-2+2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1-W5)*
-    cotB-y1/W6*W4)*(y3b/rb+1)+N1*y2/W6*(1/2*a/rb^3*2*y3b*cotB+
-    y1/W6^2*W4*(y3b/rb+1)+1/2*y1/W6*a/rb^3*2*y3b)-N1*y2*cosB*
-    cotB/W7^2*W2*W3-1/2*N1*y2*cosB*cotB/W7*a/rb^3*2*y3b+a/
-    rb^3*y2*cotB-3/2*a*y2*W8*cotB/rb^5*2*y3b+y2/rb/W6*(-N1*
-    cotB+y1/W6*W5+a*y1/rb2)-1/2*y2*W8/rb^3/W6*(-N1*cotB+y1/
-    W6*W5+a*y1/rb2)*2*y3b-y2*W8/rb/W6^2*(-N1*cotB+y1/W6*W5+
-    a*y1/rb2)*(y3b/rb+1)+y2*W8/rb/W6*(-y1/W6^2*W5*(y3b/rb+
-    1)-1/2*y1/W6*a/rb^3*2*y3b-a*y1/rb2^2*2*y3b)+y2/rb/W7*
-    (cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*cosB)-
-    a*y3b*cosB*cotB/rb2)-1/2*y2*W8/rb^3/W7*(cosB/W7*(W1*(N1*
-    cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/
-    rb2)*2*y3b-y2*W8/rb/W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+
-    (2-2*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)*W3+y2*W8/rb/
-    W7*(-cosB/W7^2*(W1*(N1*cosB-a/rb)*cotB+(2-2*nu)*(rb*sinB-y1)*
-    cosB)*W3+cosB/W7*((cosB*y3b/rb+1)*(N1*cosB-a/rb)*cotB+1/2*W1*
-    a/rb^3*2*y3b*cotB+1/2*(2-2*nu)/rb*sinB*2*y3b*cosB)-a*cosB*
-    cotB/rb2+a*y3b*cosB*cotB/rb2^2*2*y3b))/pi/(1-nu))+
-	(1/4*((2-2*nu)*(N1*rFib_ry1*cotB-y1/W6^2*W5/rb*y2-y2/W6*
+v13x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1.0-W5)*
+    cotB-y1/W6*W4)*(y3b/rb+1.0)+N1*y2/W6*(1.0/2.0*a/rb^3*2.0*y3b*cotB+
+    y1/W6^2*W4*(y3b/rb+1.0)+1.0/2.0*y1/W6*a/rb^3*2.0*y3b)-N1*y2*cosB*
+    cotB/W7^2*W2*W3-1.0/2.0*N1*y2*cosB*cotB/W7*a/rb^3*2.0*y3b+a/
+    rb^3*y2*cotB-3.0/2.0*a*y2*W8*cotB/rb^5*2.0*y3b+y2/rb/W6*(-N1*
+    cotB+y1/W6*W5+a*y1/rb2)-1.0/2.0*y2*W8/rb^3/W6*(-N1*cotB+y1/
+    W6*W5+a*y1/rb2)*2.0*y3b-y2*W8/rb/W6^2*(-N1*cotB+y1/W6*W5+
+    a*y1/rb2)*(y3b/rb+1.0)+y2*W8/rb/W6*(-y1/W6^2*W5*(y3b/rb+
+    1.0)-1.0/2.0*y1/W6*a/rb^3*2.0*y3b-a*y1/rb2^2*2.0*y3b)+y2/rb/W7*
+    (cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)-
+    a*y3b*cosB*cotB/rb2)-1.0/2.0*y2*W8/rb^3/W7*(cosB/W7*(W1*(N1*
+    cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/
+    rb2)*2.0*y3b-y2*W8/rb/W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+
+    (2.0-2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)*W3+y2*W8/rb/
+    W7*(-cosB/W7^2*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*
+    cosB)*W3+cosB/W7*((cosB*y3b/rb+1.0)*(N1*cosB-a/rb)*cotB+1.0/2.0*W1*
+    a/rb^3*2.0*y3b*cotB+1.0/2.0*(2.0-2.0*nu)/rb*sinB*2.0*y3b*cosB)-a*cosB*
+    cotB/rb2+a*y3b*cosB*cotB/rb2^2*2.0*y3b))/pi/(1.0-nu))+
+	(1.0/4*((2.0-2.0*nu)*(N1*rFib_ry1*cotB-y1/W6^2*W5/rb*y2-y2/W6*
     a/rb^3*y1+y2*cosB/W7^2*W2*(y1/rb-sinB)+y2*cosB/W7*a/rb^
-    3*y1)-y2*W8/rb^3*(2*nu/W6+a/rb2)*y1+y2*W8/rb*(-2*nu/W6^
-    2/rb*y1-2*a/rb2^2*y1)-y2*W8*cosB/rb^3/W7*(1-2*nu-W1/W7*
-    W2-a*y3b/rb2)*y1-y2*W8*cosB/rb/W7^2*(1-2*nu-W1/W7*W2-a*
-    y3b/rb2)*(y1/rb-sinB)+y2*W8*cosB/rb/W7*(-1/rb*cosB*y1/W7*
-    W2+W1/W7^2*W2*(y1/rb-sinB)+W1/W7*a/rb^3*y1+2*a*y3b/rb2^
-    2*y1))/pi/(1-nu));
+    3.0*y1)-y2*W8/rb^3*(2.0*nu/W6+a/rb2)*y1+y2*W8/rb*(-2.0*nu/W6^
+    2.0/rb*y1-2.0*a/rb2^2*y1)-y2*W8*cosB/rb^3/W7*(1.0-2.0*nu-W1/W7*
+    W2-a*y3b/rb2)*y1-y2*W8*cosB/rb/W7^2*(1.0-2.0*nu-W1/W7*W2-a*
+    y3b/rb2)*(y1/rb-sinB)+y2*W8*cosB/rb/W7*(-1.0/rb*cosB*y1/W7*
+    W2+W1/W7^2*W2*(y1/rb-sinB)+W1/W7*a/rb^3*y1+2.0*a*y3b/rb2^
+    2.0*y1))/pi/(1.0-nu));
 	
-v13y = (1/4*(N1*(((2-2*nu)*cotB^2+nu)*(y3b/rb+1)/W6-((2-2*nu)*cotB^
-    2+1)*cosB*W3/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*cotB/
-    rb+y1^2/W6*W4)*(y3b/rb+1)+N1/W6*(nu-1/2*a*y1*cotB/rb^3*2*
-    y3b-y1^2/W6^2*W4*(y3b/rb+1)-1/2*y1^2/W6*a/rb^3*2*y3b)+
+v13y = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2+nu)*(y3b/rb+1.0)/W6-((2.0-2.0*nu)*cotB^
+    2.0+1.0)*cosB*W3/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*cotB/
+    rb+y1^2/W6*W4)*(y3b/rb+1.0)+N1/W6*(nu-1.0/2.0*a*y1*cotB/rb^3*2.0*
+    y3b-y1^2/W6^2*W4*(y3b/rb+1.0)-1.0/2.0*y1^2/W6*a/rb^3*2.0*y3b)+
     N1*cotB/W7^2*(z1b*cosB-a*(rb*sinB-y1)/rb/cosB)*W3-N1*cotB/
-    W7*(cosB*sinB-1/2*a/rb2*sinB*2*y3b/cosB+1/2*a*(rb*sinB-y1)/
-    rb^3/cosB*2*y3b)-a/rb^3*y1*cotB+3/2*a*y1*W8*cotB/rb^5*2*
-    y3b+1/W6*(2*nu+1/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*y1^2/
-    rb^3)-W8/W6^2*(2*nu+1/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*
-    y1^2/rb^3)*(y3b/rb+1)+W8/W6*(-1/2/rb^3*(N1*y1*cotB+a)*2*
-    y3b+1/2*y1^2/rb^3/W6*W5*2*y3b+y1^2/rb/W6^2*W5*(y3b/rb+
-    1)+1/2*y1^2/rb2^2/W6*a*2*y3b+3/2*a*y1^2/rb^5*2*y3b)+
-    cotB/W7*(-cosB*sinB+a*y1*y3b/rb^3/cosB+(rb*sinB-y1)/rb*((2-
-    2*nu)*cosB-W1/W7*W9))-W8*cotB/W7^2*(-cosB*sinB+a*y1*y3b/rb^
-    3/cosB+(rb*sinB-y1)/rb*((2-2*nu)*cosB-W1/W7*W9))*W3+W8*cotB/
-    W7*(a/rb^3/cosB*y1-3/2*a*y1*y3b/rb^5/cosB*2*y3b+1/2/
-    rb2*sinB*2*y3b*((2-2*nu)*cosB-W1/W7*W9)-1/2*(rb*sinB-y1)/rb^
-    3*((2-2*nu)*cosB-W1/W7*W9)*2*y3b+(rb*sinB-y1)/rb*(-(cosB*y3b/
-    rb+1)/W7*W9+W1/W7^2*W9*W3+1/2*W1/W7*a/rb^3/cosB*2*
-    y3b)))/pi/(1-nu))+
-	(1/4*((-2+2*nu)*N1*cotB*(1/rb*y1/W6-cosB*(y1/rb-sinB)/W7)-
-    (2-2*nu)/W6*W5+(2-2*nu)*y1^2/W6^2*W5/rb+(2-2*nu)*y1^2/W6*
-    a/rb^3+(2-2*nu)*cosB/W7*W2-(2-2*nu)*z1b/W7^2*W2*(y1/rb-
-    sinB)-(2-2*nu)*z1b/W7*a/rb^3*y1-W8/rb^3*(N1*cotB-2*nu*y1/
-    W6-a*y1/rb2)*y1+W8/rb*(-2*nu/W6+2*nu*y1^2/W6^2/rb-a/rb2+
-    2*a*y1^2/rb2^2)+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2-2*nu)*
+    W7*(cosB*sinB-1.0/2.0*a/rb2*sinB*2.0*y3b/cosB+1.0/2.0*a*(rb*sinB-y1)/
+    rb^3/cosB*2.0*y3b)-a/rb^3*y1*cotB+3.0/2.0*a*y1*W8*cotB/rb^5*2.0*
+    y3b+1.0/W6*(2.0*nu+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*y1^2/
+    rb^3)-W8/W6^2*(2.0*nu+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*
+    y1^2/rb^3)*(y3b/rb+1.0)+W8/W6*(-1.0/2.0/rb^3*(N1*y1*cotB+a)*2.0*
+    y3b+1.0/2.0*y1^2/rb^3/W6*W5*2.0*y3b+y1^2/rb/W6^2*W5*(y3b/rb+
+    1.0)+1.0/2.0*y1^2/rb2^2/W6*a*2.0*y3b+3.0/2.0*a*y1^2/rb^5*2.0*y3b)+
+    cotB/W7*(-cosB*sinB+a*y1*y3b/rb^3/cosB+(rb*sinB-y1)/rb*((2.0-
+    2.0*nu)*cosB-W1/W7*W9))-W8*cotB/W7^2*(-cosB*sinB+a*y1*y3b/rb^
+    3.0/cosB+(rb*sinB-y1)/rb*((2.0-2.0*nu)*cosB-W1/W7*W9))*W3+W8*cotB/
+    W7*(a/rb^3/cosB*y1-3.0/2.0*a*y1*y3b/rb^5/cosB*2.0*y3b+1.0/2.0/
+    rb2*sinB*2.0*y3b*((2.0-2.0*nu)*cosB-W1/W7*W9)-1.0/2.0*(rb*sinB-y1)/rb^
+    3.0*((2.0-2.0*nu)*cosB-W1/W7*W9)*2.0*y3b+(rb*sinB-y1)/rb*(-(cosB*y3b/
+    rb+1.0)/W7*W9+W1/W7^2*W9*W3+1.0/2.0*W1/W7*a/rb^3/cosB*2.0*
+    y3b)))/pi/(1.0-nu))+
+	(1.0/4*((-2.0+2.0*nu)*N1*cotB*(1.0/rb*y1/W6-cosB*(y1/rb-sinB)/W7)-
+    (2.0-2.0*nu)/W6*W5+(2.0-2.0*nu)*y1^2/W6^2*W5/rb+(2.0-2.0*nu)*y1^2/W6*
+    a/rb^3+(2.0-2.0*nu)*cosB/W7*W2-(2.0-2.0*nu)*z1b/W7^2*W2*(y1/rb-
+    sinB)-(2.0-2.0*nu)*z1b/W7*a/rb^3*y1-W8/rb^3*(N1*cotB-2.0*nu*y1/
+    W6-a*y1/rb2)*y1+W8/rb*(-2.0*nu/W6+2.0*nu*y1^2/W6^2/rb-a/rb2+
+    2.0*a*y1^2/rb2^2)+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2.0-2.0*nu)*
     cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7))*(y1/rb-
-    sinB)-W8/W7*(1/rb2*cosB*y1*cotB*((2-2*nu)*cosB-W1/W7)-W1*
-    cotB/rb^3*((2-2*nu)*cosB-W1/W7)*y1+W1*cotB/rb*(-1/rb*cosB*
+    sinB)-W8/W7*(1.0/rb2*cosB*y1*cotB*((2.0-2.0*nu)*cosB-W1/W7)-W1*
+    cotB/rb^3*((2.0-2.0*nu)*cosB-W1/W7)*y1+W1*cotB/rb*(-1.0/rb*cosB*
     y1/W7+W1/W7^2*(y1/rb-sinB))-a/rb^3*(sinB-y3b*z1b/rb2-
-    z1b*W1/rb/W7)*y1+a/rb*(-y3b*cosB/rb2+2*y3b*z1b/rb2^2*y1-
+    z1b*W1/rb/W7)*y1+a/rb*(-y3b*cosB/rb2+2.0*y3b*z1b/rb2^2*y1-
     cosB*W1/rb/W7-z1b/rb2*cosB*y1/W7+z1b*W1/rb^3/W7*y1+z1b*
-    W1/rb/W7^2*(y1/rb-sinB))))/pi/(1-nu));
+    W1/rb/W7^2*(y1/rb-sinB))))/pi/(1.0-nu));
 	
-v13z = (1/4*(N1*(-y2/W6^2*(1+a/rb)*(y3b/rb+1)-1/2*y2/W6*a/
-    rb^3*2*y3b+y2*cosB/W7^2*W2*W3+1/2*y2*cosB/W7*a/rb^3*2*
-    y3b)-y2/rb*(a/rb2+1/W6)+1/2*y2*W8/rb^3*(a/rb2+1/W6)*2*
-    y3b-y2*W8/rb*(-a/rb2^2*2*y3b-1/W6^2*(y3b/rb+1))+y2*cosB/
-    rb/W7*(W1/W7*W2+a*y3b/rb2)-1/2*y2*W8*cosB/rb^3/W7*(W1/
-    W7*W2+a*y3b/rb2)*2*y3b-y2*W8*cosB/rb/W7^2*(W1/W7*W2+a*
-    y3b/rb2)*W3+y2*W8*cosB/rb/W7*((cosB*y3b/rb+1)/W7*W2-W1/
-    W7^2*W2*W3-1/2*W1/W7*a/rb^3*2*y3b+a/rb2-a*y3b/rb2^2*2*
-    y3b))/pi/(1-nu))+
-    (1/4*((2-2*nu)*rFib_ry1-(2-2*nu)*y2*sinB/W7^2*W2*(y1/rb-
-    sinB)-(2-2*nu)*y2*sinB/W7*a/rb^3*y1-y2*W8*sinB/rb^3/W7*(1+
-    W1/W7*W2+a*y3b/rb2)*y1-y2*W8*sinB/rb/W7^2*(1+W1/W7*W2+
-    a*y3b/rb2)*(y1/rb-sinB)+y2*W8*sinB/rb/W7*(1/rb*cosB*y1/
-    W7*W2-W1/W7^2*W2*(y1/rb-sinB)-W1/W7*a/rb^3*y1-2*a*y3b/
-    rb2^2*y1))/pi/(1-nu));
+v13z = (1.0/4*(N1*(-y2/W6^2*(1.0+a/rb)*(y3b/rb+1.0)-1.0/2.0*y2/W6*a/
+    rb^3*2.0*y3b+y2*cosB/W7^2*W2*W3+1.0/2.0*y2*cosB/W7*a/rb^3*2.0*
+    y3b)-y2/rb*(a/rb2+1.0/W6)+1.0/2.0*y2*W8/rb^3*(a/rb2+1.0/W6)*2.0*
+    y3b-y2*W8/rb*(-a/rb2^2*2.0*y3b-1.0/W6^2*(y3b/rb+1.0))+y2*cosB/
+    rb/W7*(W1/W7*W2+a*y3b/rb2)-1.0/2.0*y2*W8*cosB/rb^3/W7*(W1/
+    W7*W2+a*y3b/rb2)*2.0*y3b-y2*W8*cosB/rb/W7^2*(W1/W7*W2+a*
+    y3b/rb2)*W3+y2*W8*cosB/rb/W7*((cosB*y3b/rb+1.0)/W7*W2-W1/
+    W7^2*W2*W3-1.0/2.0*W1/W7*a/rb^3*2.0*y3b+a/rb2-a*y3b/rb2^2*2.0*
+    y3b))/pi/(1.0-nu))+
+    (1.0/4*((2.0-2.0*nu)*rFib_ry1-(2.0-2.0*nu)*y2*sinB/W7^2*W2*(y1/rb-
+    sinB)-(2.0-2.0*nu)*y2*sinB/W7*a/rb^3*y1-y2*W8*sinB/rb^3/W7*(1.0+
+    W1/W7*W2+a*y3b/rb2)*y1-y2*W8*sinB/rb/W7^2*(1.0+W1/W7*W2+
+    a*y3b/rb2)*(y1/rb-sinB)+y2*W8*sinB/rb/W7*(1.0/rb*cosB*y1/
+    W7*W2-W1/W7^2*W2*(y1/rb-sinB)-W1/W7*a/rb^3*y1-2.0*a*y3b/
+    rb2^2*y1))/pi/(1.0-nu));
 
-v23x = (1/4*(N1*(((2-2*nu)*cotB^2-nu)*(y3b/rb+1)/W6-((2-2*nu)*
-    cotB^2+1-2*nu)*cosB*W3/W7)+N1/W6^2*(y1*cotB*(1-W5)+nu*y3b-a+
-    y2^2/W6*W4)*(y3b/rb+1)-N1/W6*(1/2*a*y1*cotB/rb^3*2*y3b+
-    nu-y2^2/W6^2*W4*(y3b/rb+1)-1/2*y2^2/W6*a/rb^3*2*y3b)-N1*
-    sinB*cotB/W7*W2+N1*z1b*cotB/W7^2*W2*W3+1/2*N1*z1b*cotB/W7*
-    a/rb^3*2*y3b-a/rb^3*y1*cotB+3/2*a*y1*W8*cotB/rb^5*2*y3b+
-    1/W6*(-2*nu+1/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/
-    rb^3)-W8/W6^2*(-2*nu+1/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+
-    a*y2^2/rb^3)*(y3b/rb+1)+W8/W6*(-1/2/rb^3*(N1*y1*cotB-a)*
-    2*y3b-1/2*y2^2/rb^3/W6*W5*2*y3b-y2^2/rb/W6^2*W5*(y3b/
-    rb+1)-1/2*y2^2/rb2^2/W6*a*2*y3b-3/2*a*y2^2/rb^5*2*y3b)+
-    1/W7*(cosB^2-1/rb*(N1*z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^
-    3-1/rb/W7*(y2^2*cosB^2-a*z1b*cotB/rb*W1))-W8/W7^2*(cosB^2-
-    1/rb*(N1*z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^3-1/rb/W7*
-    (y2^2*cosB^2-a*z1b*cotB/rb*W1))*W3+W8/W7*(1/2/rb^3*(N1*
-    z1b*cotB+a*cosB)*2*y3b-1/rb*N1*sinB*cotB+a*z1b*cotB/rb^3+a*
-    y3b*sinB*cotB/rb^3-3/2*a*y3b*z1b*cotB/rb^5*2*y3b+1/2/rb^
-    3/W7*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*2*y3b+1/rb/W7^2*(y2^
-    2*cosB^2-a*z1b*cotB/rb*W1)*W3-1/rb/W7*(-a*sinB*cotB/rb*W1+
-    1/2*a*z1b*cotB/rb^3*W1*2*y3b-a*z1b*cotB/rb*(cosB*y3b/rb+
-    1))))/pi/(1-nu))+
-	(1/4*((2-2*nu)*(N1*rFib_ry2*cotB+1/W6*W5-y2^2/W6^2*W5/
+v23x = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2-nu)*(y3b/rb+1.0)/W6-((2.0-2.0*nu)*
+    cotB^2+1.0-2.0*nu)*cosB*W3/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+nu*y3b-a+
+    y2^2/W6*W4)*(y3b/rb+1.0)-N1/W6*(1.0/2.0*a*y1*cotB/rb^3*2.0*y3b+
+    nu-y2^2/W6^2*W4*(y3b/rb+1.0)-1.0/2.0*y2^2/W6*a/rb^3*2.0*y3b)-N1*
+    sinB*cotB/W7*W2+N1*z1b*cotB/W7^2*W2*W3+1.0/2.0*N1*z1b*cotB/W7*
+    a/rb^3*2.0*y3b-a/rb^3*y1*cotB+3.0/2.0*a*y1*W8*cotB/rb^5*2.0*y3b+
+    1.0/W6*(-2.0*nu+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/
+    rb^3)-W8/W6^2*(-2.0*nu+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+
+    a*y2^2/rb^3)*(y3b/rb+1.0)+W8/W6*(-1.0/2.0/rb^3*(N1*y1*cotB-a)*
+    2.0*y3b-1.0/2.0*y2^2/rb^3/W6*W5*2.0*y3b-y2^2/rb/W6^2*W5*(y3b/
+    rb+1.0)-1.0/2.0*y2^2/rb2^2/W6*a*2.0*y3b-3.0/2.0*a*y2^2/rb^5*2.0*y3b)+
+    1.0/W7*(cosB^2-1.0/rb*(N1*z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^
+    3.0-1.0/rb/W7*(y2^2*cosB^2-a*z1b*cotB/rb*W1))-W8/W7^2*(cosB^2-
+    1.0/rb*(N1*z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^3-1.0/rb/W7*
+    (y2^2*cosB^2-a*z1b*cotB/rb*W1))*W3+W8/W7*(1.0/2.0/rb^3*(N1*
+    z1b*cotB+a*cosB)*2.0*y3b-1.0/rb*N1*sinB*cotB+a*z1b*cotB/rb^3+a*
+    y3b*sinB*cotB/rb^3-3.0/2.0*a*y3b*z1b*cotB/rb^5*2.0*y3b+1.0/2.0/rb^
+    3.0/W7*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*2.0*y3b+1.0/rb/W7^2*(y2^
+    2.0*cosB^2-a*z1b*cotB/rb*W1)*W3-1.0/rb/W7*(-a*sinB*cotB/rb*W1+
+    1.0/2.0*a*z1b*cotB/rb^3*W1*2.0*y3b-a*z1b*cotB/rb*(cosB*y3b/rb+
+    1.0))))/pi/(1.0-nu))+
+	(1.0/4*((2.0-2.0*nu)*(N1*rFib_ry2*cotB+1.0/W6*W5-y2^2/W6^2*W5/
     rb-y2^2/W6*a/rb^3-cosB/W7*W2+y2^2*cosB/W7^2*W2/rb+y2^2*
-    cosB/W7*a/rb^3)+W8/rb*(2*nu/W6+a/rb2)-y2^2*W8/rb^3*(2*
-    nu/W6+a/rb2)+y2*W8/rb*(-2*nu/W6^2/rb*y2-2*a/rb2^2*y2)+
-    W8*cosB/rb/W7*(1-2*nu-W1/W7*W2-a*y3b/rb2)-y2^2*W8*cosB/
-    rb^3/W7*(1-2*nu-W1/W7*W2-a*y3b/rb2)-y2^2*W8*cosB/rb2/W7^
-    2*(1-2*nu-W1/W7*W2-a*y3b/rb2)+y2*W8*cosB/rb/W7*(-1/rb*
-    cosB*y2/W7*W2+W1/W7^2*W2/rb*y2+W1/W7*a/rb^3*y2+2*a*
-    y3b/rb2^2*y2))/pi/(1-nu));
+    cosB/W7*a/rb^3)+W8/rb*(2.0*nu/W6+a/rb2)-y2^2*W8/rb^3*(2.0*
+    nu/W6+a/rb2)+y2*W8/rb*(-2.0*nu/W6^2/rb*y2-2.0*a/rb2^2*y2)+
+    W8*cosB/rb/W7*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)-y2^2*W8*cosB/
+    rb^3/W7*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)-y2^2*W8*cosB/rb2/W7^
+    2.0*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)+y2*W8*cosB/rb/W7*(-1.0/rb*
+    cosB*y2/W7*W2+W1/W7^2*W2/rb*y2+W1/W7*a/rb^3*y2+2.0*a*
+    y3b/rb2^2*y2))/pi/(1.0-nu));
 	
-v23y = (1/4*((2-2*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((W5-1)*cotB+
-    y1/W6*W4)*(y3b/rb+1)+N1*y2/W6*(-1/2*a/rb^3*2*y3b*cotB-y1/
-    W6^2*W4*(y3b/rb+1)-1/2*y1/W6*a/rb^3*2*y3b)+N1*y2*cotB/
-    W7^2*W9*W3+1/2*N1*y2*cotB/W7*a/rb^3/cosB*2*y3b-a/rb^3*
-    y2*cotB+3/2*a*y2*W8*cotB/rb^5*2*y3b+y2/rb/W6*(N1*cotB-2*
-    nu*y1/W6-a*y1/rb*(1/rb+1/W6))-1/2*y2*W8/rb^3/W6*(N1*
-    cotB-2*nu*y1/W6-a*y1/rb*(1/rb+1/W6))*2*y3b-y2*W8/rb/W6^
-    2*(N1*cotB-2*nu*y1/W6-a*y1/rb*(1/rb+1/W6))*(y3b/rb+1)+y2*
-    W8/rb/W6*(2*nu*y1/W6^2*(y3b/rb+1)+1/2*a*y1/rb^3*(1/rb+
-    1/W6)*2*y3b-a*y1/rb*(-1/2/rb^3*2*y3b-1/W6^2*(y3b/rb+
-    1)))+y2*cotB/rb/W7*((-2+2*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)-
-    1/2*y2*W8*cotB/rb^3/W7*((-2+2*nu)*cosB+W1/W7*W9+a*y3b/
-    rb2/cosB)*2*y3b-y2*W8*cotB/rb/W7^2*((-2+2*nu)*cosB+W1/W7*
-    W9+a*y3b/rb2/cosB)*W3+y2*W8*cotB/rb/W7*((cosB*y3b/rb+1)/
-    W7*W9-W1/W7^2*W9*W3-1/2*W1/W7*a/rb^3/cosB*2*y3b+a/rb2/
-    cosB-a*y3b/rb2^2/cosB*2*y3b))/pi/(1-nu))+
-	(1/4*((-2+2*nu)*N1*cotB*(1/rb*y2/W6-cosB/rb*y2/W7)+(2-
-    2*nu)*y1/W6^2*W5/rb*y2+(2-2*nu)*y1/W6*a/rb^3*y2-(2-2*
-    nu)*z1b/W7^2*W2/rb*y2-(2-2*nu)*z1b/W7*a/rb^3*y2-W8/rb^
-    3*(N1*cotB-2*nu*y1/W6-a*y1/rb2)*y2+W8/rb*(2*nu*y1/W6^2/
-    rb*y2+2*a*y1/rb2^2*y2)+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2-
-    2*nu)*cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7))/
-    rb*y2-W8/W7*(1/rb2*cosB*y2*cotB*((2-2*nu)*cosB-W1/W7)-W1*
-    cotB/rb^3*((2-2*nu)*cosB-W1/W7)*y2+W1*cotB/rb*(-cosB/rb*
+v23y = (1.0/4*((2.0-2.0*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((W5-1.0)*cotB+
+    y1/W6*W4)*(y3b/rb+1.0)+N1*y2/W6*(-1.0/2.0*a/rb^3*2.0*y3b*cotB-y1/
+    W6^2*W4*(y3b/rb+1.0)-1.0/2.0*y1/W6*a/rb^3*2.0*y3b)+N1*y2*cotB/
+    W7^2*W9*W3+1.0/2.0*N1*y2*cotB/W7*a/rb^3/cosB*2.0*y3b-a/rb^3*
+    y2*cotB+3.0/2.0*a*y2*W8*cotB/rb^5*2.0*y3b+y2/rb/W6*(N1*cotB-2.0*
+    nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-1.0/2.0*y2*W8/rb^3/W6*(N1*
+    cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))*2.0*y3b-y2*W8/rb/W6^
+    2.0*(N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))*(y3b/rb+1.0)+y2*
+    W8/rb/W6*(2.0*nu*y1/W6^2*(y3b/rb+1.0)+1.0/2.0*a*y1/rb^3*(1.0/rb+
+    1.0/W6)*2.0*y3b-a*y1/rb*(-1.0/2.0/rb^3*2.0*y3b-1.0/W6^2*(y3b/rb+
+    1.0)))+y2*cotB/rb/W7*((-2.0+2.0*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)-
+    1.0/2.0*y2*W8*cotB/rb^3/W7*((-2.0+2.0*nu)*cosB+W1/W7*W9+a*y3b/
+    rb2/cosB)*2.0*y3b-y2*W8*cotB/rb/W7^2*((-2.0+2.0*nu)*cosB+W1/W7*
+    W9+a*y3b/rb2/cosB)*W3+y2*W8*cotB/rb/W7*((cosB*y3b/rb+1.0)/
+    W7*W9-W1/W7^2*W9*W3-1.0/2.0*W1/W7*a/rb^3/cosB*2.0*y3b+a/rb2/
+    cosB-a*y3b/rb2^2/cosB*2.0*y3b))/pi/(1.0-nu))+
+	(1.0/4*((-2.0+2.0*nu)*N1*cotB*(1.0/rb*y2/W6-cosB/rb*y2/W7)+(2.0-
+    2.0*nu)*y1/W6^2*W5/rb*y2+(2.0-2.0*nu)*y1/W6*a/rb^3*y2-(2.0-2.0*
+    nu)*z1b/W7^2*W2/rb*y2-(2.0-2.0*nu)*z1b/W7*a/rb^3*y2-W8/rb^
+    3.0*(N1*cotB-2.0*nu*y1/W6-a*y1/rb2)*y2+W8/rb*(2.0*nu*y1/W6^2/
+    rb*y2+2.0*a*y1/rb2^2*y2)+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2.0-
+    2.0*nu)*cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7))/
+    rb*y2-W8/W7*(1.0/rb2*cosB*y2*cotB*((2.0-2.0*nu)*cosB-W1/W7)-W1*
+    cotB/rb^3*((2.0-2.0*nu)*cosB-W1/W7)*y2+W1*cotB/rb*(-cosB/rb*
     y2/W7+W1/W7^2/rb*y2)-a/rb^3*(sinB-y3b*z1b/rb2-z1b*W1/
-    rb/W7)*y2+a/rb*(2*y3b*z1b/rb2^2*y2-z1b/rb2*cosB*y2/W7+
-    z1b*W1/rb^3/W7*y2+z1b*W1/rb2/W7^2*y2)))/pi/(1-nu));
+    rb/W7)*y2+a/rb*(2.0*y3b*z1b/rb2^2*y2-z1b/rb2*cosB*y2/W7+
+    z1b*W1/rb^3/W7*y2+z1b*W1/rb2/W7^2*y2)))/pi/(1.0-nu));
 	
-v23z = (1/4*(N1*(-sinB*W3/W7+y1/W6^2*(1+a/rb)*(y3b/rb+1)+
-    1/2*y1/W6*a/rb^3*2*y3b+sinB/W7*W2-z1b/W7^2*W2*W3-1/2*
-    z1b/W7*a/rb^3*2*y3b)+y1/rb*(a/rb2+1/W6)-1/2*y1*W8/rb^
-    3*(a/rb2+1/W6)*2*y3b+y1*W8/rb*(-a/rb2^2*2*y3b-1/W6^2*
-    (y3b/rb+1))-1/W7*(sinB*(cosB-a/rb)+z1b/rb*(1+a*y3b/rb2)-1/
+v23z = (1.0/4*(N1*(-sinB*W3/W7+y1/W6^2*(1.0+a/rb)*(y3b/rb+1.0)+
+    1.0/2.0*y1/W6*a/rb^3*2.0*y3b+sinB/W7*W2-z1b/W7^2*W2*W3-1.0/2.0*
+    z1b/W7*a/rb^3*2.0*y3b)+y1/rb*(a/rb2+1.0/W6)-1.0/2.0*y1*W8/rb^
+    3.0*(a/rb2+1.0/W6)*2.0*y3b+y1*W8/rb*(-a/rb2^2*2.0*y3b-1.0/W6^2*
+    (y3b/rb+1.0))-1.0/W7*(sinB*(cosB-a/rb)+z1b/rb*(1.0+a*y3b/rb2)-1.0/
     rb/W7*(y2^2*cosB*sinB-a*z1b/rb*W1))+W8/W7^2*(sinB*(cosB-
-    a/rb)+z1b/rb*(1+a*y3b/rb2)-1/rb/W7*(y2^2*cosB*sinB-a*z1b/
-    rb*W1))*W3-W8/W7*(1/2*sinB*a/rb^3*2*y3b+sinB/rb*(1+a*y3b/
-    rb2)-1/2*z1b/rb^3*(1+a*y3b/rb2)*2*y3b+z1b/rb*(a/rb2-a*
-    y3b/rb2^2*2*y3b)+1/2/rb^3/W7*(y2^2*cosB*sinB-a*z1b/rb*
-    W1)*2*y3b+1/rb/W7^2*(y2^2*cosB*sinB-a*z1b/rb*W1)*W3-1/
-    rb/W7*(-a*sinB/rb*W1+1/2*a*z1b/rb^3*W1*2*y3b-a*z1b/rb*
-    (cosB*y3b/rb+1))))/pi/(1-nu))+
-    (1/4*((2-2*nu)*rFib_ry2+(2-2*nu)*sinB/W7*W2-(2-2*nu)*y2^2*
-    sinB/W7^2*W2/rb-(2-2*nu)*y2^2*sinB/W7*a/rb^3+W8*sinB/rb/
-    W7*(1+W1/W7*W2+a*y3b/rb2)-y2^2*W8*sinB/rb^3/W7*(1+W1/
-    W7*W2+a*y3b/rb2)-y2^2*W8*sinB/rb2/W7^2*(1+W1/W7*W2+a*
-    y3b/rb2)+y2*W8*sinB/rb/W7*(1/rb*cosB*y2/W7*W2-W1/W7^2*
-    W2/rb*y2-W1/W7*a/rb^3*y2-2*a*y3b/rb2^2*y2))/pi/(1-nu));
+    a/rb)+z1b/rb*(1.0+a*y3b/rb2)-1.0/rb/W7*(y2^2*cosB*sinB-a*z1b/
+    rb*W1))*W3-W8/W7*(1.0/2.0*sinB*a/rb^3*2.0*y3b+sinB/rb*(1.0+a*y3b/
+    rb2)-1.0/2.0*z1b/rb^3*(1.0+a*y3b/rb2)*2.0*y3b+z1b/rb*(a/rb2-a*
+    y3b/rb2^2*2.0*y3b)+1.0/2.0/rb^3/W7*(y2^2*cosB*sinB-a*z1b/rb*
+    W1)*2.0*y3b+1.0/rb/W7^2*(y2^2*cosB*sinB-a*z1b/rb*W1)*W3-1.0/
+    rb/W7*(-a*sinB/rb*W1+1.0/2.0*a*z1b/rb^3*W1*2.0*y3b-a*z1b/rb*
+    (cosB*y3b/rb+1.0))))/pi/(1.0-nu))+
+    (1.0/4*((2.0-2.0*nu)*rFib_ry2+(2.0-2.0*nu)*sinB/W7*W2-(2.0-2.0*nu)*y2^2*
+    sinB/W7^2*W2/rb-(2.0-2.0*nu)*y2^2*sinB/W7*a/rb^3+W8*sinB/rb/
+    W7*(1.0+W1/W7*W2+a*y3b/rb2)-y2^2*W8*sinB/rb^3/W7*(1.0+W1/
+    W7*W2+a*y3b/rb2)-y2^2*W8*sinB/rb2/W7^2*(1.0+W1/W7*W2+a*
+    y3b/rb2)+y2*W8*sinB/rb/W7*(1.0/rb*cosB*y2/W7*W2-W1/W7^2*
+    W2/rb*y2-W1/W7*a/rb^3*y2-2.0*a*y3b/rb2^2*y2))/pi/(1.0-nu));
 	
 
 return(v11x::Float64,v22x::Float64,v33x::Float64,v12x::Float64,v13x::Float64,v23x::Float64,

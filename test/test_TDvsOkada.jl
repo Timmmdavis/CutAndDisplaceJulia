@@ -66,7 +66,7 @@ y=reshape(yy,length(yy),1); #const
 z=reshape(zz,length(zz),1); #const 
 
 DispFlag=1; #const 
-StressFlag=1; #const 
+StrainFlag=1; #const 
 HSflag=1; #const 
 
 G=ShearModulus(1.); 
@@ -78,26 +78,31 @@ Rake=90-atand(Dss/Dds); #degrees
 
 println("Vars created -> to TD func")
 
-
 #using BenchmarkTools
 #@btime (No output when you use it)
 
-@time (ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
- ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
- ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
- UxDn,UyDn,UzDn,
- UxDss,UyDss,UzDss,
- UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSflag)
+StrainInfVector=Strains([],[],[],[],[],[]);
+DispInfVector=Disps([],[],[]);
+@time (StrainAtInfPoints,DispAtInfPoints)= 
+CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StrainFlag,HSflag,StrainInfVector,DispInfVector)
  
+Ux=DispAtInfPoints.Ux;
+Uy=DispAtInfPoints.Uy;
+Uz=DispAtInfPoints.Uz;
 
- (Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
+Exx=StrainAtInfPoints.εxx;
+Eyy=StrainAtInfPoints.εyy;
+Ezz=StrainAtInfPoints.εzz;
+Exy=StrainAtInfPoints.εxy;
+Exz=StrainAtInfPoints.εxz;
+Eyz=StrainAtInfPoints.εyz;  
+#= (Exx,Eyy,Ezz,Exy,Exz,Eyz,Ux,Uy,Uz)=
  CutAndDisplaceJulia.TD_sum(ExxDn, EyyDn, EzzDn, ExyDn, ExzDn, EyzDn,
  ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
 	   ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
 	   UxDn,UyDn,UzDn,
 	   UxDss,UyDss,UzDss,
-       UxDds,UyDds,UzDds)
+       UxDds,UyDds,UzDds)=#
 
 println("Out of func, too Okada")
 
@@ -154,102 +159,6 @@ if EyzRes>1E-13
 	error("EyzRes too high, Okada and TD not matching for displacement")
 end
 println("Test P1 Passed")
-
-
-#println("Test P2 Off for now...")
-println("Now checking that when we are for only one component e.g. dipslip we only get values in those matricies")
-##Checking that there are no runaway components
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
- ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
- ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
- UxDn,UyDn,UzDn,
- UxDss,UyDss,UzDss,
- UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[1. 1.],[0. 0.],[0. 0.],ν,G,DispFlag,StressFlag,HSflag)
-uux=UxDn+UxDds;#
-uuy=UyDn+UyDds;
-uuz=UzDn+UzDds;
-eexx=ExxDn+ExxDds;#
-eeyy=EyyDn+EyyDds;
-eezz=EzzDn+EzzDds;
-eexy=ExyDn+ExyDds;
-eexz=ExzDn+ExzDds;
-eeyz=EyzDn+EyzDds;
-Exx=sum(eexx,dims=2);
-Eyy=sum(eeyy,dims=2);
-Ezz=sum(eezz,dims=2);
-Exy=sum(eexy,dims=2);
-Exz=sum(eexz,dims=2);
-Eyz=sum(eeyz,dims=2);
-Ux=sum(uux,dims=2);
-Uy=sum(uuy,dims=2);
-Uz=sum(uuz,dims=2);
-if any((Exx+Eyy+Ezz+Exy+Exz+Eyz+Ux+Uy+Uz).>eps())
-	error("Only SS components wanted but its leaking into others.")
-end
-
-##Checking that there are no runaway components
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
- ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
- ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
- UxDn,UyDn,UzDn,
- UxDss,UyDss,UzDss,
- UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[0. 0.],[1. 1.],[0. 0.],ν,G,DispFlag,StressFlag,HSflag)
-uux=UxDn+UxDss;#
-uuy=UyDn+UyDss;
-uuz=UzDn+UzDss;
-eexx=ExxDn+ExxDss;#
-eeyy=EyyDn+EyyDss;
-eezz=EzzDn+EzzDss;
-eexy=ExyDn+ExyDss;
-eexz=ExzDn+ExzDss;
-eeyz=EyzDn+EyzDss;
-Exx=sum(eexx,dims=2);
-Eyy=sum(eeyy,dims=2);
-Ezz=sum(eezz,dims=2);
-Exy=sum(eexy,dims=2);
-Exz=sum(eexz,dims=2);
-Eyz=sum(eeyz,dims=2);
-Ux=sum(uux,dims=2);
-Uy=sum(uuy,dims=2);
-Uz=sum(uuz,dims=2);
-if any((Exx+Eyy+Ezz+Exy+Exz+Eyz+Ux+Uy+Uz).>eps())
-	error("Only DS components wanted but its leaking into others.")
-end
- 
- ##Checking that there are no runaway components
-(ExxDn,EyyDn,EzzDn,ExyDn,ExzDn,EyzDn,
- ExxDss,EyyDss,EzzDss,ExyDss,ExzDss,EyzDss,
- ExxDds,EyyDds,EzzDds,ExyDds,ExzDds,EyzDds,
- UxDn,UyDn,UzDn,
- UxDss,UyDss,UzDss,
- UxDds,UyDds,UzDds)=
- CutAndDisplaceJulia.TD(x,y,z,P1,P2,P3,[0. 0.],[0. 0.],[1. 1.],ν,G,DispFlag,StressFlag,HSflag)
-uux=UxDss+UxDds;#
-uuy=UyDss+UyDds;
-uuz=UzDss+UzDds;
-eexx=ExxDss+ExxDds;#
-eeyy=EyyDss+EyyDds;
-eezz=EzzDss+EzzDds;
-eexy=ExyDss+ExyDds;
-eexz=ExzDss+ExzDds;
-eeyz=EyzDss+EyzDds;
-Exx=sum(eexx,dims=2);
-Eyy=sum(eeyy,dims=2);
-Ezz=sum(eezz,dims=2);
-Exy=sum(eexy,dims=2);
-Exz=sum(eexz,dims=2);
-Eyz=sum(eeyz,dims=2);
-Ux=sum(uux,dims=2);
-Uy=sum(uuy,dims=2);
-Uz=sum(uuz,dims=2);
-if any((Exx+Eyy+Ezz+Exy+Exz+Eyz+Ux+Uy+Uz).>eps())
-	error("Only SS components wanted but its leaking into others.")
-end
-
-println("Test P2 Passed")
-
 
 # ###= if you want to draw remove this line
 # x=reshape(x,dimx,dimy);
