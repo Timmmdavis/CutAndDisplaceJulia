@@ -40,9 +40,9 @@ TotalShearing = sqrt.((Dss).^2 .+(Dds).^2);
 
 ############Opening############	
 #Traction vector
-Tn=1;
-Tds=0.0;
-Tss=0;
+Tn=ones(n);
+Tds=zeros(n);
+Tss=zeros(n);
 #Set BoundaryConditions
 BoundaryConditions=Tractions(Tn,Tss,Tds)
 

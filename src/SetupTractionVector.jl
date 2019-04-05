@@ -2,7 +2,7 @@
 function SetupTractionVector(BC::Stresses,FaceNormalVector,n,G,λ)
 							#Importing BoundaryConditions as BC
 
-	RepeatStruct(BC,n)
+	#RepeatStruct(BC,n)
 	( Tn,Tds,Tss ) = CalculateNormalAndShearTractions3D( BC.σxx,BC.σyy,BC.σzz,BC.σxy,BC.σxz,BC.σyz,FaceNormalVector);
 	return Tn, Tds, Tss
 
@@ -10,8 +10,7 @@ end
 
 function SetupTractionVector(BoundaryConditions::Strains,FaceNormalVector,n,G,λ)
 
-	RepeatStruct(BoundaryConditions,n)
-
+	#RepeatStruct(BoundaryConditions,n)
 	#Convert to stress
 	(StressTensor) = HookesLaw3DStrain2Stress(BoundaryConditions,FaceNormalVector,λ,G);
 	( Tn,Tds,Tss )=SetupTractionVector(BoundaryConditions)
@@ -21,8 +20,7 @@ end
 
 function SetupTractionVector(BoundaryConditions::Tractions,FaceNormalVector,n,G,λ)
 
-	RepeatStruct(BoundaryConditions,n)
-
+	#RepeatStruct(BoundaryConditions,n)
 	Tn=BoundaryConditions.Tn;
 	Tss=BoundaryConditions.Tss;
 	Tds=BoundaryConditions.Tds;

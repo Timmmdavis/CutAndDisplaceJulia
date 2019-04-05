@@ -21,11 +21,12 @@ export
 #Types to contain boundary conditions
 struct Stresses;	σxx;σyy;σzz;σxy;σxz;σyz; end
 struct Strains;		εxx;εyy;εzz;εxy;εxz;εyz; end 
-mutable struct Tractions;	Tn;Tss;Tds; 			 end 	
+struct Tractions;	Tn;Tss;Tds; 			 end 	
 struct FrictionParameters; 	   µ;Sf;  		     	end
 struct MixedBoundaryConditions;Stresses;Tractions;  end
 struct MixedBoundaryConditionsFriction;Stresses;Tractions;FrictionParameters;	end
 
+println("I would prefer not be mutable")
 mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3; 	end
 
 export
@@ -37,6 +38,7 @@ export
 	MixedBoundaryConditionsFriction,
 	TriangleEdges
 
+println("I would also prefer not be mutable")
 #Init some types for influence matricies
 mutable struct TractionInf; 	
 	DnTn;	DnTss;	DnTds	
@@ -44,7 +46,7 @@ mutable struct TractionInf;
 	DdsTn;	DdsTss;	DdsTds
 end 	
 
-mutable struct DispInf; 	
+struct DispInf; 	
 	DnUx;	DnUy;	DnUz	
 	DssUx;	DssUy;	DssUz
 	DdsUx;	DdsUy; 	DdsUz
