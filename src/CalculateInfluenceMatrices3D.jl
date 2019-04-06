@@ -14,18 +14,18 @@ function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ
 		yFix=y[FixedFlag];
 		zFix=z[FixedFlag];
 		DispFlag=1;
-		StressFlag=0;
-		(StrainInfMat,DispInfMat)=TD(xFix,yFix,zFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)		
+		StrainFlag=0;
+		(StrainInfMat,DispInfMat)=TD(xFix,yFix,zFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StrainFlag,HSFlag)		
 		#Compute stress on non fixed elements
 		xNoFix=x[NotFixedFlag];
 		yNoFix=y[NotFixedFlag];
 		zNoFix=z[NotFixedFlag];	
 		DispFlag=0;
-		StressFlag=1;
-		(StrainInfMat,~)=TD(xNoFix,yNoFix,zNoFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag);
-		 
-		TractionInfMats=ConvertInfMatsToTraction(StrainInfMat,λ,G,CosAx,CosAy,CosAz);
 
+		StrainFlag=1;
+		(StrainInfMat,~)=TD(xNoFix,yNoFix,zNoFix,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StrainFlag,HSFlag);
+		 
+		TractionInfMats=ConvertStrainInfMatsToTraction(StrainInfMat,λ,G,CosAx,CosAy,CosAz);
 
 		#Now Putting DispInfMats into TractionInfMats
 		TractionInfMats=ConcatInfMats(TractionInfMats,DispInfMat,NotFixedFlag,FixedFlag,n)
@@ -38,7 +38,7 @@ function CalculateInfluenceMatrices3D(FaceNormalVector,MidPoint,P1,P2,P3,ν,G,λ
 		#Call TDE function
 		(StrainInfMat,DispInfMat)=TD(x,y,z,P1,P2,P3,DssVec,DdsVec,DnVec,ν,G,DispFlag,StressFlag,HSFlag)
 
-		 TractionInfMats=ConvertInfMatsToTraction(StrainInfMat,λ,G,CosAx,CosAy,CosAz)
+		 TractionInfMats=ConvertStrainInfMatsToTraction(StrainInfMat,λ,G,CosAx,CosAy,CosAz)
 
 		return TractionInfMats 
 
@@ -70,8 +70,50 @@ function SetupCollationPoints(FaceNormalVector,MidPoint,n)
 	return x,y,z,DssVec,DdsVec,DnVec,StressFlag,CosAx,CosAy,CosAz
 end
 
-function ConvertInfMatsToTraction(SIM,λ,G,CosAx,CosAy,CosAz)
+function ConvertStrainInfMatsToTraction(SIM,λ,G,CosAx,CosAy,CosAz)
 
+	#Faster threaded version for large mats. 
+
+	DssTn=zeros(size(SIM.εxxDss));DdsTn=copy(DssTn);	DnTn=copy(DssTn);
+	DssTss=copy(DssTn);		DdsTss=copy(DssTn);		DnTss=copy(DssTn);
+	DssTds=copy(DssTn);		DdsTds=copy(DssTn);		DnTds=copy(DssTn);
+	
+	#Calculates the directions of the dipslip and ss directions
+	(StrikeSlipCosine,DipSlipCosine) = CalculateSSandDSDirs( CosAx,CosAy,CosAz );
+
+	Threads.@threads for i=1:size(SIM.εxxDss,2) 
+
+	#Safe for threading 
+	Tx=zeros(size(SIM.εxxDss,1));
+	Ty=zeros(size(SIM.εxxDss,1));
+	Tz=zeros(size(SIM.εxxDss,1));
+
+	#Converting strains to stress tensor influences  
+	(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = HookesLaw3DStrain2Stress!(view(SIM.εxxDss,:,i),view(SIM.εyyDss,:,i),view(SIM.εzzDss,:,i),view(SIM.εxyDss,:,i),view(SIM.εxzDss,:,i),view(SIM.εyzDss,:,i),λ,G);
+	(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds) = HookesLaw3DStrain2Stress!(view(SIM.εxxDds,:,i),view(SIM.εyyDds,:,i),view(SIM.εzzDds,:,i),view(SIM.εxyDds,:,i),view(SIM.εxzDds,:,i),view(SIM.εyzDds,:,i),λ,G);
+	(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn) 		= HookesLaw3DStrain2Stress!(view(SIM.εxxDn,:,i) ,view(SIM.εyyDn,:,i), view(SIM.εzzDn,:,i) ,view(SIM.εxyDn,:,i) ,view(SIM.εxzDn,:,i) ,view(SIM.εyzDn,:,i), λ,G);
+	#Compute normal traction
+	CalculateNormalTraction3D!( σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss,CosAx,CosAy,CosAz,view(DssTn,:,i))
+	CalculateNormalTraction3D!( σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds,CosAx,CosAy,CosAz,view(DdsTn,:,i))
+	CalculateNormalTraction3D!( σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn,CosAx,CosAy,CosAz,      view(DnTn,:,i) )
+
+	TractionVectorCartesianComponents3D!(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss,CosAx,CosAy,CosAz,Tx,Ty,Tz)
+	CalculateTractionInChosenDirection3D!( Tx,Ty,Tz,CosAx,CosAy,CosAz,StrikeSlipCosine,view(DssTss,:,i) );
+	CalculateTractionInChosenDirection3D!( Tx,Ty,Tz,CosAx,CosAy,CosAz,DipSlipCosine,   view(DssTds,:,i) );
+
+	TractionVectorCartesianComponents3D!(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds,CosAx,CosAy,CosAz,Tx,Ty,Tz)
+	CalculateTractionInChosenDirection3D!( Tx,Ty,Tz,CosAx,CosAy,CosAz,StrikeSlipCosine,view(DdsTss,:,i) );
+	CalculateTractionInChosenDirection3D!( Tx,Ty,Tz,CosAx,CosAy,CosAz,DipSlipCosine,   view(DdsTds,:,i) );
+
+	TractionVectorCartesianComponents3D!(σxxDn,σyyDn,σzzDn,σxyDn,σxzDn,σyzDn,CosAx,CosAy,CosAz,Tx,Ty,Tz)
+	CalculateTractionInChosenDirection3D!( Tx,Ty,Tz,CosAx,CosAy,CosAz,StrikeSlipCosine,view(DnTss,:,i) );
+	CalculateTractionInChosenDirection3D!( Tx,Ty,Tz,CosAx,CosAy,CosAz,DipSlipCosine,   view(DnTds,:,i) );
+
+	end
+	#Now putting influence matricies inside a predefined structure
+	TractionInfMats = TractionInf(	DnTn,DnTss,DnTds, 	DssTn,DssTss,DssTds, 	DdsTn,DdsTss,DdsTds);
+
+#=
 	#Converting strains to stress tensor influences  
 	(σxxDss,σyyDss,σzzDss,σxyDss,σxzDss,σyzDss) = HookesLaw3DStrain2Stress(SIM.εxxDss,SIM.εyyDss,SIM.εzzDss,SIM.εxyDss,SIM.εxzDss,SIM.εyzDss,λ,G);
 	(σxxDds,σyyDds,σzzDds,σxyDds,σxzDds,σyzDds) = HookesLaw3DStrain2Stress(SIM.εxxDds,SIM.εyyDds,SIM.εzzDds,SIM.εxyDds,SIM.εxzDds,SIM.εyzDds,λ,G);
@@ -95,7 +137,8 @@ function ConvertInfMatsToTraction(SIM,λ,G,CosAx,CosAy,CosAz)
 	( DdsTds ) = CalculateTractionInChosenDirection3D( DdsT1x,DdsT2y,DdsT3z,CosAx,CosAy,CosAz,DipSlipCosine );
 	( DnTds  ) = CalculateTractionInChosenDirection3D( DnT1x,DnT2y,DnT3z,CosAx,CosAy,CosAz,DipSlipCosine );
 	#Now putting influence matricies inside a predefined structure
-	TractionInfMats = TractionInf(	DnTn,DnTss,DnTds, 	DssTn,DssTss,DssTds, 	DdsTn,DdsTss,DdsTds);
+	TractionInfMats = TractionInf( DnTn,DnTss,DnTds, DssTn,DssTss,DssTds, DdsTn,DdsTss,DdsTds);
+=#
 end
 
 

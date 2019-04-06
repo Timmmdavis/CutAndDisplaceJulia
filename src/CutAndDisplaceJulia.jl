@@ -68,8 +68,11 @@ export
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")
+include("CalculateNormalTraction3D!.jl")
 include("TractionVectorCartesianComponents3D.jl")
+include("TractionVectorCartesianComponents3D!.jl")
 include("CalculateTractionInChosenDirection3D.jl")
+include("CalculateTractionInChosenDirection3D!.jl")
 include("CreateTriangleNormal.jl")
 include("HookesLaw3DStrain2Stress.jl")
 include("HookesLaw3DStrain2Stress!.jl")

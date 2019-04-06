@@ -17,7 +17,7 @@
 # Ss, Ds and Ts:
 # TD slip vector components (Strike-slip, Dip-slip, Tensile-slip).
 #
-# nu:
+# ν:
 # Poisson's ratio.
 #
 # OUTPUTS
@@ -74,7 +74,7 @@
 
 
 #If Inf mats are not defined
-function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,
+function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 			DispFlag,StrainFlag,HSflag)
 
 SzCmp=size(P1List,1); if length(P1List)==3; SzCmp=1; end
@@ -127,17 +127,17 @@ else
 		[],	[], [],	[], [],	[]);
 end
 
-TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,
+TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 			DispFlag,StrainFlag,HSflag,StrainInfMat,DispInfMat)
 
 end
 
-function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,
+function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 			DispFlag,StrainFlag,HSflag,StrainInfMat::StrainInf,DispInfMat::DispInf)
 
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-eY,eZ,FillAList,FillBList,lambda)=
-PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,nu,mu)
+eY,eZ,FillAList,FillBList,λ)=
+PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
 
 Threads.@threads for i=1:SzCmp #For every element (multithreaded)  
 	#println("Multithreading off")
@@ -164,7 +164,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				UxDnI, UyDnI, UzDnI,
 				UxDssI,UyDssI,UzDssI,
 				UxDdsI,UyDdsI,UzDdsI)		
@@ -192,7 +192,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)		
@@ -204,7 +204,7 @@ return(StrainInfMat,DispInfMat)
 end
 
 #Predefined inf mats
-function PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,nu,mu)
+function PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
 
 SzCmp=size(P1List,1); if length(P1List)==3; SzCmp=1; end
 
@@ -244,10 +244,10 @@ FillAList= zeros(SzCmp,3);
 FillBList= zeros(SzCmp,3); 
 
 #Elastic con
-lambda=(2*mu*nu)/(1-(2*nu));
+λ=(2*G*ν)/(1-(2*ν));
 
 return SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-eY,eZ,FillAList,FillBList,lambda
+eY,eZ,FillAList,FillBList,λ
 
 end
 
@@ -301,14 +301,14 @@ end
 function ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				UxDnI, UyDnI, UzDnI,
 				UxDssI,UyDssI,UzDssI,
 				UxDdsI,UyDdsI,UzDdsI)
 	
 
 	# Calculate main dislocation contribution to displacements
-	TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,0,Vnorm,Vstrike,Vdip,
+	TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],ν,0,Vnorm,Vstrike,Vdip,
 	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 	UxDnI, UyDnI, UzDnI,
 	UxDssI,UyDssI,UzDssI,
@@ -317,13 +317,13 @@ function ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vs
 	if HSflag==1
 		
 		# Calculate harmonic function contribution to displacements
-		TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,Vnorm,Vstrike,Vdip,
+		TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],ν,Vnorm,Vstrike,Vdip,
 		UxDnI, UyDnI, UzDnI,
 		UxDssI,UyDssI,UzDssI,
 		UxDdsI,UyDdsI,UzDdsI);
 
 		# Calculate image dislocation contribution to displacements
-		TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],nu,1,Vnormi,Vstrikei,Vdipi,
+		TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],ν,1,Vnormi,Vstrikei,Vdipi,
 		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
 		UxDnI, UyDnI, UzDnI,
 		UxDssI,UyDssI,UzDssI,
@@ -336,14 +336,14 @@ end
 function ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)
 
 
 		# Calculate main dislocation contribution to strains
-		TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,0,Vnorm,Vstrike,Vdip,
+		TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],G,λ,ν,0,Vnorm,Vstrike,Vdip,
 		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 		εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 		εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
@@ -352,13 +352,13 @@ function ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,
 		if HSflag==1
 		
 			# Calculate harmonic function contribution to strains
-			TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,Vnorm,Vstrike,Vdip,
+			TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],G,λ,ν,Vnorm,Vstrike,Vdip,
 			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);	
 
 			# Calculate image dislocation contribution to strains 
-			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,nu,1,Vnormi,Vstrikei,Vdipi,
+			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],G,λ,ν,1,Vnormi,Vstrikei,Vdipi,
 			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
 			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
@@ -373,7 +373,7 @@ end
 
 
 #Summing results
-function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,nu,mu,
+function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 			DispFlag,StrainFlag,HSflag,StrainInfVector::Strains,DispInfVector::Disps)
 
 if DispFlag==1
@@ -391,8 +391,8 @@ if StrainFlag==1
 end
 
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-eY,eZ,FillAList,FillBList,lambda)=
-PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,nu,mu)
+eY,eZ,FillAList,FillBList,λ)=
+PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
 
 for i=1:SzCmp #For every element (multithreaded)  Threads.@threads 
 	#println("Multithreading off")
@@ -418,7 +418,7 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				UxDnI, UyDnI, UzDnI,
 				UxDssI,UyDssI,UzDssI,
 				UxDdsI,UyDdsI,UzDdsI)	
@@ -450,7 +450,7 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,mu,nu,lambda,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)	
@@ -535,7 +535,7 @@ if StrainFlag==1
 end
 
 #Elastic con
-lambda=(2*mu*nu)/(1-(2*nu));
+λ=(2*G*ν)/(1-(2*ν));
 println("Multithreading off")
 for i=1:SzCmp #For every element (multithreaded) Threads.@threads 
 
@@ -612,7 +612,7 @@ for i=1:SzCmp #For every element (multithreaded) Threads.@threads
 	if DispFlag==1
 
 		# Calculate main dislocation contribution to displacements
-		TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,0,Vnorm,Vstrike,Vdip,
+		TDdispFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],ν,0,Vnorm,Vstrike,Vdip,
 		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 		UxDnI, UyDnI, UzDnI,
 		UxDssI,UyDssI,UzDssI,
@@ -621,13 +621,13 @@ for i=1:SzCmp #For every element (multithreaded) Threads.@threads
 		if HSflag==1
 			
 			# Calculate harmonic function contribution to displacements
-			TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],nu,Vnorm,Vstrike,Vdip,
+			TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],ν,Vnorm,Vstrike,Vdip,
 			UxDnI, UyDnI, UzDnI,
 			UxDssI,UyDssI,UzDssI,
 			UxDdsI,UyDdsI,UzDdsI);
 
 			# Calculate image dislocation contribution to displacements
-			TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],nu,1,Vnormi,Vstrikei,Vdipi,
+			TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],ν,1,Vnormi,Vstrikei,Vdipi,
 			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
 			UxDnI, UyDnI, UzDnI,
 			UxDssI,UyDssI,UzDssI,
@@ -644,7 +644,7 @@ for i=1:SzCmp #For every element (multithreaded) Threads.@threads
 	if StrainFlag==1
 		
 		# Calculate main dislocation contribution to strains
-		TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,0,Vnorm,Vstrike,Vdip,
+		TDstrainFS(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],G,λ,ν,0,Vnorm,Vstrike,Vdip,
 		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 		εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 		εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
@@ -653,13 +653,13 @@ for i=1:SzCmp #For every element (multithreaded) Threads.@threads
 		if HSflag==1
 		
 			# Calculate harmonic function contribution to strains
-			TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],mu,lambda,nu,Vnorm,Vstrike,Vdip,
+			TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],G,λ,ν,Vnorm,Vstrike,Vdip,
 			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);	
 		
 			# Calculate image dislocation contribution to strains 
-			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],mu,lambda,nu,1,Vnormi,Vstrikei,Vdipi,
+			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],G,λ,ν,1,Vnormi,Vstrikei,Vdipi,
 			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
 			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
@@ -717,7 +717,7 @@ cross!(Vnorm,Vstrike,Vdip);
 end
 
 
-function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,ImageFlag,Vnorm,Vstrike,Vdip,
+function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,ImageFlag,Vnorm,Vstrike,Vdip,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,Pos,Neg,casezLog,
 				UxDn, UyDn, UzDn,
 				UxDss,UyDss,UzDss,
@@ -750,36 +750,36 @@ end
 
 # Calculate first angular dislocation contribution POS
 e13.=.-e13;
-TDSetupD(x,y,z,A,Dn,Dss,Dds,nu,p1,e13, 
+TDSetupD(x,y,z,A,Dn,Dss,Dds,ν,p1,e13, 
 UxDn,UxDss,UxDds,
 UyDn,UyDss,UyDds,
 UzDn,UzDss,UzDds,Pos); 
 e13.=.-e13; 
 # Calculate second angular dislocation contribution
-TDSetupD(x,y,z,B,Dn,Dss,Dds,nu,p2,e12,
+TDSetupD(x,y,z,B,Dn,Dss,Dds,ν,p2,e12,
 UxDn,UxDss,UxDds,
 UyDn,UyDss,UyDds,
 UzDn,UzDss,UzDds,Pos); 
 # Calculate third angular dislocation contribution
-TDSetupD(x,y,z,C,Dn,Dss,Dds,nu,p3,e23,
+TDSetupD(x,y,z,C,Dn,Dss,Dds,ν,p3,e23,
 UxDn,UxDss,UxDds,
 UyDn,UyDss,UyDds,
 UzDn,UzDss,UzDds,Pos);
  
 # Calculate first angular dislocation contribution NEG
-TDSetupD(x,y,z,A,Dn,Dss,Dds,nu,p1,e13,
+TDSetupD(x,y,z,A,Dn,Dss,Dds,ν,p1,e13,
 UxDn,UxDss,UxDds,
 UyDn,UyDss,UyDds,
 UzDn,UzDss,UzDds,Neg);
 # Calculate second angular dislocation contribution
 e12.=.-e12;
-TDSetupD(x,y,z,B,Dn,Dss,Dds,nu,p2,e12,
+TDSetupD(x,y,z,B,Dn,Dss,Dds,ν,p2,e12,
 UxDn,UxDss,UxDds,
 UyDn,UyDss,UyDds,
 UzDn,UzDss,UzDds,Neg); e12.=.-e12;
 # Calculate third angular dislocation contribution
 e23.=.-e23;
-TDSetupD(x,y,z,C,Dn,Dss,Dds,nu,p3,e23,
+TDSetupD(x,y,z,C,Dn,Dss,Dds,ν,p3,e23,
 UxDn,UxDss,UxDds,
 UyDn,UyDss,UyDds,
 UzDn,UzDss,UzDds,Neg);	e23.=.-e23;
@@ -1003,7 +1003,7 @@ end
 return(casepLog,casenLog,casezLog)
 end
 
-function TDSetupD(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec,
+function TDSetupD(x,y,z,alpha,Dn,Dss,Dds,ν,TriVertex,SideVec,
  UxDn,UxDss,UxDds,
  UyDn,UyDss,UyDds,
  UzDn,UzDss,UzDds,Index)
@@ -1026,10 +1026,10 @@ cosA = cos(Ang);
 sinA = sin(Ang);
 
 #εxtra defs out of loop to speed it up
-E1=(1.0-nu); #Elastic cons
-E2=(1.0-2.0*nu);
+E1=(1.0-ν); #Elastic cons
+E2=(1.0-2.0*ν);
 cosA2=cosA^2;
-sinADE1=sinA/8.0/pi/(1.0-nu);
+sinADE1=sinA/8.0/pi/(1.0-ν);
 
 Dn8p=Dn/8.0/pi;
 
@@ -1141,7 +1141,7 @@ return( ux::Float64,uy::Float64,uz::Float64,
 		wx::Float64,wy::Float64,wz::Float64)
 end
 
-function TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,Vnorm,Vstrike,Vdip,
+function TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,Vnorm,Vstrike,Vdip,
 				UxDn, UyDn, UzDn,
 				UxDss,UyDss,UzDss,
 				UxDds,UyDds,UzDds)
@@ -1153,19 +1153,19 @@ function TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,nu,Vnorm,Vstrike,Vdip,
 # Calculate contribution of angular dislocation pair on each TD side 
 
 # Side P1P2
-AngSetupDispFSC(X,Y,Z,P1,P2,nu,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
+AngSetupDispFSC(X,Y,Z,P1,P2,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
 UxDds,UyDds,UzDds); 
  
 # Side P2P3
-AngSetupDispFSC(X,Y,Z,P2,P3,nu,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
+AngSetupDispFSC(X,Y,Z,P2,P3,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
 UxDds,UyDds,UzDds); 
  
 # Side P3P1
-AngSetupDispFSC(X,Y,Z,P3,P1,nu,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
+AngSetupDispFSC(X,Y,Z,P3,P1,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
 UxDds,UyDds,UzDds); 
@@ -1173,7 +1173,7 @@ UxDds,UyDds,UzDds);
 end
 
 
-function AngSetupDispFSC(X,Y,Z,PA,PB,nu,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
+function AngSetupDispFSC(X,Y,Z,PA,PB,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds)
@@ -1247,43 +1247,43 @@ else
 		if Bx>=0.0;
 		#Call func that does the work
 		#if I[i] == 1
-			(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(x,y,z,cosPib,sinPib,cotPib,cotPib2,nu,-PA[3]);
+			(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(x,y,z,cosPib,sinPib,cotPib,cotPib2,ν,-PA[3]);
 		else 
-			(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(x,y,z,cosB,sinB,cotB,cotB2,nu,-PA[3]);
+			(uxA,uyA,uzA,vxA,vyA,vzA,wxA,wyA,wzA) = AngDisDispFSC(x,y,z,cosB,sinB,cotB,cotB2,ν,-PA[3]);
 		end
 		
 		#The local coordinates are such that the components must be combined 
 		#to get the global contribution for these parts.
 		if Dn!=0.0
-			uxDn =-((Dn1__/4.0/pi/(1-nu)*uxA)+(Dss0n_/4.0/pi/(1-nu)*uyA)+(Dds0n_/4.0/pi/(1-nu)*uzA))
-			uyDn =-((Dn1__/4.0/pi/(1-nu)*vxA)+(Dss0n_/4.0/pi/(1-nu)*vyA)+(Dds0n_/4.0/pi/(1-nu)*vzA))	
-			uzDn =-((Dn1__/4.0/pi/(1-nu)*wxA)+(Dss0n_/4.0/pi/(1-nu)*wyA)+(Dds0n_/4.0/pi/(1-nu)*wzA))
+			uxDn =-((Dn1__/4.0/pi/(1-ν)*uxA)+(Dss0n_/4.0/pi/(1-ν)*uyA)+(Dds0n_/4.0/pi/(1-ν)*uzA))
+			uyDn =-((Dn1__/4.0/pi/(1-ν)*vxA)+(Dss0n_/4.0/pi/(1-ν)*vyA)+(Dds0n_/4.0/pi/(1-ν)*vzA))	
+			uzDn =-((Dn1__/4.0/pi/(1-ν)*wxA)+(Dss0n_/4.0/pi/(1-ν)*wyA)+(Dds0n_/4.0/pi/(1-ν)*wzA))
 		end			
 		if Dss!=0.0		
-			uxDss=-((Dn0ss/4.0/pi/(1-nu)*uxA)+(Dss1__/4.0/pi/(1-nu)*uyA)+(Dds1ss/4.0/pi/(1-nu)*uzA))
-			uyDss=-((Dn0ss/4.0/pi/(1-nu)*vxA)+(Dss1__/4.0/pi/(1-nu)*vyA)+(Dds1ss/4.0/pi/(1-nu)*vzA))	
-			uzDss=-((Dn0ss/4.0/pi/(1-nu)*wxA)+(Dss1__/4.0/pi/(1-nu)*wyA)+(Dds1ss/4.0/pi/(1-nu)*wzA))
+			uxDss=-((Dn0ss/4.0/pi/(1-ν)*uxA)+(Dss1__/4.0/pi/(1-ν)*uyA)+(Dds1ss/4.0/pi/(1-ν)*uzA))
+			uyDss=-((Dn0ss/4.0/pi/(1-ν)*vxA)+(Dss1__/4.0/pi/(1-ν)*vyA)+(Dds1ss/4.0/pi/(1-ν)*vzA))	
+			uzDss=-((Dn0ss/4.0/pi/(1-ν)*wxA)+(Dss1__/4.0/pi/(1-ν)*wyA)+(Dds1ss/4.0/pi/(1-ν)*wzA))
 		end
 		if Dds!=0.0			
-			uxDds=-((Dn0ds/4.0/pi/(1-nu)*uxA)+(Dss0ds/4.0/pi/(1-nu)*uyA)+(Dds1__/4.0/pi/(1-nu)*uzA))
-			uyDds=-((Dn0ds/4.0/pi/(1-nu)*vxA)+(Dss0ds/4.0/pi/(1-nu)*vyA)+(Dds1__/4.0/pi/(1-nu)*vzA))
-			uzDds=-((Dn0ds/4.0/pi/(1-nu)*wxA)+(Dss0ds/4.0/pi/(1-nu)*wyA)+(Dds1__/4.0/pi/(1-nu)*wzA))
+			uxDds=-((Dn0ds/4.0/pi/(1-ν)*uxA)+(Dss0ds/4.0/pi/(1-ν)*uyA)+(Dds1__/4.0/pi/(1-ν)*uzA))
+			uyDds=-((Dn0ds/4.0/pi/(1-ν)*vxA)+(Dss0ds/4.0/pi/(1-ν)*vyA)+(Dds1__/4.0/pi/(1-ν)*vzA))
+			uzDds=-((Dn0ds/4.0/pi/(1-ν)*wxA)+(Dss0ds/4.0/pi/(1-ν)*wyA)+(Dds1__/4.0/pi/(1-ν)*wzA))
 		end			
 		
 		if Bx>=0.0;
 		#Call func that does the work
 		#if I[i] == 1		
 			#Call func that does the work		
-			(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(x-y1B,y-y2B,z-y3B,cosPib,sinPib,cotPib,cotPib2,nu,-PB[3]);
+			(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(x-y1B,y-y2B,z-y3B,cosPib,sinPib,cotPib,cotPib2,ν,-PB[3]);
 		else
-			(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(x-y1B,y-y2B,z-y3B,cosB,sinB,cotB,cotB2,nu,-PB[3]);
+			(uxB,uyB,uzB,vxB,vyB,vzB,wxB,wyB,wzB) = AngDisDispFSC(x-y1B,y-y2B,z-y3B,cosB,sinB,cotB,cotB2,ν,-PB[3]);
 		end
 
 		if Dn!=0.0		
 			#Add to the current value this part		
-			uxDn  =uxDn  + ((Dn1__/4.0/pi/(1-nu)*uxB)+(Dss0n_/4.0/pi/(1-nu)*uyB)+(Dds0n_/4.0/pi/(1-nu)*uzB))
-			uyDn  =uyDn  + ((Dn1__/4.0/pi/(1-nu)*vxB)+(Dss0n_/4.0/pi/(1-nu)*vyB)+(Dds0n_/4.0/pi/(1-nu)*vzB))		
-			uzDn  =uzDn  + ((Dn1__/4.0/pi/(1-nu)*wxB)+(Dss0n_/4.0/pi/(1-nu)*wyB)+(Dds0n_/4.0/pi/(1-nu)*wzB))
+			uxDn  =uxDn  + ((Dn1__/4.0/pi/(1-ν)*uxB)+(Dss0n_/4.0/pi/(1-ν)*uyB)+(Dds0n_/4.0/pi/(1-ν)*uzB))
+			uyDn  =uyDn  + ((Dn1__/4.0/pi/(1-ν)*vxB)+(Dss0n_/4.0/pi/(1-ν)*vyB)+(Dds0n_/4.0/pi/(1-ν)*vzB))		
+			uzDn  =uzDn  + ((Dn1__/4.0/pi/(1-ν)*wxB)+(Dss0n_/4.0/pi/(1-ν)*wyB)+(Dds0n_/4.0/pi/(1-ν)*wzB))
 			#Rotate to global coords	
 			(uxDn, uyDn, uzDn) =RotateObject3DNewCoords!(uxDn, uyDn, uzDn ,0.,0.,0.,VxR,VyR,VzR)	
 			#Add these to the total vector				
@@ -1293,9 +1293,9 @@ else
 		end
 		if  Dss!=0.0
 			#Add to the current value this part			
-			uxDss =uxDss + ((Dn0ss/4.0/pi/(1-nu)*uxB)+(Dss1__/4.0/pi/(1-nu)*uyB)+(Dds1ss/4.0/pi/(1-nu)*uzB))
-			uyDss =uyDss + ((Dn0ss/4.0/pi/(1-nu)*vxB)+(Dss1__/4.0/pi/(1-nu)*vyB)+(Dds1ss/4.0/pi/(1-nu)*vzB))	
-			uzDss =uzDss + ((Dn0ss/4.0/pi/(1-nu)*wxB)+(Dss1__/4.0/pi/(1-nu)*wyB)+(Dds1ss/4.0/pi/(1-nu)*wzB))
+			uxDss =uxDss + ((Dn0ss/4.0/pi/(1-ν)*uxB)+(Dss1__/4.0/pi/(1-ν)*uyB)+(Dds1ss/4.0/pi/(1-ν)*uzB))
+			uyDss =uyDss + ((Dn0ss/4.0/pi/(1-ν)*vxB)+(Dss1__/4.0/pi/(1-ν)*vyB)+(Dds1ss/4.0/pi/(1-ν)*vzB))	
+			uzDss =uzDss + ((Dn0ss/4.0/pi/(1-ν)*wxB)+(Dss1__/4.0/pi/(1-ν)*wyB)+(Dds1ss/4.0/pi/(1-ν)*wzB))
 			#Rotate to global coords		
 			(uxDss,uyDss,uzDss)=RotateObject3DNewCoords!(uxDss,uyDss,uzDss,0.,0.,0.,VxR,VyR,VzR)	
 			#Add these to the total vector				
@@ -1305,9 +1305,9 @@ else
 		end
 		if  Dds!=0.0	
 			#Add to the current value this part			
-			uxDds =uxDds + ((Dn0ds/4.0/pi/(1-nu)*uxB)+(Dss0ds/4.0/pi/(1-nu)*uyB)+(Dds1__/4.0/pi/(1-nu)*uzB))
-			uyDds =uyDds + ((Dn0ds/4.0/pi/(1-nu)*vxB)+(Dss0ds/4.0/pi/(1-nu)*vyB)+(Dds1__/4.0/pi/(1-nu)*vzB))
-			uzDds =uzDds + ((Dn0ds/4.0/pi/(1-nu)*wxB)+(Dss0ds/4.0/pi/(1-nu)*wyB)+(Dds1__/4.0/pi/(1-nu)*wzB))
+			uxDds =uxDds + ((Dn0ds/4.0/pi/(1-ν)*uxB)+(Dss0ds/4.0/pi/(1-ν)*uyB)+(Dds1__/4.0/pi/(1-ν)*uzB))
+			uyDds =uyDds + ((Dn0ds/4.0/pi/(1-ν)*vxB)+(Dss0ds/4.0/pi/(1-ν)*vyB)+(Dds1__/4.0/pi/(1-ν)*vzB))
+			uzDds =uzDds + ((Dn0ds/4.0/pi/(1-ν)*wxB)+(Dss0ds/4.0/pi/(1-ν)*wyB)+(Dds1__/4.0/pi/(1-ν)*wzB))
 			#Rotate to global coords			
 			(uxDds,uyDds,uzDds)=RotateObject3DNewCoords!(uxDds,uyDds,uzDds,0.,0.,0.,VxR,VyR,VzR)
 			#Add these to the total vector			
@@ -1339,7 +1339,7 @@ end
 
 function AngDisDispFSC( y1::Float64,y2::Float64,y3::Float64,
 						cosB::Float64,sinB::Float64,cotB::Float64,cotB2::Float64,
-						nu::Float64,a::Float64)
+						ν::Float64,a::Float64)
 # AngDisDispFSC calculates the harmonic function contribution to the 
 # displacements associated with an angular dislocation in an elastic 
 # half-space.
@@ -1353,51 +1353,51 @@ z1b = y1*cosB+y3b*sinB;
 z3b = -y1*sinB+y3b*cosB;
 r2b = y1 ^2 +y2 ^2 +y3b^2;
 rb = sqrt(r2b);
-c1=(1 -2*nu);
-c2=(1 -nu);
+c1=(1 -2*ν);
+c2=(1 -ν);
 Fib = 2*atan(-y2 /(-(rb+y3b)*cotB2+y1)); # The Burgers' function
 
 ux = (-2.0*c2*c1*Fib*cotB^2 +c1*y2 /
-    (rb+y3b)*((1.0 -2.0*nu-a/rb)*cotB-y1 /(rb+y3b)*(nu+a/rb))+c1*
+    (rb+y3b)*((1.0 -2.0*ν-a/rb)*cotB-y1 /(rb+y3b)*(ν+a/rb))+c1*
     y2 *cosB*cotB/(rb+z3b)*(cosB+a/rb)+a*y2 *(y3b-a)*cotB/rb^3 +y2 *
-    (y3b-a)/(rb*(rb+y3b))*(-c1*cotB+y1 /(rb+y3b)*(2.0*nu+a/rb)+
+    (y3b-a)/(rb*(rb+y3b))*(-c1*cotB+y1 /(rb+y3b)*(2.0*ν+a/rb)+
     a*y1 /rb^2)+y2 *(y3b-a)/(rb*(rb+z3b))*(cosB/(rb+z3b)*((rb*
     cosB+y3b)*(c1*cosB-a/rb)*cotB+2.0*c2*(rb*sinB-y1)*cosB)-
     a*y3b*cosB*cotB/rb^2)); #b1/4.0/pi/c2*
 
-vx = (c1*((2.0*c2*cotB^2 -nu)*log(rb+y3b)-(2.0*
-    c2*cotB^2 +1.0 -2.0*nu)*cosB*log(rb+z3b))-c1/(rb+y3b)*(y1*
-    cotB*(1.0 -2.0*nu-a/rb)+nu*y3b-a+y2 ^2 /(rb+y3b)*(nu+a/rb))-(1.0 -2.0*
-    nu)*z1b*cotB/(rb+z3b)*(cosB+a/rb)-a*y1 *(y3b-a)*cotB/rb^3 +
-    (y3b-a)/(rb+y3b)*(-2.0*nu+1.0 /rb*(c1*y1*cotB-a)+y2 ^2 /(rb*
-    (rb+y3b))*(2.0*nu+a/rb)+a*y2 ^2 /rb^3)+(y3b-a)/(rb+z3b)*(cosB^2 -
+vx = (c1*((2.0*c2*cotB^2 -ν)*log(rb+y3b)-(2.0*
+    c2*cotB^2 +1.0 -2.0*ν)*cosB*log(rb+z3b))-c1/(rb+y3b)*(y1*
+    cotB*(1.0 -2.0*ν-a/rb)+ν*y3b-a+y2 ^2 /(rb+y3b)*(ν+a/rb))-(1.0 -2.0*
+    ν)*z1b*cotB/(rb+z3b)*(cosB+a/rb)-a*y1 *(y3b-a)*cotB/rb^3 +
+    (y3b-a)/(rb+y3b)*(-2.0*ν+1.0 /rb*(c1*y1*cotB-a)+y2 ^2 /(rb*
+    (rb+y3b))*(2.0*ν+a/rb)+a*y2 ^2 /rb^3)+(y3b-a)/(rb+z3b)*(cosB^2 -
     1.0 /rb*(c1*z1b*cotB+a*cosB)+a*y3b*z1b*cotB/rb^3 -1.0 /(rb*
     (rb+z3b))*(y2 ^2*cosB^2 -a*z1b*cotB/rb*(rb*cosB+y3b)))); #b1/4.0/pi/c2*
 
 wx = (2.0*c2*((c1*Fib*cotB)+(y2 /(rb+y3b)*(2.0*
-    nu+a/rb))-(y2*cosB/(rb+z3b)*(cosB+a/rb)))+y2 *(y3b-a)/rb*(2.0*
-    nu/(rb+y3b)+a/rb^2)+y2 *(y3b-a)*cosB/(rb*(rb+z3b))*(1.0 -2.0*nu-
+    ν+a/rb))-(y2*cosB/(rb+z3b)*(cosB+a/rb)))+y2 *(y3b-a)/rb*(2.0*
+    ν/(rb+y3b)+a/rb^2)+y2 *(y3b-a)*cosB/(rb*(rb+z3b))*(1.0 -2.0*ν-
     (rb*cosB+y3b)/(rb+z3b)*(cosB+a/rb)-a*y3b/rb^2));  #b1/4.0/pi/c2*
 
-uy = (c1*((2.0*c2*cotB^2 +nu)*log(rb+y3b)-(2.0*
+uy = (c1*((2.0*c2*cotB^2 +ν)*log(rb+y3b)-(2.0*
     c2*cotB^2 +1.0)*cosB*log(rb+z3b))+c1/(rb+y3b)*(-c1*
-    y1*cotB+nu*y3b-a+a*y1*cotB/rb+y1 ^2 /(rb+y3b)*(nu+a/rb))-(1.0 -2.0*
-    nu)*cotB/(rb+z3b)*(z1b*cosB-a*(rb*sinB-y1)/(rb*cosB))-a*y1 *
-    (y3b-a)*cotB/rb^3 +(y3b-a)/(rb+y3b)*(2.0*nu+1.0 /rb*(c1*y1*
-    cotB+a)-y1 ^2 /(rb*(rb+y3b))*(2.0*nu+a/rb)-a*y1 ^2 /rb^3)+(y3b-a)*
+    y1*cotB+ν*y3b-a+a*y1*cotB/rb+y1 ^2 /(rb+y3b)*(ν+a/rb))-(1.0 -2.0*
+    ν)*cotB/(rb+z3b)*(z1b*cosB-a*(rb*sinB-y1)/(rb*cosB))-a*y1 *
+    (y3b-a)*cotB/rb^3 +(y3b-a)/(rb+y3b)*(2.0*ν+1.0 /rb*(c1*y1*
+    cotB+a)-y1 ^2 /(rb*(rb+y3b))*(2.0*ν+a/rb)-a*y1 ^2 /rb^3)+(y3b-a)*
     cotB/(rb+z3b)*(-cosB*sinB+a*y1 *y3b/(rb^3*cosB)+(rb*sinB-y1)/
     rb*(2.0*c2*cosB-(rb*cosB+y3b)/(rb+z3b)*(1.0 +a/(rb*cosB))))); #b2/4.0/pi/c2*
                 
 vy = (2.0*c2*c1*Fib*cotB^2 +c1*y2 /
-    (rb+y3b)*(-(1.0 -2.0*nu-a/rb)*cotB+y1 /(rb+y3b)*(nu+a/rb))-c1*
+    (rb+y3b)*(-(1.0 -2.0*ν-a/rb)*cotB+y1 /(rb+y3b)*(ν+a/rb))-c1*
     y2*cotB/(rb+z3b)*(1.0 +a/(rb*cosB))-a*y2 *(y3b-a)*cotB/rb^3 +y2 *
-    (y3b-a)/(rb*(rb+y3b))*(c1*cotB-2.0*nu*y1 /(rb+y3b)-a*y1 /rb*
+    (y3b-a)/(rb*(rb+y3b))*(c1*cotB-2.0*ν*y1 /(rb+y3b)-a*y1 /rb*
     (1.0 /rb+1.0 /(rb+y3b)))+y2 *(y3b-a)*cotB/(rb*(rb+z3b))*(-2.0*c2*
     cosB+(rb*cosB+y3b)/(rb+z3b)*(1.0 +a/(rb*cosB))+a*y3b/(rb^2*cosB))); #b2/4.0/pi/c2*
                 
 wy = (-2*c2*c1*cotB*(log(rb+y3b)-cosB*
-    log(rb+z3b))-2.0*c2*y1 /(rb+y3b)*(2.0*nu+a/rb)+2.0*c2*z1b/(rb+
-    z3b)*(cosB+a/rb)+(y3b-a)/rb*(c1*cotB-2.0*nu*y1 /(rb+y3b)-a*
+    log(rb+z3b))-2.0*c2*y1 /(rb+y3b)*(2.0*ν+a/rb)+2.0*c2*z1b/(rb+
+    z3b)*(cosB+a/rb)+(y3b-a)/rb*(c1*cotB-2.0*ν*y1 /(rb+y3b)-a*
     y1 /rb^2)-(y3b-a)/(rb+z3b)*(cosB*sinB+(rb*cosB+y3b)*cotB/rb*
     (2.0*c2*cosB-(rb*cosB+y3b)/(rb+z3b))+a/rb*(sinB-y3b*z1b/
     rb^2 -z1b*(rb*cosB+y3b)/(rb*(rb+z3b)))));  #b2/4.0/pi/c2*
@@ -1424,7 +1424,7 @@ return( ux::Float64,uy::Float64,uz::Float64,
 end
 
 
-function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,ImageFlag,Vnorm,Vstrike,Vdip,
+function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,G,λ,ν,ImageFlag,Vnorm,Vstrike,Vdip,
 					p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,Pos,Neg,casezLog,
 		 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
@@ -1456,40 +1456,40 @@ end
 
 # Calculate first angular dislocation contribution POS
 e13.=.-e13;
-TDSetupS(x,y,z,A,Dn,Dss,Dds,nu,p1,e13,
+TDSetupS(x,y,z,A,Dn,Dss,Dds,ν,p1,e13,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos); e13.=.-e13; #3allocs
  
 # Calculate second angular dislocation contribution
-TDSetupS(x,y,z,B,Dn,Dss,Dds,nu,p2,e12,
+TDSetupS(x,y,z,B,Dn,Dss,Dds,ν,p2,e12,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos); 
  
 # Calculate third angular dislocation contribution
-TDSetupS(x,y,z,C,Dn,Dss,Dds,nu,p3,e23,
+TDSetupS(x,y,z,C,Dn,Dss,Dds,ν,p3,e23,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos);
 
 
 # Calculate first angular dislocation contribution NEG
-TDSetupS(x,y,z,A,Dn,Dss,Dds,nu,p1,e13,
+TDSetupS(x,y,z,A,Dn,Dss,Dds,ν,p1,e13,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg);
 
 # Calculate second angular dislocation contribution
 e12.=.-e12;
-TDSetupS(x,y,z,B,Dn,Dss,Dds,nu,p2,e12,
+TDSetupS(x,y,z,B,Dn,Dss,Dds,ν,p2,e12,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg); e12.=.-e12;
  
 # Calculate third angular dislocation contribution 
 e23.=.-e23;
-TDSetupS(x,y,z,C,Dn,Dss,Dds,nu,p3,e23,
+TDSetupS(x,y,z,C,Dn,Dss,Dds,ν,p3,e23,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg); e23.=.-e23;
@@ -1546,7 +1546,7 @@ end
 end
 
 
-function TDSetupS(x,y,z,alpha,Dn,Dss,Dds,nu,TriVertex,SideVec,
+function TDSetupS(x,y,z,alpha,Dn,Dss,Dds,ν,TriVertex,SideVec,
 				 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 				 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 				 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Index)
@@ -1568,10 +1568,10 @@ cosA = cos(Ang);
 sinA = sin(Ang);
 
 #εxtra defs out of loop to speed it up
-E1=(1.0-nu); #Elastic cons
-E2=(2.0*nu+1.0);
+E1=(1.0-ν); #Elastic cons
+E2=(2.0*ν+1.0);
 cosA2=cosA^2;
-sinADE1=sinA/8/pi/(1-nu);
+sinADE1=sinA/8/pi/(1-ν);
 
 #Burger func constants
 E3=Dn/8/pi/E1;
@@ -1601,7 +1601,7 @@ for i=eachindex(Index)
 	 exzDn,exzDss,exzDds,
 	 eyzDn,eyzDss,eyzDds,
 	 rFi_rx,rFi_ry,rFi_rz) =
-	 AngDisStrain(x[Index[i]],Y,Z,cosA,sinA,nu,E2,sinADE1)
+	 AngDisStrain(x[Index[i]],Y,Z,cosA,sinA,ν,E2,sinADE1)
 
 	if Dn!=0 #Only doing if needed
 		exxdn= Dn*(rFi_rx)+E3* exxDn
@@ -1674,7 +1674,7 @@ end
 
 function AngDisStrain(x::Float64,y::Float64,z::Float64,
 					  cosA::Float64,sinA::Float64,
-					  nu::Float64,E2::Float64,sinADE1::Float64)
+					  ν::Float64,E2::Float64,sinADE1::Float64)
 # AngDisStrain calculates the strains associated with an angular 
 # dislocation in an elastic full-space.
 
@@ -1716,27 +1716,27 @@ rFi_rz = (sinA*x/r/(r-zeta))/4.0/pi;
 εxxBz =	(E2/Wr+x2/W2r2-x2/Wr3); #bz*x*sinADE1*
 		
 #εyy = 	
-εyyBx = ((1.0/Wr+S^2-y2/Wr3)*eta+E2*y/rz-y^3/r2z2-y^3/r3z-2*nu*cosA*S); #E3*
+εyyBx = ((1.0/Wr+S^2-y2/Wr3)*eta+E2*y/rz-y^3/r2z2-y^3/r3z-2*ν*cosA*S); #E3*
 εyyBy = (1.0/rz-y2/r2z2-y2/r3z+(1.0/Wr+S^2-y2/Wr3)*cosA); #by*(rFi_ry)-E4*!
 εyyBz = (1.0/Wr+S^2-y2/Wr3);#bz*x*sinADE1*
 
 #εzz = 
-εzzBx = (eta/W/r+eta*C^2-eta*z2/Wr3+y*z/r3+2.0*nu*sinA*C); #E3*
+εzzBx = (eta/W/r+eta*C^2-eta*z2/Wr3+y*z/r3+2.0*ν*sinA*C); #E3*
 εzzBy = ((1.0/Wr+C^2-z2/Wr3)*cosA+z/r3); #-E4*
 εzzBz = (1.0/Wr+C^2-z2/Wr3); #bz*(rFi_rz)+bz*x*sinADE1*
 	
 #εxy = 	
-εxyBx = (x*y2/r2z2-nu*x/rz+x*y2/r3z-nu*x*cosA/Wr+eta*x*S/Wr+eta*x*y/Wr3); #bx*(rFi_ry)/2-E3*
-εxyBy = (x2*y/r2z2-nu*y/rz+x2*y/r3z+nu*cosA*S+x2*y*cosA/Wr3+x2*cosA*S/Wr); #by*(rFi_rx)/2+E5*
-εxyBz =	(nu*S+x2*S/Wr+x2*y/Wr3);		#-bz*sinADE1*
+εxyBx = (x*y2/r2z2-ν*x/rz+x*y2/r3z-ν*x*cosA/Wr+eta*x*S/Wr+eta*x*y/Wr3); #bx*(rFi_ry)/2-E3*
+εxyBy = (x2*y/r2z2-ν*y/rz+x2*y/r3z+ν*cosA*S+x2*y*cosA/Wr3+x2*cosA*S/Wr); #by*(rFi_rx)/2+E5*
+εxyBz =	(ν*S+x2*S/Wr+x2*y/Wr3);		#-bz*sinADE1*
 
 #εxz = 		
-εxzBx =	(-x*y/r3+nu*x*sinA/Wr+eta*x*C/Wr+eta*x*z/Wr3); #bx*(rFi_rz)/2-E3*
-εxzBy = (-x2/r3+nu/r+nu*cosA*C+x2*z*cosA/Wr3+x2*cosA*C/Wr);#E5*
-εxzBz = (nu*C+x2*C/Wr+x2*z/Wr3);#    bz*(rFi_rx)/2+bz*sinADE1* (INNY BIT) ;
+εxzBx =	(-x*y/r3+ν*x*sinA/Wr+eta*x*C/Wr+eta*x*z/Wr3); #bx*(rFi_rz)/2-E3*
+εxzBy = (-x2/r3+ν/r+ν*cosA*C+x2*z*cosA/Wr3+x2*cosA*C/Wr);#E5*
+εxzBz = (ν*C+x2*C/Wr+x2*z/Wr3);#    bz*(rFi_rx)/2+bz*sinADE1* (INNY BIT) ;
 
 #εyz = 
-εyzBx = (y2/r3-nu/r-nu*cosA*C+nu*sinA*S+eta*sinA*cosA/W2-eta*(y*cosA+z*sinA)/W2r+eta*y*z/W2r2-eta*y*z/Wr3);	#E3*
+εyzBx = (y2/r3-ν/r-ν*cosA*C+ν*sinA*S+eta*sinA*cosA/W2-eta*(y*cosA+z*sinA)/W2r+eta*y*z/W2r2-eta*y*z/Wr3);	#E3*
 εyzBy = (y/r3+sinA*cosA^2/W2-cosA*(y*cosA+z*sinA)/W2r+y*z*cosA/W2r2-y*z*cosA/Wr3); #by*(rFi_rz)/2-E4*
 εyzBz =	(y*z/Wr3-sinA*cosA/W2+(y*cosA+z*sinA)/W2r-y*z/W2r2); #bz*(rFi_ry)/2-bz*x*sinADE1*
 
@@ -1750,7 +1750,7 @@ return(εxxBx::Float64,εxxBy::Float64,εxxBz::Float64,
 end
 
 
-function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,G,λ,ν,Vnorm,Vstrike,Vdip,
 			 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 			 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 			 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
@@ -1761,20 +1761,20 @@ function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,mu,lambda,nu,Vnorm,Vstrike,V
 
 # Calculate contribution of angular dislocation pair on each TD side 
 # P1P2
-AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P1,P2,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P1,P2,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
  
 # P2P3
-AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P2,P3,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P2,P3,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds); 
  
  
 # P3P1 
-AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P3,P1,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P3,P1,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
@@ -1782,7 +1782,7 @@ AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P3,P1,mu,lambda,nu,Vnorm,Vstrike,Vdip,
 end
 
 
-function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,mu,lambda,nu,Vnorm,Vstrike,Vdip,
+function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,G,λ,ν,Vnorm,Vstrike,Vdip,
 							εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 							εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 							εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
@@ -1860,7 +1860,7 @@ else
 			 #xx    yy    zz    xy    xz    yz
 			(v11Ax,v22Ax,v33Ax,v12Ax,v13Ax,v23Ax,  #Dn
 			 v11Ay,v22Ay,v33Ay,v12Ay,v13Ay,v23Ay,  #Dss
-			 v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(-x,-y,z,cosPib,sinPib,cotPib,nu,-PA[3]);
+			 v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(-x,-y,z,cosPib,sinPib,cotPib,ν,-PA[3]);
 			v13Ax = -v13Ax;
 			v13Ay = -v13Ay;
 			v13Az = -v13Az;
@@ -1877,7 +1877,7 @@ else
 			 #xx    yy    zz    xy    xz    yz
 			(v11Ax,v22Ax,v33Ax,v12Ax,v13Ax,v23Ax,  #Dn
 			 v11Ay,v22Ay,v33Ay,v12Ay,v13Ay,v23Ay,  #Dss
-			 v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(x,y,z,cosB,sinB,cotB,nu,-PA[3]);		
+			 v11Az,v22Az,v33Az,v12Az,v13Az,v23Az) = AngDisStrainFSC(x,y,z,cosB,sinB,cotB,ν,-PA[3]);		
 			Dn1__=Dn1__i;
 			Dn0ss=Dn0ssi;
 			Dn0ds=Dn0dsi;
@@ -1918,7 +1918,7 @@ else
 		#if I[i] == 1
 			(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
 			 v11By,v22By,v33By,v12By,v13By,v23By,
-			 v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(-x+y1B,-y+y2B,z-y3B,cosPib,sinPib,cotPib,nu,-PB[3]);
+			 v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(-x+y1B,-y+y2B,z-y3B,cosPib,sinPib,cotPib,ν,-PB[3]);
 			v13Bx = -v13Bx;
 			v13By = -v13By;
 			v13Bz = -v13Bz;
@@ -1928,7 +1928,7 @@ else
 		else
 			(v11Bx,v22Bx,v33Bx,v12Bx,v13Bx,v23Bx,
 			 v11By,v22By,v33By,v12By,v13By,v23By,
-			 v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(x-y1B,y-y2B,z-y3B,cosB,sinB,cotB,nu,-PB[3]);
+			 v11Bz,v22Bz,v33Bz,v12Bz,v13Bz,v23Bz) = AngDisStrainFSC(x-y1B,y-y2B,z-y3B,cosB,sinB,cotB,ν,-PB[3]);
 		end			 
 		 
 		if Dn!=0.0		
@@ -1996,7 +1996,7 @@ end
 
 function AngDisStrainFSC(y1::Float64,y2::Float64,y3::Float64,
 						 cosB::Float64,sinB::Float64,cotB::Float64,
-						 nu::Float64,a::Float64)
+						 ν::Float64,a::Float64)
 #AngDisStrainFSC calculates the harmonic function contribution to the
 #strains associated with an angular dislocation in an elastic half-space
 
@@ -2013,21 +2013,21 @@ rb=sqrt(rb2);
 W1=rb*cosB+y3b;
 W2=cosB+a/rb;
 W3=cosB+y3b/rb;
-W4=nu+a/rb;
-W5=2.0*nu+a/rb;
+W4=ν+a/rb;
+W5=2.0*ν+a/rb;
 W6=rb+y3b;
 W7=rb+z3b;
 W8=y3+a;
 W9=1.0+a/rb/cosB;
 
-N1=1.0-2.0*nu;
+N1=1.0-2.0*ν;
 
 #Partial derivatives of the Burgers' function
 rFib_ry2=z1b/rb/(rb+z3b)-y1/rb/(rb+y3b);#y2=xinADCS
 rFib_ry1=y2/rb/(rb+y3b)-cosB*y2/rb/(rb+z3b);#y1=yinADCS
 rFib_ry3=-sinB*y2/rb/(rb+z3b);#y3=zinADCS
 
-v11x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((1.0-W5)*cotB-
+v11x = (1.0/4*((-2.0+2.0*ν)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((1.0-W5)*cotB-
     y1/W6*W4)/rb*y1+N1*y2/W6*(a/rb^3*y1*cotB-1.0/W6*W4+y1^2/
     W6^2*W4/rb+y1^2/W6*a/rb^3)-N1*y2*cosB*cotB/W7^2*W2*(y1/
     rb-sinB)-N1*y2*cosB*cotB/W7*a/rb^3*y1-3.0*a*y2*W8*cotB/rb^5*
@@ -2035,44 +2035,44 @@ v11x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((1.0-W5)*cotB-
     rb2/W6^2*(-N1*cotB+y1/W6*W5+a*y1/rb2)*y1+y2*W8/rb/W6*
     (1.0/W6*W5-y1^2/W6^2*W5/rb-y1^2/W6*a/rb^3+a/rb2-2.0*a*y1^
     2.0/rb2^2)-y2*W8/rb^3/W7*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+
-    (2.0-2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)*y1-y2*W8/rb/
-    W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*
+    (2.0-2.0*ν)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)*y1-y2*W8/rb/
+    W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*ν)*(rb*sinB-y1)*
     cosB)-a*y3b*cosB*cotB/rb2)*(y1/rb-sinB)+y2*W8/rb/W7*(-cosB/
-    W7^2*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)*(y1/
+    W7^2*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*ν)*(rb*sinB-y1)*cosB)*(y1/
     rb-sinB)+cosB/W7*(1.0/rb*cosB*y1*(N1*cosB-a/rb)*cotB+W1*a/rb^
-    3.0*y1*cotB+(2.0-2.0*nu)*(1.0/rb*sinB*y1-1.0)*cosB)+2.0*a*y3b*cosB*cotB/
-    rb2^2*y1))/pi/(1.0-nu));
-v11y = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2+nu)/rb*y1/W6-((2.0-2.0*nu)*cotB^2+1.0)*
-    cosB*(y1/rb-sinB)/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*
+    3.0*y1*cotB+(2.0-2.0*ν)*(1.0/rb*sinB*y1-1.0)*cosB)+2.0*a*y3b*cosB*cotB/
+    rb2^2*y1))/pi/(1.0-ν));
+v11y = (1.0/4*(N1*(((2.0-2.0*ν)*cotB^2+ν)/rb*y1/W6-((2.0-2.0*ν)*cotB^2+1.0)*
+    cosB*(y1/rb-sinB)/W7)-N1/W6^2*(-N1*y1*cotB+ν*y3b-a+a*y1*
     cotB/rb+y1^2/W6*W4)/rb*y1+N1/W6*(-N1*cotB+a*cotB/rb-a*
     y1^2*cotB/rb^3+2.0*y1/W6*W4-y1^3/W6^2*W4/rb-y1^3/W6*a/
     rb^3)+N1*cotB/W7^2*(z1b*cosB-a*(rb*sinB-y1)/rb/cosB)*(y1/
     rb-sinB)-N1*cotB/W7*(cosB^2-a*(1.0/rb*sinB*y1-1.0)/rb/cosB+a*
     (rb*sinB-y1)/rb^3/cosB*y1)-a*W8*cotB/rb^3+3.0*a*y1^2*W8*
-    cotB/rb^5-W8/W6^2*(2.0*nu+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*
+    cotB/rb^5-W8/W6^2*(2.0*ν+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*
     W5-a*y1^2/rb^3)/rb*y1+W8/W6*(-1.0/rb^3*(N1*y1*cotB+a)*y1+
     1.0/rb*N1*cotB-2.0*y1/rb/W6*W5+y1^3/rb^3/W6*W5+y1^3/rb2/
     W6^2*W5+y1^3/rb2^2/W6*a-2.0*a/rb^3*y1+3.0*a*y1^3/rb^5)-W8*
     cotB/W7^2*(-cosB*sinB+a*y1*y3b/rb^3/cosB+(rb*sinB-y1)/rb*
-    ((2.0-2.0*nu)*cosB-W1/W7*W9))*(y1/rb-sinB)+W8*cotB/W7*(a*y3b/
+    ((2.0-2.0*ν)*cosB-W1/W7*W9))*(y1/rb-sinB)+W8*cotB/W7*(a*y3b/
     rb^3/cosB-3.0*a*y1^2*y3b/rb^5/cosB+(1.0/rb*sinB*y1-1.0)/rb*
-    ((2.0-2.0*nu)*cosB-W1/W7*W9)-(rb*sinB-y1)/rb^3*((2.0-2.0*nu)*cosB-W1/
+    ((2.0-2.0*ν)*cosB-W1/W7*W9)-(rb*sinB-y1)/rb^3*((2.0-2.0*ν)*cosB-W1/
     W7*W9)*y1+(rb*sinB-y1)/rb*(-1.0/rb*cosB*y1/W7*W9+W1/W7^2*
-    W9*(y1/rb-sinB)+W1/W7*a/rb^3/cosB*y1)))/pi/(1.0-nu));
+    W9*(y1/rb-sinB)+W1/W7*a/rb^3/cosB*y1)))/pi/(1.0-ν));
 v11z= (1.0/4*(N1*(-y2/W6^2*(1.0+a/rb)/rb*y1-y2/W6*a/rb^3*y1+y2*
     cosB/W7^2*W2*(y1/rb-sinB)+y2*cosB/W7*a/rb^3*y1)+y2*W8/
     rb^3*(a/rb2+1.0/W6)*y1-y2*W8/rb*(-2.0*a/rb2^2*y1-1.0/W6^2/
     rb*y1)-y2*W8*cosB/rb^3/W7*(W1/W7*W2+a*y3b/rb2)*y1-y2*W8*
     cosB/rb/W7^2*(W1/W7*W2+a*y3b/rb2)*(y1/rb-sinB)+y2*W8*
     cosB/rb/W7*(1.0/rb*cosB*y1/W7*W2-W1/W7^2*W2*(y1/rb-sinB)-
-    W1/W7*a/rb^3*y1-2.0*a*y3b/rb2^2*y1))/pi/(1.0-nu));
+    W1/W7*a/rb^3*y1-2.0*a*y3b/rb2^2*y1))/pi/(1.0-ν));
 	
-v22x = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2-nu)/rb*y2/W6-((2.0-2.0*nu)*cotB^2+1.0-
-    2.0*nu)*cosB/rb*y2/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+nu*y3b-a+y2^
+v22x = (1.0/4*(N1*(((2.0-2.0*ν)*cotB^2-ν)/rb*y2/W6-((2.0-2.0*ν)*cotB^2+1.0-
+    2.0*ν)*cosB/rb*y2/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+ν*y3b-a+y2^
     2.0/W6*W4)/rb*y2-N1/W6*(a*y1*cotB/rb^3*y2+2.0*y2/W6*W4-y2^
     3.0/W6^2*W4/rb-y2^3/W6*a/rb^3)+N1*z1b*cotB/W7^2*W2/rb*
     y2+N1*z1b*cotB/W7*a/rb^3*y2+3.0*a*y2*W8*cotB/rb^5*y1-W8/
-    W6^2*(-2.0*nu+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/
+    W6^2*(-2.0*ν+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/
     rb^3)/rb*y2+W8/W6*(-1.0/rb^3*(N1*y1*cotB-a)*y2+2.0*y2/rb/
     W6*W5-y2^3/rb^3/W6*W5-y2^3/rb2/W6^2*W5-y2^3/rb2^2/W6*
     a+2.0*a/rb^3*y2-3.0*a*y2^3/rb^5)-W8/W7^2*(cosB^2-1.0/rb*(N1*
@@ -2081,22 +2081,22 @@ v22x = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2-nu)/rb*y2/W6-((2.0-2.0*nu)*cotB^2+1.0-
     cosB)*y2-3.0*a*y3b*z1b*cotB/rb^5*y2+1.0/rb^3/W7*(y2^2*cosB^2-
     a*z1b*cotB/rb*W1)*y2+1.0/rb2/W7^2*(y2^2*cosB^2-a*z1b*cotB/
     rb*W1)*y2-1.0/rb/W7*(2.0*y2*cosB^2+a*z1b*cotB/rb^3*W1*y2-a*
-    z1b*cotB/rb2*cosB*y2)))/pi/(1.0-nu));
-v22y = (1.0/4*((2.0-2.0*nu)*N1*rFib_ry2*cotB^2+N1/W6*((W5-1.0)*cotB+y1/W6*
+    z1b*cotB/rb2*cosB*y2)))/pi/(1.0-ν));
+v22y = (1.0/4*((2.0-2.0*ν)*N1*rFib_ry2*cotB^2+N1/W6*((W5-1.0)*cotB+y1/W6*
     W4)-N1*y2^2/W6^2*((W5-1.0)*cotB+y1/W6*W4)/rb+N1*y2/W6*(-a/
     rb^3*y2*cotB-y1/W6^2*W4/rb*y2-y2/W6*a/rb^3*y1)-N1*cotB/
     W7*W9+N1*y2^2*cotB/W7^2*W9/rb+N1*y2^2*cotB/W7*a/rb^3/
     cosB-a*W8*cotB/rb^3+3.0*a*y2^2*W8*cotB/rb^5+W8/rb/W6*(N1*
-    cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-y2^2*W8/rb^3/W6*
-    (N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-y2^2*W8/rb2/W6^
-    2.0*(N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))+y2*W8/rb/W6*
-    (2.0*nu*y1/W6^2/rb*y2+a*y1/rb^3*(1.0/rb+1.0/W6)*y2-a*y1/rb*
-    (-1.0/rb^3*y2-1.0/W6^2/rb*y2))+W8*cotB/rb/W7*((-2.0+2.0*nu)*cosB+
-    W1/W7*W9+a*y3b/rb2/cosB)-y2^2*W8*cotB/rb^3/W7*((-2.0+2.0*nu)*
+    cotB-2.0*ν*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-y2^2*W8/rb^3/W6*
+    (N1*cotB-2.0*ν*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-y2^2*W8/rb2/W6^
+    2.0*(N1*cotB-2.0*ν*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))+y2*W8/rb/W6*
+    (2.0*ν*y1/W6^2/rb*y2+a*y1/rb^3*(1.0/rb+1.0/W6)*y2-a*y1/rb*
+    (-1.0/rb^3*y2-1.0/W6^2/rb*y2))+W8*cotB/rb/W7*((-2.0+2.0*ν)*cosB+
+    W1/W7*W9+a*y3b/rb2/cosB)-y2^2*W8*cotB/rb^3/W7*((-2.0+2.0*ν)*
     cosB+W1/W7*W9+a*y3b/rb2/cosB)-y2^2*W8*cotB/rb2/W7^2*((-2.0+
-    2.0*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)+y2*W8*cotB/rb/W7*(1.0/
+    2.0*ν)*cosB+W1/W7*W9+a*y3b/rb2/cosB)+y2*W8*cotB/rb/W7*(1.0/
     rb*cosB*y2/W7*W9-W1/W7^2*W9/rb*y2-W1/W7*a/rb^3/cosB*y2-
-    2.0*a*y3b/rb2^2/cosB*y2))/pi/(1.0-nu));
+    2.0*a*y3b/rb2^2/cosB*y2))/pi/(1.0-ν));
 v22z = (1.0/4*(N1*(-sinB/rb*y2/W7+y2/W6^2*(1.0+a/rb)/rb*y1+y2/W6*
     a/rb^3*y1-z1b/W7^2*W2/rb*y2-z1b/W7*a/rb^3*y2)-y2*W8/
     rb^3*(a/rb2+1.0/W6)*y1+y1*W8/rb*(-2.0*a/rb2^2*y2-1.0/W6^2/
@@ -2105,40 +2105,40 @@ v22z = (1.0/4*(N1*(-sinB/rb*y2/W7+y2/W6^2*(1.0+a/rb)/rb*y1+y2/W6*
     rb^3*y2-z1b/rb^3*(1.0+a*y3b/rb2)*y2-2.0*z1b/rb^5*a*y3b*y2+
     1.0/rb^3/W7*(y2^2*cosB*sinB-a*z1b/rb*W1)*y2+1.0/rb2/W7^2*
     (y2^2*cosB*sinB-a*z1b/rb*W1)*y2-1.0/rb/W7*(2.0*y2*cosB*sinB+a*
-    z1b/rb^3*W1*y2-a*z1b/rb2*cosB*y2)))/pi/(1.0-nu));
+    z1b/rb^3*W1*y2-a*z1b/rb2*cosB*y2)))/pi/(1.0-ν));
 
-v33x = (1.0/4*((2.0-2.0*nu)*(N1*rFib_ry3*cotB-y2/W6^2*W5*(y3b/rb+1.0)-
+v33x = (1.0/4*((2.0-2.0*ν)*(N1*rFib_ry3*cotB-y2/W6^2*W5*(y3b/rb+1.0)-
     1.0/2.0*y2/W6*a/rb^3*2.0*y3b+y2*cosB/W7^2*W2*W3+1.0/2.0*y2*cosB/W7*
-    a/rb^3*2.0*y3b)+y2/rb*(2.0*nu/W6+a/rb2)-1.0/2.0*y2*W8/rb^3*(2.0*
-    nu/W6+a/rb2)*2.0*y3b+y2*W8/rb*(-2.0*nu/W6^2*(y3b/rb+1.0)-a/
-    rb2^2*2.0*y3b)+y2*cosB/rb/W7*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)-
-    1.0/2.0*y2*W8*cosB/rb^3/W7*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)*2.0*
-    y3b-y2*W8*cosB/rb/W7^2*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)*W3+y2*
+    a/rb^3*2.0*y3b)+y2/rb*(2.0*ν/W6+a/rb2)-1.0/2.0*y2*W8/rb^3*(2.0*
+    ν/W6+a/rb2)*2.0*y3b+y2*W8/rb*(-2.0*ν/W6^2*(y3b/rb+1.0)-a/
+    rb2^2*2.0*y3b)+y2*cosB/rb/W7*(1.0-2.0*ν-W1/W7*W2-a*y3b/rb2)-
+    1.0/2.0*y2*W8*cosB/rb^3/W7*(1.0-2.0*ν-W1/W7*W2-a*y3b/rb2)*2.0*
+    y3b-y2*W8*cosB/rb/W7^2*(1.0-2.0*ν-W1/W7*W2-a*y3b/rb2)*W3+y2*
     W8*cosB/rb/W7*(-(cosB*y3b/rb+1.0)/W7*W2+W1/W7^2*W2*W3+1.0/2.0*
-    W1/W7*a/rb^3*2.0*y3b-a/rb2+a*y3b/rb2^2*2.0*y3b))/pi/(1.0-nu));
-v33y = (1.0/4*((-2.0+2.0*nu)*N1*cotB*((y3b/rb+1.0)/W6-cosB*W3/W7)+(2.0-2.0*nu)*
-    y1/W6^2*W5*(y3b/rb+1.0)+1.0/2.0*(2.0-2.0*nu)*y1/W6*a/rb^3*2.0*y3b+(2.0-
-    2.0*nu)*sinB/W7*W2-(2.0-2.0*nu)*z1b/W7^2*W2*W3-1.0/2.0*(2.0-2.0*nu)*z1b/
-    W7*a/rb^3*2.0*y3b+1.0/rb*(N1*cotB-2.0*nu*y1/W6-a*y1/rb2)-1.0/2.0*
-    W8/rb^3*(N1*cotB-2.0*nu*y1/W6-a*y1/rb2)*2.0*y3b+W8/rb*(2.0*nu*
+    W1/W7*a/rb^3*2.0*y3b-a/rb2+a*y3b/rb2^2*2.0*y3b))/pi/(1.0-ν));
+v33y = (1.0/4*((-2.0+2.0*ν)*N1*cotB*((y3b/rb+1.0)/W6-cosB*W3/W7)+(2.0-2.0*ν)*
+    y1/W6^2*W5*(y3b/rb+1.0)+1.0/2.0*(2.0-2.0*ν)*y1/W6*a/rb^3*2.0*y3b+(2.0-
+    2.0*ν)*sinB/W7*W2-(2.0-2.0*ν)*z1b/W7^2*W2*W3-1.0/2.0*(2.0-2.0*ν)*z1b/
+    W7*a/rb^3*2.0*y3b+1.0/rb*(N1*cotB-2.0*ν*y1/W6-a*y1/rb2)-1.0/2.0*
+    W8/rb^3*(N1*cotB-2.0*ν*y1/W6-a*y1/rb2)*2.0*y3b+W8/rb*(2.0*ν*
     y1/W6^2*(y3b/rb+1.0)+a*y1/rb2^2*2.0*y3b)-1.0/W7*(cosB*sinB+W1*
-    cotB/rb*((2.0-2.0*nu)*cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*
-    W1/rb/W7))+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2.0-2.0*nu)*cosB-W1/
+    cotB/rb*((2.0-2.0*ν)*cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*
+    W1/rb/W7))+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2.0-2.0*ν)*cosB-W1/
     W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7))*W3-W8/W7*((cosB*
-    y3b/rb+1.0)*cotB/rb*((2.0-2.0*nu)*cosB-W1/W7)-1.0/2.0*W1*cotB/rb^3*
-    ((2.0-2.0*nu)*cosB-W1/W7)*2.0*y3b+W1*cotB/rb*(-(cosB*y3b/rb+1.0)/W7+
+    y3b/rb+1.0)*cotB/rb*((2.0-2.0*ν)*cosB-W1/W7)-1.0/2.0*W1*cotB/rb^3*
+    ((2.0-2.0*ν)*cosB-W1/W7)*2.0*y3b+W1*cotB/rb*(-(cosB*y3b/rb+1.0)/W7+
     W1/W7^2*W3)-1.0/2.0*a/rb^3*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7)*
     2.0*y3b+a/rb*(-z1b/rb2-y3b*sinB/rb2+y3b*z1b/rb2^2*2.0*y3b-
     sinB*W1/rb/W7-z1b*(cosB*y3b/rb+1.0)/rb/W7+1.0/2.0*z1b*W1/rb^3/
-    W7*2.0*y3b+z1b*W1/rb/W7^2*W3)))/pi/(1.0-nu));
-v33z =(1.0/4*((2.0-2.0*nu)*rFib_ry3-(2.0-2.0*nu)*y2*sinB/W7^2*W2*W3-1.0/2.0*
-    (2.0-2.0*nu)*y2*sinB/W7*a/rb^3*2.0*y3b+y2*sinB/rb/W7*(1.0+W1/W7*
+    W7*2.0*y3b+z1b*W1/rb/W7^2*W3)))/pi/(1.0-ν));
+v33z =(1.0/4*((2.0-2.0*ν)*rFib_ry3-(2.0-2.0*ν)*y2*sinB/W7^2*W2*W3-1.0/2.0*
+    (2.0-2.0*ν)*y2*sinB/W7*a/rb^3*2.0*y3b+y2*sinB/rb/W7*(1.0+W1/W7*
     W2+a*y3b/rb2)-1.0/2.0*y2*W8*sinB/rb^3/W7*(1.0+W1/W7*W2+a*y3b/
     rb2)*2.0*y3b-y2*W8*sinB/rb/W7^2*(1.0+W1/W7*W2+a*y3b/rb2)*W3+
     y2*W8*sinB/rb/W7*((cosB*y3b/rb+1.0)/W7*W2-W1/W7^2*W2*W3-
-    1.0/2.0*W1/W7*a/rb^3*2.0*y3b+a/rb2-a*y3b/rb2^2*2.0*y3b))/pi/(1.0-nu));
+    1.0/2.0*W1/W7*a/rb^3*2.0*y3b+a/rb2-a*y3b/rb2^2*2.0*y3b))/pi/(1.0-ν));
 
-v12x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1.0-W5)*cotB-y1/
+v12x = (1.0/4*((-2.0+2.0*ν)*N1*rFib_ry2*cotB^2+N1/W6*((1.0-W5)*cotB-y1/
     W6*W4)-N1*y2^2/W6^2*((1.0-W5)*cotB-y1/W6*W4)/rb+N1*y2/W6*
     (a/rb^3*y2*cotB+y1/W6^2*W4/rb*y2+y2/W6*a/rb^3*y1)+N1*
     cosB*cotB/W7*W2-N1*y2^2*cosB*cotB/W7^2*W2/rb-N1*y2^2*cosB*
@@ -2147,21 +2147,21 @@ v12x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1.0-W5)*cotB-y1/
     cotB+y1/W6*W5+a*y1/rb2)-y2^2*W8/rb2/W6^2*(-N1*cotB+y1/
     W6*W5+a*y1/rb2)+y2*W8/rb/W6*(-y1/W6^2*W5/rb*y2-y2/W6*
     a/rb^3*y1-2.0*a*y1/rb2^2*y2)+W8/rb/W7*(cosB/W7*(W1*(N1*
-    cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/
+    cosB-a/rb)*cotB+(2.0-2.0*ν)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/
     rb2)-y2^2*W8/rb^3/W7*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-
-    2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)-y2^2*W8/rb2/
-    W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*
+    2.0*ν)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)-y2^2*W8/rb2/
+    W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*ν)*(rb*sinB-y1)*
     cosB)-a*y3b*cosB*cotB/rb2)+y2*W8/rb/W7*(-cosB/W7^2*(W1*
-    (N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)/rb*y2+cosB/
+    (N1*cosB-a/rb)*cotB+(2.0-2.0*ν)*(rb*sinB-y1)*cosB)/rb*y2+cosB/
     W7*(1.0/rb*cosB*y2*(N1*cosB-a/rb)*cotB+W1*a/rb^3*y2*cotB+(2.0-2.0*
-    nu)/rb*sinB*y2*cosB)+2.0*a*y3b*cosB*cotB/rb2^2*y2))/pi/(1.0-nu))+
-	(1.0/4*(N1*(((2.0-2.0*nu)*cotB^2-nu)/rb*y1/W6-((2.0-2.0*nu)*cotB^2+1.0-   
-    2.0*nu)*cosB*(y1/rb-sinB)/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+nu*y3b-
+    ν)/rb*sinB*y2*cosB)+2.0*a*y3b*cosB*cotB/rb2^2*y2))/pi/(1.0-ν))+
+	(1.0/4*(N1*(((2.0-2.0*ν)*cotB^2-ν)/rb*y1/W6-((2.0-2.0*ν)*cotB^2+1.0-   
+    2.0*ν)*cosB*(y1/rb-sinB)/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+ν*y3b-
     a+y2^2/W6*W4)/rb*y1-N1/W6*((1.0-W5)*cotB+a*y1^2*cotB/rb^3-
     y2^2/W6^2*W4/rb*y1-y2^2/W6*a/rb^3*y1)-N1*cosB*cotB/W7*
     W2+N1*z1b*cotB/W7^2*W2*(y1/rb-sinB)+N1*z1b*cotB/W7*a/rb^
     3.0*y1-a*W8*cotB/rb^3+3.0*a*y1^2*W8*cotB/rb^5-W8/W6^2*(-2.0*
-    nu+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/rb^3)/rb*
+    ν+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/rb^3)/rb*
     y1+W8/W6*(-1.0/rb^3*(N1*y1*cotB-a)*y1+1.0/rb*N1*cotB-y2^2/
     rb^3/W6*W5*y1-y2^2/rb2/W6^2*W5*y1-y2^2/rb2^2/W6*a*y1-
     3.0*a*y2^2/rb^5*y1)-W8/W7^2*(cosB^2-1.0/rb*(N1*z1b*cotB+a*
@@ -2171,36 +2171,36 @@ v12x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry2*cotB^2+N1/W6*((1.0-W5)*cotB-y1/
     rb^5*y1+1.0/rb^3/W7*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*y1+1.0/
     rb/W7^2*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*(y1/rb-sinB)-1.0/rb/
     W7*(-a*cosB*cotB/rb*W1+a*z1b*cotB/rb^3*W1*y1-a*z1b*cotB/
-    rb2*cosB*y1)))/pi/(1.0-nu));
+    rb2*cosB*y1)))/pi/(1.0-ν));
 	
-v12y = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2+nu)/rb*y2/W6-((2.0-2.0*nu)*cotB^2+1.0)*
-    cosB/rb*y2/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*cotB/rb+
+v12y = (1.0/4*(N1*(((2.0-2.0*ν)*cotB^2+ν)/rb*y2/W6-((2.0-2.0*ν)*cotB^2+1.0)*
+    cosB/rb*y2/W7)-N1/W6^2*(-N1*y1*cotB+ν*y3b-a+a*y1*cotB/rb+
     y1^2/W6*W4)/rb*y2+N1/W6*(-a*y1*cotB/rb^3*y2-y1^2/W6^
     2.0*W4/rb*y2-y1^2/W6*a/rb^3*y2)+N1*cotB/W7^2*(z1b*cosB-a*
     (rb*sinB-y1)/rb/cosB)/rb*y2-N1*cotB/W7*(-a/rb2*sinB*y2/
     cosB+a*(rb*sinB-y1)/rb^3/cosB*y2)+3.0*a*y2*W8*cotB/rb^5*y1-
-    W8/W6^2*(2.0*nu+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*y1^2/
+    W8/W6^2*(2.0*ν+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*y1^2/
     rb^3)/rb*y2+W8/W6*(-1.0/rb^3*(N1*y1*cotB+a)*y2+y1^2/rb^
     3.0/W6*W5*y2+y1^2/rb2/W6^2*W5*y2+y1^2/rb2^2/W6*a*y2+3.0*
     a*y1^2/rb^5*y2)-W8*cotB/W7^2*(-cosB*sinB+a*y1*y3b/rb^3/
-    cosB+(rb*sinB-y1)/rb*((2.0-2.0*nu)*cosB-W1/W7*W9))/rb*y2+W8*cotB/
-    W7*(-3.0*a*y1*y3b/rb^5/cosB*y2+1.0/rb2*sinB*y2*((2.0-2.0*nu)*cosB-
-    W1/W7*W9)-(rb*sinB-y1)/rb^3*((2.0-2.0*nu)*cosB-W1/W7*W9)*y2+(rb*
+    cosB+(rb*sinB-y1)/rb*((2.0-2.0*ν)*cosB-W1/W7*W9))/rb*y2+W8*cotB/
+    W7*(-3.0*a*y1*y3b/rb^5/cosB*y2+1.0/rb2*sinB*y2*((2.0-2.0*ν)*cosB-
+    W1/W7*W9)-(rb*sinB-y1)/rb^3*((2.0-2.0*ν)*cosB-W1/W7*W9)*y2+(rb*
     sinB-y1)/rb*(-1.0/rb*cosB*y2/W7*W9+W1/W7^2*W9/rb*y2+W1/W7*
-    a/rb^3/cosB*y2)))/pi/(1.0-nu))+
-	(1.0/4*((2.0-2.0*nu)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((W5-1.0)*cotB+
+    a/rb^3/cosB*y2)))/pi/(1.0-ν))+
+	(1.0/4*((2.0-2.0*ν)*N1*rFib_ry1*cotB^2-N1*y2/W6^2*((W5-1.0)*cotB+
     y1/W6*W4)/rb*y1+N1*y2/W6*(-a/rb^3*y1*cotB+1.0/W6*W4-y1^
     2.0/W6^2*W4/rb-y1^2/W6*a/rb^3)+N1*y2*cotB/W7^2*W9*(y1/
     rb-sinB)+N1*y2*cotB/W7*a/rb^3/cosB*y1+3.0*a*y2*W8*cotB/rb^
-    5*y1-y2*W8/rb^3/W6*(N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/
-    W6))*y1-y2*W8/rb2/W6^2*(N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/
-    rb+1.0/W6))*y1+y2*W8/rb/W6*(-2.0*nu/W6+2.0*nu*y1^2/W6^2/rb-a/
+    5*y1-y2*W8/rb^3/W6*(N1*cotB-2.0*ν*y1/W6-a*y1/rb*(1.0/rb+1.0/
+    W6))*y1-y2*W8/rb2/W6^2*(N1*cotB-2.0*ν*y1/W6-a*y1/rb*(1.0/
+    rb+1.0/W6))*y1+y2*W8/rb/W6*(-2.0*ν/W6+2.0*ν*y1^2/W6^2/rb-a/
     rb*(1.0/rb+1.0/W6)+a*y1^2/rb^3*(1.0/rb+1.0/W6)-a*y1/rb*(-1.0/
-    rb^3*y1-1.0/W6^2/rb*y1))-y2*W8*cotB/rb^3/W7*((-2.0+2.0*nu)*
+    rb^3*y1-1.0/W6^2/rb*y1))-y2*W8*cotB/rb^3/W7*((-2.0+2.0*ν)*
     cosB+W1/W7*W9+a*y3b/rb2/cosB)*y1-y2*W8*cotB/rb/W7^2*((-2.0+
-    2.0*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)*(y1/rb-sinB)+y2*W8*
+    2.0*ν)*cosB+W1/W7*W9+a*y3b/rb2/cosB)*(y1/rb-sinB)+y2*W8*
     cotB/rb/W7*(1.0/rb*cosB*y1/W7*W9-W1/W7^2*W9*(y1/rb-sinB)-
-    W1/W7*a/rb^3/cosB*y1-2.0*a*y3b/rb2^2/cosB*y1))/pi/(1.0-nu));
+    W1/W7*a/rb^3/cosB*y1-2.0*a*y3b/rb2^2/cosB*y1))/pi/(1.0-ν));
 	
 v12z = (1.0/4*(N1*(1.0/W6*(1.0+a/rb)-y2^2/W6^2*(1.0+a/rb)/rb-y2^2/
     W6*a/rb^3-cosB/W7*W2+y2^2*cosB/W7^2*W2/rb+y2^2*cosB/W7*
@@ -2209,7 +2209,7 @@ v12z = (1.0/4*(N1*(1.0/W6*(1.0+a/rb)-y2^2/W6^2*(1.0+a/rb)/rb-y2^2/
     (W1/W7*W2+a*y3b/rb2)-y2^2*W8*cosB/rb^3/W7*(W1/W7*W2+a*
     y3b/rb2)-y2^2*W8*cosB/rb2/W7^2*(W1/W7*W2+a*y3b/rb2)+y2*
     W8*cosB/rb/W7*(1.0/rb*cosB*y2/W7*W2-W1/W7^2*W2/rb*y2-W1/
-    W7*a/rb^3*y2-2.0*a*y3b/rb2^2*y2))/pi/(1.0-nu))+  
+    W7*a/rb^3*y2-2.0*a*y3b/rb2^2*y2))/pi/(1.0-ν))+  
     (1.0/4*(N1*(-sinB*(y1/rb-sinB)/W7-1.0/W6*(1.0+a/rb)+y1^2/W6^
     2.0*(1.0+a/rb)/rb+y1^2/W6*a/rb^3+cosB/W7*W2-z1b/W7^2*W2*
     (y1/rb-sinB)-z1b/W7*a/rb^3*y1)+W8/rb*(a/rb2+1.0/W6)-y1^2*
@@ -2220,9 +2220,9 @@ v12z = (1.0/4*(N1*(1.0/W6*(1.0+a/rb)-y2^2/W6^2*(1.0+a/rb)/rb-y2^2/
     rb2)*y1-2.0*z1b/rb^5*a*y3b*y1+1.0/rb^3/W7*(y2^2*cosB*sinB-a*
     z1b/rb*W1)*y1+1.0/rb/W7^2*(y2^2*cosB*sinB-a*z1b/rb*W1)*
     (y1/rb-sinB)-1.0/rb/W7*(-a*cosB/rb*W1+a*z1b/rb^3*W1*y1-a*
-    z1b/rb2*cosB*y1)))/pi/(1.0-nu));
+    z1b/rb2*cosB*y1)))/pi/(1.0-ν));
 
-v13x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1.0-W5)*
+v13x = (1.0/4*((-2.0+2.0*ν)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1.0-W5)*
     cotB-y1/W6*W4)*(y3b/rb+1.0)+N1*y2/W6*(1.0/2.0*a/rb^3*2.0*y3b*cotB+
     y1/W6^2*W4*(y3b/rb+1.0)+1.0/2.0*y1/W6*a/rb^3*2.0*y3b)-N1*y2*cosB*
     cotB/W7^2*W2*W3-1.0/2.0*N1*y2*cosB*cotB/W7*a/rb^3*2.0*y3b+a/
@@ -2231,57 +2231,57 @@ v13x = (1.0/4*((-2.0+2.0*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((1.0-W5)*
     W6*W5+a*y1/rb2)*2.0*y3b-y2*W8/rb/W6^2*(-N1*cotB+y1/W6*W5+
     a*y1/rb2)*(y3b/rb+1.0)+y2*W8/rb/W6*(-y1/W6^2*W5*(y3b/rb+
     1.0)-1.0/2.0*y1/W6*a/rb^3*2.0*y3b-a*y1/rb2^2*2.0*y3b)+y2/rb/W7*
-    (cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)-
+    (cosB/W7*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*ν)*(rb*sinB-y1)*cosB)-
     a*y3b*cosB*cotB/rb2)-1.0/2.0*y2*W8/rb^3/W7*(cosB/W7*(W1*(N1*
-    cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/
+    cosB-a/rb)*cotB+(2.0-2.0*ν)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/
     rb2)*2.0*y3b-y2*W8/rb/W7^2*(cosB/W7*(W1*(N1*cosB-a/rb)*cotB+
-    (2.0-2.0*nu)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)*W3+y2*W8/rb/
-    W7*(-cosB/W7^2*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*nu)*(rb*sinB-y1)*
+    (2.0-2.0*ν)*(rb*sinB-y1)*cosB)-a*y3b*cosB*cotB/rb2)*W3+y2*W8/rb/
+    W7*(-cosB/W7^2*(W1*(N1*cosB-a/rb)*cotB+(2.0-2.0*ν)*(rb*sinB-y1)*
     cosB)*W3+cosB/W7*((cosB*y3b/rb+1.0)*(N1*cosB-a/rb)*cotB+1.0/2.0*W1*
-    a/rb^3*2.0*y3b*cotB+1.0/2.0*(2.0-2.0*nu)/rb*sinB*2.0*y3b*cosB)-a*cosB*
-    cotB/rb2+a*y3b*cosB*cotB/rb2^2*2.0*y3b))/pi/(1.0-nu))+
-	(1.0/4*((2.0-2.0*nu)*(N1*rFib_ry1*cotB-y1/W6^2*W5/rb*y2-y2/W6*
+    a/rb^3*2.0*y3b*cotB+1.0/2.0*(2.0-2.0*ν)/rb*sinB*2.0*y3b*cosB)-a*cosB*
+    cotB/rb2+a*y3b*cosB*cotB/rb2^2*2.0*y3b))/pi/(1.0-ν))+
+	(1.0/4*((2.0-2.0*ν)*(N1*rFib_ry1*cotB-y1/W6^2*W5/rb*y2-y2/W6*
     a/rb^3*y1+y2*cosB/W7^2*W2*(y1/rb-sinB)+y2*cosB/W7*a/rb^
-    3.0*y1)-y2*W8/rb^3*(2.0*nu/W6+a/rb2)*y1+y2*W8/rb*(-2.0*nu/W6^
-    2.0/rb*y1-2.0*a/rb2^2*y1)-y2*W8*cosB/rb^3/W7*(1.0-2.0*nu-W1/W7*
-    W2-a*y3b/rb2)*y1-y2*W8*cosB/rb/W7^2*(1.0-2.0*nu-W1/W7*W2-a*
+    3.0*y1)-y2*W8/rb^3*(2.0*ν/W6+a/rb2)*y1+y2*W8/rb*(-2.0*ν/W6^
+    2.0/rb*y1-2.0*a/rb2^2*y1)-y2*W8*cosB/rb^3/W7*(1.0-2.0*ν-W1/W7*
+    W2-a*y3b/rb2)*y1-y2*W8*cosB/rb/W7^2*(1.0-2.0*ν-W1/W7*W2-a*
     y3b/rb2)*(y1/rb-sinB)+y2*W8*cosB/rb/W7*(-1.0/rb*cosB*y1/W7*
     W2+W1/W7^2*W2*(y1/rb-sinB)+W1/W7*a/rb^3*y1+2.0*a*y3b/rb2^
-    2.0*y1))/pi/(1.0-nu));
+    2.0*y1))/pi/(1.0-ν));
 	
-v13y = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2+nu)*(y3b/rb+1.0)/W6-((2.0-2.0*nu)*cotB^
-    2.0+1.0)*cosB*W3/W7)-N1/W6^2*(-N1*y1*cotB+nu*y3b-a+a*y1*cotB/
-    rb+y1^2/W6*W4)*(y3b/rb+1.0)+N1/W6*(nu-1.0/2.0*a*y1*cotB/rb^3*2.0*
+v13y = (1.0/4*(N1*(((2.0-2.0*ν)*cotB^2+ν)*(y3b/rb+1.0)/W6-((2.0-2.0*ν)*cotB^
+    2.0+1.0)*cosB*W3/W7)-N1/W6^2*(-N1*y1*cotB+ν*y3b-a+a*y1*cotB/
+    rb+y1^2/W6*W4)*(y3b/rb+1.0)+N1/W6*(ν-1.0/2.0*a*y1*cotB/rb^3*2.0*
     y3b-y1^2/W6^2*W4*(y3b/rb+1.0)-1.0/2.0*y1^2/W6*a/rb^3*2.0*y3b)+
     N1*cotB/W7^2*(z1b*cosB-a*(rb*sinB-y1)/rb/cosB)*W3-N1*cotB/
     W7*(cosB*sinB-1.0/2.0*a/rb2*sinB*2.0*y3b/cosB+1.0/2.0*a*(rb*sinB-y1)/
     rb^3/cosB*2.0*y3b)-a/rb^3*y1*cotB+3.0/2.0*a*y1*W8*cotB/rb^5*2.0*
-    y3b+1.0/W6*(2.0*nu+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*y1^2/
-    rb^3)-W8/W6^2*(2.0*nu+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*
+    y3b+1.0/W6*(2.0*ν+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*y1^2/
+    rb^3)-W8/W6^2*(2.0*ν+1.0/rb*(N1*y1*cotB+a)-y1^2/rb/W6*W5-a*
     y1^2/rb^3)*(y3b/rb+1.0)+W8/W6*(-1.0/2.0/rb^3*(N1*y1*cotB+a)*2.0*
     y3b+1.0/2.0*y1^2/rb^3/W6*W5*2.0*y3b+y1^2/rb/W6^2*W5*(y3b/rb+
     1.0)+1.0/2.0*y1^2/rb2^2/W6*a*2.0*y3b+3.0/2.0*a*y1^2/rb^5*2.0*y3b)+
     cotB/W7*(-cosB*sinB+a*y1*y3b/rb^3/cosB+(rb*sinB-y1)/rb*((2.0-
-    2.0*nu)*cosB-W1/W7*W9))-W8*cotB/W7^2*(-cosB*sinB+a*y1*y3b/rb^
-    3.0/cosB+(rb*sinB-y1)/rb*((2.0-2.0*nu)*cosB-W1/W7*W9))*W3+W8*cotB/
+    2.0*ν)*cosB-W1/W7*W9))-W8*cotB/W7^2*(-cosB*sinB+a*y1*y3b/rb^
+    3.0/cosB+(rb*sinB-y1)/rb*((2.0-2.0*ν)*cosB-W1/W7*W9))*W3+W8*cotB/
     W7*(a/rb^3/cosB*y1-3.0/2.0*a*y1*y3b/rb^5/cosB*2.0*y3b+1.0/2.0/
-    rb2*sinB*2.0*y3b*((2.0-2.0*nu)*cosB-W1/W7*W9)-1.0/2.0*(rb*sinB-y1)/rb^
-    3.0*((2.0-2.0*nu)*cosB-W1/W7*W9)*2.0*y3b+(rb*sinB-y1)/rb*(-(cosB*y3b/
+    rb2*sinB*2.0*y3b*((2.0-2.0*ν)*cosB-W1/W7*W9)-1.0/2.0*(rb*sinB-y1)/rb^
+    3.0*((2.0-2.0*ν)*cosB-W1/W7*W9)*2.0*y3b+(rb*sinB-y1)/rb*(-(cosB*y3b/
     rb+1.0)/W7*W9+W1/W7^2*W9*W3+1.0/2.0*W1/W7*a/rb^3/cosB*2.0*
-    y3b)))/pi/(1.0-nu))+
-	(1.0/4*((-2.0+2.0*nu)*N1*cotB*(1.0/rb*y1/W6-cosB*(y1/rb-sinB)/W7)-
-    (2.0-2.0*nu)/W6*W5+(2.0-2.0*nu)*y1^2/W6^2*W5/rb+(2.0-2.0*nu)*y1^2/W6*
-    a/rb^3+(2.0-2.0*nu)*cosB/W7*W2-(2.0-2.0*nu)*z1b/W7^2*W2*(y1/rb-
-    sinB)-(2.0-2.0*nu)*z1b/W7*a/rb^3*y1-W8/rb^3*(N1*cotB-2.0*nu*y1/
-    W6-a*y1/rb2)*y1+W8/rb*(-2.0*nu/W6+2.0*nu*y1^2/W6^2/rb-a/rb2+
-    2.0*a*y1^2/rb2^2)+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2.0-2.0*nu)*
+    y3b)))/pi/(1.0-ν))+
+	(1.0/4*((-2.0+2.0*ν)*N1*cotB*(1.0/rb*y1/W6-cosB*(y1/rb-sinB)/W7)-
+    (2.0-2.0*ν)/W6*W5+(2.0-2.0*ν)*y1^2/W6^2*W5/rb+(2.0-2.0*ν)*y1^2/W6*
+    a/rb^3+(2.0-2.0*ν)*cosB/W7*W2-(2.0-2.0*ν)*z1b/W7^2*W2*(y1/rb-
+    sinB)-(2.0-2.0*ν)*z1b/W7*a/rb^3*y1-W8/rb^3*(N1*cotB-2.0*ν*y1/
+    W6-a*y1/rb2)*y1+W8/rb*(-2.0*ν/W6+2.0*ν*y1^2/W6^2/rb-a/rb2+
+    2.0*a*y1^2/rb2^2)+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2.0-2.0*ν)*
     cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7))*(y1/rb-
-    sinB)-W8/W7*(1.0/rb2*cosB*y1*cotB*((2.0-2.0*nu)*cosB-W1/W7)-W1*
-    cotB/rb^3*((2.0-2.0*nu)*cosB-W1/W7)*y1+W1*cotB/rb*(-1.0/rb*cosB*
+    sinB)-W8/W7*(1.0/rb2*cosB*y1*cotB*((2.0-2.0*ν)*cosB-W1/W7)-W1*
+    cotB/rb^3*((2.0-2.0*ν)*cosB-W1/W7)*y1+W1*cotB/rb*(-1.0/rb*cosB*
     y1/W7+W1/W7^2*(y1/rb-sinB))-a/rb^3*(sinB-y3b*z1b/rb2-
     z1b*W1/rb/W7)*y1+a/rb*(-y3b*cosB/rb2+2.0*y3b*z1b/rb2^2*y1-
     cosB*W1/rb/W7-z1b/rb2*cosB*y1/W7+z1b*W1/rb^3/W7*y1+z1b*
-    W1/rb/W7^2*(y1/rb-sinB))))/pi/(1.0-nu));
+    W1/rb/W7^2*(y1/rb-sinB))))/pi/(1.0-ν));
 	
 v13z = (1.0/4*(N1*(-y2/W6^2*(1.0+a/rb)*(y3b/rb+1.0)-1.0/2.0*y2/W6*a/
     rb^3*2.0*y3b+y2*cosB/W7^2*W2*W3+1.0/2.0*y2*cosB/W7*a/rb^3*2.0*
@@ -2291,22 +2291,22 @@ v13z = (1.0/4*(N1*(-y2/W6^2*(1.0+a/rb)*(y3b/rb+1.0)-1.0/2.0*y2/W6*a/
     W7*W2+a*y3b/rb2)*2.0*y3b-y2*W8*cosB/rb/W7^2*(W1/W7*W2+a*
     y3b/rb2)*W3+y2*W8*cosB/rb/W7*((cosB*y3b/rb+1.0)/W7*W2-W1/
     W7^2*W2*W3-1.0/2.0*W1/W7*a/rb^3*2.0*y3b+a/rb2-a*y3b/rb2^2*2.0*
-    y3b))/pi/(1.0-nu))+
-    (1.0/4*((2.0-2.0*nu)*rFib_ry1-(2.0-2.0*nu)*y2*sinB/W7^2*W2*(y1/rb-
-    sinB)-(2.0-2.0*nu)*y2*sinB/W7*a/rb^3*y1-y2*W8*sinB/rb^3/W7*(1.0+
+    y3b))/pi/(1.0-ν))+
+    (1.0/4*((2.0-2.0*ν)*rFib_ry1-(2.0-2.0*ν)*y2*sinB/W7^2*W2*(y1/rb-
+    sinB)-(2.0-2.0*ν)*y2*sinB/W7*a/rb^3*y1-y2*W8*sinB/rb^3/W7*(1.0+
     W1/W7*W2+a*y3b/rb2)*y1-y2*W8*sinB/rb/W7^2*(1.0+W1/W7*W2+
     a*y3b/rb2)*(y1/rb-sinB)+y2*W8*sinB/rb/W7*(1.0/rb*cosB*y1/
     W7*W2-W1/W7^2*W2*(y1/rb-sinB)-W1/W7*a/rb^3*y1-2.0*a*y3b/
-    rb2^2*y1))/pi/(1.0-nu));
+    rb2^2*y1))/pi/(1.0-ν));
 
-v23x = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2-nu)*(y3b/rb+1.0)/W6-((2.0-2.0*nu)*
-    cotB^2+1.0-2.0*nu)*cosB*W3/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+nu*y3b-a+
+v23x = (1.0/4*(N1*(((2.0-2.0*ν)*cotB^2-ν)*(y3b/rb+1.0)/W6-((2.0-2.0*ν)*
+    cotB^2+1.0-2.0*ν)*cosB*W3/W7)+N1/W6^2*(y1*cotB*(1.0-W5)+ν*y3b-a+
     y2^2/W6*W4)*(y3b/rb+1.0)-N1/W6*(1.0/2.0*a*y1*cotB/rb^3*2.0*y3b+
-    nu-y2^2/W6^2*W4*(y3b/rb+1.0)-1.0/2.0*y2^2/W6*a/rb^3*2.0*y3b)-N1*
+    ν-y2^2/W6^2*W4*(y3b/rb+1.0)-1.0/2.0*y2^2/W6*a/rb^3*2.0*y3b)-N1*
     sinB*cotB/W7*W2+N1*z1b*cotB/W7^2*W2*W3+1.0/2.0*N1*z1b*cotB/W7*
     a/rb^3*2.0*y3b-a/rb^3*y1*cotB+3.0/2.0*a*y1*W8*cotB/rb^5*2.0*y3b+
-    1.0/W6*(-2.0*nu+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/
-    rb^3)-W8/W6^2*(-2.0*nu+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+
+    1.0/W6*(-2.0*ν+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+a*y2^2/
+    rb^3)-W8/W6^2*(-2.0*ν+1.0/rb*(N1*y1*cotB-a)+y2^2/rb/W6*W5+
     a*y2^2/rb^3)*(y3b/rb+1.0)+W8/W6*(-1.0/2.0/rb^3*(N1*y1*cotB-a)*
     2.0*y3b-1.0/2.0*y2^2/rb^3/W6*W5*2.0*y3b-y2^2/rb/W6^2*W5*(y3b/
     rb+1.0)-1.0/2.0*y2^2/rb2^2/W6*a*2.0*y3b-3.0/2.0*a*y2^2/rb^5*2.0*y3b)+
@@ -2319,44 +2319,44 @@ v23x = (1.0/4*(N1*(((2.0-2.0*nu)*cotB^2-nu)*(y3b/rb+1.0)/W6-((2.0-2.0*nu)*
     3.0/W7*(y2^2*cosB^2-a*z1b*cotB/rb*W1)*2.0*y3b+1.0/rb/W7^2*(y2^
     2.0*cosB^2-a*z1b*cotB/rb*W1)*W3-1.0/rb/W7*(-a*sinB*cotB/rb*W1+
     1.0/2.0*a*z1b*cotB/rb^3*W1*2.0*y3b-a*z1b*cotB/rb*(cosB*y3b/rb+
-    1.0))))/pi/(1.0-nu))+
-	(1.0/4*((2.0-2.0*nu)*(N1*rFib_ry2*cotB+1.0/W6*W5-y2^2/W6^2*W5/
+    1.0))))/pi/(1.0-ν))+
+	(1.0/4*((2.0-2.0*ν)*(N1*rFib_ry2*cotB+1.0/W6*W5-y2^2/W6^2*W5/
     rb-y2^2/W6*a/rb^3-cosB/W7*W2+y2^2*cosB/W7^2*W2/rb+y2^2*
-    cosB/W7*a/rb^3)+W8/rb*(2.0*nu/W6+a/rb2)-y2^2*W8/rb^3*(2.0*
-    nu/W6+a/rb2)+y2*W8/rb*(-2.0*nu/W6^2/rb*y2-2.0*a/rb2^2*y2)+
-    W8*cosB/rb/W7*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)-y2^2*W8*cosB/
-    rb^3/W7*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)-y2^2*W8*cosB/rb2/W7^
-    2.0*(1.0-2.0*nu-W1/W7*W2-a*y3b/rb2)+y2*W8*cosB/rb/W7*(-1.0/rb*
+    cosB/W7*a/rb^3)+W8/rb*(2.0*ν/W6+a/rb2)-y2^2*W8/rb^3*(2.0*
+    ν/W6+a/rb2)+y2*W8/rb*(-2.0*ν/W6^2/rb*y2-2.0*a/rb2^2*y2)+
+    W8*cosB/rb/W7*(1.0-2.0*ν-W1/W7*W2-a*y3b/rb2)-y2^2*W8*cosB/
+    rb^3/W7*(1.0-2.0*ν-W1/W7*W2-a*y3b/rb2)-y2^2*W8*cosB/rb2/W7^
+    2.0*(1.0-2.0*ν-W1/W7*W2-a*y3b/rb2)+y2*W8*cosB/rb/W7*(-1.0/rb*
     cosB*y2/W7*W2+W1/W7^2*W2/rb*y2+W1/W7*a/rb^3*y2+2.0*a*
-    y3b/rb2^2*y2))/pi/(1.0-nu));
+    y3b/rb2^2*y2))/pi/(1.0-ν));
 	
-v23y = (1.0/4*((2.0-2.0*nu)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((W5-1.0)*cotB+
+v23y = (1.0/4*((2.0-2.0*ν)*N1*rFib_ry3*cotB^2-N1*y2/W6^2*((W5-1.0)*cotB+
     y1/W6*W4)*(y3b/rb+1.0)+N1*y2/W6*(-1.0/2.0*a/rb^3*2.0*y3b*cotB-y1/
     W6^2*W4*(y3b/rb+1.0)-1.0/2.0*y1/W6*a/rb^3*2.0*y3b)+N1*y2*cotB/
     W7^2*W9*W3+1.0/2.0*N1*y2*cotB/W7*a/rb^3/cosB*2.0*y3b-a/rb^3*
     y2*cotB+3.0/2.0*a*y2*W8*cotB/rb^5*2.0*y3b+y2/rb/W6*(N1*cotB-2.0*
-    nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-1.0/2.0*y2*W8/rb^3/W6*(N1*
-    cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))*2.0*y3b-y2*W8/rb/W6^
-    2.0*(N1*cotB-2.0*nu*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))*(y3b/rb+1.0)+y2*
-    W8/rb/W6*(2.0*nu*y1/W6^2*(y3b/rb+1.0)+1.0/2.0*a*y1/rb^3*(1.0/rb+
+    ν*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))-1.0/2.0*y2*W8/rb^3/W6*(N1*
+    cotB-2.0*ν*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))*2.0*y3b-y2*W8/rb/W6^
+    2.0*(N1*cotB-2.0*ν*y1/W6-a*y1/rb*(1.0/rb+1.0/W6))*(y3b/rb+1.0)+y2*
+    W8/rb/W6*(2.0*ν*y1/W6^2*(y3b/rb+1.0)+1.0/2.0*a*y1/rb^3*(1.0/rb+
     1.0/W6)*2.0*y3b-a*y1/rb*(-1.0/2.0/rb^3*2.0*y3b-1.0/W6^2*(y3b/rb+
-    1.0)))+y2*cotB/rb/W7*((-2.0+2.0*nu)*cosB+W1/W7*W9+a*y3b/rb2/cosB)-
-    1.0/2.0*y2*W8*cotB/rb^3/W7*((-2.0+2.0*nu)*cosB+W1/W7*W9+a*y3b/
-    rb2/cosB)*2.0*y3b-y2*W8*cotB/rb/W7^2*((-2.0+2.0*nu)*cosB+W1/W7*
+    1.0)))+y2*cotB/rb/W7*((-2.0+2.0*ν)*cosB+W1/W7*W9+a*y3b/rb2/cosB)-
+    1.0/2.0*y2*W8*cotB/rb^3/W7*((-2.0+2.0*ν)*cosB+W1/W7*W9+a*y3b/
+    rb2/cosB)*2.0*y3b-y2*W8*cotB/rb/W7^2*((-2.0+2.0*ν)*cosB+W1/W7*
     W9+a*y3b/rb2/cosB)*W3+y2*W8*cotB/rb/W7*((cosB*y3b/rb+1.0)/
     W7*W9-W1/W7^2*W9*W3-1.0/2.0*W1/W7*a/rb^3/cosB*2.0*y3b+a/rb2/
-    cosB-a*y3b/rb2^2/cosB*2.0*y3b))/pi/(1.0-nu))+
-	(1.0/4*((-2.0+2.0*nu)*N1*cotB*(1.0/rb*y2/W6-cosB/rb*y2/W7)+(2.0-
-    2.0*nu)*y1/W6^2*W5/rb*y2+(2.0-2.0*nu)*y1/W6*a/rb^3*y2-(2.0-2.0*
-    nu)*z1b/W7^2*W2/rb*y2-(2.0-2.0*nu)*z1b/W7*a/rb^3*y2-W8/rb^
-    3.0*(N1*cotB-2.0*nu*y1/W6-a*y1/rb2)*y2+W8/rb*(2.0*nu*y1/W6^2/
+    cosB-a*y3b/rb2^2/cosB*2.0*y3b))/pi/(1.0-ν))+
+	(1.0/4*((-2.0+2.0*ν)*N1*cotB*(1.0/rb*y2/W6-cosB/rb*y2/W7)+(2.0-
+    2.0*ν)*y1/W6^2*W5/rb*y2+(2.0-2.0*ν)*y1/W6*a/rb^3*y2-(2.0-2.0*
+    ν)*z1b/W7^2*W2/rb*y2-(2.0-2.0*ν)*z1b/W7*a/rb^3*y2-W8/rb^
+    3.0*(N1*cotB-2.0*ν*y1/W6-a*y1/rb2)*y2+W8/rb*(2.0*ν*y1/W6^2/
     rb*y2+2.0*a*y1/rb2^2*y2)+W8/W7^2*(cosB*sinB+W1*cotB/rb*((2.0-
-    2.0*nu)*cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7))/
-    rb*y2-W8/W7*(1.0/rb2*cosB*y2*cotB*((2.0-2.0*nu)*cosB-W1/W7)-W1*
-    cotB/rb^3*((2.0-2.0*nu)*cosB-W1/W7)*y2+W1*cotB/rb*(-cosB/rb*
+    2.0*ν)*cosB-W1/W7)+a/rb*(sinB-y3b*z1b/rb2-z1b*W1/rb/W7))/
+    rb*y2-W8/W7*(1.0/rb2*cosB*y2*cotB*((2.0-2.0*ν)*cosB-W1/W7)-W1*
+    cotB/rb^3*((2.0-2.0*ν)*cosB-W1/W7)*y2+W1*cotB/rb*(-cosB/rb*
     y2/W7+W1/W7^2/rb*y2)-a/rb^3*(sinB-y3b*z1b/rb2-z1b*W1/
     rb/W7)*y2+a/rb*(2.0*y3b*z1b/rb2^2*y2-z1b/rb2*cosB*y2/W7+
-    z1b*W1/rb^3/W7*y2+z1b*W1/rb2/W7^2*y2)))/pi/(1.0-nu));
+    z1b*W1/rb^3/W7*y2+z1b*W1/rb2/W7^2*y2)))/pi/(1.0-ν));
 	
 v23z = (1.0/4*(N1*(-sinB*W3/W7+y1/W6^2*(1.0+a/rb)*(y3b/rb+1.0)+
     1.0/2.0*y1/W6*a/rb^3*2.0*y3b+sinB/W7*W2-z1b/W7^2*W2*W3-1.0/2.0*
@@ -2370,13 +2370,13 @@ v23z = (1.0/4*(N1*(-sinB*W3/W7+y1/W6^2*(1.0+a/rb)*(y3b/rb+1.0)+
     y3b/rb2^2*2.0*y3b)+1.0/2.0/rb^3/W7*(y2^2*cosB*sinB-a*z1b/rb*
     W1)*2.0*y3b+1.0/rb/W7^2*(y2^2*cosB*sinB-a*z1b/rb*W1)*W3-1.0/
     rb/W7*(-a*sinB/rb*W1+1.0/2.0*a*z1b/rb^3*W1*2.0*y3b-a*z1b/rb*
-    (cosB*y3b/rb+1.0))))/pi/(1.0-nu))+
-    (1.0/4*((2.0-2.0*nu)*rFib_ry2+(2.0-2.0*nu)*sinB/W7*W2-(2.0-2.0*nu)*y2^2*
-    sinB/W7^2*W2/rb-(2.0-2.0*nu)*y2^2*sinB/W7*a/rb^3+W8*sinB/rb/
+    (cosB*y3b/rb+1.0))))/pi/(1.0-ν))+
+    (1.0/4*((2.0-2.0*ν)*rFib_ry2+(2.0-2.0*ν)*sinB/W7*W2-(2.0-2.0*ν)*y2^2*
+    sinB/W7^2*W2/rb-(2.0-2.0*ν)*y2^2*sinB/W7*a/rb^3+W8*sinB/rb/
     W7*(1.0+W1/W7*W2+a*y3b/rb2)-y2^2*W8*sinB/rb^3/W7*(1.0+W1/
     W7*W2+a*y3b/rb2)-y2^2*W8*sinB/rb2/W7^2*(1.0+W1/W7*W2+a*
     y3b/rb2)+y2*W8*sinB/rb/W7*(1.0/rb*cosB*y2/W7*W2-W1/W7^2*
-    W2/rb*y2-W1/W7*a/rb^3*y2-2.0*a*y3b/rb2^2*y2))/pi/(1.0-nu));
+    W2/rb*y2-W1/W7*a/rb^3*y2-2.0*a*y3b/rb2^2*y2))/pi/(1.0-ν));
 	
 
 return(v11x::Float64,v22x::Float64,v33x::Float64,v12x::Float64,v13x::Float64,v23x::Float64,

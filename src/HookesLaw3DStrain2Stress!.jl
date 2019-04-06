@@ -42,13 +42,13 @@ function HookesLaw3DStrain2Stress!( Exx,Eyy,Ezz,Exy,Exz,Eyz,λ,G )
 #  Copyright 2017, Tim Davis, Potsdam University\The University of Aberdeen
 
 #Preassign
-Sxx=copy(Exx)
-Syy=copy(Sxx);
+Sxx=Exx;
+Syy=Eyy;
 Szz=Ezz;
 Sxy=Exy;
 Sxz=Exz;
 Syz=Eyz;
-G2=2*G
+G2=2.0*G
 for i=1:size(Sxx,1)
 	for j=1:size(Sxx,2)
 		#Equation 7.131 and 7.132 in Pollard and Fletcher 2005 Book. 
@@ -61,7 +61,7 @@ for i=1:size(Sxx,1)
 		Syz[i,j]= G2*Eyz[i,j];     
 	end
 end
-return(Sxx,Syy,Szz,Sxy,Sxz,Syz) 
+return Sxx,Syy,Szz,Sxy,Sxz,Syz
 
 end
 
