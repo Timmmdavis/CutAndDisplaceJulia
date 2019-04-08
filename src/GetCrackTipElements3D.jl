@@ -77,10 +77,7 @@ function GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 
 #Do for P1 P2: (Function at base of file)
 (Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P1P2FreeFlg,P1,P2,P3,MidPoint,FaceNormalVector);
-
-
 #Put in structure
-#TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlag;FeM2ELe;IntAng;
 FeP1P2S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0,0,0);
 
 

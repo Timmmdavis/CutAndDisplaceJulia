@@ -64,11 +64,15 @@ function HeronsFormula(a,b,c)
 #Calculation for Heron's formula.    
 #Inputs a b c are the edge lengths of the triangle    
 
-#Half the length of the triangle perimeter.
-HPerim=(a.+b.+c)./2; 
+HPerim=zeros(size(a))
+Area=zeros(size(a))
+for i=1:length(a)
+	#Half the length of the triangle perimeter.
+	HPerim[i]=(a[i]+b[i]+c[i])/2; 
+	#Calculates the area.
+	Area[i]=sqrt(HPerim[i]*(HPerim[i]-a[i])*(HPerim[i]-b[i])*(HPerim[i]-c[i]));
+end
 
-#Calculates the area.
-Area=sqrt.(HPerim.*(HPerim.-a).*(HPerim.-b).*(HPerim.-c));    
 return Area,HPerim
 
 end
@@ -77,10 +81,14 @@ function Distance3D(x1,y1,z1,x2,y2,z2)
 #Internal function to find the edge lengths in 3D, Pythagoras therom.
 #Inputs are xyz locations of two points in 3D space. 
 
-#Squared Cartesian lengths.
-SquaredLengths=(x1.-x2).^2+(y1.-y2).^2+(z1.-z2).^2;
-#Sqrt.
-Length=sqrt.(SquaredLengths); 
+Length=zeros(size(x1))
+for i=1:length(x1)
+	#Squared Cartesian lengths.
+	SquaredLengths=(x1[i]-x2[i])^2+(y1[i]-y2[i])^2+(z1[i]-z2[i])^2;
+	#Sqrt.
+	Length[i]=sqrt(SquaredLengths); 
+end
+
 return Length
 
 end

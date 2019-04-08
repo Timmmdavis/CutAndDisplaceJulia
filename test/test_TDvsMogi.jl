@@ -3,7 +3,7 @@
 #Start creating vars for function: 
 println("creating func vars")
 
-SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SphereUniformDistribution_Eq2000FacesSides.ts")
+SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SphereUniformDistributionON_46Faces.ts")
 (Points,Triangles)=CutAndDisplaceJulia.GoCadAsciiReader(SurfaceDir)
 
 SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SphereFix4.ts")

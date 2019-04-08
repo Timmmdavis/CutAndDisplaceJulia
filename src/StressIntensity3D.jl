@@ -1,4 +1,4 @@
-function StressIntensity3D(Dn,Dss,Dds,mu,nu,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S)
+function StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S)
 #StressIntensity3d: Returns the value of stress intensity at elements at
 #               the edge of a mesh. Outputs are structures as in inputs but
 #               these contain the stress intensity approximation for the
@@ -9,16 +9,16 @@ function StressIntensity3D(Dn,Dss,Dds,mu,nu,FaceNormalVector,FeP1P2S,FeP1P3S,FeP
 #
 # usage:
 # [FeP1P2S,FeP1P3S,FeP2P3S] = StressIntensity3d...
-# (Dn,Dss,Dds,E,nu,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S)
+# (Dn,Dss,Dds,E,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S)
 #
 # Arguments: (input)
 #  Dss,Dds,Dn       - Vectors that describe how much the elements displace in the
 #                     normal (Dn) and strike slip (Dss) and dipslip (Dds)
 #                     directions on the elements.
 #
-#       mu          - Shear modulus.
+#       G          - Shear modulus.
 #
-#       nu          - The Poisson's ratio.
+#       ν          - The Poisson's ratio.
 #
 # FaceNormalVector  - The direction cosines, CosAx (Nx), CosAy and CosAz in 
 #                     a list for each element. 
@@ -62,13 +62,13 @@ function StressIntensity3D(Dn,Dss,Dds,mu,nu,FaceNormalVector,FeP1P2S,FeP1P3S,FeP
 # [FeP1P2S,FeP1P3S,FeP2P3S]=GetCrackTipElements3d...
 # (Triangles,Points,MidPoint,P1,P2,P3);
 # #Just open crack:
-# mu=5;           	
-# nu = 0.25;     
+# G=5;           	
+# ν = 0.25;     
 # Dn=ones(size(P1(:,1))); 
 # Dss=zeros(size(Dn));
 # Dds=zeros(size(Dn));
 # [FeP1P2S,FeP1P3S,FeP2P3S] = StressIntensity3d...
-#    (Dn,Dss,Dds,mu,nu,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
+#    (Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
 # K1=sum([Dds,FeP1P2S.K1,FeP1P3S.K1,FeP2P3S.K1]','omitnan')';
 # PlotSlipDistribution3d(Triangles,Points,[],K1);
 #
@@ -76,11 +76,11 @@ function StressIntensity3D(Dn,Dss,Dds,mu,nu,FaceNormalVector,FeP1P2S,FeP1P3S,FeP
 #  Copyright 2017, Tim Davis, Potsdam University
 
 #Call internal function (base of file)
-(K1_P1P2,K2_P1P2,K3_P1P2)=K1K2K3TriDislocation(FeP1P2S.FreeFlg,mu,nu,Dn,FeP1P2S.FeM2Ev,FeP1P2S.FeEv,FeP1P2S.FeM2ELe,FeP1P2S.IntAng,FaceNormalVector,Dss,Dds);
+(K1_P1P2,K2_P1P2,K3_P1P2)=K1K2K3TriDislocation(FeP1P2S.FreeFlg,G,ν,Dn,FeP1P2S.FeM2Ev,FeP1P2S.FeEv,FeP1P2S.FeM2ELe,FeP1P2S.IntAng,FaceNormalVector,Dss,Dds);
 #Call internal function (base of file)
-(K1_P1P3,K2_P1P3,K3_P1P3)=K1K2K3TriDislocation(FeP1P3S.FreeFlg,mu,nu,Dn,FeP1P3S.FeM2Ev,FeP1P3S.FeEv,FeP1P3S.FeM2ELe,FeP1P3S.IntAng,FaceNormalVector,Dss,Dds);
+(K1_P1P3,K2_P1P3,K3_P1P3)=K1K2K3TriDislocation(FeP1P3S.FreeFlg,G,ν,Dn,FeP1P3S.FeM2Ev,FeP1P3S.FeEv,FeP1P3S.FeM2ELe,FeP1P3S.IntAng,FaceNormalVector,Dss,Dds);
 #Call internal function (base of file)
-(K1_P2P3,K2_P2P3,K3_P2P3)=K1K2K3TriDislocation(FeP2P3S.FreeFlg,mu,nu,Dn,FeP2P3S.FeM2Ev,FeP2P3S.FeEv,FeP2P3S.FeM2ELe,FeP2P3S.IntAng,FaceNormalVector,Dss,Dds);
+(K1_P2P3,K2_P2P3,K3_P2P3)=K1K2K3TriDislocation(FeP2P3S.FreeFlg,G,ν,Dn,FeP2P3S.FeM2Ev,FeP2P3S.FeEv,FeP2P3S.FeM2ELe,FeP2P3S.IntAng,FaceNormalVector,Dss,Dds);
 
 #Put results into the strucs:
 #P1P2
@@ -102,7 +102,7 @@ end
 
 
 
-function K1K2K3TriDislocation(LocFlg,mu,nu,Dn,FeM2Ev,FeEv,FeM2ELe,IntAng,FaceNormalVector,Dss,Dds)
+function K1K2K3TriDislocation(LocFlg,G,ν,Dn,FeM2Ev,FeEv,FeM2ELe,IntAng,FaceNormalVector,Dss,Dds)
 #Calculates K1 K2 and K3 on connections that are free edges using simple
 #formulas based on the displacement discontinuity of the triangle the
 #connection borders. 
@@ -216,9 +216,9 @@ DAlongEd[Vect2.==true]=-DAlongEd[Vect2.==true];
 h=FeM2ELe[LocFlg]; #Currently whole tri length FePc2ELe[LocFlg]/2
 
 #Approximate stress intensities. 
-K1[LocFlg]=(mu*sqrt(pi)./(2*sqrt.(h).*(1-nu))).*Dn[LocFlg];
-K2[LocFlg]=(mu*sqrt(pi)./(2*sqrt.(h).*(1-nu))).*DMid2Ed;
-K3[LocFlg]=(mu*sqrt(pi)./(2*sqrt.(h).*(1-nu))).*DAlongEd.*(1-nu);       
+K1[LocFlg]=(G*sqrt(pi)./(2*sqrt.(h).*(1-ν))).*Dn[LocFlg];
+K2[LocFlg]=(G*sqrt(pi)./(2*sqrt.(h).*(1-ν))).*DMid2Ed;
+K3[LocFlg]=(G*sqrt(pi)./(2*sqrt.(h).*(1-ν))).*DAlongEd.*(1-ν);       
 
 ## And correcting errors in formulas
 

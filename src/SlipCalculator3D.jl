@@ -44,6 +44,22 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	Stress=BoundaryConditions.Stresses;
 	Traction=BoundaryConditions.Tractions;
 	BoundaryConditions=MixedBoundaryConditions(Stress,Traction);
+
+	#Before calling slip calc check if we will overcome the frictional strength
+    (Tn,Tds,Tss)= CalculateNormalAndShearTractions3D( Stress.σxx,Stress.σyy,Stress.σzz,Stress.σxy,Stress.σxz,Stress.σyz,FaceNormalVector );
+    #Adding tractions imported into function if these also exist.    
+    Tn=Tn+Traction.Tn;
+    Tds=Tds+Traction.Tds;
+    Tss=Tss+Traction.Tss;
+    FricRes=Tn.*µ; #Negative is compression
+    if all(-abs.(Tss).>FricRes) && all(-abs.(Tds).>FricRes)
+    	println("Cant overcome frictional strength")
+        Dn=zeros(size(Tn))
+        Dss=zeros(size(Tn))
+        Dds=zeros(size(Tn))
+        return Dn,Dss,Dds
+    end
+
 	#Call default slip calc to get inf matrix and displacements due to BoundaryConditions
 	(Dn, Dss, Dds, A, b)=SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
 
