@@ -6,6 +6,9 @@
 This repository contains CutAndDisplace working in Julia. 
 The test folder contains some contains some simple benchmarks against analytical solutions in hope of catching regressions (run through Travis on each commit). Running through the full benchmarks in https://github.com/Timmmdavis/CutAndDisplace would be desirable to catch issues related to coordinates, sign etc. 
 
+To get the path:
+> println(pathof(CutAndDisplaceJulia))
+
 In src the main functions are 
 LD.jl 
 and 
