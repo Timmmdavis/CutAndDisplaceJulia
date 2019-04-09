@@ -21,7 +21,7 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 
 	#Extract remote stresses
 	if typeof(BoundaryConditions)==MixedBoundaryConditionsFriction
-		BoundaryConditions=BoundaryConditions.Stresses
+		BoundaryConditions=BoundaryConditions.MixedBoundaryConditions.Stresses
 	end
 	σxx∞=BoundaryConditions.σxx;
 	σyy∞=BoundaryConditions.σyy;

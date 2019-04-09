@@ -42,7 +42,8 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	µ=BoundaryConditions.FrictionParameters.µ;
 	Sf=BoundaryConditions.FrictionParameters.Sf;
 	BoundaryConditions=BoundaryConditions.MixedBoundaryConditions
-
+	Stress=BoundaryConditions.Stresses;
+	Traction=BoundaryConditions.Tractions;
 	#Before calling slip calc check if we will overcome the frictional strength
     (Tn,Tds,Tss)= CalculateNormalAndShearTractions3D( Stress.σxx,Stress.σyy,Stress.σzz,Stress.σxy,Stress.σxz,Stress.σyz,FaceNormalVector );
     #Adding tractions imported into function if these also exist.    
