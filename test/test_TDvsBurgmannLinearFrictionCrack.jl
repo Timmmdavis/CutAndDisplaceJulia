@@ -45,7 +45,7 @@ Traction=Tractions(zeros(n),zeros(n),zeros(n))
 µ=0.0;
 Sf  = abs.(MidPoint[:,1]); 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(Stress,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditionsFriction(MixedBoundaryConditions(Stress,Traction),Friction);
 #Calculate slip on faces
 (DnF, DssF, DdsF)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 

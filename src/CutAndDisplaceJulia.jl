@@ -4,6 +4,7 @@ using Profile
 using DelimitedFiles
 using Statistics
 using FischerNewton
+using Interpolations
 
 #Init some types for elastics (ElasticConstantsCheck)
 struct PoissonsRatio; 	ν::Float64;		end 
@@ -25,7 +26,9 @@ struct Disps;		Ux;	Uy;	Uz; end
 struct Tractions;	Tn;Tss;Tds; 			 end 	
 struct FrictionParameters; 	   µ;Sf;  		     	end
 struct MixedBoundaryConditions;Stresses;Tractions;  end
-struct MixedBoundaryConditionsFriction;Stresses;Tractions;FrictionParameters;	end
+struct MixedBoundaryConditionsFriction;MixedBoundaryConditions;FrictionParameters;	end
+struct MixedBoundaryConditionsFluidVolume;MixedBoundaryConditions;Volumes;	end
+
 
 println("I would prefer not be mutable")
 mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3; 	end
@@ -38,6 +41,7 @@ export
 	FrictionParameters,
 	MixedBoundaryConditions,
 	MixedBoundaryConditionsFriction,
+	MixedBoundaryConditionsFluidVolume,
 	TriangleEdges
 
 println("I would also prefer not be mutable")
@@ -89,6 +93,11 @@ include("RotateObject3DAllignVectors.jl")
 include("StressIntensity3D.jl")
 include("CalculateNormalShearTraction2D.jl")
 include("Tada_StrIntInclinedPennyTension.jl")
+
+
+#Guessing interp1 doesnt exist
+include("WalkAndInterp.jl")
+include("ComputePressurisedCrackDn.jl")
 
 
 include("SlipCalculator3D.jl")

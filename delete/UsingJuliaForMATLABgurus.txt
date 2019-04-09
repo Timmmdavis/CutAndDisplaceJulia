@@ -75,6 +75,25 @@ ID = Matrix{Float64}(I,n,n)
 #nan (Creating matrix of NaNs)
 FeLe=Array{Float64,2}(undef, n,1);FeLe=fill!(FeLe, NaN)
 
+#Like using MATLABS interp1
+x=(2:1:50)
+y=x.^2
+y5=finterp1(x,y,5)
+ans=25
+to:
+using Interpolations
+x=(1:1:50) #MUST BE UNIFORMLY SPACED 1:n
+y=x.^2
+itp = interpolate(y, BSpline(Linear()))
+ax=itp(5)
+#If you dont start from 1 i.e.
+start=4;
+x=(start:1:50) #MUST BE UNIFORMLY SPACED 1:n
+y=x.^2
+itp = interpolate(y, BSpline(Linear()))
+ax=itp(5+(1-start))
+ans=25
+
 
 Checking alloctions:
 XX=@allocated MyFunc()

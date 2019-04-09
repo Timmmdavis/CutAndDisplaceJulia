@@ -89,7 +89,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Sxz is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
@@ -104,7 +105,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Syz is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
@@ -119,7 +121,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Szz is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
@@ -147,7 +150,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Sxy is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
@@ -162,7 +166,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Syz is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
@@ -177,7 +182,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Syy is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
@@ -204,7 +210,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Sxy is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
@@ -219,7 +226,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Sxz is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
@@ -236,7 +244,8 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Sxx is satisfied")
 
 Friction=FrictionParameters(µ,Sf);
-BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Traction,Friction);
+BoundaryConditions=MixedBoundaryConditions(BoundaryConditions,Traction)
+BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
