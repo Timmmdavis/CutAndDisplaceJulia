@@ -1,4 +1,4 @@
-function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,DesiredVal)
+function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 
 	#ObjFunc - pointer to the objective func
 	#MaxVal  - Maximum value out of func
@@ -20,19 +20,20 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,DesiredVal)
 	    X[i]=ObjFunc(Y[i]);
 	end
 
-	#Remove 0 before interpolation
-	Indx=find(X.==0);
-	Y[Indx[1:end-1]]=[];
-	X[Indx[1:end-1]]=[];
+	#@info X Y Desired_X
+	
+	##Remove 0 before interpolation
+	Y=convert(Array,Y)#So we can work on it
+	Indx=findall(X.==0.0);
+	X=X[length(Indx):end]
+	Y=Y[length(Indx):end]
 
 	#using Interpolations
-	start=minimum(X);
-	itp = interpolate(Y, BSpline(Linear()))
-	X_Good=itp(DesiredVal+(1-start))
+	itp = interpolate((X,),Y, Gridded(Linear()))
+	Yv=itp(Desired_X)
 	#MATLAB way:
-	#X_Good = interp1(X,Y,DesiredVal,'linear');
+	#Y_Got = interp1(X,Y,X_Desired,'linear');
+	@info Yv
 
-
-
-	return XGood
+	return Yv
 end

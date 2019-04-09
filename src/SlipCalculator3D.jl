@@ -193,6 +193,8 @@ end
 #Friction:
 function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions::MixedBoundaryConditionsFluidVolume,FractureFlag)
 
+	println("To do: FractureFlag passed 2 slop cal")
+
 	#Compute the tractions acting on the crack
 	n=length(FaceNormalVector[:,1]);
 
@@ -200,8 +202,9 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	Volume=BoundaryConditions.Volumes;
 	BoundaryConditions=BoundaryConditions.MixedBoundaryConditions
 
+	FixedEls=zeros(size(FractureFlag));
 	#Call default slip calc to get inf matrix and displacements due to BoundaryConditions
-	(Dn, Dss, Dds, A, b)=SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureFlag)
+	(Dn, Dss, Dds, A, b)=SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
 
 	#Adding some scaling parameters (Improves solver performance). 
 	#We scale by the average triangle size and the shear mod. 
@@ -212,11 +215,9 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	#Therefore each col in [C] represents how much each 
 	#element must displace to cause a traction
 	#of one unit at element i.
-	C = inv(A);	
+	Ainv = inv(A);	
 
-	D=C*b;
-
-	Norm=max(abs(b[1:n,:])); #Maximum Tn acting on els to close these 
+	Norm=maximum(abs.(b[1:n,:])); #Maximum Tn acting on els to close these 
 
 	if any(FractureFlag.>1) #More than two cracks, need sim anneal
         NumOfFractures=maximum(FractureFlag);
@@ -232,50 +233,46 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         ## Option 1:
         #Objective function to pass to the simulated annealing solver: 
         ReturnVol=0; #Flag that means the obj func returns volumes 
-        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FrakFlag,B,Ainv,Scl,Area,Norm,NUM,Volume,ReturnVol);
+        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol);
         #Start value (multiplied by the scalar). 
         #Run the annealing. 
         (InternalPressures,fval) = anneal(ObjectiveFunction, X0);
     	OptimalPressure=Tractions(InternalPressures,[],[]);
     else
+
         # Option 2:
         #Objective function to pass to the simple solver: 
         ReturnVol=1; #Flag that means the obj func returns volumes 
-        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FrakFlag,B,Ainv,Scl,Area,Norm,NUM,Volume,ReturnVol);    
+        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol);    
         #Assuming the Obj func returns volume (for given pressure) ^ just
         #change FIRST output in 'ComputePressurisedCrackDn.m' func above. 
-        (InternalPressures) = walkandinterp(ObjectiveFunction, 1E-9, 1.4, 100,Volume);
+        (InternalPressures) = WalkAndInterp(ObjectiveFunction, 1e-9, 1.4, 100,Volume);
         #Put in struct
         OptimalPressure=Tractions(InternalPressures,[],[]);
     end
 
     #Now compute the min result, more cracks require more output args
     println(OptimalPressure)
-    (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FrakFlag,B,Ainv,Scl,Area,Norm,NUM,Volume,ReturnVol);
+    (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol);
     
-    NumOfFractures=maximum(FrakFlag);
-    for i=1:NumOfFractures #For each crack
-        Indx=find(FrakFlag.==i);
+    NumOfFractures=maximum(FractureFlag);
+    for i=eachindex(NumOfFractures) #For each crack
+        Indx=findall(FractureFlag.==i);
         CurrentVol=sum(Dn[Indx].*Area[Indx]);
         #Display results
         println("Volume we want:")
-        println(Volume(i))
+        println(Volume[i])
         println("Volume we have:")
         println(CurrentVol)
          #Catch issues
-         if abs(CurrentVol)>abs(Volume*2)
+         if abs(CurrentVol)>abs.(Volume[i]*2)
              println("didnt converge well")
-             D= D*NaN; #nan all values so not used.  
+             Dn= Dn*NaN; #nan all values so not used.  
+             Dss= Dss*NaN; #nan all values so not used.  
+             Dds= Dds*NaN; #nan all values so not used.  
          end     
     end
-    
-	n=sum(FractureFlag.==0)
-	#Extract arrays
-	Dn=D[1:n];
-	Dss=D[n+1:2*n];
-	Dds=D[n*2+1:3*n];
-
-
+  
 	return Dn,Dss,Dds
 
 end

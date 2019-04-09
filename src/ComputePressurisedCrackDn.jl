@@ -1,5 +1,5 @@
 #If we have alreay found the optimum
-function ComputePressurisedCrackDn(x::Tractions,Flag,B,Ainv,Scl,Area,Pcalc,NUM,Volume,ReturnVol)
+function ComputePressurisedCrackDn(x::Tractions,Flag,B,Ainv,Scl,Area,Pcalc,n,Volume,ReturnVol)
 
 #Setting up for the log descent (opening of parts of surface) 
 #x - constant fluid pressure defined by the simulated annealing algo
@@ -15,14 +15,20 @@ function ComputePressurisedCrackDn(x::Tractions,Flag,B,Ainv,Scl,Area,Pcalc,NUM,V
 
 #disp(x) # to diplay the current value
 
+x=x.Tn
+
 #Add pressure to each seperate crack (different) 
 NumOfFractures=maximum(Flag);
-for i=1:NumOfFractures #For each crack
+for i=eachindex(NumOfFractures) #For each crack
     
     #Get the Current crack
-    Indx=find(Flag.==i);
-    #Set the new pressure on the elements
-    B[Indx]= B[Indx] +(x[i]*Pcalc);  #Frak1 
+    Indx=Flag.==i;
+
+    for j=eachindex(Indx)
+        if Indx[j]==true
+            B[j]=B[j]+(x[i]*Pcalc);  #Frak1 
+       end
+    end
     
 end   
 
@@ -42,12 +48,12 @@ D=Ainv*B;
 
 ## Way two (same result as one, no friction involved)
 #Extract arrays
-Dn=D[1:n];
+Dn_=D[1:n];
 Dss=D[n+1:2*n];
 Dds=D[n*2+1:3*n];
 
 # If we have negative volumes force these disps to negative
-for i=1:NumOfFractures #For each crack
+for i=eachindex(NumOfFractures) #For each crack
     #Get the volume of the current crack
     Vol_i_Expected=Volume[i];    
     if Vol_i_Expected.<0
@@ -60,15 +66,22 @@ if any(Dn_.>0)
     #Get interpenetrating tris 
     Interpen=Dn_.<0; 
     #Parts of TnDn in Ainv that will be put to 0
-    InterpenIndx=find(Interpen);
-    #Drop cols to 0 so closed elements opening have no opening influence on others opening (can still slip).
-    #  A (  row  |  col ) = 0
-    Ainv[1:NUM,InterpenIndx]=0;
-    Ainv[1:NUM,InterpenIndx+NUM]=0;
-    Ainv[1:NUM,InterpenIndx+2*NUM]=0;
-    #Drop rows to 0 so closed elements cannot open (can still slip).
-    #  A (  row  |  col ) = 0
-    Ainv[InterpenIndx,:]=0;
+    InterpenIndx=findall(Interpen);
+
+    for i=1:n
+        for j=eachindex(Interpen)
+            if Interpen[j]==true
+                #Drop cols to 0 so closed elements opening have no opening influence on others opening (can still slip).
+                #  A (  row  |  col ) = 0
+                Ainv[i,j]=0;
+                Ainv[i,j+n]=0;
+                Ainv[i,j+2*n]=0;
+                #Drop rows to 0 so closed elements cannot open (can still slip).
+                #  A (  row  |  col ) = 0
+                Ainv[j,:]=Ainv[j,:].*0;
+            end
+        end
+    end
     #Recompute D
     D=Ainv*B;
     #Get results
@@ -98,10 +111,10 @@ CurrentPressure=Tractions(x,[],[]);
 #Init some parameters before loop. 
 X=0.; 
 #Now compute objective function checking each crack matches given value
-for i=1:n #For each crack
+for i=eachindex(n) #For each crack
     
     #Get the Current crack
-    Indx=find(Flag.==i);
+    Indx=findall(Flag.==i);
     #Get the volume of the current crack
     Vol_i_Expected=Volume[i];
     #Compute volume

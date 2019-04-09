@@ -78,21 +78,21 @@ FeLe=Array{Float64,2}(undef, n,1);FeLe=fill!(FeLe, NaN)
 #Like using MATLABS interp1
 x=(2:1:50)
 y=x.^2
-y5=finterp1(x,y,5)
+y5=interp1(x,y,5)
 ans=25
 to:
 using Interpolations
-x=(1:1:50) #MUST BE UNIFORMLY SPACED 1:n
-y=x.^2
-itp = interpolate(y, BSpline(Linear()))
-ax=itp(5)
 #If you dont start from 1 i.e.
 start=4;
-x=(start:1:50) #MUST BE UNIFORMLY SPACED 1:n
+x=(start:1:50) 
 y=x.^2
 itp = interpolate(y, BSpline(Linear()))
-ax=itp(5+(1-start))
+sitp = scale(itp, x)
+y5=sitp(5) #find y where x=5
 ans=25
+OR even better:
+itp = interpolate((x,),y, Gridded(Linear()))
+y5=itp(5.0);	#xq=itp(yq)
 
 
 Checking alloctions:

@@ -6,14 +6,11 @@ println("creating func vars")
 #Volume
 HeightCrack=3;
 Radius=1500
-Volume=(π*(Radius^2))*HeightCrack;
+Volume=[(π*(Radius^2))*HeightCrack];
 
 #Load triangles and points from file (mesh)
 SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
 (Points,Triangles)=CutAndDisplaceJulia.STLReader(SurfaceDir)
-
-#Get crack to correct radius
-Points[:,2:4]=Points[:,2:4].*Radius;
 
 #Flatten so normals point up
 X=Points[:,2];
@@ -26,6 +23,10 @@ BetaFromVert=90-Beta;
 #Rotate this (YZ)
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
 
+#Get crack to correct radius
+Points[:,2:4]=Points[:,2:4].*Radius;
+Points[:,4]=Points[:,4].-2000; #2Km deep
+
 #Compute triangle properties
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 n=length(Triangles[:,1]);
@@ -34,7 +35,7 @@ n2=length(Points[:,1]);
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
 # Which bits we want to compute
-HSFlag=1; #const 
+HSFlag=0; #const 
 
 #Elastic constants
 G=ShearModulus(2.0e9); 
@@ -46,10 +47,11 @@ G=ShearModulus(2.0e9);
 ρfluid=2600;
 g=9.81;
 Z=MidPoint[:,3];
+Weight=(ρrock*g).*Z;
 #Set BoundaryConditions
-σxx = fill(ρrock*g*Z,n);
-σzz = fill(ρrock*g*Z,n);
-σyy = fill(ρrock*g*Z,n);
+σxx = Weight;
+σyy = Weight;
+σzz = Weight;
 σxy = zeros(n);    
 σxz = zeros(n);
 σyz = zeros(n);
@@ -61,7 +63,7 @@ Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 Traction=Tractions(Tn,Tss,Tds);
 BoundaryConditions=MixedBoundaryConditions(Stress,Traction)
 BoundaryConditions=MixedBoundaryConditionsFluidVolume(BoundaryConditions,Volume)
-FixedEls=zeros(n,1);
+FixedEls=ones(n); #single fracture
 
 #Calculate slip on faces
 (Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);

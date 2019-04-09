@@ -36,13 +36,12 @@ function CalculateNormalTraction3D( Pxx,Pyy,Pzz,Pxy,Pxz,Pyz,CosAx,CosAy,CosAz )
 NormalTraction=zeros(size(Pxx));
 for i=1:size(Pxx,1) #On each col
 
-	CosAx2=CosAx[i].^2;
-	CosAy2=CosAy[i].^2;
-	CosAz2=CosAz[i].^2;
+	CosAx2=CosAx[i]^2;
+	CosAy2=CosAy[i]^2;
+	CosAz2=CosAz[i]^2;
 	CosAxy=CosAx[i]*CosAy[i];
 	CosAyz=CosAy[i]*CosAz[i];
 	CosAzx=CosAz[i]*CosAx[i];
-	
 	for j=1:size(Pxx,2) #Running through the rows..
 		# Normal traction on the planes. 
 		# Equation 6.49 Pollard and Fletcher Fundamentals
