@@ -5,6 +5,7 @@ using DelimitedFiles
 using Statistics
 using FischerNewton
 using Interpolations
+using Random
 
 #Init some types for elastics (ElasticConstantsCheck)
 struct PoissonsRatio; 	ν::Float64;		end 
@@ -98,7 +99,7 @@ include("Tada_StrIntInclinedPennyTension.jl")
 #Guessing interp1 doesnt exist
 include("WalkAndInterp.jl")
 include("ComputePressurisedCrackDn.jl")
-
+include("anneal.jl")
 
 include("SlipCalculator3D.jl")
 include("RepeatStruct.jl")

@@ -20,7 +20,7 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	    X[i]=ObjFunc(Y[i]);
 	end
 
-	#@info X Y Desired_X
+	@info X Y Desired_X
 	
 	##Remove 0 before interpolation
 	Y=convert(Array,Y)#So we can work on it
@@ -30,10 +30,19 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 
 	#using Interpolations
 	itp = interpolate((X,),Y, Gridded(Linear()))
-	Yv=itp(Desired_X)
+	Yv=TryInterp(itp,Desired_X)
+
 	#MATLAB way:
 	#Y_Got = interp1(X,Y,X_Desired,'linear');
-	@info Yv
 
 	return Yv
+end
+
+function TryInterp(itp,Desired_X) 
+	try 
+		Yv=itp(Desired_X); 
+	catch
+		println("increase MinVal and MaxVal limits, no extrapolation set")
+		Yv=NaN;
+	end
 end

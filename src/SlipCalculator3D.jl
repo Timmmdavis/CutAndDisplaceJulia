@@ -219,8 +219,10 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 
 	Norm=maximum(abs.(b[1:n,:])); #Maximum Tn acting on els to close these 
 
+	NumOfFractures=maximum(FractureFlag);
+    NumOfFractures=convert(Int64,NumOfFractures)
 	if any(FractureFlag.>1) #More than two cracks, need sim anneal
-        NumOfFractures=maximum(FractureFlag);
+        
         X0=zeros(NumOfFractures);
         for i=1:NumOfFractures
             if Volume[i]<0 #Neg vols need neg pressure input
@@ -246,7 +248,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol);    
         #Assuming the Obj func returns volume (for given pressure) ^ just
         #change FIRST output in 'ComputePressurisedCrackDn.m' func above. 
-        (InternalPressures) = WalkAndInterp(ObjectiveFunction, 1e-9, 1.4, 100,Volume);
+        (InternalPressures) = WalkAndInterp(ObjectiveFunction, 1e-9, 10, 100,Volume);
         #Put in struct
         OptimalPressure=Tractions(InternalPressures,[],[]);
     end
@@ -255,8 +257,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
     println(OptimalPressure)
     (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol);
     
-    NumOfFractures=maximum(FractureFlag);
-    for i=eachindex(NumOfFractures) #For each crack
+    for i=1:NumOfFractures #For each crack
         Indx=findall(FractureFlag.==i);
         CurrentVol=sum(Dn[Indx].*Area[Indx]);
         #Display results

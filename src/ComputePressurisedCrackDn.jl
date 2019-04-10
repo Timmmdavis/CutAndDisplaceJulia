@@ -1,5 +1,5 @@
 #If we have alreay found the optimum
-function ComputePressurisedCrackDn(x::Tractions,Flag,B,Ainv,Scl,Area,Pcalc,n,Volume,ReturnVol)
+function ComputePressurisedCrackDn(x::Tractions,Flag,B_old,Ainv,Scl,Area,Pcalc,n,Volume,ReturnVol)
 
 #Setting up for the log descent (opening of parts of surface) 
 #x - constant fluid pressure defined by the simulated annealing algo
@@ -16,6 +16,8 @@ function ComputePressurisedCrackDn(x::Tractions,Flag,B,Ainv,Scl,Area,Pcalc,n,Vol
 #disp(x) # to diplay the current value
 
 x=x.Tn
+#Making sure no replacement happens inside func
+B=copy(B_old);
 
 #Add pressure to each seperate crack (different) 
 NumOfFractures=maximum(Flag);
