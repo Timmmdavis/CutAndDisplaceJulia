@@ -3,14 +3,18 @@
 #Start creating vars for function: 
 println("creating func vars")
 
+#Set a flag for the test to run for two cracks
+TwoCracksFlag=false
+
 #Volume
 HeightCrack=3;
 Radius=1500
-Volume=[(π*(Radius^2))*HeightCrack];
+Volume=(π*(Radius^2))*HeightCrack
 
 #Load triangles and points from file (mesh)
 SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
 (Points,Triangles)=CutAndDisplaceJulia.STLReader(SurfaceDir)
+FractureElements=zeros(size(Triangles,1))
 
 #Flatten so normals point up
 X=Points[:,2];
@@ -26,6 +30,16 @@ BetaFromVert=90-Beta;
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*Radius;
 Points[:,4]=Points[:,4].-2000; #2Km deep
+
+
+if TwoCracksFlag==true
+	#add 2nd crack 
+	Points2=[Points[:,1:2] Points[:,3].+1000 Points[:,4]] 
+	Triangles2=copy(Triangles)
+	#Append to the two meshes
+	(Points,Triangles,FractureElements) = CutAndDisplaceJulia.DataAppender3D( Points,Points2,Triangles,Triangles);
+	 Volume=[Volume copy(Volume)*1.2]
+end
 
 #Compute triangle properties
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
@@ -63,11 +77,19 @@ Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 Traction=Tractions(Tn,Tss,Tds);
 BoundaryConditions=MixedBoundaryConditions(Stress,Traction)
 BoundaryConditions=MixedBoundaryConditionsFluidVolume(BoundaryConditions,Volume)
-FixedEls=ones(n); #single fracture
+FractureElements=FractureElements.+1; #single fracture
 
 #Calculate slip on faces
-(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
+(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
 
 #Get tip elements
 (FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
+
+KCrit=1e3; #[units?]
+(P1,P2,P3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit )
+
+Px=[P1[:,1]; P2[:,1]; P3[:,1]];
+Py=[P1[:,2]; P2[:,2]; P3[:,2]];
+Pz=[P1[:,3]; P2[:,3]; P3[:,3]];
+#scatter(P1[:,1],P1[:,2])

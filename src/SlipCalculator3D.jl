@@ -62,18 +62,33 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	#Call default slip calc to get inf matrix and displacements due to BoundaryConditions
 	(Dn, Dss, Dds, A, b)=SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
 
+
 	#Adding some scaling parameters (Improves Friction Solver performance). 
 	#We scale by the average triangle size and the shear mod. 
 	(Area,HalfPerimeter ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	Scl=(mean(HalfPerimeter)/G); 
-	A=A.*Scl;  
+	A=A*Scl; 
+
+	#Put inside structs
+	A=InfMat(A);
+	b=BoundaryConditionsVec(b);
+
+	#Pass 2 fric func where inf mat is now computed
+	(Dn,Dss,Dds)=SlipCalculator3D(Scl,n,A,b,µ,Sf)
+
+end
+
+
+function SlipCalculator3D(Scl,n,A::InfMat,b::BoundaryConditionsVec,µ,Sf)
+	
+
 
 	#Therefore each col in [C] represents how much each 
 	#element must displace to cause a traction
 	#of one unit at element i.
-	C = inv(A);	
+	C = inv(A.A);	
 
-	D=C*b;
+	D=C*b.b;
 
 	# Construct a and b for the equation [y]=[a][x]+[b] where
 	#  [y]  = |+Dn|     and [x] = |-tn|   
@@ -128,7 +143,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 		 (2*dµ)                          -ID      ZE     ZE ZE;
 		 (2*dµ)                           ZE     -ID     ZE ZE];
 
-	# Construct column vector [b].
+	# Construct column vector [b].f
 	b =	[D[L1]-CDnTss*Sf-CDnTds*Sf; 
 		 D[L2]-CDssTss*Sf-CDssTds*Sf;
 		 D[L3]-CDdsTss*Sf-CDdsTds*Sf;
@@ -193,8 +208,6 @@ end
 #Friction:
 function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions::MixedBoundaryConditionsFluidVolume,FractureFlag)
 
-	println("To do: FractureFlag passed 2 slop cal")
-
 	#Compute the tractions acting on the crack
 	n=length(FaceNormalVector[:,1]);
 
@@ -210,7 +223,8 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	#We scale by the average triangle size and the shear mod. 
 	(Area,HalfPerimeter ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	Scl=(mean(HalfPerimeter)/G); 
-	A=A.*Scl;  
+	A=A.*Scl;
+	#Scl=1;println("Scl off!")  
 
 	#Therefore each col in [C] represents how much each 
 	#element must displace to cause a traction
@@ -218,34 +232,88 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	Ainv = inv(A);	
 
 	Norm=maximum(abs.(b[1:n,:])); #Maximum Tn acting on els to close these 
+	println("Norm based on max closing stress")
+	@info Norm
+
 
 	NumOfFractures=maximum(FractureFlag);
     NumOfFractures=convert(Int64,NumOfFractures)
+    Area=vec(Area)
 	if any(FractureFlag.>1) #More than two cracks, need sim anneal
         
         X0=zeros(NumOfFractures);
+        DesiredAverageHeight=zeros(NumOfFractures);
+        Norm=zeros(NumOfFractures);
+        DnAvg=zeros(n);
         for i=1:NumOfFractures
             if Volume[i]<0 #Neg vols need neg pressure input
-                X0[i]=-1;  #if two cracks X0=[1,1];
+                X0[i]=-1.0;  #if two cracks X0=[1,1];
             else
-                X0[i]=1;  #if two cracks X0=[1,1];
+                X0[i]=1.0;  #if two cracks X0=[1,1];
             end
-        end
 
+		    #Get the Current crack
+		    Indx=FractureFlag.==i;
+
+            AreaFrak_n=0.0
+		    for j=eachindex(Indx)
+		        if Indx[j]==true
+		        	AreaFrak_n=AreaFrak_n+Area[j]
+		        end
+		    end
+            #Compting a good start prssure for each crack given the known opening
+            DesiredAverageHeight=(Volume[i]/sum(AreaFrak_n))./Scl;
+		    for j=eachindex(Indx)
+		        if Indx[j]==true
+		            DnAvg[j]=DnAvg[j]+DesiredAverageHeight;
+		       end
+		    end
+
+
+        end
+		AvgDisps=[DnAvg; zeros(n); zeros(n)]
+		ApproxTractions=A*AvgDisps;
+		TnApprox=ApproxTractions[1:n];
+		maxy=0.0;
+		for i=1:NumOfFractures
+			Indx=FractureFlag.==i;
+			for j=1:length(TnApprox)
+				if Indx[j]==true
+					if maxy<TnApprox[j]
+						maxy=TnApprox[j]
+					end
+				end
+			end
+			Norm[i]=maxy;
+        end
+        Norm=Norm.*10;
+		println("Norm based on max traction needed for constant opening desired vol")
+		@info Norm        
+
+		X0=vec(X0)
         ## Option 1:
         #Objective function to pass to the simulated annealing solver: 
         ReturnVol=0; #Flag that means the obj func returns volumes 
-        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol);
+        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);
         #Start value (multiplied by the scalar). 
         #Run the annealing. 
         (InternalPressures,fval) = anneal(ObjectiveFunction, X0);
     	OptimalPressure=Tractions(InternalPressures,[],[]);
     else
 
+		#Compting a good start prssure for each crack given the known opening
+		DesiredAverageHeight=(Volume/sum(Area))./Scl;
+		AvgDisps=[ones(n).*DesiredAverageHeight; zeros(n); zeros(n)]
+		ApproxTractions=A*AvgDisps; #ApproxTractions
+
+		Norm=maximum(ApproxTractions[1:n])*10
+		println("Norm based on max traction needed for constant opening desired vol")
+		@info Norm
+
         # Option 2:
         #Objective function to pass to the simple solver: 
         ReturnVol=1; #Flag that means the obj func returns volumes 
-        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol);    
+        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);    
         #Assuming the Obj func returns volume (for given pressure) ^ just
         #change FIRST output in 'ComputePressurisedCrackDn.m' func above. 
         (InternalPressures) = WalkAndInterp(ObjectiveFunction, 1e-9, 10, 100,Volume);
@@ -255,7 +323,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 
     #Now compute the min result, more cracks require more output args
     println(OptimalPressure)
-    (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol);
+    (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);
     
     for i=1:NumOfFractures #For each crack
         Indx=findall(FractureFlag.==i);

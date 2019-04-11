@@ -65,10 +65,15 @@ struct DispInf;
 	DdsUx;	DdsUy; 	DdsUz
 end 
 
+mutable struct InfMat; A; end
+mutable struct BoundaryConditionsVec; b; end
+
 export
     TractionInf,
 	DispInf,
-	StrainInf
+	StrainInf,
+	InfMat,
+	BoundaryConditionsVec
 
 
 #New Guys 07/02/2019
@@ -96,10 +101,14 @@ include("CalculateNormalShearTraction2D.jl")
 include("Tada_StrIntInclinedPennyTension.jl")
 
 
-#Guessing interp1 doesnt exist
+#Fluid filled crack bits
 include("WalkAndInterp.jl")
 include("ComputePressurisedCrackDn.jl")
 include("anneal.jl")
+include("PropagateFracture.jl")
+include("StrainEnergyRelease.jl")
+include("FindPropAngleAndPoint.jl")
+println("Scale length in here relative to energy")
 
 include("SlipCalculator3D.jl")
 include("RepeatStruct.jl")

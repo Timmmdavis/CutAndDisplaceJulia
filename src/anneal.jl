@@ -145,15 +145,27 @@ else #user gave all input, check if options structure is complete
 end
 =#
 
+# def = struct(...
+#         'CoolSched',@(T) (.8*T),...
+#         'Generator',@(x) (x+(randperm(length(x))==length(x))*randn/100),...
+#         'InitTemp',1,...
+#         'MaxConsRej',1000,...
+#         'MaxSuccess',20,...
+#         'MaxTries',300,...
+#         'StopTemp',1e-8,...
+#         'StopVal',-Inf,...
+#         'Verbosity',1);
+
 # main settings
-newsol = x->(x+(Random.randcycle(length(x)).==length(x))*randn()/100);      # neighborhood space function
+rng=MersenneTwister(1234);
+newsol = x->(x+(Random.shuffle(rng,Vector(1:length(x))).==length(x))*randn()/100);      # neighborhood space function
 Tinit = 1;        # initial temp
 minT = 1e-4;         # stopping temp
 cool = T-> (.8*T);        # annealing schedule
 minF = -Inf;
-max_consec_rejections = 500;
-max_try = 150;
-max_success = 10;
+max_consec_rejections = 1000;
+max_try = 300;
+max_success = 20;
 report = 1;
 k = 1;                           # boltzmann constant
 
@@ -190,9 +202,11 @@ while !finished;
     end
     
     newparam = newsol(current);
-    @info newparam
     newenergy = loss(newparam);
-    
+    #Display some kind of progress:
+    #@info newparam
+    #@info newenergy
+
     if (newenergy < minF);
         parent = newparam; 
         oldenergy = newenergy;

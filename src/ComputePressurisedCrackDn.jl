@@ -1,5 +1,5 @@
 #If we have alreay found the optimum
-function ComputePressurisedCrackDn(x::Tractions,Flag,B_old,Ainv,Scl,Area,Pcalc,n,Volume,ReturnVol)
+function ComputePressurisedCrackDn(x::Tractions,Flag,B_old,Ainv,Scl,Area,Pcalc,n,Volume,ReturnVol,NumOfFractures)
 
 #Setting up for the log descent (opening of parts of surface) 
 #x - constant fluid pressure defined by the simulated annealing algo
@@ -20,15 +20,14 @@ x=x.Tn
 B=copy(B_old);
 
 #Add pressure to each seperate crack (different) 
-NumOfFractures=maximum(Flag);
-for i=eachindex(NumOfFractures) #For each crack
+for i=1:NumOfFractures #For each crack
     
     #Get the Current crack
     Indx=Flag.==i;
 
     for j=eachindex(Indx)
         if Indx[j]==true
-            B[j]=B[j]+(x[i]*Pcalc);  #Frak1 
+            B[j]=B[j]+(x[i]*Pcalc[i]);  #Frak1 
        end
     end
     
@@ -37,23 +36,32 @@ end
 #Equation
 D=Ainv*B;
 
-# # # Way one (can have friction but ~2s per loop for 300+ tris)
-# if any(Flag==0)
-#     disp('it looks like you have elements that represent topography, deal with these correctly before passing into friction solver (see Davis 2019 ppr)')
-# end
-# [ Dn,Dss,Dds ] = ExtractArraysFromVector( D );
-# if any(Dn>0)
-#     [Dn,Dss,Dds] = LinearCompFrictionSolver3d(D,Ainv,0,0,NUM,0,0,0);
-# else
-#     Dn=Dn.*0; #Already closed (wont open, we dont care)
-# end
-
-## Way two (same result as one, no friction involved)
 #Extract arrays
 Dn_=D[1:n];
 Dss=D[n+1:2*n];
 Dds=D[n*2+1:3*n];
 
+
+
+#=# # Way one (can have friction but ~2s per loop for 300+ tris)
+if any(Flag.==0)
+    println("it looks like you have elements that represent topography, deal with these correctly before passing into friction solver (see Davis 2019 ppr)")
+end
+if any(Dn_.>0)
+    Ainv=InfMat(Ainv); 
+    b=BoundaryConditionsVec(B);
+    µ=zeros(n);println("Setting arbitary fric params")
+    Sf=zeros(n);
+    (Dn,Dss,Dds)=SlipCalculator3D(Scl,n,Ainv,b,µ,Sf)
+else
+    Dn=Dn_.*0; #Already closed (wont open, we dont care)
+    Dss=Dss.*0;
+    Dds=Dds.*0;
+end
+#SCALES INSIDE!=#
+
+
+## Way two (same result as one, no friction involved)
 # If we have negative volumes force these disps to negative
 for i=eachindex(NumOfFractures) #For each crack
     #Get the volume of the current crack
@@ -94,26 +102,25 @@ else
     Dn=Dn_.*0; #Already closed (wont open, we dont care)
 end
 
-##
 #Scaling back the data. 
 Dn=Dn*Scl;
 Dss=Dss*Scl;
 Dds=Dds*Scl;
 
-return Dn,Dss,Dds,NumOfFractures
+return Dn,Dss,Dds
 
 end
 
 
-function ComputePressurisedCrackDn(x,Flag,B,Ainv,Scl,Area,Pcalc,NUM,Volume,ReturnVol)
+function ComputePressurisedCrackDn(x,Flag,B,Ainv,Scl,Area,Pcalc,NUM,Volume,ReturnVol,NumOfFractures)
 
 CurrentPressure=Tractions(x,[],[]);
-(Dn,Dss,Dds,n)=ComputePressurisedCrackDn(CurrentPressure,Flag,B,Ainv,Scl,Area,Pcalc,NUM,Volume,ReturnVol)
+(Dn,Dss,Dds)=ComputePressurisedCrackDn(CurrentPressure,Flag,B,Ainv,Scl,Area,Pcalc,NUM,Volume,ReturnVol,NumOfFractures)
 
 #Init some parameters before loop. 
 X=0.; 
 #Now compute objective function checking each crack matches given value
-for i=eachindex(n) #For each crack
+for i=1:NumOfFractures #For each crack
     
     #Get the Current crack
     Indx=findall(Flag.==i);
