@@ -12,6 +12,7 @@ function ComputePressurisedCrackDn(x::Tractions,Flag,B_old,Ainv,Scl,Area,Pcalc,n
 #the input x value accordingly).
 #Volume - volumes of each crack (list). 
 
+#@info x Flag B_old n Ainv[1:10,:]
 
 #disp(x) # to diplay the current value
 
@@ -19,6 +20,7 @@ x=x.Tn
 
 #Making sure no replacement happens inside func
 B=copy(B_old);
+AinvF=copy(Ainv)
 
 #Add pressure to each seperate crack (different) 
 for i=1:NumOfFractures #For each crack
@@ -76,36 +78,48 @@ if any(Dn_.>0)
     #Parts of TnDn in Ainv that will be put to 0
     InterpenIndx=findall(Interpen);
 
-    for i=1:n
-        for j=eachindex(Interpen)
-            if Interpen[j]==true
-                #Drop cols to 0 so closed elements opening have no opening influence on others opening (can still slip).
-                #  A (  row  |  col ) = 0
-                Ainv[i,j]=0;
-                Ainv[i,j+n]=0;
-                Ainv[i,j+2*n]=0;
-                #Drop rows to 0 so closed elements cannot open (can still slip).
-                #  A (  row  |  col ) = 0
-                Ainv[j,:]=Ainv[j,:].*0;
+
+    println("Trying to make it")
+    I=1
+    while any(Dn_.<0)
+        I=I+1
+
+        for j=1:length(InterpenIndx)
+            for i=1:n
+            indx=InterpenIndx[j]
+            #Drop cols to 0 so closed elements opening have no opening influence on others opening (can still slip).
+            #  A (  row  |  col ) = 0
+            AinvF[indx,i]=0;
+            AinvF[indx+n,i]=0;
+            AinvF[indx+2*n,i]=0;
+            #Drop rows to 0 so closed elements cannot open (can still slip).
+            #  A (  row  |  col ) = 0
+            #Ainv[j,:]=Ainv[j,:].*0;
+
             end
         end
-    end
-    #Recompute D
-    #D=Ainv*B;
-    mul!(D,Ainv,B) 
 
-    #Get results
-    Dn=D[1:n];
-    Dss=D[n+1:2*n];
-    Dds=D[n*2+1:3*n];
+        #Recompute D
+        #D=Ainv*B;
+        mul!(D,AinvF,B) 
+
+        #Get results
+        Dn_=D[1:n];
+        Dss=D[n+1:2*n];
+        Dds=D[n*2+1:3*n];
+        if I > 20 #Max Iters
+            break
+        end
+    end
+    Dn=Dn_;
 else
     Dn=Dn_.*0; #Already closed (wont open, we dont care)
 end
 
 #Scaling back the data. 
-Dn=Dn*Scl;
-Dss=Dss*Scl;
-Dds=Dds*Scl;
+Dn=Dn.*Scl;
+Dss=Dss.*Scl;
+Dds=Dds.*Scl;
 
 return Dn,Dss,Dds
 

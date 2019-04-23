@@ -32,6 +32,9 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	itp = interpolate((X,),Y, Gridded(Linear()))
 	Yv=TryInterp(itp,Desired_X)
 
+	#@info X 
+	#@info Y
+
 	#MATLAB way:
 	#Y_Got = interp1(X,Y,X_Desired,'linear');
 

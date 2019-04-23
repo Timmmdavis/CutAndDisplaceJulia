@@ -306,7 +306,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 		AvgDisps=[ones(n).*DesiredAverageHeight; zeros(n); zeros(n)]
 		ApproxTractions=A*AvgDisps; #ApproxTractions
 
-		Norm=maximum(ApproxTractions[1:n])*10
+		Norm=maximum(ApproxTractions[1:n])
 		println("Norm based on max traction needed for constant opening desired vol")
 		@info Norm
 

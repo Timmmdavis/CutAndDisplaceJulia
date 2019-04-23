@@ -7,7 +7,7 @@ println("creating func vars")
 TwoCracksFlag=false
 
 #Volume
-HeightCrack=3;
+HeightCrack=10;
 Radius=1500
 Volume=(π*(Radius^2))*HeightCrack
 
@@ -22,7 +22,7 @@ Points[:,2]=Points[:,4];
 Points[:,4]=X;
 
 #Pennys angle away from Z. 
-Beta=-30; 
+Beta=-75; 
 BetaFromVert=90-Beta;
 #Rotate this (YZ)
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
@@ -49,7 +49,7 @@ n2=length(Points[:,1]);
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
 # Which bits we want to compute
-HSFlag=0; #const 
+HSFlag=1; #const 
 
 #Elastic constants
 G=ShearModulus(2.0e9); 
@@ -79,17 +79,20 @@ BoundaryConditions=MixedBoundaryConditions(Stress,Traction)
 BoundaryConditions=MixedBoundaryConditionsFluidVolume(BoundaryConditions,Volume)
 FractureElements=FractureElements.+1; #single fracture
 
+
 #Calculate slip on faces
 (Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
 
+#=
 #Get tip elements
 (FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
 
 KCrit=1e3; #[units?]
-(P1,P2,P3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit )
+(p1,p2,p3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit )
 
-Px=[P1[:,1]; P2[:,1]; P3[:,1]];
-Py=[P1[:,2]; P2[:,2]; P3[:,2]];
-Pz=[P1[:,3]; P2[:,3]; P3[:,3]];
+Px=[p1[:,1]; p2[:,1]; p3[:,1]];
+Py=[p1[:,2]; p2[:,2]; p3[:,2]];
+Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
 #scatter(P1[:,1],P1[:,2])
+=#
