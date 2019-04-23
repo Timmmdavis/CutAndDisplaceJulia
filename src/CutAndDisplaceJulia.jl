@@ -7,6 +7,22 @@ using FischerNewton
 using Interpolations
 using Random
 
+######################################################
+println("Remove me!")
+using Debugger
+#=
+#Assuming the func has a @bp statement
+using Debugger
+include(raw("functionpath"))
+@enter function
+C
+c 'enter' #continue to bp
+` #go into repl mode
+ctrl+c #to exit back to debug
+? #for help
+=#
+######################################################
+
 #Init some types for elastics (ElasticConstantsCheck)
 struct PoissonsRatio; 	ν::Float64;		end 
 struct ShearModulus; 	G::Float64;		end
@@ -75,6 +91,8 @@ export
 	InfMat,
 	BoundaryConditionsVec
 
+#DELETE
+include("test_DippingCrackConstantVolume.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

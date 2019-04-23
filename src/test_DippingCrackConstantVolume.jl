@@ -2,6 +2,8 @@ function test_DippingCrackConstantVolume()
 
 #Test case comparing to Penny shaped crack
 
+
+
 #Start creating vars for function: 
 println("creating func vars")
 
@@ -85,6 +87,10 @@ FractureElements=FractureElements.+1; #single fracture
 #Calculate slip on faces
 (Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
 
+#ForDrawing
+pos = map(MidPoint, FaceNormalVector) do p, n
+    p => p .+ (n .* 0.05f0)
+end
 @bp
 
 #Get tip elements

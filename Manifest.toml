@@ -33,7 +33,6 @@ git-tree-sha1 = "0c344f798f57fe7cd65e3dd4b2ab41ca76768e03"
 repo-rev = "master"
 repo-url = "https://github.com/Timmmdavis/FischerNewton"
 uuid = "c8104aa0-3b89-11e9-0761-c1f9341838a7"
-version = "0.1.0"
 
 [[InteractiveUtils]]
 deps = ["Markdown"]
