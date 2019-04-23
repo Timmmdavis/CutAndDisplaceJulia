@@ -19,8 +19,8 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	for i=1:length(Y)
 	    X[i]=ObjFunc(Y[i]);
 	end
-
-	@info X Y Desired_X
+	
+	#@info X Y Desired_X
 	
 	##Remove 0 before interpolation
 	Y=convert(Array,Y)#So we can work on it

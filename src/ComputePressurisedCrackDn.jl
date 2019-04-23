@@ -16,6 +16,7 @@ function ComputePressurisedCrackDn(x::Tractions,Flag,B_old,Ainv,Scl,Area,Pcalc,n
 #disp(x) # to diplay the current value
 
 x=x.Tn
+
 #Making sure no replacement happens inside func
 B=copy(B_old);
 
@@ -24,12 +25,9 @@ for i=1:NumOfFractures #For each crack
     
     #Get the Current crack
     Indx=Flag.==i;
-
-    for j=eachindex(Indx)
-        if Indx[j]==true
-            B[j]=B[j]+(x[i]*Pcalc[i]);  #Frak1 
-       end
-    end
+    Indx=findall(Indx)
+    tmp=x[i]*Pcalc[i];
+    B[Indx].+=tmp;  
     
 end   
 
@@ -66,7 +64,7 @@ end
 for i=eachindex(NumOfFractures) #For each crack
     #Get the volume of the current crack
     Vol_i_Expected=Volume[i];    
-    if Vol_i_Expected.<0
+    if Vol_i_Expected<0
         println("DnFlipped")
         Dn_[Flag==i]=-Dn_[Flag==i];
     end
@@ -93,7 +91,9 @@ if any(Dn_.>0)
         end
     end
     #Recompute D
-    D=Ainv*B;
+    #D=Ainv*B;
+    mul!(D,Ainv,B) 
+
     #Get results
     Dn=D[1:n];
     Dss=D[n+1:2*n];
