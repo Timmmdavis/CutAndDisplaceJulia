@@ -45,11 +45,13 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
     
 
     #New Pnt= 
-    X=1.0; 
-    Z=0.0;
+    X=1.0; #adj
+    Z=0.0; 
 
     #@info Ang
-    Y=1/tan(Ang);
+    Y=tan(Ang)*X; #opp
+    #error("Tan at 0 here goes to inf")
+
     (X,Y,Z) = RotateObject3DNewCoords!(X,Y,Z,0.0,0.0,0.0,FeM2Ev,NormalV,FeEv);
     FeM2EvK=normr([X Y Z]);
          
@@ -61,7 +63,7 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
         FeM2EvK.=-FeM2EvK; 
     end
     
-
+    
     #Length in cartesian coords
     DistFromMd=FeM2EvK.*L;
     #So new point location

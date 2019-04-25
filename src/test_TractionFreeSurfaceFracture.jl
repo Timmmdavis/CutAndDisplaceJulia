@@ -59,35 +59,68 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 	Py=[p1[:,2]; p2[:,2]; p3[:,2]];
 	Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
 
-	@bp
+	println("Do for negative values too")
 
 	#Plane pointing along x axis. On-in conv - Acting on x
 	if FaceNormalVector[1,1]==1
 		if σxx∞[1]==1 
-			@info Px Py Pz
+			println("σxx∞ twist test")
 			if any(Px.!=0)
 				error("Plane not propagating flat")
 			end
 		end
 		if σxy∞[1]==1 
-			#Want edges pointing along pos y direction
+			println("σxy∞ twist test")
 			YDir=[FeP1P2S.FeM2Ev[FeP1P2S.FreeFlg,2]
 				  FeP1P3S.FeM2Ev[FeP1P3S.FreeFlg,2]
 				  FeP2P3S.FeM2Ev[FeP2P3S.FreeFlg,2]]
+			#First we check edges pointing along pos y direction
 			flag=YDir.==1
-			if any(Px[flag].>0) #check no parts prop anticlock wise from tip
+			#because the top tips of this edge dont progate in the expected direction of a 2D fracture:
+			#We compute a ratio between those propagating properly and those not. 
+			ratio=sum(Px[flag].<0)/sum(Px[flag].>0)
+			if ratio<12 #check no parts prop anticlock wise from tip
 				error("Plane not propagating correctly")
 			end
-
+			#2nd we check edges pointing along neg y direction
+			flag=YDir.==-1
+			#because the top tips of this edge dont progate in the expected direction of a 2D fracture:
+			#We compute a ratio between those propagating properly and those not. 
+			ratio=sum(Px[flag].>0)/sum(Px[flag].<0)
+			if ratio<12 #check no parts prop anticlock wise from tip
+				error("Plane not propagating correctly")
+			end			
 		end
 		if σxz∞[1]==1
-
+			println("σxz∞ twist test")
+			ZDir=[FeP1P2S.FeM2Ev[FeP1P2S.FreeFlg,3]
+				  FeP1P3S.FeM2Ev[FeP1P3S.FreeFlg,3]
+				  FeP2P3S.FeM2Ev[FeP2P3S.FreeFlg,3]]
+			#First we check edges pointing along pos y direction
+			flag=ZDir.==1
+			#because the top tips of this edge dont progate in the expected direction of a 2D fracture:
+			#We compute a ratio between those propagating properly and those not. 
+			ratio=sum(Px[flag].<0)/sum(Px[flag].>0)
+			if ratio<12 #check no parts prop anticlock wise from tip
+				error("Plane not propagating correctly")
+			end
+			#2nd we check edges pointing along neg y direction
+			flag=ZDir.==-1
+			#because the top tips of this edge dont progate in the expected direction of a 2D fracture:
+			#We compute a ratio between those propagating properly and those not. 
+			ratio=sum(Px[flag].>0)/sum(Px[flag].<0)
+			if ratio<12 #check no parts prop anticlock wise from tip
+				error("Plane not propagating correctly")
+			end		
 		end
 	end
 	#Plane pointing along y axis. On-in conv - Acting on y
 	if FaceNormalVector[1,2]==1
 		if σyy∞[1]==1 
-
+			println("σyy∞ twist test")
+			if any(Py.!=0)
+				error("Plane not propagating flat")
+			end
 		end
 		if σxy∞[1]==1 
 
@@ -99,7 +132,16 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 	#Plane pointing along z axis. On-in conv - Acting on z
 	if FaceNormalVector[1,3]==1
 		if σzz∞[1]==1 
-
+			println("σzz∞ twist test")
+			println(Px)
+			println(Py)
+			println(Pz)
+			println(P1[:,3])
+			println(P2[:,3])
+			println(P3[:,3])
+			if any(round.(Pz.*1e-10).!=0)
+				error("Plane not propagating flat")
+			end
 		end
 		if σxz∞[1]==1 
 
@@ -147,7 +189,7 @@ Sf  = 0.0;
 σyz = zeros(n);
 Traction=Tractions(zeros(n),zeros(n),zeros(n))
 
-#=
+
 #######Sxz##########
 
 BoundaryConditions=Stresses(σxx,σyy,σzz,σxy,ones(n),σyz);
@@ -181,7 +223,6 @@ TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFl
 println("Syz is satisfied Friction")
 
 #######Szz##########
-
 BoundaryConditions=Stresses(σxx,σyy,ones(n),σxy,σxz,σyz);
 #Calculate slip on faces
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
@@ -196,7 +237,6 @@ BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
 println("Szz is satisfied Friction")
 
-=#
 #Now make surface vertical (Switch Y and Z) strikes at 90
 PointsTmp=Points[:,4];
 Points[:,4]=Points[:,3];
@@ -208,7 +248,6 @@ n2=length(Points[:,1]);
 
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
-#=
  #######Sxy##########
 
 BoundaryConditions=Stresses(σxx,σyy,σzz,ones(n),σxz,σyz);
@@ -256,7 +295,6 @@ BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
 println("Syy is satisfied Friction")
-=#
 
 #Now make surface vertical (Switch X and Y) strikes at 0
 PointsTmp=Points[:,3];
