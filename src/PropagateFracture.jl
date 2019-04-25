@@ -23,6 +23,8 @@ function CreateNewEdgePoint(Fe,Indx,FaceNormalVector,G,ν,KCrit)
         NrmVec=FaceNormalVector[I,:];
         #Check if the crack tip will extend
         ( StrainEnergy ) = StrainEnergyRelease(Fe.K1[I],Fe.K2[I],Fe.K3[I],G,ν);
+        #@info StrainEnergy
+
         if StrainEnergy>KCrit #Plane strain criteria
             ( NwPntCX,NwPntCY,NwPntCZ,~ ) = FindPropAngleAndPoint( Fe.FeMd[I,:],Fe.FeM2Ev[I,:],
                 Fe.FeLe[I],Fe.FeEv[I,:],NrmVec,Fe.K2[I],Fe.K1[I] );

@@ -88,7 +88,7 @@ FeP1P3S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0,0,0);
 
 
 #Do for P2 P3: (Function at base of file)
-(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P2P3FreeFlg,P2,P3,P1,MidPoint,FaceNormalVector);
+(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P2P3FreeFlg,P3,P2,P1,MidPoint,FaceNormalVector);
 #Put in structure
 FeP2P3S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0,0,0);
 
@@ -128,8 +128,7 @@ FeM2ELe[I]=sqrt.(((FeMd[I,1]-MidPoint[I,1]).^2)+((FeMd[I,2]-MidPoint[I,2]).^2)+(
 FeM2Ev[I,:]=normr([FeMd[I,1]-MidPoint[I,1] FeMd[I,2]-MidPoint[I,2] FeMd[I,3]-MidPoint[I,3]]);
 
 
-#Vector pointing along edge
-FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
+
 
 #Internal angle of the triangle (angle between edges that are not the free
 #edge in question). 
@@ -140,6 +139,11 @@ Indx=findall(I);
 for i = 1:length(Indx)
         IntAng[Indx[i]]=rad2deg(acos(dot(v[i,:],w[i,:])));
 end
+
+
+#Vector pointing along edge
+FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
+
 
 #|a| is the magnitude (length) of vector a
 #|b| is the magnitude (length) of vector b
@@ -191,6 +195,14 @@ end
 #Flip if not
 FeM2Ev2[Indx[Vect.==1],:]=-FeM2Ev2[Indx[Vect.==1],:]; 
 FeM2Ev[I,:]=FeM2Ev2[I,:];
+
+#=
+println("Needed?")
+#Assuming M2Ed and Ev have good convention then we now recomp edge vector
+for i=1:length(Indx)
+    cross!(vec(FeM2Ev[Indx[i],:]),vec(FaceNormalVector[Indx[i],:]),view(FeEv,Indx[i],:))
+end 
+=#
 
 return I,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng
 

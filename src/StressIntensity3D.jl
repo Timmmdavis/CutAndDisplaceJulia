@@ -183,11 +183,11 @@ K1=Array{Float64,2}(undef, length(Dn),1);K1=fill!(K1, NaN)
 K2=copy(K1);
 K3=copy(K2);
 
-
-
+#println("Off")
 ## Correct sign of shear components
 # This means these match the drawings in Fig 9.30 of Pollard and Fletcher
 # assuming our end element normal corresponds to the y-axis in this figure.
+
 
 #Assuming out vectors for the edge triangles point in the correct
 #directions (MidPoint2Edge for (KII) and counter-clockwise from this vector

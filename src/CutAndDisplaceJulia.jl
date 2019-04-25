@@ -92,7 +92,8 @@ export
 	BoundaryConditionsVec
 
 #DELETE
-include("test_DippingCrackConstantVolume.jl")
+#include("test_DippingCrackConstantVolume.jl")
+#include("test_TractionFreeSurfaceFracture.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

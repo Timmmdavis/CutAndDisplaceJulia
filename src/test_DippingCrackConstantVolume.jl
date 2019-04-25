@@ -91,11 +91,13 @@ FractureElements=FractureElements.+1; #single fracture
 pos = map(MidPoint, FaceNormalVector) do p, n
     p => p .+ (n .* 0.05f0)
 end
-@bp
+
 
 #Get tip elements
 (FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
+
+@bp
 
 KCrit=1e3; #[units?]
 (p1,p2,p3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit )
@@ -104,5 +106,7 @@ Px=[p1[:,1]; p2[:,1]; p3[:,1]];
 Py=[p1[:,2]; p2[:,2]; p3[:,2]];
 Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
 #scatter(P1[:,1],P1[:,2])
+
+return P1,P2,P3,Dn,Dss,Dds,Px,Py,Pz,MidPoint,FaceNormalVector
 
 end
