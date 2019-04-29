@@ -136,7 +136,7 @@ DssFlt=zeros(Num,2);
 #DdsFlt=DssFlt;
 FeM2EvFlt=copy(DssFlt);
 #FeEvFlt=DssFlt;
-V1[:,3].=1;
+V1[:,3].=1.0;
 
 #Loop to get the directions of the vectors in the coordiantes of the
 #triangle plane. 
@@ -203,6 +203,7 @@ for i=1:length(Indx)
     Vect2[i]=(dot(FeEv[Indx[i],:]',DPlaneCart[i,:]')).<=0;
 
 end
+
 #Flip if not
 DMid2Ed[Vect.==true]=-DMid2Ed[Vect.==true]; 
 #Flip if not

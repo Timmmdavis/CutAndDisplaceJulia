@@ -87,7 +87,7 @@ end
 w=cross(A,B);
 w=w/norm(w);
 if any(isnan.(w))
-    w=[0;0;0];
+    w=[0.;0.;0.];
 end
 w_hat=fcn_GetSkew(w);
 # 2. rotation angle

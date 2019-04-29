@@ -44,18 +44,23 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
     FeM2EvN[Bad,:]=-FeM2EvN[Bad,:];
     
 
-    #New Pnt= 
-    X=1.0; #adj
-    Z=0.0; 
+    #New Pnt - crack local coords
+    X=1.0; #along crack
+    Y=0.0; #crack normal dir
+    Z=0.0; #crack front edge dir
+    
 
     #@info Ang
-    Y=tan(Ang)*X; #opp
-    #error("Tan at 0 here goes to inf")
+    (X,Y)=CutAndDisplaceJulia.RotateObject2D!(X,Y,0.0,0.0,cos(Ang),sin(Ang))
+    #Now we have a vector length 1 pointing in right direction
+    #local crack coords
 
     (X,Y,Z) = RotateObject3DNewCoords!(X,Y,Z,0.0,0.0,0.0,FeM2Ev,NormalV,FeEv);
     FeM2EvK=normr([X Y Z]);
-         
-    
+    #FeM2EvK=[X Y Z]
+
+    #Rotated and length 1 into world coords
+
     #Check if two vectors match direction:
     Vect=(dot(FeM2Ev',FeM2EvK'))<=0;
     #Flip if not
@@ -64,9 +69,9 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
     end
     
     
-    #Length in cartesian coords
+    #Scale by length away from tip in cartesian coords
     DistFromMd=FeM2EvK.*L;
-    #So new point location
+    #So new point location is:
     NwPntCX=FeMd[1].+DistFromMd[1] 
     NwPntCY=FeMd[2].+DistFromMd[2] 
     NwPntCZ=FeMd[3].+DistFromMd[3];

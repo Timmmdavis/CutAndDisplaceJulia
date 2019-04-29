@@ -64,8 +64,7 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 	#Plane pointing along x axis. On-in conv - Acting on x
 	if FaceNormalVector[1,1]==1
 		if σxx∞[1]==1 
-			println("σxx∞ twist test")
-			if any(Px.!=0)
+			if any(round.(Px.*1e-10).!=0)
 				error("Plane not propagating flat")
 			end
 		end
@@ -86,7 +85,13 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 			flag=YDir.==-1
 			#because the top tips of this edge dont progate in the expected direction of a 2D fracture:
 			#We compute a ratio between those propagating properly and those not. 
+			
+
+			
 			ratio=sum(Px[flag].>0)/sum(Px[flag].<0)
+			println("Good and bad point twist:")
+			@info sum(Px[flag].>0) sum(Px[flag].<0)
+			#poop
 			if ratio<12 #check no parts prop anticlock wise from tip
 				error("Plane not propagating correctly")
 			end			
@@ -118,7 +123,7 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 	if FaceNormalVector[1,2]==1
 		if σyy∞[1]==1 
 			println("σyy∞ twist test")
-			if any(Py.!=0)
+			if any(round.(Py.*1e-10).!=0)
 				error("Plane not propagating flat")
 			end
 		end
@@ -133,12 +138,6 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 	if FaceNormalVector[1,3]==1
 		if σzz∞[1]==1 
 			println("σzz∞ twist test")
-			println(Px)
-			println(Py)
-			println(Pz)
-			println(P1[:,3])
-			println(P2[:,3])
-			println(P3[:,3])
 			if any(round.(Pz.*1e-10).!=0)
 				error("Plane not propagating flat")
 			end
@@ -323,7 +322,6 @@ BoundaryConditions=MixedBoundaryConditionsFriction(BoundaryConditions,Friction);
 #(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls)
 println("Sxy is satisfied Friction")
-poop
 
 #######σxz##########
 
