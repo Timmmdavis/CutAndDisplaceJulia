@@ -76,25 +76,28 @@ function StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2
 #  Copyright 2017, Tim Davis, Potsdam University
 
 #Call internal function (base of file)
-(K1_P1P2,K2_P1P2,K3_P1P2)=K1K2K3TriDislocation(FeP1P2S.FreeFlg,G,ν,Dn,FeP1P2S.FeM2Ev,FeP1P2S.FeEv,FeP1P2S.FeM2ELe,FeP1P2S.IntAng,FaceNormalVector,Dss,Dds);
+(K1_P1P2,K2_P1P2,K3_P1P2,StrainEnergy_P1P2)=K1K2K3TriDislocation(FeP1P2S.FreeFlg,G,ν,Dn,FeP1P2S.FeM2Ev,FeP1P2S.FeEv,FeP1P2S.FeM2ELe,FeP1P2S.IntAng,FaceNormalVector,Dss,Dds);
 #Call internal function (base of file)
-(K1_P1P3,K2_P1P3,K3_P1P3)=K1K2K3TriDislocation(FeP1P3S.FreeFlg,G,ν,Dn,FeP1P3S.FeM2Ev,FeP1P3S.FeEv,FeP1P3S.FeM2ELe,FeP1P3S.IntAng,FaceNormalVector,Dss,Dds);
+(K1_P1P3,K2_P1P3,K3_P1P3,StrainEnergy_P1P3)=K1K2K3TriDislocation(FeP1P3S.FreeFlg,G,ν,Dn,FeP1P3S.FeM2Ev,FeP1P3S.FeEv,FeP1P3S.FeM2ELe,FeP1P3S.IntAng,FaceNormalVector,Dss,Dds);
 #Call internal function (base of file)
-(K1_P2P3,K2_P2P3,K3_P2P3)=K1K2K3TriDislocation(FeP2P3S.FreeFlg,G,ν,Dn,FeP2P3S.FeM2Ev,FeP2P3S.FeEv,FeP2P3S.FeM2ELe,FeP2P3S.IntAng,FaceNormalVector,Dss,Dds);
+(K1_P2P3,K2_P2P3,K3_P2P3,StrainEnergy_P2P3)=K1K2K3TriDislocation(FeP2P3S.FreeFlg,G,ν,Dn,FeP2P3S.FeM2Ev,FeP2P3S.FeEv,FeP2P3S.FeM2ELe,FeP2P3S.IntAng,FaceNormalVector,Dss,Dds);
 
 #Put results into the strucs:
 #P1P2
 FeP1P2S.K1=K1_P1P2;
 FeP1P2S.K2=K2_P1P2;
 FeP1P2S.K3=K3_P1P2;
+FeP1P2S.StrainEnergy=StrainEnergy_P1P2;
 #P1P3
 FeP1P3S.K1=K1_P1P3;
 FeP1P3S.K2=K2_P1P3;
 FeP1P3S.K3=K3_P1P3;
+FeP1P3S.StrainEnergy=StrainEnergy_P1P3;
 #P2P3
 FeP2P3S.K1=K1_P2P3;
 FeP2P3S.K2=K2_P2P3;
 FeP2P3S.K3=K3_P2P3;
+FeP2P3S.StrainEnergy=StrainEnergy_P2P3;
 
 return FeP1P2S,FeP1P3S,FeP2P3S
 
@@ -233,7 +236,9 @@ K1=K1./C_K1;
 K2=K2./C_K2;
 K3=K3./C_K3;
 
-return K1,K2,K3
+( StrainEnergy ) = StrainEnergyRelease(K1,K2,K3,G,ν);
+
+return K1,K2,K3,StrainEnergy
 
 end
 

@@ -66,7 +66,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	#Adding some scaling parameters (Improves Friction Solver performance). 
 	#We scale by the average triangle size and the shear mod. 
 	(Area,HalfPerimeter ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-	Scl=(mean(HalfPerimeter)/G); 
+	Scl=(Statistics.mean(HalfPerimeter)/G); 
 	A=A*Scl; 
 
 	#Put inside structs

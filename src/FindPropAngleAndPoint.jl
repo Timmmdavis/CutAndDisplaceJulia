@@ -1,13 +1,24 @@
-function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
+function FindPropAngleAndPoint( Fe,FaceNormalVector,I,MaxStrainEnergy,AvgTriangleEdgeLength )
 #UNTITLED4 Summary of this function goes here
 #   Detailed explanation goes here
 
-    L=FeLe*sind(60); #Side length of tri
+    FeMd=Fe.FeMd[I,:];
+    FeEv=Fe.FeEv[I,:];
+    FeM2Ev=Fe.FeM2Ev[I,:];
+    #FeLe=Fe.FeLe[I,:];
+    StrainEnergy=Fe.StrainEnergy[I,:]
+    K1=Fe.K1[I,:];K1=K1[1];
+    K2=Fe.K2[I,:];K2=K2[1];
+    NormalV=FaceNormalVector[I,:]
+
+    L=AvgTriangleEdgeLength#FeLe*sind(60); #Side length of tri - Max propagation
+    ScaledL=(L/MaxStrainEnergy)*StrainEnergy;
+
     #Could be cleverer here, "C:\Users\timmm\Documents\PapersPDF\igabem3d_01doubleSpace_StressIntensity.pdf"
     #Eq.43 (paris law)
 
     #Right lateral movement so look in neg theta domain (see PF P375)
-    if K2>0 
+    if K2[1]>0.0 
         θo = range(-0.5*pi,stop=0.0,length=90);
         #Eq 9.78 Pollard:
         σθθ=(K1*sin.(θo)).+(K2*((3.0*cos.(θo)).-1.0));
@@ -36,13 +47,6 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
     #Doesnt appear to work...
     #@info Ang θc
 
-    
-    #Flip EV if normal is flipped:
-    FeM2EvN=FeM2Ev;
-    Bad=findall(NormalV[3]<0);
-    FeEv[Bad,:]=-FeEv[Bad,:];
-    FeM2EvN[Bad,:]=-FeM2EvN[Bad,:];
-    
 
     #New Pnt - crack local coords
     X=1.0; #along crack
@@ -70,7 +74,7 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
     
     
     #Scale by length away from tip in cartesian coords
-    DistFromMd=FeM2EvK.*L;
+    DistFromMd=FeM2EvK.*ScaledL;
     #So new point location is:
     NwPntCX=FeMd[1].+DistFromMd[1] 
     NwPntCY=FeMd[2].+DistFromMd[2] 

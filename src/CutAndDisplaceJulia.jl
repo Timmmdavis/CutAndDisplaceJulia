@@ -6,6 +6,7 @@ using Statistics
 using FischerNewton
 using Interpolations
 using Random
+using Statistics
 
 ######################################################
 println("Remove me!")
@@ -48,7 +49,7 @@ struct MixedBoundaryConditionsFluidVolume;MixedBoundaryConditions;Volumes;	end
 
 
 println("I would prefer not be mutable")
-mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3; 	end
+mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3;StrainEnergy; 	end
 
 export
     Stresses,
