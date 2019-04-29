@@ -13,7 +13,7 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
         σθθ=(K1*sin.(θo)).+(K2*((3.0*cos.(θo)).-1.0));
         v=σθθ; x=θo;
         #using Interpolations
-        itp = interpolate((x,),v, Gridded(Linear()))
+        itp = interpolate((v,),x, Gridded(Linear()))
         #finding σθθ at θo=0
         Ang=TryInterp(itp,0.0)
 
@@ -25,7 +25,7 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
         σθθ=(K1*sin.(θo)).+(K2*((3.0*cos.(θo)).-1.0));
         v=σθθ; x=θo;
         #using Interpolations
-        itp = interpolate((x,),v, Gridded(Linear()))
+        itp = interpolate((v,),x, Gridded(Linear()))
         #finding σθθ at θo=0
         Ang=TryInterp(itp,0.0)   
 
@@ -56,8 +56,8 @@ function FindPropAngleAndPoint( FeMd,FeM2Ev,FeLe,FeEv,NormalV,K2,K1 )
     #local crack coords
 
     (X,Y,Z) = RotateObject3DNewCoords!(X,Y,Z,0.0,0.0,0.0,FeM2Ev,NormalV,FeEv);
-    FeM2EvK=normr([X Y Z]);
-    #FeM2EvK=[X Y Z]
+    #FeM2EvK=normr([X Y Z]);
+    FeM2EvK=[X Y Z]
 
     #Rotated and length 1 into world coords
 

@@ -215,6 +215,75 @@ scatter!(Px,Pz,ms=-Py*4) #Looking towards pos y
 GoodEdges=findall(Px[flag].>0);
 BadEdges=findall(Px[flag].<0);
 @info GoodEdges BadEdges K2
+
+#Get the index's of the points:
+Freelocs=findall([FeP1P2S.FreeFlg; FeP1P3S.FreeFlg; FeP2P3S.FreeFlg])
+@info size(Freelocs)
+Indxs=findall(flag)
+
+#A list of index's to the edges that are pointing towards the south
+#if over 'n' then the next set. i.e. i:n = P1P2 n+1:2n=P1P3 2n+1:3n=P2P3
+Indxes=Freelocs[Indxs]
+@info Indxes Indxes[BadEdges] n
+
+GoodIndx=Indxes[GoodEdges];
+BadIndx=Indxes[BadEdges];
+
+#Find index locations:
+IndxP1P2=findall(FeP1P2S.FreeFlg);
+IndxP1P3=findall(FeP1P3S.FreeFlg);
+IndxP2P3=findall(FeP2P3S.FreeFlg);
+@info IndxP1P2
+
+Fe=FeP1P2S;
+for i=1:length(IndxP1P2)
+    #Extract some values
+    I=IndxP1P2[i]; 
+    if any(I.==BadIndx)
+    	println("Bad == P1P2 at $i")
+    	println(FaceNormalVector[I,:])
+    	println(Fe.FeMd[I,:])
+    	println(Fe.FeM2Ev[I,:])
+        println(Fe.FeLe[I])
+        println(Fe.FeEv[I,:])
+        println(Fe.K2[I])
+        println(Fe.K1[I])
+    end
+end
+
+Fe=FeP1P3S;
+for i=1:length(IndxP1P3)
+    #Extract some values
+    I=IndxP1P3[i]; 
+    if any(I.==(BadIndx.-n))
+    	println("Bad == P1P3 at $i")
+    	println(FaceNormalVector[I,:])
+    	println(Fe.FeMd[I,:])
+    	println(Fe.FeM2Ev[I,:])
+        println(Fe.FeLe[I])
+        println(Fe.FeEv[I,:])
+        println(Fe.K2[I])
+        println(Fe.K1[I])
+    end
+end
+
+Fe=FeP2P3S;
+for i=1:length(IndxP2P3)
+    #Extract some values
+    I=IndxP2P3[i]; 
+    if any(I.==(BadIndx.-2*n))
+    	println("Bad == P2P3 at $i")
+    	println(FaceNormalVector[I,:])
+    	println(Fe.FeMd[I,:])
+    	println(Fe.FeM2Ev[I,:])
+        println(Fe.FeLe[I])
+        println(Fe.FeEv[I,:])
+        println(Fe.K2[I])
+        println(Fe.K1[I])
+    end
+end
+
+
 K2_InterestedEdge=K2[flag];
 K1_InterestedEdge=K1[flag];
 
@@ -242,9 +311,6 @@ Ang_InterestedEdge=Ang[flag];
 
 @info Ang[GoodEdges]  
 @info Ang[BadEdges]  
-
-
-
 
 return fig2
 
