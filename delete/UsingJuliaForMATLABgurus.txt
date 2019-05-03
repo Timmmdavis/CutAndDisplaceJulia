@@ -99,3 +99,5 @@ Checking alloctions:
 XX=@allocated MyFunc()
 println(XX)
 
+ismember:
+https://discourse.julialang.org/t/julian-way-of-matlab-ismember-function/3740/11

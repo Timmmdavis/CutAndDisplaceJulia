@@ -2,34 +2,36 @@ function CleanAndIsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector
 
 ## Get edge triangles
 println("Grabbing edge tris") 
-(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeCons(P1,P2,P3,MidPoint);
+#Get edge triangles
+(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
+
 
 ## PART 1: Get edge triangles that share an inner point
 println("Now find those that share an inner point") 
 FreeTris=(P1P2FreeFlg+P2P3FreeFlg+P1P3FreeFlg).>0;
-(P1P2TET,P2P3TET,P1P3TET)=GetConnectedTrianglesOnEdge(P1[FreeTris,:],P2[FreeTris,:],P3[FreeTris,:],MidPoint[FreeTris,:]);
+(P1P2TET,P2P3TET,P1P3TET)=EdgeConstraints(P1[FreeTris,:],P2[FreeTris,:],P3[FreeTris,:],MidPoint[FreeTris,:]);
 #TET for "triangle edge touching"
 #indexs to the points connecting the two tris
 
 # # Collate
-FreeTrisIndx=find(FreeTris);
+FreeTrisIndx=findall(FreeTris);
 
 #Find the tris with this connected edge (Will be in order of connected ones): 
-BadTris=[FreeTrisIndx(P1P2TET);FreeTrisIndx(P2P3TET);FreeTrisIndx(P1P3TET)];
+BadTris=[FreeTrisIndx[P1P2TET];FreeTrisIndx[P2P3TET];FreeTrisIndx[P1P3TET]];
 #Find the points on edges (that are not part of the connected edge)
-P3Locs=FreeTrisIndx(P1P2TET); #scatter3(P3(P3Locs,1),P3(P3Locs,2),P3(P3Locs,3),"filled","blue")
-P1Locs=FreeTrisIndx(P2P3TET); #scatter3(P1(P1Locs,1),P1(P1Locs,2),P1(P1Locs,3),"filled","blue")
-P2Locs=FreeTrisIndx(P1P3TET); #scatter3(P2(P2Locs,1),P2(P2Locs,2),P2(P2Locs,3),"filled","blue")
+P3Locs=FreeTrisIndx[P1P2TET]; #scatter3(P3(P3Locs,1),P3(P3Locs,2),P3(P3Locs,3),"filled","blue")
+P1Locs=FreeTrisIndx[P2P3TET]; #scatter3(P1(P1Locs,1),P1(P1Locs,2),P1(P1Locs,3),"filled","blue")
+P2Locs=FreeTrisIndx[P1P3TET]; #scatter3(P2(P2Locs,1),P2(P2Locs,2),P2(P2Locs,3),"filled","blue")
 #Finding the inner shared point
-P3InBad=ismember(BadTris,find(P1P2FreeFlg)); #Each indx is where P1P2 is a free edge on the bad tri (i.e. P3 is the good one)
-P2InBad=ismember(BadTris,find(P1P3FreeFlg));
-P1InBad=ismember(BadTris,find(P2P3FreeFlg));
-P3Locs2=BadTris(P3InBad); #scatter3(P3(P3Locs2,1),P3(P3Locs2,2),P3(P3Locs2,3),"filled","red")
-P2Locs2=BadTris(P2InBad); #scatter3(P2(P2Locs2,1),P2(P2Locs2,2),P2(P2Locs2,3),"filled","red")
-P1Locs2=BadTris(P1InBad); #scatter3(P1(P1Locs2,1),P1(P1Locs2,2),P1(P1Locs2,3),"filled","red")
+P3InBad=in.(BadTris,[findall(P1P2FreeFlg)]); #Each indx is where P1P2 is a free edge on the bad tri (i.e. P3 is the good one)
+P2InBad=in.(BadTris,[findall(P1P3FreeFlg)]);
+P1InBad=in.(BadTris,[findall(P2P3FreeFlg)]);
+P3Locs2=BadTris[P3InBad]; #scatter3(P3(P3Locs2,1),P3(P3Locs2,2),P3(P3Locs2,3),"filled","red")
+P2Locs2=BadTris[P2InBad]; #scatter3(P2(P2Locs2,1),P2(P2Locs2,2),P2(P2Locs2,3),"filled","red")
+P1Locs2=BadTris[P1InBad]; #scatter3(P1(P1Locs2,1),P1(P1Locs2,2),P1(P1Locs2,3),"filled","red")
 
 #Assuming just two connections
-(~,SortedTriangles,~) = ConnectedTrianglesFinder(Triangles,MidPoint);
+(~,SortedTriangles,~) = FindConnectedTriangles(Triangles,MidPoint);
 SortedTriangles=SortedTriangles[BadTris,1:4];
 Logic=ismember(SortedTriangles[:,:],BadTris); #Logical, if 1&2 or 3&4 are flagged its two we are looking for
 Grab=(Logic[:,1]+Logic[:,2])==2;

@@ -27,6 +27,12 @@ function StrainEnergyRelease(K1,K2,K3,G,ν)
 
 StrainEnergy=((abs.(K1).^2+abs.(K2).^2).*(1-ν)+abs.(K3).^2)./(2*G);
 
+##from wiki (same result)
+#E=(2.0*G)*(1.0+ν);
+#c1=(1.0-(ν^2.0))/E
+#c2=1.0/(2.0*G)
+#StrainEnergyOtherEq=(abs.(K1).^2).*c1.+(abs.(K2).^2).*c1.+(abs.(K3).^2).*c2
+
 return StrainEnergy
 end
 

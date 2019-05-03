@@ -49,7 +49,7 @@ BoundaryConditions=Tractions(Tn,Tss,Tds);
 CutAndDisplaceJulia.RemoveFixedElements3D(FixedEls,Triangles,FaceNormalVector,MidPoint,P1,P2,P3)
 
 Difference=maximum(Dn)-minimum(Dn);
-@info Difference
+#@info Difference
 if Difference>(0.05)/G
 	error("Residual is too high")
 end
@@ -82,9 +82,9 @@ ResidualPercentUx=CutAndDisplaceJulia.BAsPercentOfA(UxAn,DispAtInfPoints.Ux);
 ResidualPercentUy=CutAndDisplaceJulia.BAsPercentOfA(UyAn,DispAtInfPoints.Uy);
 ResidualPercentUz=CutAndDisplaceJulia.BAsPercentOfA(UzAn,DispAtInfPoints.Uz);
 
-@info ResidualPercentUx
-@info ResidualPercentUy
-@info ResidualPercentUz
+#@info ResidualPercentUx
+#@info ResidualPercentUy
+#@info ResidualPercentUz
 
 lim=20; #Percent error limit
 if any((abs.(ResidualPercentUx.-100)).>lim) | any((abs.(ResidualPercentUy.-100)).>lim)  | any((abs.(ResidualPercentUz.-100)).>lim) 
@@ -93,10 +93,15 @@ end
 
 println("Test Passed")
 
-#=
+
 #To Draw
-using Plots
-gr()
-y=[UxAn.+UyAn.+UzAn Ux.+Uy.+Uz];
-scatter(X,y,title="X vs TotalDisp, An=y1 BEM=y2")
-=#
+#using Plots
+#gr()
+#y=[UxAn.+UyAn.+UzAn Ux.+Uy.+Uz];
+#scatter(X,y,title="X vs TotalDisp, An=y1 BEM=y2")
+using UnicodePlots
+y=[UxAn.+UyAn.+UzAn DispAtInfPoints.Ux.+DispAtInfPoints.Uy.+DispAtInfPoints.Uz];
+
+plt=lineplot(vec(X),vec(y[:,1]), title = "Deformation above mogi source \n r=$Radius [m] P=$P [MPa] G=$G [MPa] ν=$ν", name = "analytical", xlabel = "x [m]", ylabel = "ux+uy+uz [m]", canvas = DotCanvas)
+lineplot!(plt, vec(X),vec(y[:,2]), color = :blue, name = "numerical $n tris")
+
