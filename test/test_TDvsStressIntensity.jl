@@ -11,6 +11,7 @@ SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdg
 X=Points[:,2];
 Points[:,2]=Points[:,4];
 Points[:,4]=X;
+Radius=maximum(Points[:,2])
 
 #Pennys angle away from Z. 
 Beta=15; 
@@ -75,11 +76,11 @@ ResidualPercentK1=CutAndDisplaceJulia.BAsPercentOfA(K1an,K1);
 ResidualPercentK2=CutAndDisplaceJulia.BAsPercentOfA(K2an,K2);
 ResidualPercentK3=CutAndDisplaceJulia.BAsPercentOfA(K3an,K3);
 
-@info ResidualPercentK1 ResidualPercentK2 ResidualPercentK3
+#@info ResidualPercentK1 ResidualPercentK2 ResidualPercentK3
 MaxErrorK1=maximum(filter(!isnan,abs.(ResidualPercentK1)))-100; 
 MaxErrorK2=maximum(filter(!isnan,abs.(ResidualPercentK2)))-100; 
 MaxErrorK3=maximum(filter(!isnan,abs.(ResidualPercentK3)))-100;
-@info MaxErrorK1 MaxErrorK2 MaxErrorK3
+#@info MaxErrorK1 MaxErrorK2 MaxErrorK3
 #Test this has not changed 
 lim=11; #Percent error limit
 if MaxErrorK1>lim || MaxErrorK2>lim || MaxErrorK3>lim
@@ -101,3 +102,18 @@ y=[K3an K3];
 plot3=scatter(θ,y,title="Tht vs KIII, An=y1 BEM=y2")
 plot(plot1,plot2,plot3,layout=(3,1))
 =#
+
+σzz=σzz[1]
+using UnicodePlots
+plt=scatterplot(vec(θ),vec(K1an), title = "StressIntensity around inclined penny subject to tension \n r=$Radius [m] σzz=$σzz [MPa] βFromZ=$BetaFromVert [°] G=$G [MPa] ν=$ν", name = "analytical KI", xlabel = "θ [°]", ylabel = "K", canvas = DotCanvas)
+scatterplot!(plt, vec(θ),vec(K1), color = :blue, name = "numerical KI $n tris")
+println(plt) #need when running as test case
+
+plt=scatterplot(vec(θ),vec(K2an), title = "StressIntensity around inclined penny subject to tension \n r=$Radius [m] σzz=$σzz [MPa] βFromZ=$BetaFromVert [°]  G=$G [MPa] ν=$ν", name = "analytical KII", xlabel = "θ [°]", ylabel = "K", canvas = DotCanvas)
+scatterplot!(plt, vec(θ),K2, color = :yellow, name = "numerical KII $n tris")
+println(plt) #need when running as test case
+
+
+plt=scatterplot(vec(θ),vec(K3an), title = "StressIntensity around inclined penny subject to tension \n r=$Radius [m] σzz=$σzz [MPa] βFromZ=$BetaFromVert [°]  G=$G [MPa] ν=$ν", name = "analytical KIII", xlabel = "θ [°]", ylabel = "K", canvas = DotCanvas)
+scatterplot!(plt, vec(θ),vec(K3), color = :magenta, name = "numerical KIII $n tris")
+println(plt) #need when running as test case

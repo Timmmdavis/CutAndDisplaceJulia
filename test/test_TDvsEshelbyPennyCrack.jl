@@ -54,8 +54,10 @@ BoundaryConditions=Tractions(Tn,Tss,Tds)
 
 #Compute analytical solution for shearing of cracks walls
 a=1.0; #Radius of penny
-(us)=CutAndDisplaceJulia.Eshelby1957_PennyCrackSlipProfile(G,ν,0.0,1.0,ρ,a)#Shearing
-(un)=CutAndDisplaceJulia.Eshelby1957_PennyCrackSlipProfile(G,ν,1.0,0.0,ρ,a)#Opening
+ts=1.0;
+tn=1.0
+(us)=CutAndDisplaceJulia.Eshelby1957_PennyCrackSlipProfile(G,ν,0.0,ts,ρ,a)#Shearing
+(un)=CutAndDisplaceJulia.Eshelby1957_PennyCrackSlipProfile(G,ν,tn,0.0,ρ,a)#Opening
 
 #Compute the percent error between analytical and numerical
 ResidualPercentDs=CutAndDisplaceJulia.BAsPercentOfA(us,TotalShearing);
@@ -65,7 +67,7 @@ ResidualPercentDn=CutAndDisplaceJulia.BAsPercentOfA(un,Dn);
 Good=ρ.<0.9;
 ResidualPercentDs=ResidualPercentDs[Good];
 ResidualPercentDn=ResidualPercentDn[Good];
-@info ResidualPercentDs ResidualPercentDn
+#@info ResidualPercentDs ResidualPercentDn
 
 #Test this has not changed 
 lim=11; #Percent error limit
@@ -86,3 +88,15 @@ y=[un Dn];
 plot2=scatter(ρ,y,title="R vs Normal Disp, An=y1 BEM=y2")
 plot(plot1,plot2,layout=(2,1))
 =#
+using UnicodePlots
+y=[us TotalShearing];
+plt=scatterplot(vec(ρ),vec(us), title = "Slip of penny shaped cracks walls \n r=$a [m] ts=$ts [MPa] G=$G [MPa] ν=$ν",
+ name = "analytical", xlabel = "x [m]", ylabel = "ds [m]", canvas = DotCanvas)
+scatterplot!(plt, vec(ρ),vec(TotalShearing), color = :blue, name = "numerical $n tris")
+println(plt) #need when running as test case
+
+y=[us TotalShearing];
+plt=scatterplot(vec(ρ),vec(un), title = "Opening of penny shaped cracks walls \n r=$a [m] tn=$tn [MPa] G=$G [MPa] ν=$ν",
+ name = "analytical", xlabel = "x [m]", ylabel = "dn [m]", canvas = DotCanvas)
+scatterplot!(plt, vec(ρ),vec(Dn), color = :blue, name = "numerical $n tris")
+println(plt) #need when running as test case

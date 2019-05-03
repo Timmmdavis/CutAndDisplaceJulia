@@ -166,6 +166,7 @@ for i=1:length(Indx)
     X=[FeM2Ev[Indx[i],1] FeEv[Indx[i],1]];
     Y=[FeM2Ev[Indx[i],2] FeEv[Indx[i],2]];
     Z=[FeM2Ev[Indx[i],3] FeEv[Indx[i],3]];
+
     #Rotate so vectors are flat:
     (X,Y,~) = RotateObject3DAllignVectors(FaceNormalVector[Indx[i],:],V1,X,Y,Z,0,0,0);
     #Now get the two vectors as 2D coords (2nd we rotate by 90 counter

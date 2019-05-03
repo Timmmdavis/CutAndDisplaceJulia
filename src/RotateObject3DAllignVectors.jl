@@ -75,10 +75,10 @@ if B==-A
     Y=-Y;
     Z=-Z;
     #midpoint back to orig Loc
-    X=X+x0;
-    Y=Y+y0;
-    Z=Z+z0;
-    return #Leave func
+    X=X.+x0;
+    Y=Y.+y0;
+    Z=Z.+z0;
+    return X,Y,Z#Leave func
 end
 
 #Rotation Matrix between the two vectors

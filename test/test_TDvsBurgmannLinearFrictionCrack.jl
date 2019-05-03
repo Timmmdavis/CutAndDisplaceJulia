@@ -196,6 +196,7 @@ if ResidualSumDs>lim || ResidualSumDsF>lim
  	error("Sum of Residual displacement percentages too high, over $lim%")
 end
 
+println("Test Passed")
 
 #=
 #To Draw
@@ -208,5 +209,13 @@ plot2=scatter(x,y,title="R vs Normal Disp, An=y1 BEM=y2")
 plot(plot1,plot2,layout=(2,1))
 =#
 
+using UnicodePlots
+plt=scatterplot(vec(x),vec(Slip_UniformRemote), title = "Slip of line crack walls \n r=$a [m] ts=$Ts [MPa] G=$G [MPa] ν=$ν",
+ name = "analytical", xlabel = "x [m]", ylabel = "ds [m]", canvas = DotCanvas)
+scatterplot!(plt, vec(x),vec(Dds), color = :blue, name = "numerical $n tris")
+println(plt) #need when running as test case
 
-println("Test Passed")
+plt=scatterplot(vec(x),vec(Slip_IncreasingFriction), title = "Slip of line crack walls - linear cohesion profile \n r=$a [m] ts=$Ts [MPa] G=$G [MPa] ν=$ν",
+ name = "analytical", xlabel = "x [m]", ylabel = "ds [m]", canvas = DotCanvas)
+scatterplot!(plt, vec(x),vec(DdsF), color = :blue, name = "numerical $n tris")
+println(plt) #need when running as test case

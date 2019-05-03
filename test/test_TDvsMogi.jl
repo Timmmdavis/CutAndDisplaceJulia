@@ -101,7 +101,6 @@ println("Test Passed")
 #scatter(X,y,title="X vs TotalDisp, An=y1 BEM=y2")
 using UnicodePlots
 y=[UxAn.+UyAn.+UzAn DispAtInfPoints.Ux.+DispAtInfPoints.Uy.+DispAtInfPoints.Uz];
-
 plt=lineplot(vec(X),vec(y[:,1]), title = "Deformation above mogi source \n r=$Radius [m] P=$P [MPa] G=$G [MPa] ν=$ν", name = "analytical", xlabel = "x [m]", ylabel = "ux+uy+uz [m]", canvas = DotCanvas)
 lineplot!(plt, vec(X),vec(y[:,2]), color = :blue, name = "numerical $n tris")
-
+println(plt) #need when running as test case

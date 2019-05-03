@@ -106,6 +106,8 @@ else
  println("Everything looks good, checks the mean σxx σzz σxz residual of all points is below 0.15")
 end
 
+
+
 #=
 #Draw
 struct PlotAn;	σxx;σyy;σxy; end

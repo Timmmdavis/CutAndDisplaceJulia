@@ -49,6 +49,7 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 	#Now testing prop direction -
 	#check that new edge points along Md2Ed dir that points along plane we are acting on are twisted right dir
 	#Get tip elements
+	
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
 
@@ -141,7 +142,7 @@ function TwistTest(σ11∞,σ12∞,σ13∞,FeP1P2S,FeP1P3S,FeP2P3S,sheartensor2,
 end
 
 function RunBoundaryConditionsForPlane(BndConds1,BndConds2,BndConds3,
-	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls)
+	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls,n)
 
 #Set BoundaryConditions
 µ=0.0;
@@ -214,18 +215,19 @@ BoundaryConditions2=Stresses(σxx,σyy,σzz,σxy,σxz,ones(n));
 BoundaryConditions3=Stresses(σxx,σyy,ones(n),σxy,σxz,σyz);
 
 RunBoundaryConditionsForPlane(BoundaryConditions1,BoundaryConditions2,BoundaryConditions3,
-	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls)
+	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls,n)
 
-##Rotating 180 so normal is other direction
-Points[:,2]=-Points[:,2]
+#Flip normal by switching point order
+PointsTmp=Points[:,2];
+Points[:,2]=Points[:,3];
+Points[:,3]=PointsTmp;
+
 #Compute triangle properties
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
-n=length(Triangles[:,1]);
-n2=length(Points[:,1]);
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
 RunBoundaryConditionsForPlane(BoundaryConditions1,BoundaryConditions2,BoundaryConditions3,
-	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls)
+	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls,n)
 
 
 #Now make surface vertical (Switch Y and Z) strikes at 90
@@ -234,8 +236,6 @@ Points[:,4]=Points[:,3];
 Points[:,3]=PointsTmp;
 #Compute triangle properties
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
-n=length(Triangles[:,1]);
-n2=length(Points[:,1]);
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
 #######σxy##########
@@ -246,18 +246,16 @@ BoundaryConditions2=Stresses(σxx,σyy,σzz,σxy,σxz,ones(n));
 BoundaryConditions3=Stresses(σxx,ones(n),σzz,σxy,σxz,σyz);
 
 RunBoundaryConditionsForPlane(BoundaryConditions1,BoundaryConditions2,BoundaryConditions3,
-	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls)
+	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls,n)
 
 ##Rotating 180 so normal is other direction
 Points[:,2]=-Points[:,2]
 #Compute triangle properties
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
-n=length(Triangles[:,1]);
-n2=length(Points[:,1]);
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
 RunBoundaryConditionsForPlane(BoundaryConditions1,BoundaryConditions2,BoundaryConditions3,
-	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls)
+	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls,n)
 
 
 #Now make surface vertical (Switch X and Y) strikes at 0
@@ -266,8 +264,6 @@ Points[:,3]=Points[:,2];
 Points[:,2]=PointsTmp;
 #Compute triangle properties
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
-n=length(Triangles[:,1]);
-n2=length(Points[:,1]);
 
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
@@ -279,7 +275,7 @@ BoundaryConditions2=Stresses(σxx,σyy,σzz,σxy,ones(n),σyz);
 BoundaryConditions3=Stresses(ones(n),σyy,σzz,σxy,σxz,σyz);
 
 RunBoundaryConditionsForPlane(BoundaryConditions1,BoundaryConditions2,BoundaryConditions3,
-	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls)
+	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls,n)
 
 ##Rotating 180 so normal is other direction
 Points[:,3]=-Points[:,3]
@@ -290,10 +286,12 @@ n2=length(Points[:,1]);
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
 RunBoundaryConditionsForPlane(BoundaryConditions1,BoundaryConditions2,BoundaryConditions3,
-	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls)
+	P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,FixedEls,n)
 
 end
 
+#Run it
+test_TractionFreeSurfaceFracture()
 
 
 
