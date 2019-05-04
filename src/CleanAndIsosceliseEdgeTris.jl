@@ -5,6 +5,7 @@ println("Grabbing edge tris")
 #Get edge triangles
 (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
 
+SortedTriangles=ConnectedConstraints(P1,P2,P3,MidPoint)
 
 ## PART 1: Get edge triangles that share an inner point
 println("Now find those that share an inner point") 
@@ -31,7 +32,7 @@ P2Locs2=BadTris[P2InBad]; #scatter3(P2(P2Locs2,1),P2(P2Locs2,2),P2(P2Locs2,3),"f
 P1Locs2=BadTris[P1InBad]; #scatter3(P1(P1Locs2,1),P1(P1Locs2,2),P1(P1Locs2,3),"filled","red")
 
 #Assuming just two connections
-(~,SortedTriangles,~) = FindConnectedTriangles(Triangles,MidPoint);
+#(~,SortedTriangles,~) = FindConnectedTriangles(Triangles,MidPoint);
 SortedTriangles=SortedTriangles[BadTris,1:4];
 Logic=ismember(SortedTriangles[:,:],BadTris); #Logical, if 1&2 or 3&4 are flagged its two we are looking for
 Grab=(Logic[:,1]+Logic[:,2])==2;

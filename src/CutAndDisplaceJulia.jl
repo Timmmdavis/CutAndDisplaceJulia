@@ -98,6 +98,7 @@ export
 include("CleanAndIsosceliseEdgeTris.jl")
 include("FindConnectedTriangles.jl")
 include("ismember.jl")
+include("ConnectedConstraints.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

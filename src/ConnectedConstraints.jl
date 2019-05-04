@@ -1,39 +1,15 @@
-function EdgeConstraints(P1,P2,P3,MidPoint)
-# EdgeCons: 
-#               
-# usage:
-# [TriNo]=EdgeCons(Pa,Pb);
-#
-# Arguments: (input)
-# Pa,Pb          - The corner point of each triangle in 'Triangles'.
-#                    Arranged so the row index's correspond exactly to
-#                    'Triangles' and 'MidPoint'. 
-#
-#
-# Arguments: (output)
-# TriNo           - The triangle index that is the connected triangle to
-#                   that edge. Location of index is the triangle in question.
-#
-# P1P2FreeFlg     
-# P2P3FreeFlg
-# P3P1FreeFlg     - Flags of free edges between Pa and Pb (location
-#                   specific)
-#                             
-# Example usage:
-#
-# 
-#  Author: Tim Davis
-#  Copyright 2017, Tim Davis, Potsdam University
+function ConnectedConstraints(P1,P2,P3,MidPoint)
+
 
 #Checking 6 points
 (SixPntsP1P2)=CreateSortedEdgeVec(P1,P2);
 (SixPntsP2P3)=CreateSortedEdgeVec(P2,P3);
 (SixPntsP3P1)=CreateSortedEdgeVec(P3,P1);
 
-#Flags for free edges:
-P1P2FreeFlg=fill(true,length(P1[:,1])); #zeros(length(P1[:,1]));
-P2P3FreeFlg=fill(true,length(P1[:,1]));
-P3P1FreeFlg=fill(true,length(P1[:,1]));
+#rows nos are index of tri, the three rows are filled with index's of
+#connected tris
+#SortedTris=Int.(zeros(length(P1[:,1]),3)); #zeros(length(P1[:,1]));
+SortedTris=fill(0,length(P1[:,1]),3)
 
 #Calculate half length of each triangles perimeter
 ( ~,HPerimP ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
@@ -64,19 +40,13 @@ for j=1:length(P1[:,1])
     
     #Diff edge cons:
     if MatchingRow(SixPntsP1P2,SixPntsP2P3,i,j) 
-        #all(SixPntsP1P2[i,:]==SixPntsP2P3[j,:])
-        P1P2FreeFlg[i]=false; 
-        P2P3FreeFlg[j]=false; 
+        FillSortedTris(SortedTris,i,j)
     end
     if MatchingRow(SixPntsP1P2,SixPntsP3P1,i,j) 
-        #all(SixPntsP1P2[i,:]==SixPntsP3P1[j,:])
-        P1P2FreeFlg[i]=false; 
-        P3P1FreeFlg[j]=false; 
+        FillSortedTris(SortedTris,i,j)
     end
     if MatchingRow(SixPntsP2P3,SixPntsP3P1,i,j) 
-        #all(SixPntsP2P3[i,:]==SixPntsP3P1[j,:])
-        P2P3FreeFlg[i]=false;  
-        P3P1FreeFlg[j]=false; 
+        FillSortedTris(SortedTris,i,j)
     end
         
     if i==j
@@ -85,29 +55,35 @@ for j=1:length(P1[:,1])
     
     #Self cons: (e.g. only P1P2 to P1P2 edges)
     if MatchingRow(SixPntsP1P2,SixPntsP1P2,i,j) 
-        #all(SixPntsP1P2[i,:]==SixPntsP1P2[j,:])
-        P1P2FreeFlg[i]=false; 
-        P1P2FreeFlg[j]=false; 
+        FillSortedTris(SortedTris,i,j)
     end
     
     if MatchingRow(SixPntsP2P3,SixPntsP2P3,i,j) 
-        #all(SixPntsP2P3[i,:]==SixPntsP2P3[j,:])
-        P2P3FreeFlg[i]=false; 
-        P2P3FreeFlg[j]=false; 
+        FillSortedTris(SortedTris,i,j)
     end
     
     if MatchingRow(SixPntsP3P1,SixPntsP3P1,i,j) 
-        #all(SixPntsP3P1[i,:]==SixPntsP3P1[j,:])
-        P3P1FreeFlg[i]=false; 
-        P3P1FreeFlg[j]=false; 
+        FillSortedTris(SortedTris,i,j)
     end
 
 	end
 end
 
-return P1P2FreeFlg,P2P3FreeFlg,P3P1FreeFlg
+return SortedTris
 
 end
+
+function FillSortedTris(SortedTris,RowIndx,TriIndx)
+    #RowIndx - the current tri 
+    #TriIndx - known connection
+    if SortedTris[RowIndx,1]==0
+        SortedTris[RowIndx,1]=TriIndx;
+    elseif SortedTris[RowIndx,2]==0
+        SortedTris[RowIndx,2]=TriIndx;
+    elseif SortedTris[RowIndx,3]==0
+        SortedTris[RowIndx,3]=TriIndx; 
+    end 
+end      
 
 function MatchingRow(A1,A2,i,j)
 #Compare Els of two vectors
