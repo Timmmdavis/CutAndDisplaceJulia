@@ -1,4 +1,4 @@
-function FindConnectedTriangles(TR,MidPoint)
+function FindConnectedTriangles(Triangles,MidPoint)
 # ConnectedTrianglesFinder: Finds a list of index's of connected
 #                   triangles for each triangle on the surface, the
 #                   distance between these and the total number of edges.
@@ -71,27 +71,32 @@ function FindConnectedTriangles(TR,MidPoint)
 mnTriangulation=Triangles;
 nNumTriangles = size(mnTriangulation, 1);
 # - Collect all edges
-mnAllEdges = vertcat([mnTriangulation[:, 1:2]   (1:nNumTriangles)'],
-                     [mnTriangulation[:, 2:3]   (1:nNumTriangles)'],
-                     [mnTriangulation[:, [3 1]] (1:nNumTriangles)']);
-mnAllEdges[:, 1:2] = sort(mnAllEdges[:, 1:2], 2);
-# - Collect the edges list
-E = unique(mnAllEdges[:, 1:2], "rows");
+mnAllEdges = [[mnTriangulation[:, 1:2]   (1:nNumTriangles)]
+              [mnTriangulation[:, 2:3]   (1:nNumTriangles)]
+              [mnTriangulation[:, 3] mnTriangulation[:, 1] (1:nNumTriangles)]];
 
-NoEdges=length(E)/2;
+mnAllEdges[:, 1:2]=sort(mnAllEdges[:, 1:2],dims=2);
+
+# - Collect the edges list
+#E = unique(mnAllEdges[:, 1:2], "rows");
+E = Matrix(unique(DataFrame(mnAllEdges[:, 1:2])));
+
+NoEdges=size(E,1);
 AllTriangleNos=zeros(2,NoEdges);
 #Will need loop
 #Going to create a list the size of E that says which two triangles are connected to each other. 
 for i=1:NoEdges
-    Lia = (sum((ismember(TR,E[i,:]))'))'; 
-    Lia=Lia==2 ; #Creating indentity matrix where triangles have two adjacent edges at E1
-    TriangleNos = findall(Lia);#Finding the two connected triangles. 
+
+    bIna=sum(Int.(in.(Triangles,[E[i,:]])),dims=2)
+    bIna=bIna.==2; #Creating indentity matrix where triangles have two adjacent edges at E1
+    TriangleNos=findall(vec(bIna))
+    @info TriangleNos bIna
     AllTriangleNos[1,i]=TriangleNos[1]; 
     if length(TriangleNos) == 2
-    AllTriangleNos[2,i]=TriangleNos[2];   #Gives a matrix where each column is an edge connection with a triangle or TWO. 
+        AllTriangleNos[2,i]=TriangleNos[2];   #Gives a matrix where each column is an edge connection with a triangle or TWO. 
     end  
 end
-
+poop
 length=size[TR[:,1]];length=length[1,1];
 
 SortedTriangles=zeros(length,6);

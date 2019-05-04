@@ -8,6 +8,7 @@ using Interpolations
 using Random
 using Statistics
 using UnicodePlots
+using DataFrames
 
 ######################################################
 println("Remove me!")
@@ -96,6 +97,7 @@ export
 #DELETE
 include("CleanAndIsosceliseEdgeTris.jl")
 include("FindConnectedTriangles.jl")
+include("ismember.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")
