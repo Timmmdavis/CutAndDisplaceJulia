@@ -1,4 +1,4 @@
-function FindConnectedTriangles(Triangles,MidPoint)
+
 # ConnectedTrianglesFinder: Finds a list of index's of connected
 #                   triangles for each triangle on the surface, the
 #                   distance between these and the total number of edges.
@@ -68,6 +68,10 @@ function FindConnectedTriangles(Triangles,MidPoint)
 
 # Open src version of : TR = triangulation(Triangles,Points(:,2),Points(:,3),Points(:,4)); E = edges(TR); %Gives all connected edges. 
 # https://de.mathworks.com/matlabcentral/fileexchange/32727-fast-loop-mesh-subdivision
+
+function FindConnectedTriangles(Triangles,MidPoint)
+
+length(2)
 mnTriangulation=Triangles;
 nNumTriangles = size(mnTriangulation, 1);
 # - Collect all edges
@@ -90,25 +94,27 @@ for i=1:NoEdges
     bIna=sum(Int.(in.(Triangles,[E[i,:]])),dims=2)
     bIna=bIna.==2; #Creating indentity matrix where triangles have two adjacent edges at E1
     TriangleNos=findall(vec(bIna))
-    @info TriangleNos bIna
+    #@info TriangleNos bIna
     AllTriangleNos[1,i]=TriangleNos[1]; 
-    if length(TriangleNos) == 2
+    if length(TriangleNos)==2
         AllTriangleNos[2,i]=TriangleNos[2];   #Gives a matrix where each column is an edge connection with a triangle or TWO. 
     end  
 end
-poop
-length=size[TR[:,1]];length=length[1,1];
+lengthz=length(Triangles[:,1]);
 
-SortedTriangles=zeros(length,6);
-SortTri=zeros(3,length); #Just associated vertex's
+SortedTriangles=zeros(lengthz,6);
+SortTri=zeros(3,lengthz); #Just associated vertex's
 
 #To findall number of connections for each triangle
-for i=1:length
-    indices = findall(any(AllTriangleNos==i));     
+for i=1:lengthz
+    indices = findall(any(AllTriangleNos.==i));     
     
-    Flag=AllTriangleNos[:,indices[1]]==i;
+    
+    Flag=findall(AllTriangleNos[:,indices[1]].==i);
     TriNo=AllTriangleNos[:,indices[1]];
+    error("here")
     TriNo[Flag,:]=[];
+    
     SortTri[1,i]=TriNo;
     
     b=length(indices);    
@@ -136,21 +142,21 @@ SortTri=SortTri';
 SortTri = sort(SortTri,2,"descend"); #Sorting so 0's are always last row. Useful for loops later. 
 #Ie if only 2 connections only loop through size twice not three times. 
 SortedTriangles[:,2]=SortTri[:,1];SortedTriangles[:,4]=SortTri[:,2];SortedTriangles[:,6]=SortTri[:,3];
-Ascend=[1:length]';
+Ascend=[1:lengthz]';
 SortedTriangles[:,1]=Ascend;SortedTriangles[:,3]=Ascend;SortedTriangles[:,5]=Ascend;
 #List of every triangle and connections. 
 
 #Creating list of how many connections each tri has (can be used in loops
 #later) 
 Noconnections = SortTri<=0;
-Noconnections=(zeros(1,length)+3)'- sum(Noconnections,2);
+Noconnections=(zeros(1,lengthz)+3)'- sum(Noconnections,2);
 Noconnections=[Ascend,Noconnections];
 
-ConnectionDist1=zeros(length,3);
-ConnectionDist2=zeros(length,3);
-ConnectionDist3=zeros(length,3);
+ConnectionDist1=zeros(lengthz,3);
+ConnectionDist2=zeros(lengthz,3);
+ConnectionDist3=zeros(lengthz,3);
 
-for i=1:length
+for i=1:lengthz
     if Noconnections[i,2]==0
         continue
     end
