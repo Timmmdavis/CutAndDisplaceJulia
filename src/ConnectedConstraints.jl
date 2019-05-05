@@ -45,7 +45,16 @@ for j=1:length(P1[:,1])
     if MatchingRow(SixPntsP1P2,SixPntsP3P1,i,j) 
         FillSortedTris(SortedTris,i,j)
     end
+    if MatchingRow(SixPntsP2P3,SixPntsP1P2,i,j) 
+        FillSortedTris(SortedTris,i,j)
+    end
     if MatchingRow(SixPntsP2P3,SixPntsP3P1,i,j) 
+        FillSortedTris(SortedTris,i,j)
+    end
+    if MatchingRow(SixPntsP3P1,SixPntsP1P2,i,j) 
+        FillSortedTris(SortedTris,i,j)
+    end
+    if MatchingRow(SixPntsP3P1,SixPntsP2P3,i,j) 
         FillSortedTris(SortedTris,i,j)
     end
         

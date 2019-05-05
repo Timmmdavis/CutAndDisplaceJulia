@@ -4,8 +4,51 @@ function CleanAndIsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector
 println("Grabbing edge tris") 
 #Get edge triangles
 (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
-
 SortedTriangles=ConnectedConstraints(P1,P2,P3,MidPoint)
+#n*3 list of triangles connected to this tri
+
+## Firstly we collapse edge triangles that share an inner point
+n=length(Triangles[:,1]);
+#number of connected tris (Sorted tris rows not == to 0)
+NoConnections=sum(SortedTriangles.!=0,dims=2)
+EdgeTri=NoConnections.<3 #- edge tri
+for i=1:n #for each triangle
+    if EdgeTri[i]==true #current triangle is an edge
+        #We look at each connection of this tri
+        for j=1:NoConnections[i]
+            Next2EdgeTri=SortedTriangles[i,j]
+            if EdgeTri[Next2EdgeTri] #both edges and connected
+                error("Need to define this func -spits index's of connected points out")
+                #Get index's of connected points (Pa and Pb)
+                (EdgeTriPa,EdgeTriPb,Next2EdgeTriPa,Next2EdgeTriPb)=
+                FindConnectedPoints(P1,P2,P3,EdgeTri,Next2EdgeTri);
+                #Work out if these are on an edge or the inner point
+                if P1P2FreeFlg[EdgeTriPa] || P2P3FreeFlg[EdgeTriPa] || P1P3FreeFlg[EdgeTriPa]
+                    println("Pa is on the edge")
+                else
+                     println("Pa is Pnt C")
+                end
+                #You have Pnt C, now find the outeredgepoints that are not shared")
+            end
+        end
+    end
+end
+#=  
+for each tri:
+if EdgeTri && Next2EdgeTri
+if outeredgepoints connected
+if outeredges share PntC (innerpoint) 
+    check which point order for good normal dir
+    create new tri that represents the two
+    remove current two tris from P1P2P3
+    add new tri to bottom of row
+    remove connected outeredgepoint
+end
+end
+end
+remove tri row 
+=#
+
 
 ## PART 1: Get edge triangles that share an inner point
 println("Now find those that share an inner point") 
@@ -32,9 +75,12 @@ P2Locs2=BadTris[P2InBad]; #scatter3(P2(P2Locs2,1),P2(P2Locs2,2),P2(P2Locs2,3),"f
 P1Locs2=BadTris[P1InBad]; #scatter3(P1(P1Locs2,1),P1(P1Locs2,2),P1(P1Locs2,3),"filled","red")
 
 #Assuming just two connections
-#(~,SortedTriangles,~) = FindConnectedTriangles(Triangles,MidPoint);
-SortedTriangles=SortedTriangles[BadTris,1:4];
-Logic=ismember(SortedTriangles[:,:],BadTris); #Logical, if 1&2 or 3&4 are flagged its two we are looking for
+SortedTriangles=SortedTriangles[BadTris,1:2];
+Logic=in.(SortedTriangles,BadTris[end-1]);
+#Logic=ismember(SortedTriangles[:,:],BadTris); #Logical, if 1&2 or 3&4 are flagged its two we are looking for
+@info SortedTriangles BadTris size(SortedTriangles)
+@info size(Logic) Logic[end-3:end,1:2]
+poop
 Grab=(Logic[:,1]+Logic[:,2])==2;
 Connections=[SortedTriangles[Grab,1:2];SortedTriangles[!Grab,3:4]];
 Connections= unique(sort(Connections,2), "rows");
@@ -42,44 +88,44 @@ Connections= unique(sort(Connections,2), "rows");
    
 #And the edge points:
 PointC=[];PointB=[];PointA=[];
-for ii=1:length(Connections(:,1))
+for ii=1:length(Connections[:,1])
     
-    A=P3Locs(find(ismember(P3Locs,Connections[ii,1])));
-    B=P2Locs(find(ismember(P2Locs,Connections[ii,1])));
-    C=P1Locs(find(ismember(P1Locs,Connections[ii,1])));
-    if ~isempty(A)
+    A=P3Locs(findall(ismember(P3Locs,Connections[ii,1])));
+    B=P2Locs(findall(ismember(P2Locs,Connections[ii,1])));
+    C=P1Locs(findall(ismember(P1Locs,Connections[ii,1])));
+    if !isempty(A)
         PointA=[PointA;P3[A,:]];
     end
-    if ~isempty(B)
+    if !isempty(B)
         PointA=[PointA;P2[B,:]];    
     end
-    if ~isempty(C)        
+    if !isempty(C)        
         PointA=[PointA;P1[C,:]];   
     end
     
-    D=P3Locs(find(ismember(P3Locs,Connections[ii,2])));
-    E=P2Locs(find(ismember(P2Locs,Connections[ii,2])));    
-    F=P1Locs(find(ismember(P1Locs,Connections[ii,2])));
-    if ~isempty(D)
+    D=P3Locs(findall(ismember(P3Locs,Connections[ii,2])));
+    E=P2Locs(findall(ismember(P2Locs,Connections[ii,2])));    
+    F=P1Locs(findall(ismember(P1Locs,Connections[ii,2])));
+    if !isempty(D)
         PointB=[PointB;P3[D,:]];
     end
-    if ~isempty(E)
+    if !isempty(E)
         PointB=[PointB;P2[E,:]];    
     end
-    if ~isempty(F)
+    if !isempty(F)
         PointB=[PointB;P1[F,:]];   
     end
     
-    G=P3Locs2(find(ismember(P3Locs2,Connections[ii,1])));
-    H=P2Locs2(find(ismember(P2Locs2,Connections[ii,1])));    
-    I=P1Locs2(find(ismember(P1Locs2,Connections[ii,1])));
-    if ~isempty(G)
+    G=P3Locs2(findall(ismember(P3Locs2,Connections[ii,1])));
+    H=P2Locs2(findall(ismember(P2Locs2,Connections[ii,1])));    
+    I=P1Locs2(findall(ismember(P1Locs2,Connections[ii,1])));
+    if !isempty(G)
         PointC=[PointC;P3[G,:]];
     end
-    if ~isempty(H)
+    if !isempty(H)
         PointC=[PointC;P2[H,:]];    
     end
-    if ~isempty(I)
+    if !isempty(I)
         PointC=[PointC;P1[I,:]];   
     end    
     
