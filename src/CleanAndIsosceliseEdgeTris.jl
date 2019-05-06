@@ -4,162 +4,163 @@ function CleanAndIsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector
 println("Grabbing edge tris") 
 #Get edge triangles
 (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
-SortedTriangles=ConnectedConstraints(P1,P2,P3,MidPoint)
+(SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
 #n*3 list of triangles connected to this tri
 
+
 ## Firstly we collapse edge triangles that share an inner point
+#This loop assumes these double edge bits only have two connections
+#
+#  ¯.¯\¯¯|¯¯/¯.¯       ¯.¯\¯¯ ¯¯/¯.¯
+#  ....\ | /....  -- > ....\   /....
+#  .....\|/.....       .....\ /.....
+#  .............       .............      
+
 n=length(Triangles[:,1]);
+(SixPntsP1P2)=CreateSortedEdgePoints(P1,P2);
+(SixPntsP2P3)=CreateSortedEdgePoints(P2,P3);
+(SixPntsP3P1)=CreateSortedEdgePoints(P3,P1);
 #number of connected tris (Sorted tris rows not == to 0)
 NoConnections=sum(SortedTriangles.!=0,dims=2)
 EdgeTri=NoConnections.<3 #- edge tri
+
+fillme=zeros(1,9)
+fillme2=fill(0,1,2)
+newTris=zeros(1,9)
+removeIndx=fill(0,1,2);
+AvgVect=zeros(1,3);
+append=0;
 for i=1:n #for each triangle
-    if EdgeTri[i]==true #current triangle is an edge
+    
+    if EdgeTri[i] #current triangle is an edge
         #We look at each connection of this tri
-        for j=1:NoConnections[i]
+        for j=1:3
             Next2EdgeTri=SortedTriangles[i,j]
+            if Next2EdgeTri==0
+                continue
+            end
+
             if EdgeTri[Next2EdgeTri] #both edges and connected
-                error("Need to define this func -spits index's of connected points out")
-                #Get index's of connected points (Pa and Pb)
-                (EdgeTriPa,EdgeTriPb,Next2EdgeTriPa,Next2EdgeTriPb)=
-                FindConnectedPoints(P1,P2,P3,EdgeTri,Next2EdgeTri);
-                #Work out if these are on an edge or the inner point
-                if P1P2FreeFlg[EdgeTriPa] || P2P3FreeFlg[EdgeTriPa] || P1P3FreeFlg[EdgeTriPa]
-                    println("Pa is on the edge")
-                else
-                     println("Pa is Pnt C")
+                
+                #No point doing this for the 2nd tri
+                if any(in.(i,removeIndx))
+                    continue
                 end
-                #You have Pnt C, now find the outeredgepoints that are not shared")
+                
+
+                #Getting connected edges of each tri (P1 P2 or P3)
+                #j defines if its Col1=P1P2 Col2=P2P3 Col3=P1P3
+                if j==1
+                    #EdgeTriEdge=12
+                    EdgeTriNonConnectedPoint=P3[i,:]
+                    if P2P3FreeFlg[i]
+                        EdgeTriInnerPoint=P1[i,:]
+                    else
+                        EdgeTriInnerPoint=P2[i,:]
+                    end
+                elseif j==2
+                    #EdgeTriEdge=23
+                    EdgeTriNonConnectedPoint=P1[i,:]
+                    if P1P2FreeFlg[i]
+                        EdgeTriInnerPoint=P3[i,:]
+                    else
+                        EdgeTriInnerPoint=P2[i,:]
+                    end                    
+                elseif j==3
+                    #EdgeTriEdge=13
+                    EdgeTriNonConnectedPoint=P2[i,:]
+                    if P1P2FreeFlg[i]
+                        EdgeTriInnerPoint=P3[i,:]
+                    else
+                        EdgeTriInnerPoint=P1[i,:]
+                    end                       
+                end
+
+                Next2EdgeTriEdge=ConnectedEdge[i,j]
+                if Next2EdgeTriEdge==12
+                    Next2EdgeTriNonConnectedPoint=P3[Next2EdgeTri,:]
+                    #if P2P3FreeFlg[Next2EdgeTri]
+                    #    Next2EdgeTriInnerPoint=P1[Next2EdgeTri,:]
+                    #else
+                    #    Next2EdgeTriInnerPoint=P2[Next2EdgeTri,:]
+                    #end                    
+                elseif Next2EdgeTriEdge==23
+                    Next2EdgeTriNonConnectedPoint=P1[Next2EdgeTri,:]
+                    #if P1P2FreeFlg[Next2EdgeTri]
+                    #    Next2EdgeTriInnerPoint=P3[Next2EdgeTri,:]
+                    #else
+                    #    Next2EdgeTriInnerPoint=P2[Next2EdgeTri,:]
+                    #end          
+                elseif Next2EdgeTriEdge==13
+                    Next2EdgeTriNonConnectedPoint=P2[Next2EdgeTri,:]
+                    #if P1P2FreeFlg[Next2EdgeTri]
+                    #    Next2EdgeTriInnerPoint=P3[Next2EdgeTri,:]
+                    #else
+                    #    Next2EdgeTriInnerPoint=P1[Next2EdgeTri,:]
+                    #end   
+                end
+
+                
+
+                #should match - Next2EdgeTriInnerPoint EdgeTriInnerPoint
+               
+                #Adding to list of new triangles
+                fillme[1:3].=EdgeTriInnerPoint;
+                fillme[4:6].=Next2EdgeTriNonConnectedPoint;
+                fillme[7:9].=EdgeTriNonConnectedPoint;
+                #make sure point ordering matches that of the normal direction
+                AvgVect=(FaceNormalVector[i,:].+FaceNormalVector[Next2EdgeTri,:])./2;
+                NewTriNormalVector = CreateTriangleNormal( fillme[1:3],fillme[4:6],fillme[7:9] );
+                C = dot(AvgVect,NewTriNormalVector);
+                if C<0
+                    fillme[1:3].=EdgeTriNonConnectedPoint ;
+                    fillme[7:9].=EdgeTriInnerPoint;
+                end  
+                if append==0
+                    newTris=copy(fillme)
+                else
+                    newTris=[newTris; copy(fillme) ]
+                end
+
+                #Adding to list of triangles to remove
+                fillme2[1]=i;
+                fillme2[2]=Next2EdgeTri;
+                if append==0
+                    removeIndx=fillme2
+                else
+                    removeIndx=[removeIndx; fillme2 ]
+                end    
+
+                #once we hit this the first time we want to add to the vectors
+                append=1; 
+           
+           
             end
         end
     end
 end
-#=  
-for each tri:
-if EdgeTri && Next2EdgeTri
-if outeredgepoints connected
-if outeredges share PntC (innerpoint) 
-    check which point order for good normal dir
-    create new tri that represents the two
-    remove current two tris from P1P2P3
-    add new tri to bottom of row
-    remove connected outeredgepoint
-end
-end
-end
-remove tri row 
-=#
-
-
-## PART 1: Get edge triangles that share an inner point
-println("Now find those that share an inner point") 
-FreeTris=(P1P2FreeFlg+P2P3FreeFlg+P1P3FreeFlg).>0;
-(P1P2TET,P2P3TET,P1P3TET)=EdgeConstraints(P1[FreeTris,:],P2[FreeTris,:],P3[FreeTris,:],MidPoint[FreeTris,:]);
-#TET for "triangle edge touching"
-#indexs to the points connecting the two tris
-
-# # Collate
-FreeTrisIndx=findall(FreeTris);
-
-#Find the tris with this connected edge (Will be in order of connected ones): 
-BadTris=[FreeTrisIndx[P1P2TET];FreeTrisIndx[P2P3TET];FreeTrisIndx[P1P3TET]];
-#Find the points on edges (that are not part of the connected edge)
-P3Locs=FreeTrisIndx[P1P2TET]; #scatter3(P3(P3Locs,1),P3(P3Locs,2),P3(P3Locs,3),"filled","blue")
-P1Locs=FreeTrisIndx[P2P3TET]; #scatter3(P1(P1Locs,1),P1(P1Locs,2),P1(P1Locs,3),"filled","blue")
-P2Locs=FreeTrisIndx[P1P3TET]; #scatter3(P2(P2Locs,1),P2(P2Locs,2),P2(P2Locs,3),"filled","blue")
-#Finding the inner shared point
-P3InBad=in.(BadTris,[findall(P1P2FreeFlg)]); #Each indx is where P1P2 is a free edge on the bad tri (i.e. P3 is the good one)
-P2InBad=in.(BadTris,[findall(P1P3FreeFlg)]);
-P1InBad=in.(BadTris,[findall(P2P3FreeFlg)]);
-P3Locs2=BadTris[P3InBad]; #scatter3(P3(P3Locs2,1),P3(P3Locs2,2),P3(P3Locs2,3),"filled","red")
-P2Locs2=BadTris[P2InBad]; #scatter3(P2(P2Locs2,1),P2(P2Locs2,2),P2(P2Locs2,3),"filled","red")
-P1Locs2=BadTris[P1InBad]; #scatter3(P1(P1Locs2,1),P1(P1Locs2,2),P1(P1Locs2,3),"filled","red")
-
-#Assuming just two connections
-SortedTriangles=SortedTriangles[BadTris,1:2];
-Logic=in.(SortedTriangles,BadTris[end-1]);
-#Logic=ismember(SortedTriangles[:,:],BadTris); #Logical, if 1&2 or 3&4 are flagged its two we are looking for
-@info SortedTriangles BadTris size(SortedTriangles)
-@info size(Logic) Logic[end-3:end,1:2]
-poop
-Grab=(Logic[:,1]+Logic[:,2])==2;
-Connections=[SortedTriangles[Grab,1:2];SortedTriangles[!Grab,3:4]];
-Connections= unique(sort(Connections,2), "rows");
-
-   
-#And the edge points:
-PointC=[];PointB=[];PointA=[];
-for ii=1:length(Connections[:,1])
-    
-    A=P3Locs(findall(ismember(P3Locs,Connections[ii,1])));
-    B=P2Locs(findall(ismember(P2Locs,Connections[ii,1])));
-    C=P1Locs(findall(ismember(P1Locs,Connections[ii,1])));
-    if !isempty(A)
-        PointA=[PointA;P3[A,:]];
-    end
-    if !isempty(B)
-        PointA=[PointA;P2[B,:]];    
-    end
-    if !isempty(C)        
-        PointA=[PointA;P1[C,:]];   
-    end
-    
-    D=P3Locs(findall(ismember(P3Locs,Connections[ii,2])));
-    E=P2Locs(findall(ismember(P2Locs,Connections[ii,2])));    
-    F=P1Locs(findall(ismember(P1Locs,Connections[ii,2])));
-    if !isempty(D)
-        PointB=[PointB;P3[D,:]];
-    end
-    if !isempty(E)
-        PointB=[PointB;P2[E,:]];    
-    end
-    if !isempty(F)
-        PointB=[PointB;P1[F,:]];   
-    end
-    
-    G=P3Locs2(findall(ismember(P3Locs2,Connections[ii,1])));
-    H=P2Locs2(findall(ismember(P2Locs2,Connections[ii,1])));    
-    I=P1Locs2(findall(ismember(P1Locs2,Connections[ii,1])));
-    if !isempty(G)
-        PointC=[PointC;P3[G,:]];
-    end
-    if !isempty(H)
-        PointC=[PointC;P2[H,:]];    
-    end
-    if !isempty(I)
-        PointC=[PointC;P1[I,:]];   
-    end    
-    
-end
-
-if any(Connections[:].==0)
-    println("try B = unique(Points[:,2:4],'rows'); If there are less rows then::")
-    error("Make sure you use triangulaed surfaces where there are not duplicate rows in the point list, use func...")
-end  
-
-## Make sure we are facing the correct way:
-println("Fix normal direction") 
-for JJ=1:length(Connections[:,1])
-    AvgVect=(FaceNormalVector[Connections[JJ,1],:]+FaceNormalVector[Connections[JJ,2],:])/2;
-    NewTriNormalVector = CalculateTriangleNormal( PointA[JJ,:],PointB[JJ,:],PointC[JJ,:] );
-    C = dot(AvgVect,NewTriNormalVector);
-    if C<0
-        PcTmp=PointA[JJ,:];
-        PointA[JJ,:]=PointC[JJ,:];
-        PointC[JJ,:]=PcTmp;
+#Now redefine P1 P2 P3 
+n_new=n-length(removeIndx)+size(newTris,1)
+P1new=zeros(n_new,3)
+P2new=zeros(n_new,3)
+P3new=zeros(n_new,3)
+#should always be more than new tris
+counter=1;
+for i=1:n
+    if any(in.(i,removeIndx))
+        #skip
+    else
+        P1new[counter,:]=P1[i,:]
+        P2new[counter,:]=P2[i,:]
+        P3new[counter,:]=P3[i,:]
+        counter+=1
     end
 end
+P1new=[P1new;newTris[:,1:3]]
+P2new=[P2new;newTris[:,4:6]]
+P3new=[P3new;newTris[:,7:9]]
 
-#Remove the bad tris
-P1[BadTris,:]=[];
-P2[BadTris,:]=[]; 
-P3[BadTris,:]=[];
-println("Removing rows here, would be a desireable place to keep track of indexing")
-
-#Add new tris
-P1=[P1;PointA];
-P2=[P2;PointB];
-P3=[P3;PointC];
-
+error("heere")
 ##
 println("Collate") 
 
@@ -177,7 +178,6 @@ Triangles=reshape(Triangles,3,[])';
 ## PART 2: Now Rotate so always eq lat tris on edge
 #[P1,P2,P3] = CreateP1P2P3( Triangles,Points ); 
 (MidPoint,FaceNormalVector) = MidPointCreate(Points,Triangles,0);
-
 
 ## Get edge triangles (Of cleaned tri)
 (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeCons(P1,P2,P3,MidPoint);
