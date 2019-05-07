@@ -100,3 +100,5 @@ plt=scatterplot(vec(ρ),vec(un), title = "Opening of penny shaped cracks walls \
  name = "analytical", xlabel = "x [m]", ylabel = "dn [m]", canvas = DotCanvas)
 scatterplot!(plt, vec(ρ),vec(Dn), color = :blue, name = "numerical $n tris")
 println(plt) #need when running as test case
+
+

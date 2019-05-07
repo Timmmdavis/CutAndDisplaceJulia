@@ -102,8 +102,11 @@ include("ConnectedConstraints.jl")
 include("CreateSortedEdgePoints.jl")
 include("qGetRotQuaternion.jl")
 include("qRotatePoint.jl")
-
 include("MatchingRow.jl")
+include("OFFReader.jl")
+include("xyzExport.jl")
+include("OFFExport.jl")
+
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

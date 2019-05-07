@@ -3,7 +3,12 @@ function ismember(a,b)
 #b - value / row of values that we want to find in a 
 #logical - returned logical list length of size(a,1)
 
-BinALogical=sum(Int.(in.(a,[b])),dims=2).==size(a,2)
+#checking each col with loop
+Total=zeros(size(a,1),1)
+for i=1:size(a,2)
+	Total.+=in.(a[:,i],[b[i]])
+end
+BinALogical=Total.==size(a,2)
 
 return BinALogical
 end

@@ -67,7 +67,7 @@ function qInv( Q1 )
 Q1 = reshape( Q1, 4, 1 );
 Q = [Q1[1]; -Q1[2:4]];
 
-Q = Q ./ ( sqrt( sum( Q1 .* Q1 )); )^2;
+Q = Q ./ ( sqrt( sum( Q1 .* Q1 )) )^2;
 
 return Q
 end
