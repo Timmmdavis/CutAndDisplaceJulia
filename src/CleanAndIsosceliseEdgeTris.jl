@@ -160,58 +160,51 @@ P1new=[P1new;newTris[:,1:3]]
 P2new=[P2new;newTris[:,4:6]]
 P3new=[P3new;newTris[:,7:9]]
 
-error("heere")
-##
-println("Collate") 
 
-Points=[zeros(size(P1));zeros(size(P1));zeros(size(P1))];
-Points[1:3:end]=P1;
-Points[2:3:end]=P2;
-Points[3:3:end]=P3;
-Triangles=1:1:length(Points)/3;
-Triangles=reshape(Triangles,3,[])';
-
-#figure;
-#trisurf(Triangles,Points(:,1),Points(:,2),Points(:,3));
-#Points=[(1:1:length(Points(:,1)))",Points];
-
-## PART 2: Now Rotate so always eq lat tris on edge
+## Recreate tri
+Points=zeros(Int(length(P1)),3)
+Points[1:3:end,:]=P1;
+Points[2:3:end,:]=P2;
+Points[3:3:end,:]=P3;
+n=length(Points)
+Points=[1:n/3 Points]
+Triangles=fill(0,Int(n/9),3)
+Triangles[:,1]=1:3:n/3;
+Triangles[:,2]=2:3:n/3;
+Triangles[:,3]=3:3:n/3;
 #[P1,P2,P3] = CreateP1P2P3( Triangles,Points ); 
-(MidPoint,FaceNormalVector) = MidPointCreate(Points,Triangles,0);
-
+(MidPoint,FaceNormalVector) = CreateFaceNormalAndMidPoint(Points,Triangles)
 ## Get edge triangles (Of cleaned tri)
-(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeCons(P1,P2,P3,MidPoint);
+(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
 
-#hold on
-#scatter3(MidPoint(P1P2FreeFlg,1),MidPoint(P1P2FreeFlg,2),MidPoint(P1P2FreeFlg,3),"filled","red")
-#scatter3(MidPoint(P2P3FreeFlg,1),MidPoint(P2P3FreeFlg,2),MidPoint(P2P3FreeFlg,3),"filled","green")
-#scatter3(MidPoint(P1P3FreeFlg,1),MidPoint(P1P3FreeFlg,2),MidPoint(P1P3FreeFlg,3),"filled","blue")
-#title("CleanedDupEdges - FreeEdgeIndx - Going into Equi eqs")
 
-## Get new point if all tris are now isos
+
+## PART 2: Now Rotate so always isosceles tris on edge
+(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
+
 #Do for P1 P2: (Function at base of file)
-(P1,P2,P3)=MakeEqEdgeTris(P1P2FreeFlg,P1,P2,P3,MidPoint,FaceNormalVector);
+(P1,P2,P3)=MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector);
 
 #Do for P1 P3: (Function at base of file)
-(P1,P2,P3)=MakeEqEdgeTris(P1P3FreeFlg,P1,P3,P2,MidPoint,FaceNormalVector);
+(P1,P2,P3)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector);
 
 #Do for P2 P3: (Function at base of file)
-(P1,P2,P3)=MakeEqEdgeTris(P2P3FreeFlg,P2,P3,P1,MidPoint,FaceNormalVector);
+(P1,P2,P3)=MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector);
 
 
-Points=[zeros(size(P1));zeros(size(P1));zeros(size(P1))];
-Points[1:3:end]=P1;
-Points[2:3:end]=P2;
-Points[3:3:end]=P3;
-Triangles=1:1:length(Points)/3;
-Triangles=reshape(Triangles,3,[])';
-
-#figure;
-#trisurf(Triangles,Points(:,1),Points(:,2),Points(:,3));
-#axis("equal")
-
-Points=[(1:1:length(Points(:,1)))',Points];
-(MidPoint,FaceNormalVector) = MidPointCreate(Points,Triangles,0);
+## Recreate tri
+Points=zeros(Int(length(P1)),3)
+Points[1:3:end,:]=P1;
+Points[2:3:end,:]=P2;
+Points[3:3:end,:]=P3;
+n=length(Points)
+Points=[1:n/3 Points]
+Triangles=fill(0,Int(n/9),3)
+Triangles[:,1]=1:3:n/3;
+Triangles[:,2]=2:3:n/3;
+Triangles[:,3]=3:3:n/3;
+#[P1,P2,P3] = CreateP1P2P3( Triangles,Points ); 
+(MidPoint,FaceNormalVector) = CreateFaceNormalAndMidPoint(Points,Triangles)
 
 return P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector
 
@@ -220,98 +213,42 @@ end
 
 
 
-function MakeEqEdgeTris(Flg,Pa,Pb,Pc,MidPoint,FaceNormalVector)
+function MakeEqEdgeTris(T,Pa,Pb,Pc,MidPoint,FaceNormalVector)
 #Fills array with values if the connection is a free edge. 
 
-#Initialise some arrays:
-
-#Lengths of Free edges
-FeLe=nan(length(MidPoint)/3,1);
-#Length from innerpoint to edge Midpoint
-FeIn2ELe=nan(length(MidPoint)/3,1);
-#MidPoints of Free edges
-FeMd=nan(length(MidPoint)/3,3);
-#Vector parallel to Free edges (edge vector Ev)
-FeEv=nan(length(MidPoint)/3,3);
-#Vector pointing from midpoint to midpoint of Free edge (mid to edge vector
-#M2Ev)
-FeM2Ev=nan(length(MidPoint)/3,3);
-#Internal angles
-IntAng=nan(length(MidPoint)/3,1);
-#Vector from inner point to edge midpoint
-FeIn2Ev=nan(length(MidPoint)/3,3);
-
-#Create index thats says if the connection is a free edge. 
-Flag=logical(Flg); 
-#Midpoint of edge
-FeMd[Flag,:]=  [((Pa[Flag,1]+Pb[Flag,1])/2), ((Pa[Flag,2]+Pb[Flag,2])/2), ((Pa[Flag,3]+Pb[Flag,3])/2)];
-#Vector from midpoint to edge midpoint. 
-FeM2Ev[Flag,:]=normr([FeMd[Flag,1]-MidPoint[Flag,1],FeMd[Flag,2]-MidPoint[Flag,2],FeMd[Flag,3]-MidPoint[Flag,3]]);
-#Vector from inner point to edge midpoint
-FeIn2Ev[Flag,:]=normr([FeMd[Flag,1]-Pc[Flag,1],FeMd[Flag,2]-Pc[Flag,2],FeMd[Flag,3]-Pc[Flag,3]]);
-
-#Vector pointing along edge
-FeEv[Flag,:]=normr([(Pa[Flag,1]-Pb[Flag,1]),  (Pa[Flag,2]-Pb[Flag,2]),     (Pa[Flag,3]-Pb[Flag,3])]);
-
-#Internal angle of the triangle (angle between edges that are not the free
-#edge in question). 
-v=normr([(Pa[Flag,1]-Pc[Flag,1]), (Pa[Flag,2]-Pc[Flag,2]), (Pa[Flag,3]-Pc[Flag,3])]);
-w=normr([(Pb[Flag,1]-Pc[Flag,1]), (Pb[Flag,2]-Pc[Flag,2]), (Pb[Flag,3]-Pc[Flag,3])]);
-
-Indx=find(Flag);
-for i = 1:length(v(:,1))
-    IntAng[Indx[i]]=rad2deg(acos(dot(v[i,:],w[i,:])));
-end
-#|a| is the magnitude (length) of vector a
-#|b| is the magnitude (length) of vector b
-#? is the angle between a and b
-#a · b = |a| × |b| × cos(?) 
-#so acos the dot of the normalised gives theta
-
-
-##
-#Fix to make sure that the the Edge vector is counter clockwise from the
-#mid2edge vector when looking in the normal direction:
-for i=1:length(Indx)
-    #First rotate to flat:
-    V1=[0,0,1]; #Pointing up
-    #Get Nx Ny Nz for the vectors and put in here. 
-    X=[FeM2Ev[Indx[i],1],FeEv[Indx[i],1]];
-    Y=[FeM2Ev[Indx[i],2],FeEv[Indx[i],2]];
-    Z=[FeM2Ev[Indx[i],3],FeEv[Indx[i],3]];
-    #Rotate so vectors are flat:
-    (X,Y,~) = RotateObject3dAllignVectors(FaceNormalVector[Indx[i],:],V1,X,Y,Z,0,0,0);
-    #Now get the two vectors as 2D coords (2nd we rotate by 90 counter
-    #clockwise)
-    VM2Ev=[X[1], Y[1]]; 
-    VEv=[Y[2], -X[2]]; 
-    #Calculate the dot product
-    AllignFlag=dot(VM2Ev,VEv);
-    #See if these allign or not:
-    if AllignFlag>0
-        FeEv[Indx[i],:]=-FeEv[Indx[i],:];
-    end
-end
+#= Structure contains
+TriangleEdges (T) =
+FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;
+all defined in: GetCrackTipElements3D
+=#
 
 ## 
 #If triangles are not completly equilateral then the mid2Ed vec calculated
 #above is not perpendicular to the edge (meaning poor calculation of K2).
 #This fixes this for non eq tris.
 
-
+n=Int(length(MidPoint)/3);
+#Internal angles
+Ang=fill(NaN,n,1)
 #First we recompute the mid2edvec length (perp):
 #Angle between vectors: 
-Ang=pi/2-(acos(dot(FeIn2Ev[Flag,:]',FeEv[Flag,:]')));
-Upsidedown=(FaceNormalVector[Flag,3]<0)';
-Ang[Upsidedown]=-Ang[Upsidedown];
+Indx=findall(T.FreeFlg);
+Upsidedown=FaceNormalVector[T.FreeFlg,3].<0;
+for i = 1:length(Indx)
+    Ang[Indx[i]]=pi/2-rad2deg(acos(dot(T.FeM2Ev[i,:],T.FeEv[i,:])));
+    if Upsidedown[i]
+        Ang[Indx[i]]=-Ang[Indx[i]];
+    end
+end
+
 # #Length of R
 # FePc2ELe(Flag,:);
 # #Centre of Rotation
 # FeMd(Flag,:);
 #Default axis
-Vect=FaceNormalVector[Flag,:];
+Vect=FaceNormalVector[Indx,:];
 #Place Point to be rotated in correct pos
-PcCoords=Pc[Flag,:]-FeMd[Flag,:];
+PcCoords=Pc[Indx,:].-T.FeMd[Indx,:];
 # EXAMPLE:
 #     Rotate point (1;2;3) around vector (4;5;6) by an angle of pi/2
 #     P = [1;2;3];  # create the point
@@ -319,53 +256,39 @@ PcCoords=Pc[Flag,:]-FeMd[Flag,:];
 #     Qrot = qGetRotQuaternion( pi/2, V );
 #     P2 = qRotatePoint( P, Qrotate ); ];
 #
-Pc2=zeros(length(Ang),3);
-for i=1:length(Ang)
-    Qrot = qGetRotQuaternion( Ang[i], Vect[i,:]' );
+Pc2=zeros(length(Indx),3);
+for i=1:length(Indx)
+    Qrot = qGetRotQuaternion( Ang[i], Vect[i,:] );
     Pc2[i,:] = qRotatePoint( PcCoords[i,:]', Qrot ); 
 end
 
 #Move back to orig coords:
-Pc2=Pc2+FeMd[Flag,:];
-
-
-# ## Only if you want eq tris
-# #Length of edge
-# FeLe(Flag,:)=sqrt(((Pa(Flag,1)-Pb(Flag,1)).^2)+((Pa(Flag,2)-Pb(Flag,2)).^2)+((Pa(Flag,3)-Pb(Flag,3)).^2));
-# #Length of innerpoint to edge innerpoint
-# FeIn2ELe(Flag,:)=sqrt(((FeMd(Flag,1)-Pc(Flag,1)).^2)+((FeMd(Flag,2)-Pc(Flag,2)).^2)+((FeMd(Flag,3)-Pc(Flag,3)).^2));
-# Shdbe=(FeLe*sqrt(3))/2;
-# ToMove=Shdbe-FeIn2ELe;
-# FeIn2Ev(Flag,:)=normr([FeMd(Flag,1)-Pc2(:,1),FeMd(Flag,2)-Pc2(:,2),FeMd(Flag,3)-Pc2(:,3)]);
-# Pc2=Pc2+(-ToMove(Flag,:).*FeIn2Ev(Flag,:));
-# ##
-
-
-#hold on
-#scatter3(Pc2(:,1),Pc2(:,2),Pc2(:,3),"g","filled")
+Pc2=Pc2+T.FeMd[Indx,:];
 
 #And clean up connected tris
 for i=1:length(Indx)
-    InPa=ismember(Pa(:,:),Pc(Indx(i),:),"rows");
-    InPb=ismember(Pb(:,:),Pc(Indx(i),:),"rows");
-    InPc=ismember(Pc(:,:),Pc(Indx(i),:),"rows");
-    InPaIndx=find(InPa);
-    for j=1:length(InPaIndx)
-        Pa[InPaIndx(j),:]=Pc2[i,:];
+
+    InPa=ismember(Pa[:,:],Pc[Indx[i],:]);
+    InPb=ismember(Pb[:,:],Pc[Indx[i],:]);
+    InPc=ismember(Pc[:,:],Pc[Indx[i],:]);
+
+    InPaIndx=findall(InPa);
+    for j in eachindex(InPaIndx)
+        Pa[j,:]=Pc2[i,:];
     end
     
-    InPbIndx=find(InPb);
-    for j=1:length(InPbIndx)      
-        Pb[InPbIndx(j),:]=Pc2[i,:];
+    InPbIndx=findall(InPb);
+    for j in eachindex(InPbIndx)      
+        Pb[j,:]=Pc2[i,:];
     end    
     
-    InPcIndx=find(InPc);
-    for j=1:length(InPcIndx)    
-        Pc[InPcIndx(j),:]=Pc2[i,:];
+    InPcIndx=findall(InPc);
+    for j in eachindex(InPcIndx)    
+        Pc[j,:]=Pc2[i,:];
     end    
 end
 
-Pc[Flag,:]=Pc2;
+Pc[Indx,:]=Pc2;
 
 return Pa,Pb,Pc
 
