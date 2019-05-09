@@ -94,19 +94,23 @@ export
 	InfMat,
 	BoundaryConditionsVec
 
+#=
 #DELETE
+include("LoopRoundBoundary.jl")
 include("CleanAndIsosceliseEdgeTris.jl")
-include("FindConnectedTriangles.jl")
-include("ismember.jl")
-include("ConnectedConstraints.jl")
-include("CreateSortedEdgePoints.jl")
-include("qGetRotQuaternion.jl")
-include("qRotatePoint.jl")
-include("MatchingRow.jl")
+include("LoopRoundBoundary.jl")
+=#
 include("OFFReader.jl")
 include("xyzExport.jl")
 include("OFFExport.jl")
-
+include("ConnectedConstraints.jl")
+include("qGetRotQuaternion.jl")
+include("qRotatePoint.jl")
+include("FindConnectedTriangles.jl")
+include("ismember.jl")
+include("MatchingRow.jl")
+include("CreateSortedEdgePoints.jl")
+include("CollapseEdgeTris.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

@@ -38,23 +38,20 @@ for i=1:n
 	#Remesh using Polygon method in CGAL:
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	target_edge_length=mean(HalfPerimeter)*(2/3)
-	(Outputdirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
+	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 
 	#Reload	
-	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(Outputdirectory)
+	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-
-	@bp
 
 	#Compute triangle properties
 	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 	n=length(Triangles[:,1]);
 	n2=length(Points[:,1]);
-	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanAndIsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 
-	#kill 
-	poop
+	
 
 	# Which bits we want to compute
 	HSFlag=1; #const 
@@ -87,21 +84,49 @@ for i=1:n
 	BoundaryConditions=MixedBoundaryConditionsFluidVolume(BoundaryConditions,Volume)
 	FractureElements=FractureElements.+1; #single fracture
 
-
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
 
 	#Get tip elements
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
+	
 
+	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+	
+	AvgTriangleEdgeLength=mean(HalfPerimeter)*(2/3)
 	KCrit=1e3; #[units?]
-	(p1,p2,p3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit )
+	(p1,p2,p3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit,AvgTriangleEdgeLength )
+
 
 	Px=[p1[:,1]; p2[:,1]; p3[:,1]];
 	Py=[p1[:,2]; p2[:,2]; p3[:,2]];
 	Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
 	#scatter(P1[:,1],P1[:,2])
+
+	#Remove closed elements
+	OpenEls=(round.(Dn.*1e16)./1e16).!=0
+	P1=P1[OpenEls,:]
+	P2=P2[OpenEls,:]
+	P3=P3[OpenEls,:]
+	#Add to the new points
+	Px=[Px; P1[:,1]; P2[:,1]; P3[:,1]];
+	Py=[Py; P1[:,2]; P2[:,2]; P3[:,2]];
+	Pz=[Pz; P1[:,3]; P2[:,3]; P3[:,3]];
+
+	#remove duplicate rows
+	Pnts=[Px Py Pz]
+	Pnts=unique(Pnts,dims=1) 
+
+	OutputDirectory=CutAndDisplaceJulia.xyzExport(Pnts[:,1],Pnts[:,2],Pnts[:,3])
+	println(OutputDirectory)
+	(OutputDirectory)=BuildCGAL.AdvancingFrontCGAL(OutputDirectory)
+	println(OutputDirectory)
+	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
+
+	if i==2
+		poop
+	end
 
 end
 

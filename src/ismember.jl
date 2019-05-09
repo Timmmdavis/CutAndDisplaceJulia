@@ -8,7 +8,7 @@ Total=zeros(size(a,1),1)
 for i=1:size(a,2)
 	Total.+=in.(a[:,i],[b[i]])
 end
-BinALogical=Total.==size(a,2)
+BinALogical=vec(Total.==size(a,2))
 
 return BinALogical
 end

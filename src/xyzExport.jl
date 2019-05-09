@@ -1,10 +1,11 @@
-function xyzExport(Points)
+function xyzExport(x,y,z)
+#vectors x y and z
 
 #using DelimitedFiles
-writedlm("testexport.txt",Points[:,2:4]," ")
+writedlm("testexport.xyz",[x y z]," ")
 
 #OutputDir
-OutputDirectory=pwd()
+OutputDirectory=string(pwd(),"\\","testexport.xyz")
 
 return OutputDirectory
 end

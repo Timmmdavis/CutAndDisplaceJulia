@@ -117,3 +117,4 @@ println(plt) #need when running as test case
 plt=scatterplot(vec(θ),vec(K3an), title = "StressIntensity around inclined penny subject to tension \n r=$Radius [m] σzz=$σzz [MPa] βFromZ=$BetaFromVert [°]  G=$G [MPa] ν=$ν", name = "analytical KIII", xlabel = "θ [°]", ylabel = "K", canvas = DotCanvas)
 scatterplot!(plt, vec(θ),vec(K3), color = :magenta, name = "numerical KIII $n tris")
 println(plt) #need when running as test case
+

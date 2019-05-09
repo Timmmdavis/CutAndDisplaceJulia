@@ -82,13 +82,13 @@ FeP1P2S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0);
 
 
 #Do for P1 P3: (Function at base of file)
-(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P1P3FreeFlg,P3,P1,P2,MidPoint,FaceNormalVector);
+(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P1P3FreeFlg,P1,P3,P2,MidPoint,FaceNormalVector);
 #Put in structure
 FeP1P3S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0);
 
 
 #Do for P2 P3: (Function at base of file)
-(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P2P3FreeFlg,P3,P2,P1,MidPoint,FaceNormalVector);
+(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P2P3FreeFlg,P2,P3,P1,MidPoint,FaceNormalVector);
 #Put in structure
 FeP2P3S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0);
 
@@ -176,7 +176,7 @@ for i=1:length(Indx)
     #Calculate the dot product
     AllignFlag=dot(VM2Ev,VEv);
     #See if these allign or not:
-    if AllignFlag>0
+    if AllignFlag<0
         FeEv[Indx[i],:]=-FeEv[Indx[i],:];
     end
 end
@@ -184,27 +184,27 @@ end
 #Then the direction of this vector: 
 #Vector from midpoint to edge midpoint (cross Pro)
 FeM2Ev2=zeros(size(FeM2Ev));
-Vect=zeros(size(Indx));
 for i=1:length(Indx)
     FaceNormalVectorLp=FaceNormalVector[Indx[i],:];
     FeEvLp=FeEv[Indx[i],:];
     FeM2Ev2[Indx[i],:]=cross(vec(FaceNormalVectorLp),vec(FeEvLp))
 
-    #Check if edge vector and slip vector match in sign
-    Vect[i]=(dot((FeM2Ev[Indx[i],:]),vec(FeM2Ev2[Indx[i],:])))<=0;
+    #Check if edge vector and slip vector allign
+    AllignFlag=dot(FeM2Ev[Indx[i],:],vec(FeM2Ev2[Indx[i],:]));
+    #Flip if not
+    if AllignFlag<0
+        FeM2Ev2[Indx[i],:]=-FeM2Ev2[Indx[i],:]; 
+    end
 end
-#Flip if not
-FeM2Ev2[Indx[Vect.==1],:]=-FeM2Ev2[Indx[Vect.==1],:]; 
+
 FeM2Ev[I,:]=FeM2Ev2[I,:];
 
 
-println("Needed?")
 #Assuming M2Ed and Ev have good convention then we now recomp edge vector
 for i=1:length(Indx)
     #cross!(vec(FeM2Ev[Indx[i],:]),vec(FaceNormalVector[Indx[i],:]),view(FeEv,Indx[i],:))
     FeEv[Indx[i],:]=cross(vec(FeM2Ev[Indx[i],:]),vec(FaceNormalVector[Indx[i],:]))
 end 
-
 
 return I,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng
 

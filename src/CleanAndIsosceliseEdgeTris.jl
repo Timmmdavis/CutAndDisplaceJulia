@@ -140,51 +140,58 @@ for i=1:n #for each triangle
         end
     end
 end
-#Now redefine P1 P2 P3 
-n_new=n-length(removeIndx)+size(newTris,1)
-P1new=zeros(n_new,3)
-P2new=zeros(n_new,3)
-P3new=zeros(n_new,3)
-#should always be more than new tris
-counter=1;
-for i=1:n
-    if any(in.(i,removeIndx))
-        #skip
-    else
-        P1new[counter,:]=P1[i,:]
-        P2new[counter,:]=P2[i,:]
-        P3new[counter,:]=P3[i,:]
-        counter+=1
+
+#Only doing if there are changes
+if removeIndx!=[0 0] || newTris!=[0 0 0 0 0 0 0 0 0]
+
+    #Now redefine P1 P2 P3 
+    n_new=n-length(removeIndx)+size(newTris,1)
+    P1new=zeros(n_new,3)
+    P2new=zeros(n_new,3)
+    P3new=zeros(n_new,3)
+
+    #should always be more than new tris
+    counter=1;
+    for i=1:n
+        if any(in.(i,removeIndx))
+            #skip
+        else
+            P1new[counter,:]=P1[i,:]
+            P2new[counter,:]=P2[i,:]
+            P3new[counter,:]=P3[i,:]
+            counter+=1
+        end
     end
+    P1new=[P1new;newTris[:,1:3]]
+    P2new=[P2new;newTris[:,4:6]]
+    P3new=[P3new;newTris[:,7:9]]
+
+
+    P1=P1new
+    P2=P2new
+    P3=P3new
+
+    ## Recreate tri
+    Points=zeros(Int(length(P1)),3)
+    Points[1:3:end,:]=P1;
+    Points[2:3:end,:]=P2;
+    Points[3:3:end,:]=P3;
+    n=length(Points)
+    Points=[1:n/3 Points]
+    Triangles=fill(0,Int(n/9),3)
+    Triangles[:,1]=1:3:n/3;
+    Triangles[:,2]=2:3:n/3;
+    Triangles[:,3]=3:3:n/3;
+    #(P1,P2,P3) = CreateP1P2P3( Triangles,Points ); 
+    try (MidPoint,FaceNormalVector) = CreateFaceNormalAndMidPoint(Points,Triangles)
+    catch 
+        println("Check your surface, more than 2 duplicate edge tris?")
+        error("Remesh here")
+    end
+    ### Get edge triangles (Of cleaned tri)
+    #(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
+
 end
-P1new=[P1new;newTris[:,1:3]]
-P2new=[P2new;newTris[:,4:6]]
-P3new=[P3new;newTris[:,7:9]]
-
-
-P1=P1new
-P2=P2new
-P3=P3new
-
-## Recreate tri
-Points=zeros(Int(length(P1)),3)
-Points[1:3:end,:]=P1;
-Points[2:3:end,:]=P2;
-Points[3:3:end,:]=P3;
-n=length(Points)
-Points=[1:n/3 Points]
-Triangles=fill(0,Int(n/9),3)
-Triangles[:,1]=1:3:n/3;
-Triangles[:,2]=2:3:n/3;
-Triangles[:,3]=3:3:n/3;
-#(P1,P2,P3) = CreateP1P2P3( Triangles,Points ); 
-try (MidPoint,FaceNormalVector) = CreateFaceNormalAndMidPoint(Points,Triangles)
-catch 
-    println("Check your surface, more than 2 duplicate edge tris?")
-    error("Remesh here")
-end
-## Get edge triangles (Of cleaned tri)
-(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
 
 ## PART 2: Now Rotate so always isosceles tris on edge
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
@@ -212,7 +219,7 @@ Triangles[:,2]=2:3:n/3;
 Triangles[:,3]=3:3:n/3;
 
 #[P1,P2,P3] = CreateP1P2P3( Triangles,Points ); 
-(MidPoint,FaceNormalVector) = CreateFaceNormalAndMidPoint(Points,Triangles)
+(FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
 
 
 return P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector
