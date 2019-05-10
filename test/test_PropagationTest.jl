@@ -11,7 +11,7 @@ Volume=(π*(Radius^2))*HeightCrack
 #Load triangles and points from file (mesh)
 SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
 (Points,Triangles)=CutAndDisplaceJulia.STLReader(SurfaceDir)
-FractureElements=zeros(size(Triangles,1))
+
 
 #Flatten so normals point up
 X=Points[:,2];
@@ -28,9 +28,11 @@ BetaFromVert=90-Beta;
 Points[:,2:4]=Points[:,2:4].*Radius;
 Points[:,4]=Points[:,4].-2000; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-n=5;
+lps=5;
 #Looping from here on in
-for i=1:n
+for i=1:lps
+
+	Volume=(π*(Radius^2))*HeightCrack
 
 	#Export current mesh
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]))
@@ -43,15 +45,19 @@ for i=1:n
 	#Reload	
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-
 	#Compute triangle properties
 	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+
+	@bp
+
+	#Remesh edges
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanAndIsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
+
+	@bp
+
 	n=length(Triangles[:,1]);
 	n2=length(Points[:,1]);
 
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanAndIsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
-
-	
 
 	# Which bits we want to compute
 	HSFlag=1; #const 
@@ -82,7 +88,9 @@ for i=1:n
 	Traction=Tractions(Tn,Tss,Tds);
 	BoundaryConditions=MixedBoundaryConditions(Stress,Traction)
 	BoundaryConditions=MixedBoundaryConditionsFluidVolume(BoundaryConditions,Volume)
-	FractureElements=FractureElements.+1; #single fracture
+
+	#All a fracture
+	FractureElements=fill(1,n)
 
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
@@ -104,8 +112,10 @@ for i=1:n
 	Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
 	#scatter(P1[:,1],P1[:,2])
 
+	@bp
+
 	#Remove closed elements
-	OpenEls=(round.(Dn.*1e16)./1e16).!=0
+	OpenEls=(round.(Dn.*1e10)./1e10).!=0
 	P1=P1[OpenEls,:]
 	P2=P2[OpenEls,:]
 	P3=P3[OpenEls,:]
@@ -124,9 +134,8 @@ for i=1:n
 	println(OutputDirectory)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 
-	if i==2
-		poop
-	end
+
+
 
 end
 

@@ -246,6 +246,8 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         Norm=zeros(NumOfFractures);
         DnAvg=zeros(n);
         for i=1:NumOfFractures
+        	println("We have this $Volume")
+        	println("i is $i")
             if Volume[i]<0 #Neg vols need neg pressure input
                 X0[i]=-1.0;  #if two cracks X0=[1,1];
             else

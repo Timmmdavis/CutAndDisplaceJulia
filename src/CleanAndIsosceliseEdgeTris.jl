@@ -26,7 +26,9 @@ println("Grabbing edge tris")
 
 
 #Only doing if there are changes
-if removeIndx!=[0 0] || newTris!=[0 0 0 0 0 0 0 0 0]
+if size(removeIndx)!=()
+
+    println("SpringCleaning")
 
     #Remove first dud value
     newTris=copy(newTris[2:end,:])
@@ -76,6 +78,8 @@ if removeIndx!=[0 0] || newTris!=[0 0 0 0 0 0 0 0 0]
 
 end
 
+@bp
+
 ## PART 2: Now Rotate so always isosceles tris on edge
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 
@@ -83,10 +87,10 @@ end
 (P1,P2,P3)=MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector); #
 
 #Do for P1 P3: (Function at base of file)
-(P1,P2,P3)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector);
+(P1,P3,P2)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector);
 
 #Do for P2 P3: (Function at base of file)
-(P1,P2,P3)=MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector);
+(P2,P3,P1)=MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector);
 
 
 ## Recreate tri
@@ -170,15 +174,14 @@ Ang=fill(NaN,n,1)
 #First we recompute the mid2edvec length (perp):
 #Angle between vectors: 
 
-@info size(T.FeEv) size(FeIn2Ev) Indx
 
-Upsidedown=FaceNormalVector[Indx,3].<0;
+#Upsidedown=FaceNormalVector[Indx,3].>0;
 for i=1:length(Indx)
     idx=Indx[i];
     Ang[idx]=(pi/2)-(acos(dot(vec(FeIn2Ev[idx,:]),vec(T.FeEv[idx,:]))));
-    if Upsidedown[i]
-        Ang[idx]=-Ang[idx];
-    end
+    #if Upsidedown[i]
+    #    Ang[idx]=-Ang[idx];
+    #end
 end
 # #Length of R
 # FePc2ELe(Flag,:);
