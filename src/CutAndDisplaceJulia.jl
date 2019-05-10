@@ -97,7 +97,7 @@ export
 #=
 #DELETE
 include("LoopRoundBoundary.jl")
-include("CleanAndIsosceliseEdgeTris.jl")
+
 include("LoopRoundBoundary.jl")
 =#
 include("OFFReader.jl")
@@ -111,6 +111,7 @@ include("ismember.jl")
 include("MatchingRow.jl")
 include("CreateSortedEdgePoints.jl")
 include("CollapseEdgeTris.jl")
+include("CleanAndIsosceliseEdgeTris.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

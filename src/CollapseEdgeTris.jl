@@ -23,7 +23,7 @@ function CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
 #G=zeros(size(P1,1),1)
 #G[114]=1; #172
 
-
+#=
 ###########################P1########################################
 #RemoveAnyTrianglesWithMoreThan1EdgeFirst
 #Number of edges:
@@ -55,14 +55,14 @@ P2=copy(P2new)
 P3=copy(P3new)
 MidPoint=copy(MidPointnew)
 FaceNormalVector=copy(FaceNormalVectornew)
-
+=#
 
 ###########################P2########################################
 #Sorting so the the last point described in FeP1P2S FeP1P3S FeP2P3S will always lie down the direction of FeEv
-(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
-(P1,P2,P3)=SortPointsOrderingAlongEdgeVector(FeP1P2S,P1,P2,P3);
-(P1,P3,P2)=SortPointsOrderingAlongEdgeVector(FeP1P3S,P1,P3,P2);
-(P2,P3,P1)=SortPointsOrderingAlongEdgeVector(FeP2P3S,P2,P3,P1);
+#(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
+#(P1,P2,P3)=SortPointsOrderingAlongEdgeVector(FeP1P2S,P1,P2,P3);
+#(P1,P3,P2)=SortPointsOrderingAlongEdgeVector(FeP1P3S,P1,P3,P2);
+#(P2,P3,P1)=SortPointsOrderingAlongEdgeVector(FeP2P3S,P2,P3,P1);
 
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
@@ -80,6 +80,12 @@ FeP1P2Indxs=findall(FeP1P2S.FreeFlg);
 FeP2P3Indxs=findall(FeP2P3S.FreeFlg);
 FeP1P3Indxs=findall(FeP1P3S.FreeFlg);
 
+@info FeP1P2Indxs 
+@info FeP2P3Indxs 
+@info FeP1P3Indxs
+@info FeP2P3S.FreeFlg[60,:]
+
+
 if any(FeP1P2S.FreeFlg)
 	#Start with First index in P1P2FreeFlg[:,1]
 	CurrentEdge=12
@@ -87,6 +93,7 @@ if any(FeP1P2S.FreeFlg)
 	Direction=FeP1P2S.FeEv[FirstTriIndx] 
 	EdgeMidPoint=FeP1P2S.FeMd[FirstTriIndx] 
 	CurrentPoint=P2[FirstTriIndx,:]
+	TrailingPoint=P1[FirstTriIndx,:]
 
 elseif any(FeP2P3S.FreeFlg) #no edges in P1P2
 
@@ -95,6 +102,7 @@ elseif any(FeP2P3S.FreeFlg) #no edges in P1P2
 	Direction=FeP2P3S.FeEv[FirstTriIndx] 
 	EdgeMidPoint=FeP2P3S.FeMd[FirstTriIndx]  
 	CurrentPoint=P3[FirstTriIndx,:]
+	TrailingPoint=P2[FirstTriIndx,:]
 
 elseif any(FeP1P3S.FreeFlg)
 
@@ -103,6 +111,7 @@ elseif any(FeP1P3S.FreeFlg)
 	Direction=FeP1P3S.FeEv[FirstTriIndx] 
 	EdgeMidPoint=FeP1P3S.FeMd[FirstTriIndx]  
 	CurrentPoint=P3[FirstTriIndx,:]
+	TrailingPoint=P1[FirstTriIndx,:]
 
 else
 	error("It seems a little odd, your surface has no edges")
@@ -112,7 +121,7 @@ end
 triindx=FirstTriIndx
 OuterPointB=[NaN NaN NaN]
 Collapse=false
-removeIndx=NaN;
+removeIndx=-1000; #To be removed
 fillme=zeros(1,9)
 newTris=fill(NaN,1,9)
 EdgeTriInnerPoint=[0 0 0]
@@ -123,12 +132,17 @@ Next2EdgeTriIndex=0;
 RunOnceMore=false
 for i=1:n_edges
 
+
+
 	#@info triindx CurrentEdge 
 	#@info P1[triindx,:] P2[triindx,:] P3[triindx,:]
 	#@info CurrentPoint
 
 	#Find Connected triangle in the correct direction
 	for j=1:3
+
+		println("j")
+		@info j
 
 	    NeighbourIndex=SortedTriangles[triindx,j]
 	    if NeighbourIndex==0
@@ -140,34 +154,41 @@ for i=1:n_edges
 	    
 	    if EdgeTri[Next2EdgeTriIndx] #both edges and connected
 
+	    	removeIndx=[removeIndx triindx] #add to list of tris to remove
 
+	    	println("InsideLoopBnd")
 	    	#Check that the next edge point is in the right direction
-			(NewCurrentEdge)=LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,Next2EdgeTriIndx,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
-			
+			(NewCurrentEdge)=LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,CurrentPoint,TrailingPoint,Next2EdgeTriIndx,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
+
 
 			if NewCurrentEdge==0
+
 				println("Not going the correct way")
 				RunOnceMore=false
+
 				continue #jump to next interation
 			
-
 			else #EdgePointsMatch
 
-	    		(EdgeTriNonConnectedPoint,EdgeTriInnerPoint)=GetSpecficPointsCurrentTri(triindx,j,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
+				println("Getting Spec Points")
+
+	    		(EdgeTriNonConnectedPointF,EdgeTriInnerPointF)=GetSpecficPointsCurrentTri(triindx,j,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
 	    		(Next2EdgeTriNonConnectedPoint)=GetSpecficPointsConnectedTri(triindx,j,Next2EdgeTriIndx,ConnectedEdge,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
-
-	    		removeIndx=[removeIndx triindx] #add to list of tris to remove
-
-	    		OuterPointB=Next2EdgeTriNonConnectedPoint;
 
 	    		println("Changing triindx to $Next2EdgeTriIndx")
 	    		triindx=Next2EdgeTriIndx #update to the new tri
-
 	    		CurrentEdge=NewCurrentEdge;
 
+	    		##################################
+	    		TrailingPoint=copy(CurrentPoint);
+	    		CurrentPoint=copy(Next2EdgeTriNonConnectedPoint);
+
+	    		if Collapse==false
+	    			EdgeTriInnerPoint=EdgeTriInnerPointF
+	    			EdgeTriNonConnectedPoint=EdgeTriNonConnectedPointF
+	    		end
 	    		#Flag to say we are collapsing triangles
 	    		Collapse=true
-
 	    		RunOnceMore=true
 	    		break #drop out of loop
 
@@ -181,43 +202,56 @@ for i=1:n_edges
 
 	end
 	if RunOnceMore==true
+		println("Running once more")
 		continue
 	end
 
 	if Collapse==true
 
+		println("CollapsingTri")
+
+		#update the currentpoint
+		#TrailingPoint=CurrentPoint;
+		#CurrentPoint=Next2EdgeTriNonConnectedPoint;
+
+		@info CurrentPoint
+		@info TrailingPoint
+
 		#If we get here we know that there is no edge connection to the current triangle
 		#Adding to list of new triangles
 		fillme[1:3].=EdgeTriInnerPoint;
-		fillme[4:6].=Next2EdgeTriNonConnectedPoint;
+		fillme[4:6].=CurrentPoint;
 		fillme[7:9].=EdgeTriNonConnectedPoint;
+
+		
 		#make sure point ordering matches that of the normal direction
 		AvgVect=(FaceNormalVector[i,:].+FaceNormalVector[Next2EdgeTriIndx,:])./2;
 		NewTriNormalVector = CreateTriangleNormal( fillme[1:3],fillme[4:6],fillme[7:9] );
 		AllignFlag = dot(AvgVect,NewTriNormalVector);
 		if AllignFlag<0
 			#flip order
-		    fillme[1:3].=EdgeTriNonConnectedPoint ;
+		    fillme[1:3].=EdgeTriNonConnectedPoint;
 		    fillme[7:9].=EdgeTriInnerPoint;
 		end  
+		
 
 		newTris=[newTris; copy(fillme) ]
 		Collapse=false
 
-		#update the currentpoint
-		CurrentPoint=Next2EdgeTriNonConnectedPoint;
 
 	end
 
 	#FindNextPointAlongFromThisTriangleEdgeAndSetNewTriIndex
-	(NewTriIndex,CurrentEdge,CurrentPoint)=LoopingRoundBoundary(triindx,CurrentPoint,CurrentEdge,P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
-	triindx=NewTriIndex
-	Collapse=false
-
+	(triindx,CurrentPoint,TrailingPoint,CurrentEdge)=
+	LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
+	
 end
+
 
 @info newTris
 @info removeIndx
+
+return newTris,removeIndx
 
 end
 
@@ -231,7 +265,7 @@ if j==1
     EdgeTriNonConnectedPoint=P3[triindx,:]
     if P2P3FreeFlg[triindx]
         EdgeTriInnerPoint=P1[triindx,:]
-    else
+    else #13free
         EdgeTriInnerPoint=P2[triindx,:]
     end
 elseif j==2
@@ -239,7 +273,7 @@ elseif j==2
     EdgeTriNonConnectedPoint=P1[triindx,:]
     if P1P2FreeFlg[triindx]
         EdgeTriInnerPoint=P3[triindx,:]
-    else
+    else #13free
         EdgeTriInnerPoint=P2[triindx,:]
     end                    
 elseif j==3
@@ -247,7 +281,7 @@ elseif j==3
     EdgeTriNonConnectedPoint=P2[triindx,:]
     if P1P2FreeFlg[triindx]
         EdgeTriInnerPoint=P3[triindx,:]
-    else
+    else #23free
         EdgeTriInnerPoint=P1[triindx,:]
     end                       
 end
@@ -291,83 +325,79 @@ return Next2EdgeTriNonConnectedPoint
 end
 
 
-function LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,JoinedTriIndex,P1,P2,P3,P1P2FreeFlg,P1P3FreeFlg,P2P3FreeFlg)
-
-	#because we have sorted these
-	if CurrentEdge==12
-		CurrentPoint=P2[triindx]
-	elseif CurrentEdge==13
-		CurrentPoint=P3[triindx]
-	elseif CurrentEdge==23
-		CurrentPoint=P3[triindx]
-	end
+function LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,CurrentPoint,TrailingPoint,JoinedTriIndex,P1,P2,P3,P1P2FreeFlg,P1P3FreeFlg,P2P3FreeFlg)
 
 
 	#reset
 	NewCurrentEdge=0
 
-	InP1=CurrentPoint==P1[JoinedTriIndex];
-	if InP1==true & P1P2FreeFlg[JoinedTriIndex]==true
-		println("InsideLikeABoss")
-		NewCurrentEdge=12
-	elseif InP1==true & P1P3FreeFlg[JoinedTriIndex]==true
-		println("InsideLikeABoss")
-		NewCurrentEdge=13
+	CurrentInP1=CurrentPoint==P1[JoinedTriIndex,:];
+	if CurrentInP1==true & P1P2FreeFlg[JoinedTriIndex]==true
+		#If the other point not the trailing point then go ahead
+		if TrailingPoint!=P2[JoinedTriIndex,:]; 
+			NewCurrentEdge=12
+		end
+
+	elseif CurrentInP1==true & P1P3FreeFlg[JoinedTriIndex]==true
+		#If the other point not the trailing point then go ahead
+		if TrailingPoint!=P3[JoinedTriIndex,:]; 
+			NewCurrentEdge=13
+		end		
 	end
 
-	InP2=CurrentPoint==P2[JoinedTriIndex];
-	if InP2==true & P1P2FreeFlg[JoinedTriIndex]==true
-		println("InsideLikeABoss")
-		NewCurrentEdge=12
-	elseif InP2==true & P2P3FreeFlg[JoinedTriIndex]==true
-		println("InsideLikeABoss")
-		NewCurrentEdge=23
+	CurrentInP2=CurrentPoint==P2[JoinedTriIndex,:];
+	if CurrentInP2==true & P1P2FreeFlg[JoinedTriIndex]==true
+		#If the other point not the trailing point then go ahead
+		if TrailingPoint!=P1[JoinedTriIndex,:]; 
+			NewCurrentEdge=12
+		end
+
+	elseif CurrentInP2==true & P2P3FreeFlg[JoinedTriIndex]==true
+		#If the other point not the trailing point then go ahead
+		if TrailingPoint!=P3[JoinedTriIndex,:]; 
+			NewCurrentEdge=23
+		end		
+
 	end	
 
-	InP3=CurrentPoint==P3[JoinedTriIndex];
-	if InP3==true & P1P3FreeFlg[JoinedTriIndex]==true
-		println("InsideLikeABoss")
-		NewCurrentEdge=13
-	elseif InP3==true & P2P3FreeFlg[JoinedTriIndex]==true
-		println("InsideLikeABoss")
-		NewCurrentEdge=23
+	CurrentInP3=CurrentPoint==P3[JoinedTriIndex,:];
+	if CurrentInP3==true & P1P3FreeFlg[JoinedTriIndex]==true
+		#If the other point not the trailing point then go ahead
+		if TrailingPoint!=P1[JoinedTriIndex,:]; 
+			NewCurrentEdge=13
+		end			
+
+	elseif CurrentInP3==true & P2P3FreeFlg[JoinedTriIndex]==true
+		#If the other point not the trailing point then go ahead
+		if TrailingPoint!=P2[JoinedTriIndex,:]; 
+			NewCurrentEdge=23
+		end					
+
 	end	
 
-
+	test="test"
+	@info test CurrentInP1 CurrentInP2 CurrentInP3
 
 return NewCurrentEdge
 
 end
 
-function LoopingRoundBoundary(triindx,CurrentPoint,CurrentEdge,P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
+function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
+								P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
 
 
 	P1P2FreeFlg=FeP1P2S.FreeFlg;
 	P1P3FreeFlg=FeP1P3S.FreeFlg;
 	P2P3FreeFlg=FeP2P3S.FreeFlg;
 
-	#=
-	if CurrentEdge==12
-		Ev=FeP1P2S.FeEv[triindx,:];
-		println("1")
-
-
-	elseif CurrentEdge==13
-		Ev=FeP1P3S.FeEv[triindx,:];
-		println("2")
-
-
-	elseif CurrentEdge==23
-		Ev=FeP2P3S.FeEv[triindx,:];
-		println("3")
-
-
-	end
-	=#
 
 	
+	NewTriIndex=0 #NewTriIndex
+	NewCurrentEdge=0 #NewCurrentEdge
+	NewCurrentPoint=[0 0 0] #NewCurrentPoint
+	NewTrailingPoint=[0 0 0] #NewTrailingPoint
 
-	JoinedTriIndex=0
+
 	InP1=ismember(P1,vec(CurrentPoint));
 	if any(InP1) 
 		Inside=findall(InP1)
@@ -376,31 +406,23 @@ function LoopingRoundBoundary(triindx,CurrentPoint,CurrentEdge,P1,P2,P3,FeP1P2S,
 
 			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
 		
-				println("Information ----------------->")
-				@info P1[Inside[i],:]!=CurrentPoint P2[Inside[i],:]!=CurrentPoint
+				println("P1P2 - InP1")
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,12,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
 
-				if P2[Inside[i],:]!=CurrentPoint #Only do if not current point
+			end
+			if P1P3FreeFlg[Inside[i]]==true
 
-					JoinedTriIndex=Inside[i]
-					CurrentEdge=12
-					CurrentPoint=P2[JoinedTriIndex,:]
+				println("P1P3 - InP1")
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,13,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
 
-				end
+			end
 
-			elseif P1P3FreeFlg[Inside[1]]==true
-
-
-				println("Information ----------------->")
-				@info P13[Inside[i],:]!=CurrentPoint P3[Inside[i],:]!=CurrentPoint
-
-				if P3[Inside[i],:]!=CurrentPoint #Only do if not current point
-
-					JoinedTriIndex=Inside[i]
-					CurrentEdge=13
-					CurrentPoint=P3[JoinedTriIndex,:]
-
-				end
-
+			if P2P3FreeFlg[Inside[i]]==true #Now check its a free edge
+				println("P2P3 - InP1")
 			end
 
 		end
@@ -410,87 +432,112 @@ function LoopingRoundBoundary(triindx,CurrentPoint,CurrentEdge,P1,P2,P3,FeP1P2S,
 	InP2=ismember(P2,vec(CurrentPoint));
 	if any(InP2) 
 		Inside=findall(InP2)
+		println(Inside)
+
 		for i=1:length(Inside)
+
+			if i==2
+				@info Inside[i] P1P2FreeFlg[Inside[i]] P2P3FreeFlg[Inside[1]] P1P3FreeFlg[Inside[i]]
+			end
+
+
+			if P1P3FreeFlg[Inside[i]]==true #Now check its a free edge
+				println("P1P3 - InP2")
+			end
 
 			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
 
-				println("Information ----------------->")
-				@info P1[Inside[i],:]!=CurrentPoint P2[Inside[i],:]!=CurrentPoint
-				
-				println("ERROR IS HERE - WHY P1 not P2????!!!!")
+				println("P1P2 - InP2")
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,12,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
 
-				if P2[Inside[i],:]!=CurrentPoint #Only do if not current point
+			end
+			if P2P3FreeFlg[Inside[i]]==true
 
-					JoinedTriIndex=Inside[i]
-					CurrentEdge=12
-					CurrentPoint=P2[JoinedTriIndex,:]
-
-				end
-
-			elseif P2P3FreeFlg[Inside[1]]==true
-
-				println("Information ----------------->")
-				@info P2[Inside[i],:]!=CurrentPoint P3[Inside[i],:]!=CurrentPoint
-
-				if P3[Inside[i],:]!=CurrentPoint #Only do if not current point
-
-					JoinedTriIndex=Inside[i]
-					CurrentEdge=23
-					CurrentPoint=P3[JoinedTriIndex,:]
-
-				end
+				println("P2P3 - InP2")
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,23,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
 
 			end
 
 		end
 	end
-	
+
 
 	InP3=ismember(P3,vec(CurrentPoint));
 	if any(InP3) 
 		Inside=findall(InP3)
 		for i=1:length(Inside)
 
-
-
 			if P1P3FreeFlg[Inside[i]]==true #Now check its a free edge
 
-				println("Information ----------------->")
-				@info P1[Inside[i],:]!=CurrentPoint P3[Inside[i],:]!=CurrentPoint
+				println("P1P3 - InP3")
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,13,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
 
-				if P3[Inside[i],:]!=CurrentPoint #Only do if not current point
+			end
+			if P2P3FreeFlg[Inside[i]]==true
 
-					JoinedTriIndex=Inside[i]
-					CurrentEdge=13
-					CurrentPoint=P3[JoinedTriIndex,:]
-					
+				println("P2P3 - InP3")
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,23,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
 
-				end
+			end
 
-
-			elseif P2P3FreeFlg[Inside[1]]==true
-
-				println("Information ----------------->")
-				@info P2[Inside[i],:]!=CurrentPoint P3[Inside[i],:]!=CurrentPoint
-
-				if P3[Inside[i],:]!=CurrentPoint #Only do if not current point
-
-					JoinedTriIndex=Inside[i]
-					CurrentEdge=23
-					CurrentPoint=P3[JoinedTriIndex,:]
-					
-				end
-
+			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
+				println("P1P2 - InP3")
 			end
 
 		end
 	end	
 
-	@info any(InP1) any(InP2) any(InP3) JoinedTriIndex CurrentEdge
+	triindx=NewTriIndex;
+	CurrentPoint=NewCurrentPoint;
+	TrailingPoint=NewTrailingPoint;
+	CurrentEdge=NewCurrentEdge;
+	
+
+
+	@info any(InP1) any(InP2) any(InP3) triindx CurrentEdge CurrentPoint TrailingPoint
+	println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!MadeItThrough!!!!!!!!!!!!!!!!!!")
 
 	#V1=normr([P1[Inside[1],1]-CurrentPoint[1] P1[Inside[1],2]-CurrentPoint[2] P1[Inside[1],3]-CurrentPoint[3]])
 				#AllignFlag=dot(V1,Ev)
 
-return JoinedTriIndex,CurrentEdge,CurrentPoint
+return triindx,CurrentPoint,TrailingPoint,CurrentEdge
+
+end
+
+
+function GetNewEdgePoint(TestIndex,CurrentPoint,TrailingPoint,Pa,Pb,EdgeNo,NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
+#EdgeNo=12;
+
+println("Information ----------------->")
+test=1
+@info test Pa[TestIndex,:]!=CurrentPoint Pa[TestIndex,:]!=TrailingPoint Pb[TestIndex,:]!=CurrentPoint  Pb[TestIndex,:]!=TrailingPoint
+@info test Pa[TestIndex,:] Pb[TestIndex,:] CurrentPoint TrailingPoint
+
+if Pb[TestIndex,:]!=CurrentPoint && Pb[TestIndex,:]!=TrailingPoint
+
+	NewTriIndex=TestIndex
+	NewCurrentEdge=EdgeNo
+	NewCurrentPoint=Pb[TestIndex,:]
+	NewTrailingPoint=CurrentPoint
+
+elseif Pa[TestIndex,:]!=CurrentPoint && Pa[TestIndex,:]!=TrailingPoint
+
+	NewTriIndex=TestIndex
+	NewCurrentEdge=EdgeNo
+	NewCurrentPoint=Pa[TestIndex,:]
+	NewTrailingPoint=CurrentPoint
+end
+
+
+
+return NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint
 
 end
