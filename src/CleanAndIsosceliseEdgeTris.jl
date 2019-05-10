@@ -42,7 +42,6 @@ if removeIndx!=[0 0] || newTris!=[0 0 0 0 0 0 0 0 0]
         end
     end
 
-    @info size(P1) size(Good)
     P1=copy(P1[Good,1:3])
     P2=copy(P2[Good,1:3])
     P3=copy(P3[Good,1:3])
@@ -53,38 +52,11 @@ if removeIndx!=[0 0] || newTris!=[0 0 0 0 0 0 0 0 0]
     P3=[P3;newTris[:,7:9]]
 
 
-    @bp 
-
-
-    #Now redefine P1 P2 P3 
-    n_new=n-length(removeIndx)+size(newTris,1)
-    P1new=zeros(n_new,3)
-    P2new=zeros(n_new,3)
-    P3new=zeros(n_new,3)
-
-    #should always be more than new tris
-    counter=1;
-    for i=1:n
-        if any(in.(i,removeIndx))
-            #skip
-        else
-            P1new[counter,:]=P1[i,:]
-            P2new[counter,:]=P2[i,:]
-            P3new[counter,:]=P3[i,:]
-            counter+=1
-        end
-    end
-
-
-    P1=P1new
-    P2=P2new
-    P3=P3new
-
     ## Recreate tri
     Points=zeros(Int(length(P1)),3)
-    Points[1:3:end,:]=P1;
-    Points[2:3:end,:]=P2;
-    Points[3:3:end,:]=P3;
+    Points[1:3:end,:]=copy(P1);
+    Points[2:3:end,:]=copy(P2);
+    Points[3:3:end,:]=copy(P3);
     n=length(Points)
     Points=[1:n/3 Points]
     Triangles=fill(0,Int(n/9),3)
@@ -92,10 +64,9 @@ if removeIndx!=[0 0] || newTris!=[0 0 0 0 0 0 0 0 0]
     Triangles[:,2]=2:3:n/3;
     Triangles[:,3]=3:3:n/3;
 
-    @bp
 
     #(P1,P2,P3) = CreateP1P2P3( Triangles,Points ); 
-    try (MidPoint,FaceNormalVector) = CreateFaceNormalAndMidPoint(Points,Triangles)
+    try (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
     catch 
         println("Check your surface, more than 2 duplicate edge tris?")
         error("Remesh here")
@@ -104,8 +75,6 @@ if removeIndx!=[0 0] || newTris!=[0 0 0 0 0 0 0 0 0]
     #(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
 
 end
-
-popp
 
 ## PART 2: Now Rotate so always isosceles tris on edge
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
@@ -200,6 +169,8 @@ end
 Ang=fill(NaN,n,1)
 #First we recompute the mid2edvec length (perp):
 #Angle between vectors: 
+
+@info size(T.FeEv) size(FeIn2Ev) Indx
 
 Upsidedown=FaceNormalVector[Indx,3].<0;
 for i=1:length(Indx)

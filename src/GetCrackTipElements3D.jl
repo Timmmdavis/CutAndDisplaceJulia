@@ -204,7 +204,15 @@ FeM2Ev[I,:]=FeM2Ev2[I,:];
 for i=1:length(Indx)
     #cross!(vec(FeM2Ev[Indx[i],:]),vec(FaceNormalVector[Indx[i],:]),view(FeEv,Indx[i],:))
     FeEv[Indx[i],:]=cross(vec(FeM2Ev[Indx[i],:]),vec(FaceNormalVector[Indx[i],:]))
+
+
+    #vector=FeEv[Indx[i],:];
+    #if sqrt(vector[1]^2+vector[2]^2+vector[3]^2)>1.1
+    #    @info Indx[i] FeM2Ev[Indx[i],:] FaceNormalVector[Indx[i],:]
+    #end
+    
 end 
+
 
 return I,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng
 
