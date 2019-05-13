@@ -1,73 +1,39 @@
-function SortPointsOrderingAlongEdgeVector(FreePaPb,Pa,Pb,Pc)
-
-#MdPnt to point Pb
-FeM2Pb=Array{Float64,2}(undef, size(Pa));FeM2Pb=fill!(FeM2Pb, NaN)
-Indx=findall(FreePaPb.FreeFlg)
-#Check that Pb is always down the direction of FeEv - useful for cleaning tris later
-FeM2Pb[Indx,:]=normr([Pb[Indx,1]-FreePaPb.FeMd[Indx,1] Pb[Indx,2]-FreePaPb.FeMd[Indx,2] Pb[Indx,3]-FreePaPb.FeMd[Indx,3]]);
-for i=1:length(Indx)
-    AllignFlag=dot(FreePaPb.FeEv[Indx[i],:],FeM2Pb[Indx[i],:]);
-    if AllignFlag<0
-        tmp=copy(Pb[Indx[i],:])
-        Pb[Indx[i],:]=copy(Pa[Indx[i],:])
-        Pa[Indx[i],:]=tmp
-    end
-end
-return Pa,Pb,Pc
-end
-
-
 function CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
 
-#( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-#G=zeros(size(P1,1),1)
-#G[114]=1; #172
-
 #=
-###########################P1########################################
-#RemoveAnyTrianglesWithMoreThan1EdgeFirst
-#Number of edges:
-(SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
-NoConnections=sum(SortedTriangles.!=0,dims=2)
-Good=fill(true,size(NoConnections))
-for i=1:length(NoConnections)
-	if NoConnections[i]<2
-		Good[i]=false
+#Remove any slither tris
+( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+Good=vec(fill(true,length(Area)))
+tol=mean(Area)/3
+for i=1:length(Good)
+	if Area[i]<tol
+		PGood=false
 	end
 end
-
-P1new=zeros(sum(Good),3)
-P2new=zeros(sum(Good),3)
-P3new=zeros(sum(Good),3)
-MidPointnew=zeros(sum(Good),3)
-FaceNormalVectornew=zeros(sum(Good),3)
-for i=1:sum(Good)
-	if Good[i]==true
-		P1new[i,:]=P1[i,:]
-		P2new[i,:]=P2[i,:]
-		P3new[i,:]=P3[i,:]
-		MidPointnew[i,:]=MidPoint[i,:]
-		FaceNormalVectornew[i,:]=FaceNormalVector[i,:]
-	end
-end
-P1=copy(P1new)
-P2=copy(P2new)
-P3=copy(P3new)
-MidPoint=copy(MidPointnew)
-FaceNormalVector=copy(FaceNormalVectornew)
+P1=copy(P1[Good,1:3])
+P2=copy(P2[Good,1:3])
+P3=copy(P3[Good,1:3])
+(Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
 =#
 
-###########################P2########################################
-#Sorting so the the last point described in FeP1P2S FeP1P3S FeP2P3S will always lie down the direction of FeEv
-#(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
-#(P1,P2,P3)=SortPointsOrderingAlongEdgeVector(FeP1P2S,P1,P2,P3);
-#(P1,P3,P2)=SortPointsOrderingAlongEdgeVector(FeP1P3S,P1,P3,P2);
-#(P2,P3,P1)=SortPointsOrderingAlongEdgeVector(FeP2P3S,P2,P3,P1);
+## The aim is to collapse edge triangles that share an inner point
+# We do this by looping round and checking if tris share a point inside the surface
+#
+#   T   C 	 	       T   C 		          T   ---> C
+# ¯.¯\¯¯|¯¯/¯.¯  ¯.¯\¯¯|¯¯/¯.¯       ¯.¯\¯¯ ¯¯/¯.¯
+# ....\ | /....  ....\ | /....  -- > ....\   /....
+# .....\|/.....  .....\|/.....       .....\ /.....
+# ......I......  ......I.......       .....I.......     
+#	    
+#  
+# T=TrailingPoint
+# C=CurrentPoint
+# I=InnerPoint
 
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
 
-###########################P3########################################
 #number of connected tris (Sorted tris rows not == to 0)
 NoConnections=sum(SortedTriangles.!=0,dims=2)
 EdgeTri=NoConnections.<3 #- edge tri
@@ -79,11 +45,6 @@ n_edges=sum([FeP1P2S.FreeFlg;FeP2P3S.FreeFlg;FeP1P3S.FreeFlg])
 FeP1P2Indxs=findall(FeP1P2S.FreeFlg);
 FeP2P3Indxs=findall(FeP2P3S.FreeFlg);
 FeP1P3Indxs=findall(FeP1P3S.FreeFlg);
-
-@info FeP1P2Indxs 
-@info FeP2P3Indxs 
-@info FeP1P3Indxs
-@info FeP2P3S.FreeFlg[60,:]
 
 
 if any(FeP1P2S.FreeFlg)
@@ -117,32 +78,28 @@ else
 	error("It seems a little odd, your surface has no edges")
 end
 
-
+#The current index of the triangle on the outer edge
 triindx=FirstTriIndx
-OuterPointB=[NaN NaN NaN]
+#Flag to say we are inside part of loop that is collapsing triangles
 Collapse=false
+#Index's of triangles we will remove after loop
 removeIndx=-1000; #To be removed
+#Memoryless vector to fill with the list of new points
 fillme=zeros(1,9)
+#Appending to this vector everytime we add a new tri
 newTris=fill(NaN,1,9)
+
 EdgeTriInnerPoint=[0 0 0]
 EdgeTriNonConnectedPoint=[0 0 0]
 Next2EdgeTriNonConnectedPoint=[0 0 0]
 Next2EdgeTriIndx=0;
 Next2EdgeTriIndex=0;
 RunOnceMore=false
+
 for i=1:n_edges
-
-
-
-	#@info triindx CurrentEdge 
-	#@info P1[triindx,:] P2[triindx,:] P3[triindx,:]
-	#@info CurrentPoint
 
 	#Find Connected triangle in the correct direction
 	for j=1:3
-
-		println("j")
-		@info j
 
 	    NeighbourIndex=SortedTriangles[triindx,j]
 	    if NeighbourIndex==0
@@ -156,30 +113,32 @@ for i=1:n_edges
 
 	    	removeIndx=[removeIndx triindx] #add to list of tris to remove
 
-	    	println("InsideLoopBnd")
 	    	#Check that the next edge point is in the right direction
-			(NewCurrentEdge)=LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,CurrentPoint,TrailingPoint,Next2EdgeTriIndx,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
+			(NewCurrentEdge)=
+			LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,CurrentPoint,TrailingPoint,Next2EdgeTriIndx,P1,P2,P3,
+				FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
 
 
 			if NewCurrentEdge==0
 
-				println("Not going the correct way")
+				#Not going the correct way
 				RunOnceMore=false
 
 				continue #jump to next interation
 			
 			else #EdgePointsMatch
 
-				println("Getting Spec Points")
 
-	    		(EdgeTriNonConnectedPointF,EdgeTriInnerPointF)=GetSpecficPointsCurrentTri(triindx,j,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
-	    		(Next2EdgeTriNonConnectedPoint)=GetSpecficPointsConnectedTri(triindx,j,Next2EdgeTriIndx,ConnectedEdge,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
+	    		(EdgeTriNonConnectedPointF,EdgeTriInnerPointF)=
+	    		GetSpecficPointsCurrentTri(triindx,j,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
 
-	    		println("Changing triindx to $Next2EdgeTriIndx")
-	    		triindx=Next2EdgeTriIndx #update to the new tri
+	    		(Next2EdgeTriNonConnectedPoint)=
+	    		GetSpecficPointsConnectedTri(triindx,j,Next2EdgeTriIndx,ConnectedEdge,P1,P2,P3,
+	    			FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
+
+	    		#Update to the new tri we are working on
+	    		triindx=Next2EdgeTriIndx 
 	    		CurrentEdge=NewCurrentEdge;
-
-	    		##################################
 	    		TrailingPoint=copy(CurrentPoint);
 	    		CurrentPoint=copy(Next2EdgeTriNonConnectedPoint);
 
@@ -187,10 +146,10 @@ for i=1:n_edges
 	    			EdgeTriInnerPoint=EdgeTriInnerPointF
 	    			EdgeTriNonConnectedPoint=EdgeTriNonConnectedPointF
 	    		end
-	    		#Flag to say we are collapsing triangles
-	    		Collapse=true
-	    		RunOnceMore=true
-	    		break #drop out of loop
+	    		
+	    		Collapse=true 		#We are removing edges with shared inner Points
+	    		RunOnceMore=true 	#We run the outer i loop once more before assuming the next tri is not a edge shared with this inner point
+	    		break #drop out of inner j loop
 
 	    	end
 
@@ -201,21 +160,13 @@ for i=1:n_edges
 	    end
 
 	end
+
+	#run outer i loop again
 	if RunOnceMore==true
-		println("Running once more")
 		continue
 	end
 
 	if Collapse==true
-
-		println("CollapsingTri")
-
-		#update the currentpoint
-		#TrailingPoint=CurrentPoint;
-		#CurrentPoint=Next2EdgeTriNonConnectedPoint;
-
-		@info CurrentPoint
-		@info TrailingPoint
 
 		#If we get here we know that there is no edge connection to the current triangle
 		#Adding to list of new triangles
@@ -234,22 +185,16 @@ for i=1:n_edges
 		    fillme[7:9].=EdgeTriInnerPoint;
 		end  
 		
-
 		newTris=[newTris; copy(fillme) ]
 		Collapse=false
 
-
 	end
 
-	#FindNextPointAlongFromThisTriangleEdgeAndSetNewTriIndex
+	#Find next outer triangle along from this triangle (they share CurrentPoint on the outer edge)
 	(triindx,CurrentPoint,TrailingPoint,CurrentEdge)=
 	LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
 	
 end
-
-
-@info newTris
-@info removeIndx
 
 return newTris,removeIndx
 
@@ -298,34 +243,19 @@ function GetSpecficPointsConnectedTri(triindx,j,Next2EdgeTriIndx,ConnectedEdge,P
 Next2EdgeTriEdge=ConnectedEdge[triindx,j]
 if Next2EdgeTriEdge==12
     Next2EdgeTriNonConnectedPoint=P3[Next2EdgeTriIndx,:]
-    #if P2P3FreeFlg[Next2EdgeTri]
-    #    Next2EdgeTriInnerPoint=P1[Next2EdgeTri,:]
-    #else
-    #    Next2EdgeTriInnerPoint=P2[Next2EdgeTri,:]
-    #end                    
 elseif Next2EdgeTriEdge==23
     Next2EdgeTriNonConnectedPoint=P1[Next2EdgeTriIndx,:]
-    #if P1P2FreeFlg[Next2EdgeTri]
-    #    Next2EdgeTriInnerPoint=P3[Next2EdgeTri,:]
-    #else
-    #    Next2EdgeTriInnerPoint=P2[Next2EdgeTri,:]
-    #end          
 elseif Next2EdgeTriEdge==13
     Next2EdgeTriNonConnectedPoint=P2[Next2EdgeTriIndx,:]
-    #if P1P2FreeFlg[Next2EdgeTri]
-    #    Next2EdgeTriInnerPoint=P3[Next2EdgeTri,:]
-    #else
-    #    Next2EdgeTriInnerPoint=P1[Next2EdgeTri,:]
-    #end   
 end
-
 
 return Next2EdgeTriNonConnectedPoint
 
 end
 
 
-function LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,CurrentPoint,TrailingPoint,JoinedTriIndex,P1,P2,P3,P1P2FreeFlg,P1P3FreeFlg,P2P3FreeFlg)
+function LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,CurrentPoint,TrailingPoint,JoinedTriIndex,
+	P1,P2,P3,P1P2FreeFlg,P1P3FreeFlg,P2P3FreeFlg)
 
 
 	#reset
@@ -375,9 +305,6 @@ function LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,CurrentPoint,T
 
 	end	
 
-	test="test"
-	@info test CurrentInP1 CurrentInP2 CurrentInP3
-
 return NewCurrentEdge
 
 end
@@ -406,7 +333,6 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
 		
-				println("P1P2 - InP1")
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,12,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
@@ -414,15 +340,10 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 			end
 			if P1P3FreeFlg[Inside[i]]==true
 
-				println("P1P3 - InP1")
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,13,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
 
-			end
-
-			if P2P3FreeFlg[Inside[i]]==true #Now check its a free edge
-				println("P2P3 - InP1")
 			end
 
 		end
@@ -436,18 +357,9 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 		for i=1:length(Inside)
 
-			if i==2
-				@info Inside[i] P1P2FreeFlg[Inside[i]] P2P3FreeFlg[Inside[1]] P1P3FreeFlg[Inside[i]]
-			end
-
-
-			if P1P3FreeFlg[Inside[i]]==true #Now check its a free edge
-				println("P1P3 - InP2")
-			end
 
 			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
 
-				println("P1P2 - InP2")
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,12,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
@@ -455,7 +367,6 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 			end
 			if P2P3FreeFlg[Inside[i]]==true
 
-				println("P2P3 - InP2")
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,23,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
@@ -473,7 +384,6 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 			if P1P3FreeFlg[Inside[i]]==true #Now check its a free edge
 
-				println("P1P3 - InP3")
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,13,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
@@ -481,15 +391,10 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 			end
 			if P2P3FreeFlg[Inside[i]]==true
 
-				println("P2P3 - InP3")
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,23,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
 
-			end
-
-			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
-				println("P1P2 - InP3")
 			end
 
 		end
@@ -501,25 +406,12 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 	CurrentEdge=NewCurrentEdge;
 	
 
-
-	@info any(InP1) any(InP2) any(InP3) triindx CurrentEdge CurrentPoint TrailingPoint
-	println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!MadeItThrough!!!!!!!!!!!!!!!!!!")
-
-	#V1=normr([P1[Inside[1],1]-CurrentPoint[1] P1[Inside[1],2]-CurrentPoint[2] P1[Inside[1],3]-CurrentPoint[3]])
-				#AllignFlag=dot(V1,Ev)
-
 return triindx,CurrentPoint,TrailingPoint,CurrentEdge
 
 end
 
 
 function GetNewEdgePoint(TestIndex,CurrentPoint,TrailingPoint,Pa,Pb,EdgeNo,NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
-#EdgeNo=12;
-
-println("Information ----------------->")
-test=1
-@info test Pa[TestIndex,:]!=CurrentPoint Pa[TestIndex,:]!=TrailingPoint Pb[TestIndex,:]!=CurrentPoint  Pb[TestIndex,:]!=TrailingPoint
-@info test Pa[TestIndex,:] Pb[TestIndex,:] CurrentPoint TrailingPoint
 
 if Pb[TestIndex,:]!=CurrentPoint && Pb[TestIndex,:]!=TrailingPoint
 
@@ -535,8 +427,6 @@ elseif Pa[TestIndex,:]!=CurrentPoint && Pa[TestIndex,:]!=TrailingPoint
 	NewCurrentPoint=Pa[TestIndex,:]
 	NewTrailingPoint=CurrentPoint
 end
-
-
 
 return NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint
 
