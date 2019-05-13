@@ -32,6 +32,7 @@ lps=5;
 
 #Drawing with debugger
 scene=[];limits=[];
+Px=[];Py=[];Pz=[];
 
 #Looping from here on in
 for i=1:lps
@@ -59,6 +60,8 @@ for i=1:lps
 
 	@bp
 
+	
+
 	n=length(Triangles[:,1]);
 	n2=length(Points[:,1]);
 
@@ -78,8 +81,8 @@ for i=1:lps
 	Z=MidPoint[:,3];
 	Weight=(ρrock*g).*Z;
 	#Set BoundaryConditions
-	σxx = Weight;
-	σyy = Weight;
+	σxx = Weight.*0.8;
+	σyy = Weight.*0.8;
 	σzz = Weight;
 	σxy = zeros(n);    
 	σxz = zeros(n);
@@ -96,18 +99,41 @@ for i=1:lps
 	#All a fracture
 	FractureElements=fill(1,n)
 
+	try	
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
+    catch
+	    scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+	    return scene #display
+    end
+
+    #scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+    #Makie.save("plot.png", scene)
+
+	@bp
+
+	#Remove closed elements
+	Dn[Dn.<0].=0.0 #Neg Els dropped to 0
+	OpenEls=((round.(Dn.*1e1))./1e1).!=0.0 
+	P1=P1[OpenEls,:]
+	P2=P2[OpenEls,:]
+	P3=P3[OpenEls,:]
+	Dn=Dn[OpenEls,:]
+	Dss=Dss[OpenEls,:]
+	Dds=Dds[OpenEls,:]	
+	FaceNormalVector=FaceNormalVector[OpenEls,:]	
+	MidPoint=MidPoint[OpenEls,:]
 
 	#Get tip elements
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
-	
+
 
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	AvgTriangleEdgeLength=mean(HalfPerimeter)*(2/3)
 	KCrit=1e3; #[units?]
 	(p1,p2,p3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit,AvgTriangleEdgeLength )
+
 
 
 	Px=[p1[:,1]; p2[:,1]; p3[:,1]];
@@ -118,11 +144,7 @@ for i=1:lps
 
 	@bp
 
-	#Remove closed elements
-	OpenEls=(round.(Dn.*1e10)./1e10).!=0
-	P1=P1[OpenEls,:]
-	P2=P2[OpenEls,:]
-	P3=P3[OpenEls,:]
+
 	#Add to the new points
 	Px=[Px; P1[:,1]; P2[:,1]; P3[:,1]];
 	Py=[Py; P1[:,2]; P2[:,2]; P3[:,2]];
@@ -142,5 +164,7 @@ for i=1:lps
 
 
 end
+
+return P1,P2,P3,Px,Py,Pz
 
 end

@@ -1,22 +1,4 @@
 function CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
-
-#=
-#Remove any slither tris
-( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-Good=vec(fill(true,length(Area)))
-tol=mean(Area)/3
-for i=1:length(Good)
-	if Area[i]<tol
-		PGood=false
-	end
-end
-P1=copy(P1[Good,1:3])
-P2=copy(P2[Good,1:3])
-P3=copy(P3[Good,1:3])
-(Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
-(FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
-=#
-
 ## The aim is to collapse edge triangles that share an inner point
 # We do this by looping round and checking if tris share a point inside the surface
 #
@@ -31,15 +13,16 @@ P3=copy(P3[Good,1:3])
 # C=CurrentPoint
 # I=InnerPoint
 
+
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
-
 #number of connected tris (Sorted tris rows not == to 0)
 NoConnections=sum(SortedTriangles.!=0,dims=2)
 EdgeTri=NoConnections.<3 #- edge tri
 
 #Number of edges:
 n_edges=sum([FeP1P2S.FreeFlg;FeP2P3S.FreeFlg;FeP1P3S.FreeFlg])
+
 
 #Indx's of all the edges
 FeP1P2Indxs=findall(FeP1P2S.FreeFlg);
