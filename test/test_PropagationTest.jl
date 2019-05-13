@@ -29,6 +29,10 @@ Points[:,2:4]=Points[:,2:4].*Radius;
 Points[:,4]=Points[:,4].-2000; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=5;
+
+#Drawing with debugger
+scene=[];limits=[];
+
 #Looping from here on in
 for i=1:lps
 
@@ -101,7 +105,6 @@ for i=1:lps
 	
 
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-	
 	AvgTriangleEdgeLength=mean(HalfPerimeter)*(2/3)
 	KCrit=1e3; #[units?]
 	(p1,p2,p3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit,AvgTriangleEdgeLength )
@@ -111,6 +114,7 @@ for i=1:lps
 	Py=[p1[:,2]; p2[:,2]; p3[:,2]];
 	Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
 	#scatter(P1[:,1],P1[:,2])
+
 
 	@bp
 

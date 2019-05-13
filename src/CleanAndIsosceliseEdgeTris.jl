@@ -11,7 +11,7 @@ n=length(Triangles[:,1]);
 println("Grabbing edge tris") 
 #Get edge triangles
 (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
-(SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
+(SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
 
 #n*3 list of triangles connected to this tri
 
@@ -62,7 +62,7 @@ end
 @bp
 
 ## PART 2: Now Rotate so always isosceles tris on edge
-(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
+(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 
 #Do for P1 P2: (Function at base of file)
 (P1,P2,P3)=MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector); #

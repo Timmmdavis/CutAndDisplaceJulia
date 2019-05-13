@@ -353,7 +353,6 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 	InP2=ismember(P2,vec(CurrentPoint));
 	if any(InP2) 
 		Inside=findall(InP2)
-		println(Inside)
 
 		for i=1:length(Inside)
 

@@ -112,6 +112,7 @@ include("MatchingRow.jl")
 include("CreateSortedEdgePoints.jl")
 include("CollapseEdgeTris.jl")
 include("CleanAndIsosceliseEdgeTris.jl")
+include("CreateTrianglesPointsFromP1P2P3.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

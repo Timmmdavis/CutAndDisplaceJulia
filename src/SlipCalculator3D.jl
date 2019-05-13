@@ -239,6 +239,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	NumOfFractures=maximum(FractureFlag);
     NumOfFractures=convert(Int64,NumOfFractures)
     Area=vec(Area)
+    #println("SHOULD BE any(FractureFlag.>1) !!!!")
 	if any(FractureFlag.>1) #More than two cracks, need sim anneal
         
         X0=zeros(NumOfFractures);

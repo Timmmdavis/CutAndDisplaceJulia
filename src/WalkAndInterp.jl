@@ -18,6 +18,10 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	X=zeros(size(Y));
 	for i=1:length(Y)
 	    X[i]=ObjFunc(Y[i]);
+	    #Stops bad knot vector error (sometimes the loops in the obj func are not enough to stop neg values coming out)
+	    if X[i]<0
+	    	X[i]=1e-12*i
+	    end
 	end
 	
 	#@info X Y Desired_X
@@ -28,6 +32,8 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	X=X[length(Indx):end]
 	Y=Y[length(Indx):end]
 
+	@bp
+
 	#using Interpolations
 	itp = interpolate((X,),Y, Gridded(Linear()))
 	Yv=TryInterp(itp,Desired_X)
@@ -37,6 +43,8 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 
 	#MATLAB way:
 	#Y_Got = interp1(X,Y,X_Desired,'linear');
+
+
 
 	return Yv
 end
