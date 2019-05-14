@@ -16,13 +16,21 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	#Step=MaxVal/NumberOfIts;
 	Y = range(MinVal,stop=MaxVal,length=NumberOfIts); #linspace deprecated
 	X=zeros(size(Y));
+	breakat=[]
 	for i=1:length(Y)
 	    X[i]=ObjFunc(Y[i]);
 	    #Stops bad knot vector error (sometimes the loops in the obj func are not enough to stop neg values coming out)
 	    if X[i]<0
 	    	X[i]=1e-12*i
 	    end
+	    #break loop early if we have already hit DesiredVal
+	    if X[i]>Desired_X
+	    	X=X[1:i];
+	    	Y=Y[1:i];
+	    	break
+	    end
 	end
+
 	
 	#@info X Y Desired_X
 	
@@ -32,7 +40,6 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	X=X[length(Indx):end]
 	Y=Y[length(Indx):end]
 
-	@bp
 
 	#using Interpolations
 	itp = interpolate((X,),Y, Gridded(Linear()))

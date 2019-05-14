@@ -30,6 +30,10 @@ Points[:,4]=Points[:,4].-2000; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=5;
 
+( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+max_target_edge_length=maximum(HalfPerimeter)*(2/3)
+target_edge_length=mean(HalfPerimeter)*(2/3)
+
 #Drawing with debugger
 scene=[];limits=[];
 Px=[];Py=[];Pz=[];
@@ -39,12 +43,26 @@ for i=1:lps
 
 	Volume=(π*(Radius^2))*HeightCrack
 
+	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+	(IntAngA,IntAngB,IntAngC)=CutAndDisplaceJulia.CalculateInternalTriAngles(P1,P2,P3)
+
+	#Clean up Advancing front result - remove overly long edges
+	GoodTris=((HalfPerimeter.*(2/3) .< (max_target_edge_length*1.5)) .+ (IntAngA.>5) .+ (IntAngB.>5) .+ (IntAngC.>5)).==4 #1.5 is a tolerance
+	P1=P1[GoodTris,:]
+	P2=P2[GoodTris,:]
+	P3=P3[GoodTris,:]
+	(Points,Triangles)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+
 	#Export current mesh
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]))
 	println(OutputDirectory)
-	#Remesh using Polygon method in CGAL:
+	#Get parameters
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-	target_edge_length=mean(HalfPerimeter)*(2/3)
+	
+	scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+	Makie.save("AfterAdvancingFrontCGALRemeshing$i.png", scene)
+
+	#Remesh using Polygon method in CGAL:
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 
 	#Reload	
@@ -54,13 +72,20 @@ for i=1:lps
 	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 	@bp
+	scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+	Makie.save("AfterIsoCGALRemeshing$i.png", scene)
 
 	#Remesh edges
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanAndIsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
+	#Recompute target_edge_length
+	max_target_edge_length=maximum(HalfPerimeter)*(2/3)
+	target_edge_length=mean(HalfPerimeter)*(2/3)
+
 
 	@bp
+	scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+	Makie.save("AfterCleaningAndIsolating$i.png", scene)
 
-	
 
 	n=length(Triangles[:,1]);
 	n2=length(Points[:,1]);
@@ -99,39 +124,44 @@ for i=1:lps
 	#All a fracture
 	FractureElements=fill(1,n)
 
-	try	
+	#try	
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
-    catch
-	    scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-	    return scene #display
-    end
+    #catch
+    #	println("Failed")
+	#    scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+	#    return scene #display
+    #end
 
-    #scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-    #Makie.save("plot.png", scene)
 
 	@bp
 
-	#Remove closed elements
-	Dn[Dn.<0].=0.0 #Neg Els dropped to 0
-	OpenEls=((round.(Dn.*1e1))./1e1).!=0.0 
-	P1=P1[OpenEls,:]
-	P2=P2[OpenEls,:]
-	P3=P3[OpenEls,:]
-	Dn=Dn[OpenEls,:]
-	Dss=Dss[OpenEls,:]
-	Dds=Dds[OpenEls,:]	
-	FaceNormalVector=FaceNormalVector[OpenEls,:]	
-	MidPoint=MidPoint[OpenEls,:]
+
 
 	#Get tip elements
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
+
+	#Remove closed elements
+	Dn[Dn.<0].=0.0 #Neg Els dropped to 0
+	Precision=eps(typeof(Dn[1]))*5; #rounding to 5x the system precision
+	Precision=1.0/Precision; 
+	OpenEls=((round.(Dn.*Precision))./Precision).!=0.0 
+	P1=P1[OpenEls,:]
+	P2=P2[OpenEls,:]
+	P3=P3[OpenEls,:]
+	#Just saying the edges we removed we will not comp stress intensity on (or propagate)
+	ClosedEls=OpenEls.==false;
+	FeP1P2S.FreeFlg[ClosedEls].=false
+	FeP1P3S.FreeFlg[ClosedEls].=false
+	FeP2P3S.FreeFlg[ClosedEls].=false
+	@bp
+	#From tip els too: 
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
 
 
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	AvgTriangleEdgeLength=mean(HalfPerimeter)*(2/3)
-	KCrit=1e3; #[units?]
+	KCrit=5e7; #[50 MPa √m]
 	(p1,p2,p3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit,AvgTriangleEdgeLength )
 
 
@@ -141,6 +171,9 @@ for i=1:lps
 	Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
 	#scatter(P1[:,1],P1[:,2])
 
+	scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+	scatter!(scene,[Px Py Pz],markersize = 50,limits=scene.limits)#
+	Makie.save("AfterElsRemoved$i.png", scene)
 
 	@bp
 
@@ -159,7 +192,7 @@ for i=1:lps
 	(OutputDirectory)=BuildCGAL.AdvancingFrontCGAL(OutputDirectory)
 	println(OutputDirectory)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
-
+	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 
 
 
