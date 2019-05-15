@@ -1,11 +1,11 @@
-function xyzExport(x,y,z)
+function xyzExport(x,y,z,filename)
 #vectors x y and z
 
 #using DelimitedFiles
-writedlm("testexport.xyz",[x y z]," ")
+writedlm("$filename.xyz",[x y z]," ")
 
 #OutputDir
-OutputDirectory=string(pwd(),"\\","testexport.xyz")
+OutputDirectory=string(pwd(),"\\",filename,".xyz")
 
 return OutputDirectory
 end

@@ -3,7 +3,7 @@ function OFFExport(Points,Triangles,n_tris,n_points)
 #CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]))
 
 #create a new file for writing
-io = open("xyz.off", "w+");
+io = open("AfterAdvancingFrontClean.off", "w+");
 write(io, "OFF");print(io,"\r\n");
 print(io,n_points); print(io," ");print(io,n_tris); print(io," ");;print(io,0); print(io,"\r\n");
 for i=1:n_points
@@ -23,7 +23,7 @@ print(io,"\r\n");
 close(io);
 
 #OutputDir
-OutputDirectory=string(pwd(),"\\xyz.off")
+OutputDirectory=string(pwd(),"\\AfterAdvancingFrontClean.off")
 
 return OutputDirectory
 end

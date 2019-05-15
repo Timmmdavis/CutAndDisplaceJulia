@@ -56,7 +56,7 @@ for i=1:lps
 	
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("AfterAdvancingFrontCGALRemeshing$i.png", scene)
+		Makie.save("$i-a-AfterAdvancingFrontCGALRemeshingAndCleaning.png", scene)
 	end
 
 	#Remesh using Polygon method in CGAL:
@@ -71,7 +71,7 @@ for i=1:lps
 	if draw==1
 		@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("AfterIsoCGALRemeshing$i.png", scene)
+		Makie.save("$i-b-AfterIsoCGALRemeshing.png", scene)
 	end
 
 	#Remesh edges
@@ -83,7 +83,7 @@ for i=1:lps
 	if draw==1
 		@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("AfterCleaningAndIsolating$i.png", scene)
+		Makie.save("$i-c-AfterCleaningAndIsolating.png", scene)
 	end
 
 	n=length(Triangles[:,1]);
@@ -159,11 +159,13 @@ for i=1:lps
 	Py=[p1[:,2]; p2[:,2]; p3[:,2]];
 	Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
 	NewEdgePoints=[Px Py Pz]
+	@info NewEdgePoints
+	OutputDirectory=CutAndDisplaceJulia.xyzExport(NewEdgePoints[:,1],NewEdgePoints[:,2],NewEdgePoints[:,3],"FractureTipPoints")
 
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
 		scatter!(scene,[Px Py Pz],markersize = 50,limits=scene.limits)#
-		Makie.save("AfterElsRemoved$i.png", scene)
+		Makie.save("$i-d-AfterElsRemoved.png", scene)
 	end
 
 
@@ -176,7 +178,7 @@ for i=1:lps
 	Pnts=[Px Py Pz]
 	Pnts=unique(Pnts,dims=1) 
 
-	OutputDirectory=CutAndDisplaceJulia.xyzExport(Pnts[:,1],Pnts[:,2],Pnts[:,3])
+	OutputDirectory=CutAndDisplaceJulia.xyzExport(Pnts[:,1],Pnts[:,2],Pnts[:,3],"NewFracturePoints")
 	println(OutputDirectory)
 	(OutputDirectory)=BuildCGAL.AdvancingFrontCGAL(OutputDirectory)
 	println(OutputDirectory)
