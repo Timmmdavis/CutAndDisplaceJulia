@@ -114,6 +114,7 @@ include("CollapseEdgeTris.jl")
 include("CleanAndIsosceliseEdgeTris.jl")
 include("CreateTrianglesPointsFromP1P2P3.jl")
 include("CalculateInternalTriAngles.jl")
+include("RemoveDodgyNewEdges.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")
