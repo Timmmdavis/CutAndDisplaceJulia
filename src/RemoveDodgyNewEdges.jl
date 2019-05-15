@@ -6,7 +6,7 @@ function RemoveDodgyNewEdges(P1,P2,P3,NewEdgePoints,max_target_edge_length)
 #slithers by assuming tris that are only connected to the new edge points and
 #not the original meshshould be removed
 
-( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+( Area,HalfPerimeter ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 #(IntAngA,IntAngB,IntAngC)=CutAndDisplaceJulia.CalculateInternalTriAngles(P1,P2,P3)
 
 #Clean up Advancing front result - remove overly long edges
@@ -14,9 +14,9 @@ GoodTris=HalfPerimeter.*(2/3) .< max_target_edge_length*1.5
 P1=P1[GoodTris,:]
 P2=P2[GoodTris,:]
 P3=P3[GoodTris,:]
-(Points,Triangles)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 
-(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+(FaceNormalVector,MidPoint)=CreateFaceNormalAndMidPoint(Points,Triangles)
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
 EdgeTri=findall(NoConnections).<3 #- edge tri
 
@@ -41,10 +41,11 @@ for i = 1:length(EdgeTri)
         if testP1==zers || testP2==zers || testP3==zers
             ContainsNewPoint+=1
         end
-    #If it only contains our new points (not the previous mesh points) its set
-    #to invalid and we remove it
-    if ContainsNewPoint==3
-        good[EdgeTri[i]]==false
+        #If it only contains our new points (not the previous mesh points) its set
+        #to invalid and we remove it
+        if ContainsNewPoint==3
+            good[EdgeTri[i]]==false
+        end
     end
 end
 
@@ -52,7 +53,7 @@ P1=copy(P1[good,:])
 P2=copy(P2[good,:])
 P3=copy(P3[good,:]) 
 
-(Points,Triangles)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 
 return P1,P2,P3,Points,Triangles
 end
