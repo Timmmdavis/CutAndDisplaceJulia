@@ -18,6 +18,7 @@ EdgeTri=findall(NoConnections).<3 #- edge tri
 testP1=[0. 0. 0.]
 testP2=[0. 0. 0.]
 testP3=[0. 0. 0.]
+zers  =[0. 0. 0.]
 good=fill(true,size(P1,1))
 
 #loop to remove tris that consist entirely of new edge points, we only want tris that are connected to the previous mesh
@@ -27,11 +28,11 @@ for i = 1:length(EdgeTri)
     
     for j=1:length(NewEdgePoints)
 
-        testP1=P1[EdgeTri[i,:]].-NewEdgePoints[j,:]
-        testP2=P2[EdgeTri[i,:]].-NewEdgePoints[j,:]
-        testP3=P3[EdgeTri[i,:]].-NewEdgePoints[j,:]
+        testP1.=P1[EdgeTri[i,:]].-NewEdgePoints[j,:]
+        testP2.=P2[EdgeTri[i,:]].-NewEdgePoints[j,:]
+        testP3.=P3[EdgeTri[i,:]].-NewEdgePoints[j,:]
 
-        if testP1==[0. 0. 0.] | testP2==[0. 0. 0.] | testP3==[0. 0. 0.]
+        if testP1==zers || testP2==zers || testP3==zers
             ContainsNewPoint+=1
         end
     #If it only contains our new points (not the previous mesh points) its set to invalid and we remove it
