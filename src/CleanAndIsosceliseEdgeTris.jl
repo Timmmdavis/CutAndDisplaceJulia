@@ -75,7 +75,20 @@ if size(removeIndx)!=()
 
 end
 
-@bp
+# The aim is to isoscelise edge triangles by swinging the inner point around
+# the edge midpoint
+#
+#                       Em
+# ¯.¯\¯¯¯¯¯ ⁄¯.¯  ¯.¯\¯¯•¯¯ ⁄¯.¯      ¯.¯\¯¯ ¯¯/¯.¯
+# ....\   ⁄.....  ....\   ⁄..... -- > ....\   /....
+# .....\⁄.......  .....\⁄.......      .....\ /.....
+# .....I........  .|...I........       .....I.......     
+#                  \  
+#                   ＼ _ >
+#                          
+#  
+# Em = Edge MidPoint
+# I=Inner Point
 
 ## PART 2: Now Rotate so always isosceles tris on edge
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
