@@ -11,7 +11,7 @@ for i=1:n_points
 
 	#13 digits precision
 	@printf(io,"%0.13f", Points[i,2]);print(io," ");
-	@printf(io,"%0.13f", Points[i,2]);print(io," ");
+	@printf(io,"%0.13f", Points[i,3]);print(io," ");
 	@printf(io,"%0.13f", Points[i,4]);print(io,"\r\n");
 
 end
