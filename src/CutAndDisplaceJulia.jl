@@ -9,6 +9,7 @@ using Random
 using Statistics
 using UnicodePlots
 using DataFrames
+using Printf
 
 ######################################################
 println("Remove me!")

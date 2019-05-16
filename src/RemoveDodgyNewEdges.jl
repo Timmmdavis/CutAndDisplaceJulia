@@ -6,7 +6,7 @@ function RemoveDodgyNewEdges(P1,P2,P3,NewEdgePoints,max_target_edge_length)
 #slithers by assuming tris that are only connected to the new edge points and
 #not the original meshshould be removed
 
-#=
+
 ( Area,HalfPerimeter ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 #(IntAngA,IntAngB,IntAngC)=CutAndDisplaceJulia.CalculateInternalTriAngles(P1,P2,P3)
 
@@ -17,7 +17,7 @@ P2=copy(P2[GoodTris,:])
 P3=copy(P3[GoodTris,:])
 NoRemoved=sum(GoodTris.==false)
 println("Removed $NoRemoved faces from AdvancingFront as their area was too large")
-=#
+
 
 
 testP1=[0. 0. 0.]
@@ -26,32 +26,6 @@ testP3=[0. 0. 0.]
 zers  =[0. 0. 0.]
 good=fill(true,size(P1,1))
 
-
-
-#WHY DOES THIS NOT WORK????
-for p=1:size(NewEdgePoints,1)
-    InPa=ismember(P1,NewEdgePoints[p,:]); 
-    InPb=ismember(P2,NewEdgePoints[p,:]); 
-    InPc=ismember(P3,NewEdgePoints[p,:]); 
-    #loop through and update to new point
-    for j=1:length(InPa)
-        if InPa[j]
-            println("HERE!")
-        end
-    end
-    #loop through and update to new point
-    for j=1:length(InPb)
-        if InPb[j]
-            println("HERE!")
-        end
-    end
-    #loop through and update to new point
-    for j=1:length(InPc)
-        if InPc[j]
-            println("HERE!")
-        end
-    end
-end
 
 #loop to remove tris that consist entirely of new edge points, we only want
 #tris that are connected to the previous mesh
