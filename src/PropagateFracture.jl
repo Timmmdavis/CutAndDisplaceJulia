@@ -9,13 +9,14 @@ IndxP2P3=findall(FeP2P3S.FreeFlg);
 #Find MaxStrainEnergy value for all edges
 MaxStrainEnergy=maximum(filter(!isnan,[FeP1P2S.StrainEnergy; FeP1P3S.StrainEnergy; FeP2P3S.StrainEnergy]))
 
-(PV1,Ang1)=CreateNewEdgePoint(FeP1P2S,IndxP1P2,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,AvgTriangleEdgeLength)
-(PV2,Ang2)=CreateNewEdgePoint(FeP1P3S,IndxP1P3,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,AvgTriangleEdgeLength)
-(PV3,Ang3)=CreateNewEdgePoint(FeP2P3S,IndxP2P3,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,AvgTriangleEdgeLength)
+
+(PV1,Ang1,StillEdge_P1P2)=CreateNewEdgePoint(FeP1P2S,IndxP1P2,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,AvgTriangleEdgeLength)
+(PV2,Ang2,StillEdge_P1P3)=CreateNewEdgePoint(FeP1P3S,IndxP1P3,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,AvgTriangleEdgeLength)
+(PV3,Ang3,StillEdge_P2P3)=CreateNewEdgePoint(FeP2P3S,IndxP2P3,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,AvgTriangleEdgeLength)
 
 
 
-return PV1,PV2,PV3,Ang1,Ang2,Ang3
+return PV1,PV2,PV3,StillEdge_P1P2,StillEdge_P1P3,StillEdge_P2P3,Ang1,Ang2,Ang3
 end
 
 function CreateNewEdgePoint(Fe,Indx,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,AvgTriangleEdgeLength)
@@ -23,6 +24,7 @@ function CreateNewEdgePoint(Fe,Indx,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,
     PointVectorY=[];
     PointVectorZ=[];
     AngVector=[];
+    UnpropagatedEdges=fill(false,size(FaceNormalVector,1))
 	for i=1:length(Indx)
 
         
@@ -31,7 +33,9 @@ function CreateNewEdgePoint(Fe,Indx,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,
         #Check if the crack tip will extend
         if Fe.StrainEnergy[I]>KCrit #Plane strain criteria
             ( NwPntCX,NwPntCY,NwPntCZ,Ang ) = FindPropAngleAndPoint( Fe,FaceNormalVector,I,MaxStrainEnergy,AvgTriangleEdgeLength );
-        else 
+        else
+            #Flag to say that this open edge of the mesh has not propagted
+            UnpropagatedEdges[I]=true
             continue
         end
         PointVectorX=push!(PointVectorX,NwPntCX)
@@ -40,6 +44,6 @@ function CreateNewEdgePoint(Fe,Indx,FaceNormalVector,G,ν,KCrit,MaxStrainEnergy,
         AngVector=push!(AngVector,Ang)
     end
     PointVector=[PointVectorX PointVectorY PointVectorZ]
-    return PointVector,AngVector
+    return PointVector,AngVector,UnpropagatedEdges
 end
 

@@ -4,7 +4,7 @@ function xyzExport(x,y,z,filename)
 #using Printf
 n_points=length(x)
 #create a new file for writing
-io = open("$filename.off", "w+");
+io = open("$filename.xyz", "w+");
 for i=1:n_points
 
 	#13 digits precision
@@ -17,7 +17,7 @@ end
 close(io);
 
 #OutputDir
-OutputDirectory=string(pwd(),"\\",filename,".off")
+OutputDirectory=string(pwd(),"\\",filename,".xyz")
 
 return OutputDirectory
 end

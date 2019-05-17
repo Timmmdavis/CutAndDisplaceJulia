@@ -23,56 +23,60 @@ P3=copy(P3[Good,1:3])
 (Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
 
-(newTris,removeIndx)=CutAndDisplaceJulia.CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
-n=length(Triangles[:,1]);
+rerunFunc=1 #sometime we need to run twice
+while rerunFunc==1
+
+    (newTris,removeIndx,rerunFunc)=CutAndDisplaceJulia.CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
+    n=length(Triangles[:,1]);
 
 
-#Get edge triangles
-(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
-(SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
+    #Get edge triangles
+    (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
+    (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
 
-#n*3 list of triangles connected to this tri
+    #n*3 list of triangles connected to this tri
 
 
-#Only doing if there are changes
-if size(removeIndx)!=()
+    #Only doing if there are changes
+    if size(removeIndx)!=()
 
-    #Remove first dud value
-    newTris=copy(newTris[2:end,:])
-    removeIndx=copy(removeIndx[2:end])
+        #Remove first dud value
+        newTris=copy(newTris[2:end,:])
+        removeIndx=copy(removeIndx[2:end])
 
-    NoCollapsed=length(removeIndx)
-    NoCreated=size(newTris,1)
-    println("$NoCollapsed shared inner point edge triangles have been collapsed into $NoCreated triangles with unique inner points")
-    
-    Step=collect(1:n)
-    Good=vec(fill(true,n,1))
-    for i=1:length(removeIndx)
-        Locs=findall(in.(Step,removeIndx[i]))
-        for j=1:length(Locs)
-            Good[Locs[j]]=false
+        NoCollapsed=length(removeIndx)
+        NoCreated=size(newTris,1)
+        println("$NoCollapsed shared inner point edge triangles have been collapsed into $NoCreated triangles with unique inner points")
+        
+        Step=collect(1:n)
+        Good=vec(fill(true,n,1))
+        for i=1:length(removeIndx)
+            Locs=findall(in.(Step,removeIndx[i]))
+            for j=1:length(Locs)
+                Good[Locs[j]]=false
+            end
         end
+
+        P1=copy(P1[Good,1:3])
+        P2=copy(P2[Good,1:3])
+        P3=copy(P3[Good,1:3])
+
+        P1=[P1;newTris[:,1:3]]
+        P2=[P2;newTris[:,4:6]]
+        P3=[P3;newTris[:,7:9]]
+
+
+        ## Recreate tri
+        (Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+        try (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
+        catch 
+            println("Check your surface, more than 2 duplicate edge tris?")
+            error("Remesh here")
+        end
+        ### Get edge triangles (Of cleaned tri)
+        #(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
+
     end
-
-    P1=copy(P1[Good,1:3])
-    P2=copy(P2[Good,1:3])
-    P3=copy(P3[Good,1:3])
-
-    P1=[P1;newTris[:,1:3]]
-    P2=[P2;newTris[:,4:6]]
-    P3=[P3;newTris[:,7:9]]
-
-
-    ## Recreate tri
-    (Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
-    try (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
-    catch 
-        println("Check your surface, more than 2 duplicate edge tris?")
-        error("Remesh here")
-    end
-    ### Get edge triangles (Of cleaned tri)
-    #(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
-
 end
 
 # The aim is to isoscelise edge triangles by swinging the inner point around

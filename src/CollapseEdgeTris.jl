@@ -13,7 +13,7 @@ function CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
 # C=CurrentPoint
 # I=InnerPoint
 
-
+( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
 #number of connected tris (Sorted tris rows not == to 0)
@@ -78,6 +78,8 @@ Next2EdgeTriNonConnectedPoint=[0 0 0]
 Next2EdgeTriIndx=0;
 Next2EdgeTriIndex=0;
 RunOnceMore=false
+AreaSum=0.;
+rerunFunc=0;
 
 for i=1:n_edges
 
@@ -96,6 +98,7 @@ for i=1:n_edges
 
 	    	removeIndx=[removeIndx triindx] #add to list of tris to remove
 
+
 	    	#Check that the next edge point is in the right direction
 			(NewCurrentEdge)=
 			LoopingRoundBoundaryKnownNextEdgeTri(triindx,CurrentEdge,CurrentPoint,TrailingPoint,Next2EdgeTriIndx,P1,P2,P3,
@@ -111,6 +114,7 @@ for i=1:n_edges
 			
 			else #EdgePointsMatch
 
+				AreaSum+=Area[Next2EdgeTriIndx]
 
 	    		(EdgeTriNonConnectedPointF,EdgeTriInnerPointF)=
 	    		GetSpecficPointsCurrentTri(triindx,j,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
@@ -157,7 +161,7 @@ for i=1:n_edges
 		fillme[4:6].=CurrentPoint;
 		fillme[7:9].=EdgeTriNonConnectedPoint;
 
-		
+
 		#make sure point ordering matches that of the normal direction
 		AvgVect=(FaceNormalVector[i,:].+FaceNormalVector[Next2EdgeTriIndx,:])./2;
 		NewTriNormalVector = CreateTriangleNormal( fillme[1:3],fillme[4:6],fillme[7:9] );
@@ -167,19 +171,31 @@ for i=1:n_edges
 		    fillme[1:3].=EdgeTriNonConnectedPoint;
 		    fillme[7:9].=EdgeTriInnerPoint;
 		end  
-		
-		newTris=[newTris; copy(fillme) ]
-		Collapse=false
 
+		#Check that the area is retained, if not the new triangle is just bad
+		( NewArea,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D( fillme[:,1],fillme[:,2],fillme[:,3],fillme[:,4],fillme[:,5],fillme[:,6],fillme[:,7],fillme[:,8],fillme[:,9] );
+		if NewArea[1]<AreaSum
+			#Do nothing 
+			println("bad1")
+			rerunFunc=1 #we will need to rerun
+		else
+			newTris=[newTris; copy(fillme) ]
+
+		end
+		Collapse=false
+		
 	end
 
 	#Find next outer triangle along from this triangle (they share CurrentPoint on the outer edge)
 	(triindx,CurrentPoint,TrailingPoint,CurrentEdge)=
 	LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
 	
+	AreaSum=0.; #reset
+
+
 end
 
-return newTris,removeIndx
+return newTris,removeIndx,rerunFunc
 
 end
 
