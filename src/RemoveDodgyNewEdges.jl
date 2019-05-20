@@ -6,7 +6,7 @@ function RemoveDodgyNewEdges(P1,P2,P3,Points,Triangles,FaceNormalVector,MidPoint
 #slithers by assuming tris that are only connected to the new edge points and
 #not the original meshshould be removed
 
-#=
+
 ( Area,HalfPerimeter ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 #(IntAngA,IntAngB,IntAngC)=CutAndDisplaceJulia.CalculateInternalTriAngles(P1,P2,P3)
 
@@ -16,10 +16,14 @@ P1=copy(P1[GoodTris,:])
 P2=copy(P2[GoodTris,:])
 P3=copy(P3[GoodTris,:])
 NoRemoved=sum(GoodTris.==false)
-println("Removed $NoRemoved faces from AdvancingFront as their area was too large")
-=#
+if NoRemoved>0
+    println("Removed $NoRemoved faces from AdvancingFront as their area was too large")
+    (Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+    (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+end
 
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
+
 #number of connected tris (Sorted tris rows not == to 0)
 NoConnections=sum(SortedTriangles.!=0,dims=2)
 EdgeTri=NoConnections.<3 #- edge tri
@@ -72,17 +76,29 @@ for i = 1:size(P1,1)
     #baddies. Sometimes new tris go from outer edge new points to old outer
     #tris in a dodgy way
     if NoEdgePoints>0
-        if EdgeTri[i] #if its an edge triangle
+        #if EdgeTri[i] #if its an edge triangle
             
             GoodCons=0; #reset
             BadCons=0;
 
-            for j=1:NoConnections[i]
-
-                ConnectedNormal=FaceNormalVector[SortedTris[i,j],:]
+            for j=1:3
+                if SortedTriangles[i,j]==0
+                    continue
+                end
+                if good[SortedTriangles[i,j]]==false
+                    continue
+                end
+                ConnectedNormal=FaceNormalVector[SortedTriangles[i,j],:]
                 CurrentNormal=FaceNormalVector[i,:]
-                AngBetweenNormals=acos(dot(vec(ConnectedNormal),vec(CurrentNormal)))
-                
+                CosCurve=dot(vec(ConnectedNormal),vec(CurrentNormal))
+                #Catches errors when vectors are not quite perfect
+                if CosCurve>1.
+                    AngBetweenNormals=1.
+                else
+                    AngBetweenNormals=acos(CosCurve)
+                end
+
+
                 if AngBetweenNormals>(pi/2) #bigger than 90
                     BadCons+=1;
                 else    #smaller
@@ -91,10 +107,10 @@ for i = 1:size(P1,1)
 
             end    
             #Only remove if its mainly got bad connections
-            if BadCons>GoodCons 
+            if BadCons>=GoodCons 
                 good[i]=false
             end
-        end    
+        #end    
     end
 
 end
@@ -105,8 +121,10 @@ P1=copy(P1[good,:])
 P2=copy(P2[good,:])
 P3=copy(P3[good,:]) 
 NoRemoved=sum(good.==false)
-println("Removed $NoRemoved faces from AdvancingFront as they were only the new tip points")
 
+if NoRemoved>0
+    println("Removed $NoRemoved faces from AdvancingFront as they were only the new tip points")
+end
 (Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 
 return P1,P2,P3,Points,Triangles

@@ -1,4 +1,15 @@
 function testProp()
+#=
+	using AbstractPlotting
+	AbstractPlotting.__init__()
+	using DelimitedFiles
+	using Makie
+	using CutAndDisplaceJulia
+	using CutAndDisplaceJuliaPlots
+	using Statistics
+	using BuildCGAL
+	using Debugger
+=#
 
 #Start creating vars for function: 
 println("creating func vars")
@@ -42,7 +53,9 @@ scene=[];limits=[];
 Px=[];Py=[];Pz=[];
 EdgePoints=[]
 draw=1
-println("Drawing off")
+if draw==0
+	println("Drawing off")
+end
 
 #Looping from here on in
 for i=1:lps
@@ -170,6 +183,7 @@ for i=1:lps
 
 
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[nonNan,1],P1[nonNan,2],P1[nonNan,3],P2[nonNan,1],P2[nonNan,2],P2[nonNan,3],P3[nonNan,1],P3[nonNan,2],P3[nonNan,3] );
+	max_target_edge_length=maximum(HalfPerimeter)*(2/3)
 	AvgTriangleEdgeLength=mean(HalfPerimeter)*(2/3)
 	KCrit=5e7; #[50 MPa √m]
 
