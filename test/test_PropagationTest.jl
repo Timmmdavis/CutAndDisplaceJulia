@@ -53,7 +53,7 @@ for i=1:lps
 	if i!=1
 		EdgePoints=readdlm("FractureTipPoints.xyz", ' ') #reread
 	end
-	(P1,P2,P3,Points,Triangles)=CutAndDisplaceJulia.RemoveDodgyNewEdges(P1,P2,P3,EdgePoints,max_target_edge_length)
+	(P1,P2,P3,Points,Triangles)=CutAndDisplaceJulia.RemoveDodgyNewEdges(P1,P2,P3,Points,Triangles,FaceNormalVector,MidPoint,EdgePoints,max_target_edge_length)
 
 	#Export current mesh
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"AfterAdvancingFrontClean")

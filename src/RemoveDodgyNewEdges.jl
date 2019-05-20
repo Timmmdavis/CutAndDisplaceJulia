@@ -1,4 +1,4 @@
-function RemoveDodgyNewEdges(P1,P2,P3,OnlyEdgePoints,max_target_edge_length)
+function RemoveDodgyNewEdges(P1,P2,P3,Points,Triangles,FaceNormalVector,MidPoint,OnlyEdgePoints,max_target_edge_length)
 #After AdvancingFrontReconstruction we often end with a manifold mesh with
 #large edge tris over the top and small slither tris connecting the new edge
 #points. This function first removes the large triangles by assuming we only
@@ -19,6 +19,11 @@ NoRemoved=sum(GoodTris.==false)
 println("Removed $NoRemoved faces from AdvancingFront as their area was too large")
 =#
 
+(SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
+#number of connected tris (Sorted tris rows not == to 0)
+NoConnections=sum(SortedTriangles.!=0,dims=2)
+EdgeTri=NoConnections.<3 #- edge tri
+
 good=fill(true,size(P1,1))
 
 #Only use unique ones
@@ -28,6 +33,7 @@ OnlyEdgePoints=round.(OnlyEdgePoints,digits=13)
 P1=round.(P1,digits=13)
 P2=round.(P2,digits=13)
 P3=round.(P3,digits=13)
+
 
 
 #loop to remove tris that consist entirely of only edge points, we only want
@@ -56,9 +62,44 @@ for i = 1:size(P1,1)
     #to invalid and we remove it
     if NoEdgePoints==3
         good[i]=false
+        continue
+    end
+
+    #Part 2 - remove edges with over 90 degrees between connected face normal
+    #vectors We only do when more bad connectons than good. The propagation
+    #algorithm doesnt allow for over 90 degree turns. This is because in rare
+    #cases the algorithm to remove bad tris above doesnt quite catch all the
+    #baddies. Sometimes new tris go from outer edge new points to old outer
+    #tris in a dodgy way
+    if NoEdgePoints>0
+        if EdgeTri[i] #if its an edge triangle
+            
+            GoodCons=0; #reset
+            BadCons=0;
+
+            for j=1:NoConnections[i]
+
+                ConnectedNormal=FaceNormalVector[SortedTris[i,j],:]
+                CurrentNormal=FaceNormalVector[i,:]
+                AngBetweenNormals=acos(dot(vec(ConnectedNormal),vec(CurrentNormal)))
+                
+                if AngBetweenNormals>(pi/2) #bigger than 90
+                    BadCons+=1;
+                else    #smaller
+                    GoodCons+=1
+                end
+
+            end    
+            #Only remove if its mainly got bad connections
+            if BadCons>GoodCons 
+                good[i]=false
+            end
+        end    
     end
 
 end
+
+
 
 P1=copy(P1[good,:])
 P2=copy(P2[good,:])
