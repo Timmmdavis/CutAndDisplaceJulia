@@ -6,15 +6,12 @@ function CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 
 #Concat 2 big mat
 AllPnts=CreateSortedPointsP1P2P3(P1,P2,P3);
-println(size(AllPnts))
-println(size(P1))
-println(P1[end,:])
-println(P2[end,:])
-println(P3[end,:])
-println(AllPnts[end,:])
-error("This should be sorted!")
 
 Slimmed=unique(AllPnts,dims=1) 
+println(size(AllPnts))
+println(size(Slimmed))
+
+
 
 #Extract as these are now sorted:
 P1=copy(AllPnts[:,1:3])
