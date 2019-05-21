@@ -1,55 +1,25 @@
 function CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 #Collapses back for use with external functions in CGAL etc
 
-
-
-
-#Concat 2 big mat
-AllPnts=CreateSortedPointsP1P2P3(P1,P2,P3);
-
-Slimmed=unique(AllPnts,dims=1) 
-println(size(AllPnts))
-println(size(Slimmed))
-
-
-
-#Extract as these are now sorted:
-P1=copy(AllPnts[:,1:3])
-P2=copy(AllPnts[:,4:6])
-P3=copy(AllPnts[:,7:9])
+n=size(P1,1)
+#Big long list
+Pnts=[P1;P2;P3]
 
 #Reduce and get index's of the new reduced points relative to old index's
-P1Unique=unique(P1,dims=1) 
-P1RowNos=UnqiueRowNumberFinder(P1,P1Unique)
+Points=unique(Pnts,dims=1) 
+PntsUniqueRowNos=UnqiueRowNumberFinder(Pnts,Points)
 
-#Reduce and get index's of the new reduced points relative to old index's
-P2Unique=unique(P2,dims=1) 
-P2RowNos=UnqiueRowNumberFinder(P2,P2Unique)
 
-#Reduce and get index's of the new reduced points relative to old index's
-P3Unique=unique(P3,dims=1) 
-P3RowNos=UnqiueRowNumberFinder(P3,P1Unique)
 
+P1PntsUnique=PntsUniqueRowNos[1:n]
+P2PntsUnique=PntsUniqueRowNos[n+1:2*n]
+P3PntsUnique=PntsUniqueRowNos[n*2+1:3*n]
 
 #Now place P1 P2 P3 on seperate rows
-n=length(P1Unique)
-Points=[1:n P1Unique P2Unique P3Unique]
-Triangles=[P1RowNos P2RowNos P3RowNos]
+Points=[1:size(Points,1) Points]
+Triangles=[P1PntsUnique P2PntsUnique P3PntsUnique]
 
-#=
-Points=zeros(Int(length(P1)),3)
-Points[1:3:end,:]=copy(P1);
-Points[2:3:end,:]=copy(P2);
-Points[3:3:end,:]=copy(P3);
-n=length(Points)
-Points=[1:n/3 Points]
-Triangles=fill(0,Int(n/9),3)
-Triangles[:,1]=1:3:n/3;
-Triangles[:,2]=2:3:n/3;
-Triangles[:,3]=3:3:n/3;
-=#
-
-return Points,Triangles
+return Triangles,Points
 end 
 
 
