@@ -1,5 +1,11 @@
 function testProp()
 #=
+
+	println("PackageCOMPILESTUFF")
+	exepath=raw"C:\Users\timmm\AppData\Local\Julia-1.1.0\bin\julia.exe"; 
+	new_image=raw"C:\Users\timmm\.julia\dev\PackageCompiler\sysimg\sys.dll"; 
+	run(`$exepath --quiet -J $new_image`)
+
 	using AbstractPlotting
 	AbstractPlotting.__init__()
 	using DelimitedFiles
@@ -79,12 +85,13 @@ for i=1:lps
 		Makie.save("$i-a-AfterAdvancingFrontCGALRemeshingAndCleaning.png", scene)
 	end
 
+	#=
 	#Remesh using Polygon method in CGAL:
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
-
-	#Reload	
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+	=#
+
 	#Compute triangle properties
 	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
@@ -95,7 +102,13 @@ for i=1:lps
 	end
 
 	#Remesh edges
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanAndIsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
+	if draw==1
+		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+		Makie.save("$i-b-AfterCleaningEdgeTris.png", scene)
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"MeshAfterEdgeClean-PreIsocelise")
+	end
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 
 	#Recompute target_edge_length
 	max_target_edge_length=maximum(HalfPerimeter)*(2/3)
@@ -108,6 +121,9 @@ for i=1:lps
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
 		Makie.save("$i-c-AfterCleaningAndIsolating.png", scene)
+
+		println("Not Needed")
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"MeshBeforeSlipCalc")
 	end
 
 	n=length(Triangles[:,1]);
@@ -167,6 +183,40 @@ for i=1:lps
 	FaceNormalVector[ClosedEls,:].=NaN
 	nonNan=ClosedEls.==false;
 
+	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+	
+
+
+	#Check that we have seperated into multiple meshes - if we have fix this
+	P1Open=copy(P1[nonNan,:])
+	P2Open=copy(P2[nonNan,:])
+	P3Open=copy(P3[nonNan,:])
+	(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1Open,P2Open,P3Open)
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"CheckingConnectedComps")
+	(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
+	Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
+	if any(Flags.>1) #more than one component
+		NoConnectedComponents=maximum(Flags)
+		Vol=zeros(NoConnectedComponents)
+		for i=1:NoConnectedComponents
+			CurrentIndx=findall(Flags.==i)
+			Vol[i]=sum(Dn[CurrentIndx,:].*Area[CurrentIndx,:])
+		end
+		#The actual fracture (index in Flags), assumed to be the largest volume connected component
+		(~,goodflag)=findmax(Vol) 
+		#Indexs of split mesh we dont want:
+		BadComponents=findall(Flags.!=goodflag)
+		#Set these to closed elements too
+		nonNanidx=findall(nonNan)
+		ClosedEls[nonNanidx[BadComponents]].=true
+		P1[ClosedEls,:].=NaN
+		P2[ClosedEls,:].=NaN
+		P3[ClosedEls,:].=NaN
+		MidPoint[ClosedEls,:].=NaN
+		FaceNormalVector[ClosedEls,:].=NaN
+		nonNan=ClosedEls.==false;
+	end
+
 	#Get tip elements again now we have closed some elements
 	(NewFeP1P2,NewFeP1P3,NewFeP2P3)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 
@@ -182,9 +232,9 @@ for i=1:lps
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
 
 
-	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[nonNan,1],P1[nonNan,2],P1[nonNan,3],P2[nonNan,1],P2[nonNan,2],P2[nonNan,3],P3[nonNan,1],P3[nonNan,2],P3[nonNan,3] );
-	max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-	AvgTriangleEdgeLength=mean(HalfPerimeter)*(2/3)
+	
+	max_target_edge_length=maximum(HalfPerimeter[nonNan])*(2/3)
+	AvgTriangleEdgeLength=mean(HalfPerimeter[nonNan])*(2/3)
 	KCrit=5e7; #[50 MPa √m]
 
 	#Switch so new free elements are used but old ones no longer free edges

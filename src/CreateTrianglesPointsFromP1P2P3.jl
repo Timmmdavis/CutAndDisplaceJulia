@@ -7,9 +7,7 @@ Pnts=[P1;P2;P3]
 
 #Reduce and get index's of the new reduced points relative to old index's
 Points=unique(Pnts,dims=1) 
-PntsUniqueRowNos=UnqiueRowNumberFinder(Pnts,Points)
-
-
+PntsUniqueRowNos=UniqueRowNumberFinder(Pnts,Points)
 
 P1PntsUnique=PntsUniqueRowNos[1:n]
 P2PntsUnique=PntsUniqueRowNos[n+1:2*n]
@@ -24,25 +22,20 @@ end
 
 
 
-function UnqiueRowNumberFinder(OriginalData,UnqiueData)
+function UniqueRowNumberFinder(OriginalData,UniqueData)
 
 n=size(OriginalData,1)
-n2=size(OriginalData,2)
-RowNos=zeros(n)
-IndividualRows=fill(false,n)
+m=size(UniqueData,1)
 
-for i=1:n2
-	RowNos=indexin(OriginalData[:,i],UnqiueData[:,i])
-	for j=1:length(RowNos)
-		if RowNos[j]!=j
-			IndividualRows[j]=true
+RowNos=zeros(n)
+#Lp to check that each col is unique - if so we then use the index of the 
+#new unqiue row
+for i=1:n
+	for j=1:m
+		if OriginalData[i,:]==UniqueData[j,:]
+			RowNos[i]=j
 		end
-	end
-end
-for j=1:length(RowNos)
-	if IndividualRows[j]==true
-		RowNos[j]=j
-	end
+	end	
 end
 RowNos=Int.(RowNos)
 end

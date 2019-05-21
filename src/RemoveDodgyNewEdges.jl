@@ -18,7 +18,7 @@ P3=copy(P3[GoodTris,:])
 NoRemoved=sum(GoodTris.==false)
 if NoRemoved>0
     println("Removed $NoRemoved faces from AdvancingFront as their area was too large")
-    (Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+    (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
     (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 end
 
@@ -125,7 +125,7 @@ NoRemoved=sum(good.==false)
 if NoRemoved>0
     println("Removed $NoRemoved faces from AdvancingFront as they were only the new tip points")
 end
-(Points,Triangles)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 
 return P1,P2,P3,Points,Triangles
 end

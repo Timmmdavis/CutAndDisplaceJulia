@@ -176,8 +176,8 @@ for i=1:n_edges
 		( NewArea,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D( fillme[:,1],fillme[:,2],fillme[:,3],fillme[:,4],fillme[:,5],fillme[:,6],fillme[:,7],fillme[:,8],fillme[:,9] );
 		if NewArea[1]<AreaSum
 			#Do nothing 
-			println("bad1")
 			rerunFunc=1 #we will need to rerun
+			#break
 		else
 			newTris=[newTris; copy(fillme) ]
 
