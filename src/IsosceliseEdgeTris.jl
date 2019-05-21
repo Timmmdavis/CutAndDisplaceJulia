@@ -9,21 +9,21 @@ function IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 #@enter MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector);
 
 #Do for P1 P2: (Function at base of file)
+println(1)
 (P1,P2,P3)=MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector); 
 
 #Do for P1 P3: (Function at base of file)
-@enter MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector);
+println(2)
 (P1,P3,P2)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector);
 
 #Do for P2 P3: (Function at base of file)
+println(3)
 (P2,P3,P1)=MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector);
 
 
 ## Recreate tri
 (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 
-test=1
-@info test P1 P2 P3
 #[P1,P2,P3] = CreateP1P2P3( Triangles,Points ); 
 (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
 
@@ -75,29 +75,29 @@ FeM2Ev=T.FeM2Ev
 #Init values
 FePa2PcV=Array{Float64,2}(undef, n,3);FePa2PcV=fill!(FePa2PcV, NaN)
 FePb2PcV=Array{Float64,2}(undef, n,3);FePb2PcV=fill!(FePb2PcV, NaN)
-FeEv=Array{Float64,2}(undef, n,3);FeEv=fill!(FePb2PcV, NaN)
+FeEv=Array{Float64,2}(undef, n,3);FeEv=fill!(FeEv, NaN)
 
 #Vector pointing along edge
 FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
 FePa2PcV[I,:]=normr([(Pc[I,1]-Pa[I,1]) (Pc[I,2]-Pa[I,2]) (Pc[I,3]-Pa[I,3])]);
 FePb2PcV[I,:]=normr([(Pc[I,1]-Pb[I,1]) (Pc[I,2]-Pb[I,2]) (Pc[I,3]-Pb[I,3])]);
 #Get angle between edge and these vectors : smallest is the one we use
-AngEdge_PaPc=fill(NaN,n)
-AngEdge_PbPc=fill(NaN,n)
+AngEdge_Pa=fill(NaN,n)
+AngEdge_Pb=fill(NaN,n)
+AngEdge_Pc=fill(NaN,n)
 PcNew=fill(NaN,n,3)
 for i=1:length(I)
     idx=I[i];
 
-    #FeEv points 2 Pa (from Pb) #FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
-    try AngEdge_PaPc[idx]=acos(dot(vec(FePa2PcV[idx,:]),vec(.-FeEv[idx,:])))
-    catch
-        println(vec(FePa2PcV[idx,:]))
-        println(vec(.-FeEv[idx,:]))
-    end
-    try AngEdge_PbPc[idx]=acos(dot(vec(FePb2PcV[idx,:]),vec(FeEv[idx,:])))
-    catch
-        println(vec(FePa2PcV[idx,:]))
-        println(vec(FeEv[idx,:]))
+    #FeEv points from Pb to Pa #FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
+    AngEdge_Pa[idx]=acos(dot(vec(FePa2PcV[idx,:]),vec(.-FeEv[idx,:])))
+    AngEdge_Pb[idx]=acos(dot(vec(FePb2PcV[idx,:]),vec(FeEv[idx,:])))
+    AngEdge_Pc[idx]=acos(dot(vec(.-FePb2PcV[idx,:]),vec(.-FePa2PcV[idx,:])))
+
+    TotalAngDegrees=rad2deg(AngEdge_Pa[idx]+AngEdge_Pb[idx]+AngEdge_Pc[idx])
+    TotalAngDegrees=round(TotalAngDegrees,digits=3)
+    if TotalAngDegrees!=180
+        error("Internal angle is $TotalAngDegrees not 180")
     end
     #=
     ###################DELETE##########################
@@ -113,21 +113,11 @@ for i=1:length(I)
     arrows!(scene,[r2[1];r2[1]],[r2[2];r2[2]],[r2[3];r2[3]],[e2[1];0],[e2[2];0],[e2[3];1],lengthscale =:15)
     =#
     
-    #If both over 90!
-    if rad2deg(AngEdge_PbPc[idx])>90 && rad2deg(AngEdge_PaPc[idx])>90
-        test =90-(rad2deg(AngEdge_PbPc[idx])-90)
-        test2=90-(rad2deg(AngEdge_PaPc[idx])-90)
-        if test<test2
-            AngEdge_PbPc[idx]=test
-        else
-            AngEdge_PaPc[idx]=test2
-        end
-    end
 
     #Now use the correct vector
-    if AngEdge_PaPc[idx]<AngEdge_PbPc[idx]
+    if AngEdge_Pa[idx]<AngEdge_Pb[idx]
 
-        if rad2deg(AngEdge_PaPc[idx])<10
+        if rad2deg(AngEdge_Pa[idx])<10
             println("Very low angles - bad tris")
         end
         #https://stackoverflow.com/questions/10551555/need-an-algorithm-for-3d-vectors-intersection
@@ -157,9 +147,9 @@ for i=1:length(I)
 
 
 
-    elseif AngEdge_PbPc[idx]<AngEdge_PaPc[idx]
+    elseif AngEdge_Pb[idx]<AngEdge_Pa[idx]
 
-        if rad2deg(AngEdge_PbPc[idx])<10
+        if rad2deg(AngEdge_Pb[idx])<10
             println("Very low angles - bad tris")
         end
 
