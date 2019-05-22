@@ -30,13 +30,6 @@ while rerunFunc==1
     n=length(Triangles[:,1]);
 
 
-    #Get edge triangles
-    (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
-    (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
-
-    #n*3 list of triangles connected to this tri
-
-
     #Only doing if there are changes
     if size(removeIndx)!=()
 
@@ -67,7 +60,6 @@ while rerunFunc==1
         P2=[P2;newTris[:,4:6]]
         P3=[P3;newTris[:,7:9]]
 
-
         ## Recreate tri
         (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
         try (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
@@ -75,11 +67,36 @@ while rerunFunc==1
             println("Check your surface, more than 2 duplicate edge tris?")
             error("Remesh here")
         end
-        ### Get edge triangles (Of cleaned tri)
-        #(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
 
+
+
+        end
+
+
+    #Now remove edges that have two outer edges
+    (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
+    #number of connected tris (Sorted tris rows not == to 0)
+    NoConnections=sum(SortedTriangles.!=0,dims=2)
+    GoodEdgeTri=NoConnections.>1 #- edge tri
+    if any(GoodEdgeTri.==false)
+        GoodEdgeTri=findall(vec(GoodEdgeTri)) #- edge tri
+        rerunFunc=1
+        P1=copy(P1[GoodEdgeTri,1:3])
+        P2=copy(P2[GoodEdgeTri,1:3])
+        P3=copy(P3[GoodEdgeTri,1:3])
     end
+
+    ## Recreate tri
+    (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+    try (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
+    catch 
+        println("Check your surface, more than 2 duplicate edge tris?")
+        error("Remesh here")
+    end
+
 end
+
+
 
 return P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector
 end

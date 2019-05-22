@@ -48,11 +48,11 @@ BetaFromVert=90-Beta;
 Points[:,2:4]=Points[:,2:4].*Radius;
 Points[:,4]=Points[:,4].-3500; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-lps=10;
+lps=25;
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-target_edge_length=(mean(HalfPerimeter)*(2/3))*1.5
+target_edge_length=(mean(HalfPerimeter)*(2/3))*0.75
 
 #Drawing with debugger
 scene=[];limits=[];
@@ -75,38 +75,40 @@ for i=1:lps
 	(P1,P2,P3,Points,Triangles)=CutAndDisplaceJulia.RemoveDodgyNewEdges(P1,P2,P3,Points,Triangles,FaceNormalVector,MidPoint,EdgePoints,max_target_edge_length)
 
 	#Export current mesh
-	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"AfterAdvancingFrontClean")
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-1-AfterAdvancingFrontClean")
 	println(OutputDirectory)
 	#Get parameters
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("$i-a-AfterAdvancingFrontCGALRemeshingAndCleaning.png", scene)
+		Makie.save("$i-1-AfterAdvancingFrontCGALRemeshingAndCleaning.png", scene)
 	end
 
-	#=
+	
 	#Remesh using Polygon method in CGAL:
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-	=#
+	
 
 	#Compute triangle properties
 	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 	if draw==1
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-2-AfterPolygonRemeshingCGAL")
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("$i-b-AfterIsoCGALRemeshing.png", scene)
+		Makie.save("$i-2-AfterIsoCGALRemeshing.png", scene)
+		
 	end
 
 	#Remesh edges
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("$i-b-AfterCleaningEdgeTris.png", scene)
-		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"MeshAfterEdgeClean-PreIsocelise")
+		Makie.save("$i-3-AfterCleaningEdgeTris.png", scene)
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-3-MeshAfterEdgeClean-PreIsocelise")
 	end
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 
@@ -120,10 +122,10 @@ for i=1:lps
 	if draw==1
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("$i-c-AfterCleaningAndIsolating.png", scene)
+		Makie.save("$i-4-AfterCleaningAndIsolating.png", scene)
 
 		println("Not Needed")
-		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"MeshBeforeSlipCalc")
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-4-MeshBeforeSlipCalc")
 	end
 
 	n=length(Triangles[:,1]);
@@ -167,6 +169,12 @@ for i=1:lps
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
 
+
+	if draw==1
+		scene=CutAndDisplaceJuliaPlots.DrawMeshMakieFilledFaces(Dn,"Dn",P1,P2,P3,cmap2)
+		Makie.save("$i-5-SlipDistribution.png", scene)
+	end
+
 	#Compute average face normal
 	AvgFaceNormalVector=[mean(FaceNormalVector[:,1]) mean(FaceNormalVector[:,2]) mean(FaceNormalVector[:,3])]
 
@@ -192,7 +200,7 @@ for i=1:lps
 	P2Open=copy(P2[nonNan,:])
 	P3Open=copy(P3[nonNan,:])
 	(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1Open,P2Open,P3Open)
-	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"CheckingConnectedComps")
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"$i-4-CheckingConnectedComps")
 	(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
 	Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
 	if any(Flags.>1) #more than one component
@@ -279,7 +287,7 @@ for i=1:lps
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1[nonNan,:],P2[nonNan,:],P3[nonNan,:])
 		scatter!(scene,[Px Py Pz],markersize = 50,limits=scene.limits)#
-		Makie.save("$i-d-AfterElsRemoved.png", scene)
+		Makie.save("$i-6-AfterElsRemoved.png", scene)
 		@bp 
 	end
 
@@ -298,7 +306,32 @@ for i=1:lps
 	(OutputDirectory)=BuildCGAL.AdvancingFrontCGAL(OutputDirectory)
 	println(OutputDirectory)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
+
+
+	#Remove extra compoents if they have appeared
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-5-CheckingConnectedComps")
+	(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
+	Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
 	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+	if any(Flags.>1) #more than one component
+		NoConnectedComponents=maximum(Flags)
+		Areas=zeros(NoConnectedComponents)
+		( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+		for i=1:NoConnectedComponents
+			CurrentIndx=findall(Flags.==i)
+			Areas[i]=sum(Area[CurrentIndx,:])
+		end
+		#The actual fracture (index in Flags), assumed to be the largest area connected component
+		(~,goodflag)=findmax(Areas) 
+		#Indexs of split mesh we dont want:
+		GoodComponents=findall(Flags.==goodflag)
+		#Set these to closed elements too
+		P1=copy(P1[GoodComponents,:])
+		P2=copy(P2[GoodComponents,:])
+		P3=copy(P3[GoodComponents,:])
+		(Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+	end
+
 	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 end

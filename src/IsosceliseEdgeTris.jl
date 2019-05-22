@@ -1,19 +1,29 @@
 function IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 
 ## PART 2: Now Rotate so always isosceles tris on edge
+
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 
-
-#@enter MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector);
-#@enter MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector);
-#@enter MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector);
 
 #Do for P1 P2: (Function at base of file)
 (P1,P2,P3)=MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector); 
 
+#Remesh
+(Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
+
+OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"Test1")
+
 #Do for P1 P3: (Function at base of file)
-@enter MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector);
 (P1,P3,P2)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector);
+
+#Remesh
+(Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
+
+OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"Test2")
 
 #Do for P2 P3: (Function at base of file)
 (P2,P3,P1)=MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector);
@@ -21,12 +31,9 @@ function IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 
 ## Recreate tri
 (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
-
-test=1
-@info test P1 P2 P3
-#[P1,P2,P3] = CreateP1P2P3( Triangles,Points ); 
 (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
 
+OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"Test3")
 
 return P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector
 
@@ -75,59 +82,45 @@ FeM2Ev=T.FeM2Ev
 #Init values
 FePa2PcV=Array{Float64,2}(undef, n,3);FePa2PcV=fill!(FePa2PcV, NaN)
 FePb2PcV=Array{Float64,2}(undef, n,3);FePb2PcV=fill!(FePb2PcV, NaN)
-FeEv=Array{Float64,2}(undef, n,3);FeEv=fill!(FePb2PcV, NaN)
+FeEv=Array{Float64,2}(undef, n,3);FeEv=fill!(FeEv, NaN)
 
 #Vector pointing along edge
 FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
 FePa2PcV[I,:]=normr([(Pc[I,1]-Pa[I,1]) (Pc[I,2]-Pa[I,2]) (Pc[I,3]-Pa[I,3])]);
 FePb2PcV[I,:]=normr([(Pc[I,1]-Pb[I,1]) (Pc[I,2]-Pb[I,2]) (Pc[I,3]-Pb[I,3])]);
 #Get angle between edge and these vectors : smallest is the one we use
-AngEdge_PaPc=fill(NaN,n)
-AngEdge_PbPc=fill(NaN,n)
+AngEdge_Pa=fill(NaN,n)
+AngEdge_Pb=fill(NaN,n)
+AngEdge_Pc=fill(NaN,n)
 PcNew=fill(NaN,n,3)
+
+NewTriPa=[0. 0. 0.]
+NewTriPb=[0. 0. 0.]
+NewTriPc=[0. 0. 0.]
+#Index 2 say we dont move points attached to point c around
+skipindx=fill(false,n)
+
 for i=1:length(I)
     idx=I[i];
 
-    #FeEv points 2 Pa (from Pb) #FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
-    try AngEdge_PaPc[idx]=acos(dot(vec(FePa2PcV[idx,:]),vec(.-FeEv[idx,:])))
-    catch
-        println(vec(FePa2PcV[idx,:]))
-        println(vec(.-FeEv[idx,:]))
-    end
-    try AngEdge_PbPc[idx]=acos(dot(vec(FePb2PcV[idx,:]),vec(FeEv[idx,:])))
-    catch
-        println(vec(FePa2PcV[idx,:]))
-        println(vec(FeEv[idx,:]))
-    end
-    #=
-    ###################DELETE##########################
-    Px=[Pa[idx,1] Pb[idx,1] Pc[idx,1]]
-    Py=[Pa[idx,2] Pb[idx,2] Pc[idx,2]]
-    Pz=[Pa[idx,3] Pb[idx,3] Pc[idx,3]]
-    scene=0;
+    #FeEv points from Pb to Pa #FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
+    AngEdge_Pa[idx]=acos(dot(vec(FePa2PcV[idx,:]),vec(.-FeEv[idx,:])))
+    AngEdge_Pb[idx]=acos(dot(vec(FePb2PcV[idx,:]),vec(FeEv[idx,:])))
+    AngEdge_Pc[idx]=acos(dot(vec(.-FePb2PcV[idx,:]),vec(.-FePa2PcV[idx,:])))
 
-    #Tri stuff
-    scene=scatter(vec(Px), vec(Py), vec(Pz),markersize = 15)#
-    scatter!(scene,p1',markersize = 5)#
-    arrows!(scene,[r1[1];r1[1]],[r1[2];r1[2]],[r1[3];r1[3]],[e1[1];0],[e1[2];0],[e1[3];1],lengthscale =:15)
-    arrows!(scene,[r2[1];r2[1]],[r2[2];r2[2]],[r2[3];r2[3]],[e2[1];0],[e2[2];0],[e2[3];1],lengthscale =:15)
-    =#
+    TotalAngDegrees=rad2deg(AngEdge_Pa[idx]+AngEdge_Pb[idx]+AngEdge_Pc[idx])
+    TotalAngDegrees=round(TotalAngDegrees,digits=3)
+    if TotalAngDegrees!=180
+        error("Internal angle is $TotalAngDegrees not 180")
+    end
     
-    #If both over 90!
-    if rad2deg(AngEdge_PbPc[idx])>90 && rad2deg(AngEdge_PaPc[idx])>90
-        test =90-(rad2deg(AngEdge_PbPc[idx])-90)
-        test2=90-(rad2deg(AngEdge_PaPc[idx])-90)
-        if test<test2
-            AngEdge_PbPc[idx]=test
-        else
-            AngEdge_PaPc[idx]=test2
-        end
-    end
+    ( Areab4,Perimb4 ) = CutAndDisplaceJulia.AreaOfTriangle3D( Pa[idx,1],Pa[idx,2],Pa[idx,3],Pb[idx,1],Pb[idx,2],Pb[idx,3],Pc[idx,1],Pc[idx,2],Pc[idx,3] );
 
+    NewTri1=[]
     #Now use the correct vector
-    if AngEdge_PaPc[idx]<AngEdge_PbPc[idx]
+    if AngEdge_Pa[idx]<AngEdge_Pb[idx]
 
-        if rad2deg(AngEdge_PaPc[idx])<10
+        if rad2deg(AngEdge_Pa[idx])<10
             println("Very low angles - bad tris")
         end
         #https://stackoverflow.com/questions/10551555/need-an-algorithm-for-3d-vectors-intersection
@@ -146,20 +139,32 @@ for i=1:length(I)
         p1=r1.+d1.*e1
         #p2=r2.+d2.*e2
         if u==1
-            @bp
             println(p1)
             println(p2)
             println("lines are parallel")
             
         end
 
+        #subdivide tri if new angle allows a fairly decent tri:
+        NewPb2PcVec=normr([(p1[1]-Pb[idx,1]) (p1[2]-Pb[idx,2]) (p1[3]-Pb[idx,3])]);
+        if NewPb2PcVec!=FePb2PcV[idx,:]
+            Ang=acos(dot(vec(NewPb2PcVec),vec(FePb2PcV[idx,:])))
+        end
+        if rad2deg(abs(Ang))>45
+            NewTriPa=[NewTriPa;[Pb[idx,1] Pb[idx,2] Pb[idx,3]]]
+            NewTriPb=[NewTriPb;[p1[1] p1[2] p1[3]]]
+            NewTriPc=[NewTriPc;[Pc[idx,1] Pc[idx,2] Pc[idx,3]]]
+            skipindx[idx]=true
+        end
+
         PcNew[idx,:]=copy(p1)
 
+        
 
 
-    elseif AngEdge_PbPc[idx]<AngEdge_PaPc[idx]
+    elseif AngEdge_Pb[idx]<AngEdge_Pa[idx]
 
-        if rad2deg(AngEdge_PbPc[idx])<10
+        if rad2deg(AngEdge_Pb[idx])<10
             println("Very low angles - bad tris")
         end
 
@@ -177,13 +182,23 @@ for i=1:length(I)
         p1=r1.+d1.*e1
         #p2=r2.+d2.*e2
         if u==1
-            @bp
             println(p1)
             println(p2)
             println("lines are parallel")
             
         end
 
+        #subdivide tri if new angle allows a fairly decent tri:
+        NewPa2PcVec=normr([(p1[1]-Pa[idx,1]) (p1[2]-Pa[idx,2]) (p1[3]-Pa[idx,3])]);
+        if NewPa2PcVec!=FePa2PcV[idx,:]
+            Ang=acos(dot(vec(NewPa2PcVec),vec(FePa2PcV[idx,:])))
+        end
+        if rad2deg(abs(Ang))>45
+            NewTriPa=[NewTriPa;[Pa[idx,1] Pa[idx,2] Pa[idx,3]]]
+            NewTriPb=[NewTriPb;[p1[1] p1[2] p1[3]]]
+            NewTriPc=[NewTriPc;[Pc[idx,1] Pc[idx,2] Pc[idx,3]]]
+            skipindx[idx]=true
+        end
 
         PcNew[idx,:]=copy(p1)
 
@@ -194,8 +209,6 @@ for i=1:length(I)
     end
 
 end
-
-@bp
 
 #=
 
@@ -257,6 +270,10 @@ Pc2=Pc2.+T.FeMd[Indx,:];
 #And clean up connected tris
 for i=1:length(I)
 
+    if skipindx[I[i]]==true
+        continue
+    end
+
     OldPoint=Pc[I[i],:]
     NewPoint=PcNew[I[i],:];
 
@@ -286,6 +303,17 @@ for i=1:length(I)
 end
 
 Pc[I,:]=copy(PcNew[I,:]);
+
+#Splitting certain triangles into 2 (based on area changes)
+if any(skipindx.==true)
+    #Remove first part
+    NewTriPa=NewTriPa[2:end,:]
+    NewTriPb=NewTriPb[2:end,:]
+    NewTriPc=NewTriPc[2:end,:]
+    Pa=[Pa;NewTriPa]
+    Pb=[Pb;NewTriPb]
+    Pc=[Pc;NewTriPc]
+end
 
 return Pa,Pb,Pc
 

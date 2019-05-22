@@ -38,83 +38,90 @@ P1=round.(P1,digits=13)
 P2=round.(P2,digits=13)
 P3=round.(P3,digits=13)
 
+#We loop to remove edge vectors that are bad based on the tri normal below too
+rerunFunc=1
+while rerunFunc==1
+    rerunFunc=0 #switched back on if needed
 
+    #loop to remove tris that consist entirely of only edge points, we only want
+    #tris that are connected to the previous mesh
+    for i = 1:size(P1,1)
 
-#loop to remove tris that consist entirely of only edge points, we only want
-#tris that are connected to the previous mesh
-for i = 1:size(P1,1)
+        NoEdgePoints=0 #reset
+        
+        for j=1:size(OnlyEdgePoints,1)
 
-    NoEdgePoints=0 #reset
-    
-    for j=1:size(OnlyEdgePoints,1)
+            testP1=P1[i,:]==OnlyEdgePoints[j,:]
+            testP2=P2[i,:]==OnlyEdgePoints[j,:]
+            testP3=P3[i,:]==OnlyEdgePoints[j,:]
 
-        testP1=P1[i,:]==OnlyEdgePoints[j,:]
-        testP2=P2[i,:]==OnlyEdgePoints[j,:]
-        testP3=P3[i,:]==OnlyEdgePoints[j,:]
-
-        if testP1
-            NoEdgePoints+=1
-        end 
-        if testP2
-            NoEdgePoints+=1
-        end
-        if testP3
-            NoEdgePoints+=1
-        end
-    end
-    #If it only contains our new points (not the previous mesh points) its set
-    #to invalid and we remove it
-    if NoEdgePoints==3
-        good[i]=false
-        continue
-    end
-
-    #Part 2 - remove edges with over 90 degrees between connected face normal
-    #vectors We only do when more bad connectons than good. The propagation
-    #algorithm doesnt allow for over 90 degree turns. This is because in rare
-    #cases the algorithm to remove bad tris above doesnt quite catch all the
-    #baddies. Sometimes new tris go from outer edge new points to old outer
-    #tris in a dodgy way
-    if NoEdgePoints>0
-        #if EdgeTri[i] #if its an edge triangle
-            
-            GoodCons=0; #reset
-            BadCons=0;
-
-            for j=1:3
-                if SortedTriangles[i,j]==0
-                    continue
-                end
-                if good[SortedTriangles[i,j]]==false
-                    continue
-                end
-                ConnectedNormal=FaceNormalVector[SortedTriangles[i,j],:]
-                CurrentNormal=FaceNormalVector[i,:]
-                CosCurve=dot(vec(ConnectedNormal),vec(CurrentNormal))
-                #Catches errors when vectors are not quite perfect
-                if CosCurve>1.
-                    AngBetweenNormals=1.
-                else
-                    AngBetweenNormals=acos(CosCurve)
-                end
-
-
-                if AngBetweenNormals>(pi/2) #bigger than 90
-                    BadCons+=1;
-                else    #smaller
-                    GoodCons+=1
-                end
-
-            end    
-            #Only remove if its mainly got bad connections
-            if BadCons>=GoodCons 
-                good[i]=false
+            if testP1
+                NoEdgePoints+=1
+            end 
+            if testP2
+                NoEdgePoints+=1
             end
-        #end    
+            if testP3
+                NoEdgePoints+=1
+            end
+        end
+        #If it only contains our new points (not the previous mesh points) its set
+        #to invalid and we remove it
+        if NoEdgePoints==3
+            good[i]=false
+            continue
+        end
+
+        #Part 2 - remove edges with over 90 degrees between connected face normal
+        #vectors We only do when more bad connectons than good. The propagation
+        #algorithm doesnt allow for over 90 degree turns. This is because in rare
+        #cases the algorithm to remove bad tris above doesnt quite catch all the
+        #baddies. Sometimes new tris go from outer edge new points to old outer
+        #tris in a dodgy way
+        if NoEdgePoints>0
+            #if EdgeTri[i] #if its an edge triangle
+                
+                GoodCons=0; #reset
+                BadCons=0;
+
+                for j=1:3
+                    if SortedTriangles[i,j]==0
+                        continue
+                    end
+                    if good[SortedTriangles[i,j]]==false
+                        continue
+                    end
+                    ConnectedNormal=FaceNormalVector[SortedTriangles[i,j],:]
+                    CurrentNormal=FaceNormalVector[i,:]
+                    CosCurve=dot(vec(ConnectedNormal),vec(CurrentNormal))
+                    #Catches errors when vectors are not quite perfect
+                    if CosCurve>1.
+                        AngBetweenNormals=1.
+                    else
+                        AngBetweenNormals=acos(CosCurve)
+                    end
+
+
+                    if AngBetweenNormals>(pi/2) #bigger than 90
+                        BadCons+=1;
+                    else    #smaller
+                        GoodCons+=1
+                    end
+
+                end    
+                #Only remove if its mainly got bad connections
+                if BadCons>=GoodCons 
+                    #Only do if not already set
+                    if good[i]==true
+                        good[i]=false
+                        rerunFunc=1 #rerun!
+                    end
+                end
+
+        end
+
     end
-
 end
-
 
 
 P1=copy(P1[good,:])
