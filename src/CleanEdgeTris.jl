@@ -24,6 +24,7 @@ P3=copy(P3[Good,1:3])
 (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
 
 rerunFunc=1 #sometime we need to run twice
+extrarun=0 #for good luck
 while rerunFunc==1
 
     (newTris,removeIndx,rerunFunc)=CutAndDisplaceJulia.CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
@@ -92,6 +93,14 @@ while rerunFunc==1
     catch 
         println("Check your surface, more than 2 duplicate edge tris?")
         error("Remesh here")
+    end
+
+    #Rerun one extra time before exit
+    if rerunFunc==0
+        if extrarun==0
+            extrarun=1
+            rerunFunc=1
+        end
     end
 
 end
