@@ -52,7 +52,13 @@ lps=25;
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-target_edge_length=(mean(HalfPerimeter)*(2/3))*0.75
+target_edge_length=(mean(HalfPerimeter)*(2/3))*0.58
+
+#For the remeshing in CGAL to work correctly 
+(Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+
+
 
 #Drawing with debugger
 scene=[];limits=[];
@@ -63,28 +69,17 @@ if draw==0
 	println("Drawing off")
 end
 
+#If you run a few times this will help differntiate the results
+RandNum=rand(1:100)
+p=0
 #Looping from here on in
 for i=1:lps
+	p=1
 
 	Volume=(π*(Radius^2))*HeightCrack
 
-	#Clean up advancing front result
-	if i!=1
-		EdgePoints=readdlm("FractureTipPoints.xyz", ' ') #reread
-	end
-	(P1,P2,P3,Points,Triangles)=CutAndDisplaceJulia.RemoveDodgyNewEdges(P1,P2,P3,Points,Triangles,FaceNormalVector,MidPoint,EdgePoints,max_target_edge_length)
 
-	#Export current mesh
-	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-1-AfterAdvancingFrontClean")
-	println(OutputDirectory)
-	#Get parameters
-	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-	
-	if draw==1
-		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("$i-1-AfterAdvancingFrontCGALRemeshingAndCleaning.png", scene)
-	end
-
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-BeforePolygonRemshing-$RandNum")
 	
 	#Remesh using Polygon method in CGAL:
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
@@ -96,10 +91,11 @@ for i=1:lps
 	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 	if draw==1
-		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-2-AfterPolygonRemeshingCGAL")
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-AfterPolygonRemeshingCGAL-$RandNum")
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("$i-2-AfterIsoCGALRemeshing.png", scene)
+		Makie.save("$i-$p-AfterIsoCGALRemeshing-$RandNum.png", scene)
+		p+=1
 		
 	end
 
@@ -107,8 +103,9 @@ for i=1:lps
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("$i-3-AfterCleaningEdgeTris.png", scene)
-		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-3-MeshAfterEdgeClean-PreIsocelise")
+		Makie.save("$i-$p-AfterCleaningEdgeTris-$RandNum.png", scene)
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshAfterEdgeClean-PreIsocelise-$RandNum")
+		p+=1
 	end
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 
@@ -122,10 +119,9 @@ for i=1:lps
 	if draw==1
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
-		Makie.save("$i-4-AfterCleaningAndIsolating.png", scene)
-
-		println("Not Needed")
-		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-4-MeshBeforeSlipCalc")
+		Makie.save("$i-$p-AfterCleaningAndIsolating-$RandNum.png", scene)
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshBeforeSlipCalc-$RandNum")
+		p+=1
 	end
 
 	n=length(Triangles[:,1]);
@@ -172,7 +168,8 @@ for i=1:lps
 
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakieFilledFaces(Dn,"Dn",P1,P2,P3,cmap2)
-		Makie.save("$i-5-SlipDistribution.png", scene)
+		Makie.save("$i-$p-SlipDistribution-$RandNum.png", scene)
+		p+=1
 	end
 
 	#Compute average face normal
@@ -200,7 +197,7 @@ for i=1:lps
 	P2Open=copy(P2[nonNan,:])
 	P3Open=copy(P3[nonNan,:])
 	(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1Open,P2Open,P3Open)
-	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"$i-4-CheckingConnectedComps")
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"$i-$p-CheckingConnectedComps-$RandNum")
 	(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
 	Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
 	if any(Flags.>1) #more than one component
@@ -223,7 +220,17 @@ for i=1:lps
 		MidPoint[ClosedEls,:].=NaN
 		FaceNormalVector[ClosedEls,:].=NaN
 		nonNan=ClosedEls.==false;
+
+
 	end
+
+
+	if draw==1
+		(Tris2,Pnts2)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1[nonNan,:],P2[nonNan,:],P3[nonNan,:])
+		IgnoreMe=CutAndDisplaceJulia.OFFExport(Pnts2,Tris2,length(Tris2[:,1]),length(Pnts2[:,1]),"$i-$p-ClosedElsRemoved-$RandNum")
+		p+=1
+	end
+
 
 	#Get tip elements again now we have closed some elements
 	(NewFeP1P2,NewFeP1P3,NewFeP2P3)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
@@ -232,15 +239,11 @@ for i=1:lps
 	FeP1P2S.FreeFlg[ClosedEls].=false
 	FeP1P3S.FreeFlg[ClosedEls].=false
 	FeP2P3S.FreeFlg[ClosedEls].=false
-	#NewFeP1P2.FreeFlg[ClosedEls].=false
-	#NewFeP1P3.FreeFlg[ClosedEls].=false
-	#NewFeP2P3.FreeFlg[ClosedEls].=false
 
 	#Comp stress intensity on the old set of elements where the closed els are ignored
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.StressIntensity3D(Dn,Dss,Dds,G,ν,FaceNormalVector,FeP1P2S,FeP1P3S,FeP2P3S);
 
 
-	
 	max_target_edge_length=maximum(HalfPerimeter[nonNan])*(2/3)
 	AvgTriangleEdgeLength=mean(HalfPerimeter[nonNan])*(2/3)
 	KCrit=5e7; #[50 MPa √m]
@@ -287,8 +290,8 @@ for i=1:lps
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1[nonNan,:],P2[nonNan,:],P3[nonNan,:])
 		scatter!(scene,[Px Py Pz],markersize = 50,limits=scene.limits)#
-		Makie.save("$i-6-AfterElsRemoved.png", scene)
-		@bp 
+		Makie.save("$i-$p-AfterElsRemoved-$RandNum.png", scene)
+		p+=1
 	end
 
 
@@ -308,8 +311,24 @@ for i=1:lps
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 
 
+	#Clean up advancing front result
+	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+	(P1,P2,P3,Points,Triangles)=CutAndDisplaceJulia.RemoveDodgyNewEdges(P1,P2,P3,Points,Triangles,FaceNormalVector,MidPoint,EdgePoints,max_target_edge_length)
+
+	#Export current mesh
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-AfterAdvancingFrontClean-$RandNum")
+	#Get parameters
+	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+	
+	if draw==1
+		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+		Makie.save("$i-$p-AfterAdvancingFrontCGALRemeshingAndCleaning-$RandNum.png", scene)
+		p+=1
+	end
+
 	#Remove extra compoents if they have appeared
-	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-5-CheckingConnectedComps")
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-CheckingConnectedCompsP2-$RandNum")
 	(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
 	Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
 	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )

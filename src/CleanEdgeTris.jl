@@ -71,7 +71,7 @@ while rerunFunc==1
 
 
 
-        end
+    end
 
 
     #Now remove edges that have two outer edges

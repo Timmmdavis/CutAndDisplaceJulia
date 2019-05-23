@@ -213,20 +213,26 @@ for i=1:length(I)
                     end
 
                     #Check normals are good
-                    FNV   =CreateTriangleNormal(Pa[idx,:],Pb[idx,:],Pc[idx,:])
+                    FNV   =CreateTriangleNormal(Pa[EdgeIndx,:],Pb[EdgeIndx,:],Pc[EdgeIndx,:])
                     FNVnew=CreateTriangleNormal(NewTriPa[end,:],NewTriPb[end,:],NewTriPc[end,:])
-                    if round.(FNVnew,digits=10)!=round.(FNV,digits=10)  
-                        tmp=NewTriPa[end,:]
-                        NewTriPa[end,:]=NewTriPc[end,:]
-                        NewTriPc[end,:]=tmp
+                    x=dot(FNVnew,FNV)
+                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    if Ang>pi/2 
+                        tmp=copy(NewTriPa[end,:])
+                        NewTriPa[end,:]=copy(NewTriPc[end,:])
+                        NewTriPc[end,:]=copy(tmp)
                     end
 
-                    FNV   =CreateTriangleNormal(Pa[EdgeIndx,:],Pb[EdgeIndx,:],Pc[EdgeIndx,:])
+                    
+                    FNV   =CreateTriangleNormal(Pa[idx,:],Pb[idx,:],Pc[idx,:])
                     FNVnew=CreateTriangleNormal(NewTri2Pa[end,:],NewTri2Pb[end,:],NewTri2Pc[end,:])
-                    if round.(FNVnew,digits=10)!=round.(FNV,digits=10) 
-                        tmp=NewTri2Pa[end,:]
-                        NewTri2Pa[end,:]=NewTri2Pc[end,:]
-                        NewTri2Pc[end,:]=tmp
+                    x=dot(FNVnew,FNV)
+                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    if Ang>pi/2 
+                        test=1
+                        tmp=copy(NewTri2Pa[end,:])
+                        NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
+                        NewTri2Pc[end,:]=copy(tmp)
                     end
 
                 else
@@ -333,20 +339,25 @@ for i=1:length(I)
                     end
 
                     #Check normals are good
-                    FNV   =CreateTriangleNormal(Pa[idx,:],Pb[idx,:],Pc[idx,:])
+                    FNV   =CreateTriangleNormal(Pa[EdgeIndx,:],Pb[EdgeIndx,:],Pc[EdgeIndx,:])
                     FNVnew=CreateTriangleNormal(NewTriPa[end,:],NewTriPb[end,:],NewTriPc[end,:])
-                    if round.(FNVnew,digits=10)!=round.(FNV,digits=10) 
-                        tmp=NewTriPa[end,:]
-                        NewTriPa[end,:]=NewTriPc[end,:]
-                        NewTriPc[end,:]=tmp
+                    x=dot(FNVnew,FNV)
+                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    if Ang>pi/2 
+                        tmp=copy(NewTriPa[end,:])
+                        NewTriPa[end,:]=copy(NewTriPc[end,:])
+                        NewTriPc[end,:]=copy(tmp)
                     end
 
-                    FNV   =CreateTriangleNormal(Pa[EdgeIndx,:],Pb[EdgeIndx,:],Pc[EdgeIndx,:])
+                    
+                    FNV   =CreateTriangleNormal(Pa[idx,:],Pb[idx,:],Pc[idx,:])
                     FNVnew=CreateTriangleNormal(NewTri2Pa[end,:],NewTri2Pb[end,:],NewTri2Pc[end,:])
-                    if round.(FNVnew,digits=10)!=round.(FNV,digits=10) 
-                        tmp=NewTri2Pa[end,:]
-                        NewTri2Pa[end,:]=NewTri2Pc[end,:]
-                        NewTri2Pc[end,:]=tmp
+                    x=dot(FNVnew,FNV)
+                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    if Ang>pi/2                      
+                        tmp=copy(NewTri2Pa[end,:])
+                        NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
+                        NewTri2Pc[end,:]=copy(tmp)
                     end
 
                 else
