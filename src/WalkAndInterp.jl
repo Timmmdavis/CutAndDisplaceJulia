@@ -34,12 +34,12 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	
 	#@info X Y Desired_X
 	
-	##Remove 0 before interpolation
-	Y=convert(Array,Y)#So we can work on it
-	Indx=findall(X.==0.0);
-	X=X[length(Indx):end]
-	Y=Y[length(Indx):end]
+	#scatter(X,Y,markersize=(Desired_X/25))
+	@bp
 
+	#Reduce to only values that surrond our desired X (assuming we stopped one value above this)
+	X=X[end-1:end]
+	Y=Y[end-1:end]
 
 	#using Interpolations
 	itp = interpolate((X,),Y, Gridded(Linear()))
@@ -47,11 +47,6 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 
 	#@info X 
 	#@info Y
-
-	#MATLAB way:
-	#Y_Got = interp1(X,Y,X_Desired,'linear');
-
-
 
 	return Yv
 end

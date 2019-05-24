@@ -11,7 +11,7 @@ function RemoveDodgyNewEdges(P1,P2,P3,Points,Triangles,FaceNormalVector,MidPoint
 #(IntAngA,IntAngB,IntAngC)=CutAndDisplaceJulia.CalculateInternalTriAngles(P1,P2,P3)
 
 #Clean up Advancing front result - remove overly long edges
-GoodTris=HalfPerimeter.*(2/3) .< max_target_edge_length*5
+GoodTris=HalfPerimeter.*(2/3) .< max_target_edge_length*1.5
 P1=copy(P1[GoodTris,:])
 P2=copy(P2[GoodTris,:])
 P3=copy(P3[GoodTris,:])

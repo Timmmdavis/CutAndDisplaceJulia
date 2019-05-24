@@ -14,7 +14,6 @@ function IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
 
-
 #Do for P1 P3: (Function at base of file)
 (P1,P3,P2)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3);
 
@@ -24,13 +23,13 @@ function IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
 
-
 #Do for P2 P3: (Function at base of file)
 (P2,P3,P1)=MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3);
 
 ## Recreate tri
 (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
+
 
 
 return P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector
@@ -101,6 +100,8 @@ NewTri2Pc=[0. 0. 0.]
 
 #Index 2 say we dont move points attached to point c around
 skipindx=fill(false,n)
+SplittingEdge=[0. 0. 0.;0. 0. 0.]
+
 
 for i=1:length(I)
     idx=I[i];
@@ -151,6 +152,8 @@ for i=1:length(I)
         NewPb2PcVec=normr([(p1[1]-Pb[idx,1]) (p1[2]-Pb[idx,2]) (p1[3]-Pb[idx,3])]);
         if NewPb2PcVec!=FePb2PcV[idx,:]
             Ang=acos(dot(vec(NewPb2PcVec),vec(FePb2PcV[idx,:])))
+        else
+            Ang=0.
         end
         if rad2deg(abs(Ang))>45
             NewTriPa=[NewTriPa;[Pb[idx,1] Pb[idx,2] Pb[idx,3]]]
@@ -165,10 +168,12 @@ for i=1:length(I)
                     continue
                 end
                 #Find if it shares the edge we are interested in decimating
-                SplittingEdge=[Pc[idx,:];Pa[idx,:]] 
+                SplittingEdge[1,:].=Pc[idx,:]
+                SplittingEdge[2,:].=Pa[idx,:] 
                 InPa=ismember(SplittingEdge,Pa[NeighbourIndex,:]);
                 InPb=ismember(SplittingEdge,Pb[NeighbourIndex,:]);
                 InPc=ismember(SplittingEdge,Pc[NeighbourIndex,:]);
+
                 #The edge in question
                 if sum([InPa;InPb;InPc])==2
                     #Describes if the connected edge is P1P2 P1P3 or P2P3
@@ -234,7 +239,8 @@ for i=1:length(I)
                         NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
                         NewTri2Pc[end,:]=copy(tmp)
                     end
-
+                    #leave after first time 
+                    #break
                 else
                     continue    
                 end
@@ -278,8 +284,11 @@ for i=1:length(I)
         NewPa2PcVec=normr([(p1[1]-Pa[idx,1]) (p1[2]-Pa[idx,2]) (p1[3]-Pa[idx,3])]);
         if NewPa2PcVec!=FePa2PcV[idx,:]
             Ang=acos(dot(vec(NewPa2PcVec),vec(FePa2PcV[idx,:])))
+        else
+            Ang=0.
         end
         if rad2deg(abs(Ang))>45
+
             NewTriPa=[NewTriPa;[Pa[idx,1] Pa[idx,2] Pa[idx,3]]]
             NewTriPb=[NewTriPb;[p1[1] p1[2] p1[3]]]
             NewTriPc=[NewTriPc;[Pc[idx,1] Pc[idx,2] Pc[idx,3]]]
@@ -292,7 +301,8 @@ for i=1:length(I)
                     continue
                 end
                 #Find if it shares the edge we are interested in decimating
-                SplittingEdge=[Pc[idx,:];Pb[idx,:]] 
+                SplittingEdge[1,:].=Pc[idx,:]
+                SplittingEdge[2,:].=Pb[idx,:]
                 InPa=ismember(SplittingEdge,Pa[NeighbourIndex,:]);
                 InPb=ismember(SplittingEdge,Pb[NeighbourIndex,:]);
                 InPc=ismember(SplittingEdge,Pc[NeighbourIndex,:]);
@@ -360,6 +370,7 @@ for i=1:length(I)
                         NewTri2Pc[end,:]=copy(tmp)
                     end
 
+                    #break
                 else
                     continue    
                 end

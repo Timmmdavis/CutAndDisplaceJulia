@@ -26,20 +26,22 @@ Radius=1500
 Volume=(π*(Radius^2))*HeightCrack
 
 #Load triangles and points from file (mesh)
-SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
+#SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
+SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SquareGrid.stl")
 (Points,Triangles)=CutAndDisplaceJulia.STLReader(SurfaceDir)
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 #Compute average face normal
 AvgFaceNormalVector=[mean(FaceNormalVector[:,1]) mean(FaceNormalVector[:,2]) mean(FaceNormalVector[:,3])]
 
+#=
 #Flatten so normals point up
 X=Points[:,2];
 Points[:,2]=Points[:,4];
 Points[:,4]=X;
-
+=#
 
 #Pennys angle away from Z. 
-Beta=-40; 
+Beta=-45; 
 BetaFromVert=90-Beta;
 #Rotate this (YZ)
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
@@ -52,7 +54,7 @@ lps=25;
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-target_edge_length=(mean(HalfPerimeter)*(2/3))*0.58
+target_edge_length=(mean(HalfPerimeter)*(2/3))*1.5
 
 #For the remeshing in CGAL to work correctly 
 (Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
@@ -75,8 +77,6 @@ p=0
 #Looping from here on in
 for i=1:lps
 	p=1
-
-	Volume=(π*(Radius^2))*HeightCrack
 
 
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-BeforePolygonRemshing-$RandNum")
@@ -161,6 +161,14 @@ for i=1:lps
 	#All a fracture
 	FractureElements=fill(1,n)
 
+	#Check if fracture has reached free surface
+	if HSFlag==1
+		if any([P1[:,3];P2[:,3];P1[:,3]].>0)
+			printstyled("Fracture has hit the free surface \n",color=:green)
+			break
+		end
+	end
+
 	#try	
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
@@ -198,10 +206,13 @@ for i=1:lps
 	P3Open=copy(P3[nonNan,:])
 	(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1Open,P2Open,P3Open)
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"$i-$p-CheckingConnectedComps-$RandNum")
+	println(OutputDirectory)
 	(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
 	Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
 	if any(Flags.>1) #more than one component
 		NoConnectedComponents=maximum(Flags)
+
+		#=
 		Vol=zeros(NoConnectedComponents)
 		for i=1:NoConnectedComponents
 			CurrentIndx=findall(Flags.==i)
@@ -209,6 +220,16 @@ for i=1:lps
 		end
 		#The actual fracture (index in Flags), assumed to be the largest volume connected component
 		(~,goodflag)=findmax(Vol) 
+		=#
+		Areas=zeros(NoConnectedComponents)
+		( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+		for i=1:NoConnectedComponents
+			CurrentIndx=findall(Flags.==i)
+			Areas[i]=sum(Area[CurrentIndx,:])
+		end
+		#The actual fracture (index in Flags), assumed to be the largest area connected component
+		(~,goodflag)=findmax(Areas) 
+
 		#Indexs of split mesh we dont want:
 		BadComponents=findall(Flags.!=goodflag)
 		#Set these to closed elements too
@@ -260,6 +281,11 @@ for i=1:lps
 	Px=[p1[:,1]; p2[:,1]; p3[:,1]];
 	Py=[p1[:,2]; p2[:,2]; p3[:,2]];
 	Pz=[p1[:,3]; p2[:,3]; p3[:,3]];
+
+	if isempty(Px)
+		printstyled("Fracture has stopped propagating \n",color=:green)
+		break
+	end
 	
 	StillEdge_P1P2[ClosedEls].=false
 	StillEdge_P1P3[ClosedEls].=false

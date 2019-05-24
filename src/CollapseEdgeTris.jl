@@ -78,7 +78,8 @@ Next2EdgeTriNonConnectedPoint=[0 0 0]
 Next2EdgeTriIndx=0;
 Next2EdgeTriIndex=0;
 RunOnceMore=false
-AreaSum=0.;
+AngleSum=0.;
+AreaSum=0.
 rerunFunc=0;
 
 for i=1:n_edges
@@ -114,7 +115,7 @@ for i=1:n_edges
 			
 			else #EdgePointsMatch
 
-				AreaSum+=Area[Next2EdgeTriIndx]
+
 
 	    		(EdgeTriNonConnectedPointF,EdgeTriInnerPointF)=
 	    		GetSpecficPointsCurrentTri(triindx,j,P1,P2,P3,FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
@@ -122,6 +123,18 @@ for i=1:n_edges
 	    		(Next2EdgeTriNonConnectedPoint)=
 	    		GetSpecficPointsConnectedTri(triindx,j,Next2EdgeTriIndx,ConnectedEdge,P1,P2,P3,
 	    			FeP1P2S.FreeFlg,FeP1P3S.FreeFlg,FeP2P3S.FreeFlg)
+
+	    		###############################################################
+	    		#Vectors pointing out from inner point on current tri
+	    		V1=normr([CurrentPoint[1]-EdgeTriInnerPointF[1] CurrentPoint[2]-EdgeTriInnerPointF[2] CurrentPoint[3]-EdgeTriInnerPointF[3]])
+	    		V2=normr([TrailingPoint[1]-EdgeTriInnerPointF[1] TrailingPoint[2]-EdgeTriInnerPointF[2] TrailingPoint[3]-EdgeTriInnerPointF[3]])
+	    		x=dot(V1,V2)
+	    		if abs(x)>1; Ang=0.; else; Ang=acos(x); end					  			
+	    		AngleSum+=Ang
+	    		#Sum of areas of each connected tri
+	    		AreaSum+=Area[Next2EdgeTriIndx]
+	    		###############################################################
+
 
 	    		#Update to the new tri we are working on
 	    		triindx=Next2EdgeTriIndx 
@@ -172,9 +185,10 @@ for i=1:n_edges
 		    fillme[7:9].=EdgeTriInnerPoint;
 		end  
 
-		#Check that the area is retained, if not the new triangle is just bad
+		##Check that the area is retained, if not the new triangle is just bad
 		( NewArea,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D( fillme[:,1],fillme[:,2],fillme[:,3],fillme[:,4],fillme[:,5],fillme[:,6],fillme[:,7],fillme[:,8],fillme[:,9] );
-		if NewArea[1]<AreaSum
+		#AngleSum - if we have passed through over 180 degrees its bound to be bad
+		if NewArea[1]<(AreaSum/4) || rad2deg(AngleSum)>180 #way too small
 			#Do nothing 
 			rerunFunc=1 #we will need to rerun
 			#break
@@ -187,11 +201,16 @@ for i=1:n_edges
 	end
 
 	#Find next outer triangle along from this triangle (they share CurrentPoint on the outer edge)
-	(triindx,CurrentPoint,TrailingPoint,CurrentEdge)=
+	(triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint)=
 	LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
 	
-	AreaSum=0.; #reset
-
+	#reset values
+	V1=normr([CurrentPoint[1]-InnerPoint[1] CurrentPoint[2]-InnerPoint[2] CurrentPoint[3]-InnerPoint[3]])
+	V2=normr([TrailingPoint[1]-InnerPoint[1] TrailingPoint[2]-InnerPoint[2] TrailingPoint[3]-InnerPoint[3]])
+	x=dot(V1,V2)
+	if abs(x)>1; Ang=0.; else; Ang=acos(x); end					  			
+	AngleSum=Ang
+	AreaSum=0.;
 
 end
 
@@ -320,9 +339,9 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 	
 	NewTriIndex=0 #NewTriIndex
 	NewCurrentEdge=0 #NewCurrentEdge
-	NewCurrentPoint=[0 0 0] #NewCurrentPoint
-	NewTrailingPoint=[0 0 0] #NewTrailingPoint
-
+	NewCurrentPoint=[0. 0. 0.] #NewCurrentPoint
+	NewTrailingPoint=[0. 0. 0.] #NewTrailingPoint
+	NewInnerPoint=[0. 0. 0.]
 
 	InP1=ismember(P1,vec(CurrentPoint));
 	if any(InP1) 
@@ -335,6 +354,7 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,12,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
+				NewInnerPoint=P3[Inside[i],:]
 
 			end
 			if P1P3FreeFlg[Inside[i]]==true
@@ -342,6 +362,7 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,13,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
+				NewInnerPoint=P2[Inside[i],:]
 
 			end
 
@@ -361,6 +382,7 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,12,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
+				NewInnerPoint=P3[Inside[i],:]
 
 			end
 			if P2P3FreeFlg[Inside[i]]==true
@@ -368,6 +390,7 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,23,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
+				NewInnerPoint=P1[Inside[i],:]
 
 			end
 
@@ -385,6 +408,7 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,13,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
+				NewInnerPoint=P2[Inside[i],:]
 
 			end
 			if P2P3FreeFlg[Inside[i]]==true
@@ -392,6 +416,7 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,23,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint)
+				NewInnerPoint=P1[Inside[i],:]
 
 			end
 
@@ -402,9 +427,9 @@ function LoopingRoundBoundary(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 	CurrentPoint=NewCurrentPoint;
 	TrailingPoint=NewTrailingPoint;
 	CurrentEdge=NewCurrentEdge;
-	
+	InnerPoint=NewInnerPoint
 
-return triindx,CurrentPoint,TrailingPoint,CurrentEdge
+return triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint
 
 end
 
@@ -429,3 +454,7 @@ end
 return NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint
 
 end
+
+
+
+
