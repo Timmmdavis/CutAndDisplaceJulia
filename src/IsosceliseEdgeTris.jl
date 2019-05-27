@@ -9,28 +9,33 @@ function IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 (P1,P2,P3)=MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3); 
 
 #Remesh
-(Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
-(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+(Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(FaceNormalVector,MidPoint)=CreateFaceNormalAndMidPoint(Points,Triangles)
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
+
+OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"PizzaDELETE1")
 
 #Do for P1 P3: (Function at base of file)
 (P1,P3,P2)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3);
 
 #Remesh
-(Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
-(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+(Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+(FaceNormalVector,MidPoint)=CreateFaceNormalAndMidPoint(Points,Triangles)
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
+
+OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"PizzaDELETE2")
 
 #Do for P2 P3: (Function at base of file)
 (P2,P3,P1)=MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3);
 
 ## Recreate tri
+
 (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
 
-
+OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"PizzaDELETE3")
 
 return P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector
 
@@ -58,12 +63,12 @@ all defined in: GetCrackTipElements3D
 # The aim is to isoscelise edge triangles by finding the intersection between the edge MidPointVec and 
 # the longest inner edge. We then retriangulate with x as the new inner point
 #
-#   q                   Em            q
+#   q                   Em              q
 # ¯.¯\¯¯¯¯¯⁄¯.¯   ¯.¯\¯¯¯•¯ ⁄¯.¯      ¯.¯\¯¯ ¯¯/¯.¯
 # ....\   ⁄.....  ....\  ↓⁄..... -- > ....\   /....
-# .....\⁄ ....... .....\⁄x......      .....\ /.....
-# .....I........  ....I........       ......x.......     
-#                    
+# .....\⁄ ......  .....\⁄x......      .....\ /.....
+# .....I........  .....I........      ......x......     
+# ..............  ..............      ..I..........             
 #                    
 #                          
 #  
@@ -167,6 +172,10 @@ for i=1:length(I)
                 if NeighbourIndex==0
                     continue
                 end
+
+                FNVTri1   = FaceNormalVector[idx,:] #CreateTriangleNormal(Pa[idx,:],Pb[idx,:],Pc[idx,:])
+                FNVTri2   = FaceNormalVector[NeighbourIndex,:] #CreateTriangleNormal(Pa[NeighbourIndex,:],Pb[NeighbourIndex,:],Pc[NeighbourIndex,:])
+
                 #Find if it shares the edge we are interested in decimating
                 SplittingEdge[1,:].=Pc[idx,:]
                 SplittingEdge[2,:].=Pa[idx,:] 
@@ -181,8 +190,8 @@ for i=1:length(I)
                     if EdgeIndx==12
 
                         #Add the new tri
-                        NewTri2Pa=[NewTri2Pa;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
-                        NewTri2Pb=[NewTri2Pb;[p1[1] p1[2] p1[3]]]
+                        NewTri2Pa=[NewTri2Pa;[p1[1] p1[2] p1[3]]]
+                        NewTri2Pb=[NewTri2Pb;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
                         NewTri2Pc=[NewTri2Pc;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
 
@@ -194,8 +203,8 @@ for i=1:length(I)
                     elseif EdgeIndx==13
 
                         #Add the new tri
-                        NewTri2Pa=[NewTri2Pa;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
-                        NewTri2Pb=[NewTri2Pb;[p1[1] p1[2] p1[3]]]
+                        NewTri2Pa=[NewTri2Pa;[p1[1] p1[2] p1[3]]]
+                        NewTri2Pb=[NewTri2Pb;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
                         NewTri2Pc=[NewTri2Pc;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
                         #Change current tri in P1 P2 P3
@@ -206,9 +215,9 @@ for i=1:length(I)
                     elseif EdgeIndx==23
 
                         #Add the new tri
-                        NewTri2Pa=[NewTri2Pa;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+                        NewTri2Pa=[NewTri2Pa;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
                         NewTri2Pb=[NewTri2Pb;[p1[1] p1[2] p1[3]]]
-                        NewTri2Pc=[NewTri2Pc;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                        NewTri2Pc=[NewTri2Pc;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
                         #Change current tri in P1 P2 P3
                         #P1 the same
@@ -218,9 +227,8 @@ for i=1:length(I)
                     end
 
                     #Check normals are good
-                    FNV   =CreateTriangleNormal(Pa[EdgeIndx,:],Pb[EdgeIndx,:],Pc[EdgeIndx,:])
                     FNVnew=CreateTriangleNormal(NewTriPa[end,:],NewTriPb[end,:],NewTriPc[end,:])
-                    x=dot(FNVnew,FNV)
+                    x=dot(FNVnew,FNVTri1)
                     if abs(x)>1; Ang=0.; else; Ang=acos(x); end
                     if Ang>pi/2 
                         tmp=copy(NewTriPa[end,:])
@@ -229,12 +237,10 @@ for i=1:length(I)
                     end
 
                     
-                    FNV   =CreateTriangleNormal(Pa[idx,:],Pb[idx,:],Pc[idx,:])
                     FNVnew=CreateTriangleNormal(NewTri2Pa[end,:],NewTri2Pb[end,:],NewTri2Pc[end,:])
-                    x=dot(FNVnew,FNV)
+                    x=dot(FNVnew,FNVTri2)
                     if abs(x)>1; Ang=0.; else; Ang=acos(x); end
-                    if Ang>pi/2 
-                        test=1
+                    if Ang>pi/2                      
                         tmp=copy(NewTri2Pa[end,:])
                         NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
                         NewTri2Pc[end,:]=copy(tmp)
@@ -300,6 +306,10 @@ for i=1:length(I)
                 if NeighbourIndex==0
                     continue
                 end
+
+                FNVTri1   = FaceNormalVector[idx,:] #CreateTriangleNormal(Pa[idx,:],Pb[idx,:],Pc[idx,:])
+                FNVTri2   = FaceNormalVector[NeighbourIndex,:] #CreateTriangleNormal(Pa[NeighbourIndex,:],Pb[NeighbourIndex,:],Pc[NeighbourIndex,:])
+
                 #Find if it shares the edge we are interested in decimating
                 SplittingEdge[1,:].=Pc[idx,:]
                 SplittingEdge[2,:].=Pb[idx,:]
@@ -310,11 +320,13 @@ for i=1:length(I)
                 if sum([InPa;InPb;InPc])==2
                     #Describes if the connected edge is P1P2 P1P3 or P2P3
                     EdgeIndx=ConnectedEdge[idx,j]
+
+
                     if EdgeIndx==12
 
                         #Add the new tri
-                        NewTri2Pa=[NewTri2Pa;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
-                        NewTri2Pb=[NewTri2Pb;[p1[1] p1[2] p1[3]]]
+                        NewTri2Pa=[NewTri2Pa;[p1[1] p1[2] p1[3]]]
+                        NewTri2Pb=[NewTri2Pb;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
                         NewTri2Pc=[NewTri2Pc;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
                         #Change current tri in P1 P2 P3
@@ -325,8 +337,8 @@ for i=1:length(I)
                     elseif EdgeIndx==13
 
                         #Add the new tri
-                        NewTri2Pa=[NewTri2Pa;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
-                        NewTri2Pb=[NewTri2Pb;[p1[1] p1[2] p1[3]]]
+                        NewTri2Pa=[NewTri2Pa;[p1[1] p1[2] p1[3]]]
+                        NewTri2Pb=[NewTri2Pb;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
                         NewTri2Pc=[NewTri2Pc;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
                         #Change current tri in P1 P2 P3
@@ -337,9 +349,9 @@ for i=1:length(I)
                     elseif EdgeIndx==23
 
                         #Add the new tri
-                        NewTri2Pa=[NewTri2Pa;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+                        NewTri2Pa=[NewTri2Pa;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
                         NewTri2Pb=[NewTri2Pb;[p1[1] p1[2] p1[3]]]
-                        NewTri2Pc=[NewTri2Pc;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                        NewTri2Pc=[NewTri2Pc;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
                         #Change current tri in P1 P2 P3
                         #P1 the same
@@ -348,10 +360,10 @@ for i=1:length(I)
 
                     end
 
+
                     #Check normals are good
-                    FNV   =CreateTriangleNormal(Pa[EdgeIndx,:],Pb[EdgeIndx,:],Pc[EdgeIndx,:])
                     FNVnew=CreateTriangleNormal(NewTriPa[end,:],NewTriPb[end,:],NewTriPc[end,:])
-                    x=dot(FNVnew,FNV)
+                    x=dot(FNVnew,FNVTri1)
                     if abs(x)>1; Ang=0.; else; Ang=acos(x); end
                     if Ang>pi/2 
                         tmp=copy(NewTriPa[end,:])
@@ -360,15 +372,15 @@ for i=1:length(I)
                     end
 
                     
-                    FNV   =CreateTriangleNormal(Pa[idx,:],Pb[idx,:],Pc[idx,:])
                     FNVnew=CreateTriangleNormal(NewTri2Pa[end,:],NewTri2Pb[end,:],NewTri2Pc[end,:])
-                    x=dot(FNVnew,FNV)
+                    x=dot(FNVnew,FNVTri2)
                     if abs(x)>1; Ang=0.; else; Ang=acos(x); end
                     if Ang>pi/2                      
                         tmp=copy(NewTri2Pa[end,:])
                         NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
                         NewTri2Pc[end,:]=copy(tmp)
                     end
+
 
                     #break
                 else

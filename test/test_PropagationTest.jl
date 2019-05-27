@@ -54,7 +54,7 @@ lps=25;
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-target_edge_length=(mean(HalfPerimeter)*(2/3))*1.5
+target_edge_length=(mean(HalfPerimeter)*(2/3))*1
 
 #For the remeshing in CGAL to work correctly 
 (Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
