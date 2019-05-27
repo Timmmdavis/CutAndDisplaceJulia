@@ -21,9 +21,9 @@ function testProp()
 println("creating func vars")
 
 #Volume
-HeightCrack=5;
+HeightCrack=50;
 Radius=1500
-Volume=(π*(Radius^2))*HeightCrack
+CrackVolume=(π*(Radius^2))*HeightCrack
 
 #Load triangles and points from file (mesh)
 #SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
@@ -54,7 +54,7 @@ lps=25;
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-target_edge_length=(mean(HalfPerimeter)*(2/3))*1
+target_edge_length=(mean(HalfPerimeter)*(2/3))*0.75
 
 #For the remeshing in CGAL to work correctly 
 (Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
@@ -85,9 +85,6 @@ for i=1:lps
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-	
-
-	#Compute triangle properties
 	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 	if draw==1
@@ -156,7 +153,7 @@ for i=1:lps
 	Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 	Traction=Tractions(Tn,Tss,Tds);
 	BoundaryConditions=MixedBoundaryConditions(Stress,Traction)
-	BoundaryConditions=MixedBoundaryConditionsFluidVolume(BoundaryConditions,Volume)
+	BoundaryConditions=MixedBoundaryConditionsFluidVolume(BoundaryConditions,CrackVolume)
 
 	#All a fracture
 	FractureElements=fill(1,n)
@@ -212,24 +209,32 @@ for i=1:lps
 	if any(Flags.>1) #more than one component
 		NoConnectedComponents=maximum(Flags)
 
-		#=
-		Vol=zeros(NoConnectedComponents)
-		for i=1:NoConnectedComponents
-			CurrentIndx=findall(Flags.==i)
-			Vol[i]=sum(Dn[CurrentIndx,:].*Area[CurrentIndx,:])
-		end
-		#The actual fracture (index in Flags), assumed to be the largest volume connected component
-		(~,goodflag)=findmax(Vol) 
-		=#
-		Areas=zeros(NoConnectedComponents)
+		ComponentAreas=zeros(NoConnectedComponents)
+		ComponentVolumes=zeros(NoConnectedComponents)
 		( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 		for i=1:NoConnectedComponents
 			CurrentIndx=findall(Flags.==i)
-			Areas[i]=sum(Area[CurrentIndx,:])
+			ComponentAreas[i]=sum(Area[CurrentIndx,:])
+			ComponentVolumes[i]=sum(Area[CurrentIndx,:].*Dn[CurrentIndx,:])
 		end
 		#The actual fracture (index in Flags), assumed to be the largest area connected component
-		(~,goodflag)=findmax(Areas) 
+		(~,goodflag)=findmax(ComponentAreas) 
 
+		if NoConnectedComponents>1
+			printstyled("Volume was $CrackVolume \n",color=:orange)
+			for i=1:NoConnectedComponents
+				if i!=goodflag
+					if isnan(ComponentVolumes[i])
+						continue #skip as was clearly a dud tri with 0 area
+					end
+					CrackVolume=CrackVolume-ComponentVolumes[i]
+				end
+			end
+			printstyled("Parts of fracture have been left behind \n",color=:green)
+			printstyled("Volume now $CrackVolume \n",color=:green)
+			@info typeof(CrackVolume)
+			sleep(2)
+		end
 		#Indexs of split mesh we dont want:
 		BadComponents=findall(Flags.!=goodflag)
 		#Set these to closed elements too

@@ -14,8 +14,6 @@ function IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
 
-OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"PizzaDELETE1")
-
 #Do for P1 P3: (Function at base of file)
 (P1,P3,P2)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3);
 
@@ -25,8 +23,6 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
 
-OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"PizzaDELETE2")
-
 #Do for P2 P3: (Function at base of file)
 (P2,P3,P1)=MakeEqEdgeTris(FeP2P3S,P2,P3,P1,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3);
 
@@ -34,8 +30,6 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 
 (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
 (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
-
-OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"PizzaDELETE3")
 
 return P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector
 
@@ -51,7 +45,7 @@ function MakeEqEdgeTris(T,Pa,Pb,Pc,MidPoint,FaceNormalVector,SortedTriangles,Con
 #= Structure contains
 TriangleEdges (T) =
 FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;
-all defined in: GetCrackTipElements3D
+all defined in: GetCrackTipElements3Dt
 =#
 
 ## 
@@ -111,7 +105,7 @@ SplittingEdge=[0. 0. 0.;0. 0. 0.]
 for i=1:length(I)
     idx=I[i];
 
-    #FeEv points from Pb to Pa #FeEv[I,:]=normr([(Pa[I,1]-Pb[I,1]) (Pa[I,2]-Pb[I,2]) (Pa[I,3]-Pb[I,3])]);
+    #FeEv points from Pb to Pa 
     AngEdge_Pa[idx]=acos(dot(vec(FePa2PcV[idx,:]),vec(.-FeEv[idx,:])))
     AngEdge_Pb[idx]=acos(dot(vec(FePb2PcV[idx,:]),vec(FeEv[idx,:])))
     AngEdge_Pc[idx]=acos(dot(vec(.-FePb2PcV[idx,:]),vec(.-FePa2PcV[idx,:])))
@@ -161,8 +155,8 @@ for i=1:length(I)
             Ang=0.
         end
         if rad2deg(abs(Ang))>45
-            NewTriPa=[NewTriPa;[Pb[idx,1] Pb[idx,2] Pb[idx,3]]]
-            NewTriPb=[NewTriPb;[p1[1] p1[2] p1[3]]]
+            NewTriPa=[NewTriPa;[p1[1] p1[2] p1[3]]]
+            NewTriPb=[NewTriPb;[Pb[idx,1] Pb[idx,2] Pb[idx,3]]]
             NewTriPc=[NewTriPc;[Pc[idx,1] Pc[idx,2] Pc[idx,3]]]
             skipindx[idx]=true
 
