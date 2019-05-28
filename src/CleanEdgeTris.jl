@@ -28,8 +28,8 @@ extrarun=0 #for good luck
 i=1
 while rerunFunc==1
 
-    @enter CutAndDisplaceJulia.CollapseEdgeTris2(P1,P2,P3,MidPoint,FaceNormalVector)
-    (newTris,removeIndx,rerunFunc)=CutAndDisplaceJulia.CollapseEdgeTris2(P1,P2,P3,MidPoint,FaceNormalVector)
+
+    (newTris,removeIndx,rerunFunc)=CutAndDisplaceJulia.CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
     n=length(Triangles[:,1]);
 
 
@@ -75,9 +75,6 @@ while rerunFunc==1
 
     end
 
-    OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"PizzaA")
-    poop
-
     #Now remove edges that have two outer edges
     (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
     #number of connected tris (Sorted tris rows not == to 0)
@@ -98,8 +95,6 @@ while rerunFunc==1
         println("Check your surface, more than 2 duplicate edge tris?")
         error("Remesh here")
     end
-
-    OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"PizzaB")
 
     #Rerun one extra time before exit
     if rerunFunc==0

@@ -10,6 +10,7 @@ function GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
+
 #number of connected tris (Sorted tris rows not == to 0)
 NoConnections=sum(SortedTriangles.!=0,dims=2)
 EdgeTri=NoConnections.<3 #- edge tri
@@ -38,6 +39,11 @@ InnerPoint=[NaN NaN NaN]# reset
 triindx=NaN
 CurrentEdge=NaN
 
+deleteme=[NaN NaN NaN]
+FrontPointLoc=0
+BackPointLoc=0
+InnerPointLoc=0
+
 #While sorted triangles still has edges we have not passed
 while sum(SortedTriangles.!=0)!=length(SortedTriangles) 
 
@@ -50,30 +56,33 @@ while sum(SortedTriangles.!=0)!=length(SortedTriangles)
 			if SortedTriangles[i,j]==0 #Its a tri with a missing connection (free edge)
 
 				CurrentPoint=[NaN NaN NaN]# reset
-				triindx=i; #Current tri with free edge 
+				triindx=i; #First tri with free edge 
 				if j==1
 
 					CurrentEdge=12
-					Direction=FeP1P2S.FeEv[triindx] 
-					EdgeMidPoint=FeP1P2S.FeMd[triindx] 
-					FirstPnt=P2[triindx,:]
-					TrailingPoint=P1[triindx,:]
+					FirstPnt=copy(P2[triindx,:])
+					TrailingPoint=copy(P1[triindx,:])
+					FrontPointLoc=2
+					BackPointLoc=1
+					InnerPointLoc=3
 
 				elseif j==2
 
 					CurrentEdge=23
-					Direction=FeP2P3S.FeEv[triindx] 
-					EdgeMidPoint=FeP2P3S.FeMd[triindx]  
-					FirstPnt=P3[triindx,:]
-					TrailingPoint=P2[triindx,:]
+					FirstPnt=copy(P3[triindx,:])
+					TrailingPoint=copy(P2[triindx,:])
+					FrontPointLoc=3
+					BackPointLoc=2
+					InnerPointLoc=1
 
 				elseif j==3
 
 					CurrentEdge=13
-					Direction=FeP1P3S.FeEv[triindx] 
-					EdgeMidPoint=FeP1P3S.FeMd[triindx]  
-					FirstPnt=P3[triindx,:]
-					TrailingPoint=P1[triindx,:]
+					FirstPnt=copy(P3[triindx,:])
+					TrailingPoint=copy(P1[triindx,:])
+					FrontPointLoc=3
+					BackPointLoc=1
+					InnerPointLoc=2
 
 				else
 					error("It seems a little odd, your surface has no edges")
@@ -96,21 +105,9 @@ while sum(SortedTriangles.!=0)!=length(SortedTriangles)
 			CurrentPoint=FirstPnt
 		end
 
-		#Find next outer triangle along from this triangle (they share CurrentPoint on the outer edge)
-		(triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)=
-		LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
-
 		#FrontPointLoc BackPointLoc InnerPointLoc - In the current triindx which
 		#points (from P1P2P3) represent the front, back and inner point
 		Counter+=1; #Indx inside our lists : TrailingPoints LeadingPoints etc
-
-		if Counter>TotalNoFreeEdges
-			error("Irk")
-		end
-
-		if FrontPointLoc==BackPointLoc || FrontPointLoc==InnerPointLoc || InnerPointLoc==BackPointLoc
-			error("Whats happening here")
-		end
 
 		if FrontPointLoc==1
 			LeadingPoints[Counter,1]=triindx
@@ -142,7 +139,29 @@ while sum(SortedTriangles.!=0)!=length(SortedTriangles)
 			SortedTriangles[triindx,3]=-1
 		end
 
+		#=
+		if deleteme!=TrailingPoint && isnan(CurrentPoint[1])==false
+			@info deleteme TrailingPoint
+			error("Whats happening here?")
+		end
+		test=1
+		@info test triindx CurrentPoint TrailingPoint
+		deleteme=copy(CurrentPoint)
+		=#
 
+		#Find next outer triangle along from this triangle (they share CurrentPoint on the outer edge)
+		(triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)=
+		LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
+			P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S)
+
+		if Counter>TotalNoFreeEdges
+			@info Counter TotalNoFreeEdges
+			error("Irk")
+		end
+
+		if FrontPointLoc==BackPointLoc || FrontPointLoc==InnerPointLoc || InnerPointLoc==BackPointLoc
+			error("Whats happening here")
+		end
 
 	end
 
@@ -189,36 +208,17 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
 		
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,12,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)
-				NewInnerPoint=P3[Inside[i],:]
-				if PaOrPb==1
-					FrontPointLoc=1;
-					BackPointLoc=2;
-					InnerPointLoc=3;
-				elseif PaOrPb==2
-					FrontPointLoc=2;
-					BackPointLoc=1;
-					InnerPointLoc=3;
-				end
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,P3,12,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)
 
 			end
 			if P1P3FreeFlg[Inside[i]]==true
 
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,13,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)
-				NewInnerPoint=P2[Inside[i],:]
-				if PaOrPb==1
-					FrontPointLoc=1;
-					BackPointLoc=3;
-					InnerPointLoc=2;
-				elseif PaOrPb==2
-					FrontPointLoc=3;
-					BackPointLoc=1;
-					InnerPointLoc=2;
-				end
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,P2,13,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)
+
 
 			end
 
@@ -235,36 +235,18 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
 
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,12,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)
-				NewInnerPoint=P3[Inside[i],:]
-				if PaOrPb==1
-					FrontPointLoc=1;
-					BackPointLoc=2;
-					InnerPointLoc=3;
-				elseif PaOrPb==2
-					FrontPointLoc=2;
-					BackPointLoc=1;
-					InnerPointLoc=3;
-				end
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,P3,12,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)
+
 
 			end
 			if P2P3FreeFlg[Inside[i]]==true
 
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,23,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)
-				NewInnerPoint=P1[Inside[i],:]
-				if PaOrPb==1
-					FrontPointLoc=2;
-					BackPointLoc=3;
-					InnerPointLoc=1;
-				elseif PaOrPb==2
-					FrontPointLoc=3;
-					BackPointLoc=2;
-					InnerPointLoc=1;
-				end
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,P1,23,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)
+
 
 			end
 
@@ -279,36 +261,17 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 			if P1P3FreeFlg[Inside[i]]==true #Now check its a free edge
 
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,13,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)
-				NewInnerPoint=P2[Inside[i],:]
-				if PaOrPb==1
-					FrontPointLoc=1;
-					BackPointLoc=3;
-					InnerPointLoc=2;
-				elseif PaOrPb==2
-					FrontPointLoc=3;
-					BackPointLoc=1;
-					InnerPointLoc=2;
-				end
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,P2,13,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)
+
 
 			end
 			if P2P3FreeFlg[Inside[i]]==true
 
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,23,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)
-				NewInnerPoint=P1[Inside[i],:]
-				if PaOrPb==1
-					FrontPointLoc=2;
-					BackPointLoc=3;
-					InnerPointLoc=1;
-				elseif PaOrPb==2
-					FrontPointLoc=3;
-					BackPointLoc=2;
-					InnerPointLoc=1;
-				end
+				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)=
+				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,P1,23,
+					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)
 
 			end
 
@@ -326,8 +289,8 @@ return triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,B
 end
 
 
-function GetNewEdgePoint(TestIndex,CurrentPoint,TrailingPoint,Pa,Pb,EdgeNo,NewTriIndex,
-	NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb)
+function GetNewEdgePoint(TestIndex,CurrentPoint,TrailingPoint,Pa,Pb,Pc,EdgeNo,NewTriIndex,
+	NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc)
 
 if Pb[TestIndex,:]!=CurrentPoint && Pb[TestIndex,:]!=TrailingPoint
 
@@ -335,7 +298,21 @@ if Pb[TestIndex,:]!=CurrentPoint && Pb[TestIndex,:]!=TrailingPoint
 	NewCurrentEdge=EdgeNo
 	NewCurrentPoint=Pb[TestIndex,:]
 	NewTrailingPoint=CurrentPoint
-	PaOrPb=2 #New current pnt is Pb
+	NewInnerPoint=copy(Pc[TestIndex,:])
+
+	if EdgeNo==12
+		FrontPointLoc=2;
+		BackPointLoc=1;
+		InnerPointLoc=3;
+	elseif EdgeNo==13
+		FrontPointLoc=3;
+		BackPointLoc=1;
+		InnerPointLoc=2;
+	elseif EdgeNo==23
+		FrontPointLoc=3;
+		BackPointLoc=2;
+		InnerPointLoc=1;		
+	end
 
 elseif Pa[TestIndex,:]!=CurrentPoint && Pa[TestIndex,:]!=TrailingPoint
 
@@ -343,11 +320,25 @@ elseif Pa[TestIndex,:]!=CurrentPoint && Pa[TestIndex,:]!=TrailingPoint
 	NewCurrentEdge=EdgeNo
 	NewCurrentPoint=Pa[TestIndex,:]
 	NewTrailingPoint=CurrentPoint
-	PaOrPb=1 #New current pnt is Pa
+
+	NewInnerPoint=copy(Pc[TestIndex,:])
+	if EdgeNo==12		
+		FrontPointLoc=1;
+		BackPointLoc=2;
+		InnerPointLoc=3;
+	elseif EdgeNo==13
+		FrontPointLoc=1;
+		BackPointLoc=3;
+		InnerPointLoc=2;
+	elseif EdgeNo==23
+		FrontPointLoc=2;
+		BackPointLoc=3;
+		InnerPointLoc=1;		
+	end
 
 end
 
-return NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,PaOrPb
+return NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc
 
 end
 

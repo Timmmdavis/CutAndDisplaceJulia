@@ -106,7 +106,6 @@ include("FindConnectedTriangles.jl")
 include("ismember.jl")
 include("MatchingRow.jl")
 include("CreateSortedEdgePoints.jl")
-include("CollapseEdgeTris.jl")
 include("IsosceliseEdgeTris.jl")
 include("CleanEdgeTris.jl")
 include("CreateTrianglesPointsFromP1P2P3.jl")
@@ -114,7 +113,7 @@ include("CalculateInternalTriAngles.jl")
 include("RemoveDodgyNewEdges.jl")
 include("ConnectedComponentsReader.jl")
 include("GetSortedEdgesOfMeshList.jl") #Rename to -> 
-include("CollapseEdgeTris2.jl") #Rename to -> 
+include("CollapseEdgeTris.jl") #Rename to -> 
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

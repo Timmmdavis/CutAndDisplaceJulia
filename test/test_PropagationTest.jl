@@ -15,6 +15,8 @@ function testProp()
 	using Statistics
 	using BuildCGAL
 	using Debugger
+
+	cd(raw"C:\Users\timmm\Desktop\MeshProp")
 =#
 
 #Start creating vars for function: 
