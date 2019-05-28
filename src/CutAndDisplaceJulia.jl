@@ -95,12 +95,7 @@ export
 	InfMat,
 	BoundaryConditionsVec
 
-#=
-#DELETE
-include("LoopRoundBoundary.jl")
 
-include("LoopRoundBoundary.jl")
-=#
 include("OFFReader.jl")
 include("xyzExport.jl")
 include("OFFExport.jl")
@@ -118,7 +113,8 @@ include("CreateTrianglesPointsFromP1P2P3.jl")
 include("CalculateInternalTriAngles.jl")
 include("RemoveDodgyNewEdges.jl")
 include("ConnectedComponentsReader.jl")
-
+include("GetSortedEdgesOfMeshList.jl") #Rename to -> 
+include("CollapseEdgeTris2.jl") #Rename to -> 
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")
