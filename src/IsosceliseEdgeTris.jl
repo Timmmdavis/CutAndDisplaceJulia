@@ -57,12 +57,12 @@ all defined in: GetCrackTipElements3Dt
 # The aim is to isoscelise edge triangles by finding the intersection between the edge MidPointVec and 
 # the longest inner edge. We then retriangulate with x as the new inner point
 #
-#   q                   Em              q
-# ¯.¯\¯¯¯¯¯⁄¯.¯   ¯.¯\¯¯¯•¯ ⁄¯.¯      ¯.¯\¯¯ ¯¯/¯.¯
-# ....\   ⁄.....  ....\  ↓⁄..... -- > ....\   /....
-# .....\⁄ ......  .....\⁄x......      .....\ /.....
-# .....I........  .....I........      ......x......     
-# ..............  ..............      ..I..........             
+#   q                   Em             q
+# ¯.¯\¯¯¯¯¯⁄¯.¯   ¯.¯\¯¯¯•¯⁄¯.¯      ¯.¯\¯•¯⁄¯.¯
+# ....\   ⁄.....  ....\  ↓⁄..... -- > ...\ ⁄....
+# .....\⁄ ......  .....\⁄x......      ....x.....
+# .....I........  .....I........      ..I.......     
+# ..............  ..............      ..........             
 #                    
 #                          
 #  
@@ -100,15 +100,23 @@ NewTri2Pc=[0. 0. 0.]
 #Index 2 say we dont move points attached to point c around
 skipindx=fill(false,n)
 SplittingEdge=[0. 0. 0.;0. 0. 0.]
-
+#Some arrays we work on
+Ang=0.
+tmp=0.
 
 for i=1:length(I)
     idx=I[i];
 
     #FeEv points from Pb to Pa 
-    AngEdge_Pa[idx]=acos(dot(vec(FePa2PcV[idx,:]),vec(.-FeEv[idx,:])))
-    AngEdge_Pb[idx]=acos(dot(vec(FePb2PcV[idx,:]),vec(FeEv[idx,:])))
-    AngEdge_Pc[idx]=acos(dot(vec(.-FePb2PcV[idx,:]),vec(.-FePa2PcV[idx,:])))
+    FeEv[idx,:]=FlipValue(FeEv[idx,:])
+        AngEdge_Pa[idx]=AngleBetweenVectors(FePa2PcV[idx,:],FeEv[idx,:],tmp,Ang)
+    FeEv[idx,:]=FlipValue(FeEv[idx,:])
+
+    AngEdge_Pb[idx]=AngleBetweenVectors(FePb2PcV[idx,:],FeEv[idx,:],tmp,Ang)
+    
+    FePb2PcV[idx,:]=FlipValue(FePb2PcV[idx,:])
+        AngEdge_Pc[idx]=AngleBetweenVectors(FePb2PcV[idx,:],FePa2PcV[idx,:],tmp,Ang)
+    FePb2PcV[idx,:]=FlipValue(FePb2PcV[idx,:])
 
     TotalAngDegrees=rad2deg(AngEdge_Pa[idx]+AngEdge_Pb[idx]+AngEdge_Pc[idx])
     TotalAngDegrees=round(TotalAngDegrees,digits=3)
@@ -125,35 +133,12 @@ for i=1:length(I)
         if rad2deg(AngEdge_Pa[idx])<10
             println("Very low angles - bad tris")
         end
-        #https://stackoverflow.com/questions/10551555/need-an-algorithm-for-3d-vectors-intersection
         
-        #Func using these values
-        r1=T.FeMd[idx,:] #MidPoint of the edge
-        r2=Pa[idx,:]
-        e1=FeM2Ev[idx,:]
-        e2=FePa2PcV[idx,:];
-        
-        u =dot(e1,e2)
-        t1=dot(r2-r1,e1)
-        t2=dot(r2-r1,e2)
-        d1 = (t1-u*t2)/(1.0-u*u)
-       # d2 = (t2-u*t1)/(u*u.-1.0)
-        p1=r1.+d1.*e1
-        #p2=r2.+d2.*e2
-        if u==1
-            println(p1)
-            println(p2)
-            println("lines are parallel")
-            
-        end
+        p1=FindIntersectionOf3DVectors(T.FeMd[idx,:],Pa[idx,:],FeM2Ev[idx,:],FePa2PcV[idx,:])
 
         #subdivide tri if new angle allows a fairly decent tri:
         NewPb2PcVec=normr([(p1[1]-Pb[idx,1]) (p1[2]-Pb[idx,2]) (p1[3]-Pb[idx,3])]);
-        if NewPb2PcVec!=FePb2PcV[idx,:]
-            Ang=acos(dot(vec(NewPb2PcVec),vec(FePb2PcV[idx,:])))
-        else
-            Ang=0.
-        end
+        Ang=AngleBetweenVectors(NewPb2PcVec,FePb2PcV,tmp,Ang)
         if rad2deg(abs(Ang))>45
             NewTriPa=[NewTriPa;[p1[1] p1[2] p1[3]]]
             NewTriPb=[NewTriPb;[Pb[idx,1] Pb[idx,2] Pb[idx,3]]]
@@ -222,8 +207,7 @@ for i=1:length(I)
 
                     #Check normals are good
                     FNVnew=CreateTriangleNormal(NewTriPa[end,:],NewTriPb[end,:],NewTriPc[end,:])
-                    x=dot(FNVnew,FNVTri1)
-                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    Ang=AngleBetweenVectors(FNVnew,FNVTri1,tmp,Ang)
                     if Ang>pi/2 
                         tmp=copy(NewTriPa[end,:])
                         NewTriPa[end,:]=copy(NewTriPc[end,:])
@@ -232,9 +216,8 @@ for i=1:length(I)
 
                     
                     FNVnew=CreateTriangleNormal(NewTri2Pa[end,:],NewTri2Pb[end,:],NewTri2Pc[end,:])
-                    x=dot(FNVnew,FNVTri2)
-                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
-                    if Ang>pi/2                      
+                    Ang=AngleBetweenVectors(FNVnew,FNVTri2,tmp,Ang)
+                    if Ang>pi/2                     
                         tmp=copy(NewTri2Pa[end,:])
                         NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
                         NewTri2Pc[end,:]=copy(tmp)
@@ -260,33 +243,12 @@ for i=1:length(I)
             println("Very low angles - bad tris")
         end
 
-        #Func using these values
-        r1=T.FeMd[idx,:]    #MidPoint of the edge
-        r2=Pb[idx,:]        #CornerPoint
-        e1=FeM2Ev[idx,:]
-        e2=FePb2PcV[idx,:];
-        
-        u =dot(e1,e2)
-        t1=dot(r2-r1,e1)
-        t2=dot(r2-r1,e2)
-        d1 = (t1-u*t2)/(1.0-u*u)
-        #d2 = (t2-u*t1)/(u*u.-1.0)
-        p1=r1.+d1.*e1
-        #p2=r2.+d2.*e2
-        if u==1
-            println(p1)
-            println(p2)
-            println("lines are parallel")
-            
-        end
+        p1=FindIntersectionOf3DVectors(T.FeMd[idx,:],Pb[idx,:],FeM2Ev[idx,:],FePb2PcV[idx,:])
 
         #subdivide tri if new angle allows a fairly decent tri:
         NewPa2PcVec=normr([(p1[1]-Pa[idx,1]) (p1[2]-Pa[idx,2]) (p1[3]-Pa[idx,3])]);
-        if NewPa2PcVec!=FePa2PcV[idx,:]
-            Ang=acos(dot(vec(NewPa2PcVec),vec(FePa2PcV[idx,:])))
-        else
-            Ang=0.
-        end
+        
+        Ang=AngleBetweenVectors(NewPa2PcVec,FePa2PcV[idx,:],tmp,Ang)
         if rad2deg(abs(Ang))>45
 
             NewTriPa=[NewTriPa;[Pa[idx,1] Pa[idx,2] Pa[idx,3]]]
@@ -357,8 +319,7 @@ for i=1:length(I)
 
                     #Check normals are good
                     FNVnew=CreateTriangleNormal(NewTriPa[end,:],NewTriPb[end,:],NewTriPc[end,:])
-                    x=dot(FNVnew,FNVTri1)
-                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    Ang=AngleBetweenVectors(FNVnew,FNVTri1,tmp,Ang)
                     if Ang>pi/2 
                         tmp=copy(NewTriPa[end,:])
                         NewTriPa[end,:]=copy(NewTriPc[end,:])
@@ -367,8 +328,7 @@ for i=1:length(I)
 
                     
                     FNVnew=CreateTriangleNormal(NewTri2Pa[end,:],NewTri2Pb[end,:],NewTri2Pc[end,:])
-                    x=dot(FNVnew,FNVTri2)
-                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    Ang=AngleBetweenVectors(FNVnew,FNVTri1,tmp,Ang)
                     if Ang>pi/2                      
                         tmp=copy(NewTri2Pa[end,:])
                         NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
@@ -395,62 +355,7 @@ for i=1:length(I)
 
 end
 
-#=
-
-# The aim is to isoscelise edge triangles by swinging the inner point around
-# the edge midpoint
-#
-#                       Em
-# ¯.¯\¯¯¯¯¯ ⁄¯.¯  ¯.¯\¯¯•¯¯ ⁄¯.¯      ¯.¯\¯¯ ¯¯/¯.¯
-# ....\   ⁄.....  ....\   ⁄..... -- > ....\   /....
-# .....\⁄.......  .....\⁄.......      .....\ /.....
-# .....I........  .|...I........       .....I.......     
-#                  \  
-#                   ＼ _ >
-#                          
-#  
-# Em = Edge MidPoint
-# I=Inner Point
-
-
-#Vector from inner point to edge midpoint
-FeIn2Ev=Array{Float64,2}(undef, n,3);FeIn2Ev=fill!(FeIn2Ev, NaN)
-FeIn2Ev[Indx,:]=normr([T.FeMd[Indx,1]-Pc[Indx,1] T.FeMd[Indx,2]-Pc[Indx,2] T.FeMd[Indx,3]-Pc[Indx,3]]);
-
-#Internal angles
-Ang=fill(NaN,n,1)
-#First we recompute the mid2edvec length (perp):
-#Angle between vectors: 
-
-
-#Upsidedown=FaceNormalVector[Indx,3].>0;
-for i=1:length(Indx)
-    idx=Indx[i];
-    Ang[idx]=(pi/2)-(acos(dot(vec(FeIn2Ev[idx,:]),vec(T.FeEv[idx,:]))));
-
-end
-
-#Default axis
-Vect=FaceNormalVector[Indx,:];
-#Place Point to be rotated in correct pos
-PcCoords=Pc[Indx,:].-T.FeMd[Indx,:];
-# EXAMPLE:
-#     Rotate point (1;2;3) around vector (4;5;6) by an angle of pi/2
-#     P = [1;2;3];  # create the point
-#     V = [4;5;6];  # create vector around which rotation is performed
-#     Qrot = qGetRotQuaternion( pi/2, V );
-#     P2 = qRotatePoint( P, Qrotate ); ];
-#
-Pc2=zeros(length(Indx),3);
-for i=1:length(Indx)
-    idx=Indx[i];    
-    Qrot = qGetRotQuaternion(  Ang[idx], vec(Vect[i,:]) );
-    Pc2[i,:] = qRotatePoint( PcCoords[i,:], Qrot ); 
-end
-
-#Move back to orig coords:
-Pc2=Pc2.+T.FeMd[Indx,:];
-=#
+#Put Quat rotation here (commented at base)
 
 #Splitting certain triangles into 2 (based on area changes)
 if any(skipindx.==true)
@@ -543,3 +448,59 @@ return Pa,Pb,Pc
 
 end
 
+#=
+
+# The aim is to isoscelise edge triangles by swinging the inner point around
+# the edge midpoint
+#
+#                       Em
+# ¯.¯\¯¯¯¯¯ ⁄¯.¯  ¯.¯\¯¯•¯¯ ⁄¯.¯      ¯.¯\¯¯ ¯¯/¯.¯
+# ....\   ⁄.....  ....\   ⁄..... -- > ....\   /....
+# .....\⁄.......  .....\⁄.......      .....\ /.....
+# .....I........  .|...I........       .....I.......     
+#                  \  
+#                   ＼ _ >
+#                          
+#  
+# Em = Edge MidPoint
+# I=Inner Point
+
+
+#Vector from inner point to edge midpoint
+FeIn2Ev=Array{Float64,2}(undef, n,3);FeIn2Ev=fill!(FeIn2Ev, NaN)
+FeIn2Ev[Indx,:]=normr([T.FeMd[Indx,1]-Pc[Indx,1] T.FeMd[Indx,2]-Pc[Indx,2] T.FeMd[Indx,3]-Pc[Indx,3]]);
+
+#Internal angles
+Ang=fill(NaN,n,1)
+#First we recompute the mid2edvec length (perp):
+#Angle between vectors: 
+
+
+#Upsidedown=FaceNormalVector[Indx,3].>0;
+for i=1:length(Indx)
+    idx=Indx[i];
+    Ang[idx]=(pi/2)-(acos(dot(vec(FeIn2Ev[idx,:]),vec(T.FeEv[idx,:]))));
+
+end
+
+#Default axis
+Vect=FaceNormalVector[Indx,:];
+#Place Point to be rotated in correct pos
+PcCoords=Pc[Indx,:].-T.FeMd[Indx,:];
+# EXAMPLE:
+#     Rotate point (1;2;3) around vector (4;5;6) by an angle of pi/2
+#     P = [1;2;3];  # create the point
+#     V = [4;5;6];  # create vector around which rotation is performed
+#     Qrot = qGetRotQuaternion( pi/2, V );
+#     P2 = qRotatePoint( P, Qrotate ); ];
+#
+Pc2=zeros(length(Indx),3);
+for i=1:length(Indx)
+    idx=Indx[i];    
+    Qrot = qGetRotQuaternion(  Ang[idx], vec(Vect[i,:]) );
+    Pc2[i,:] = qRotatePoint( PcCoords[i,:], Qrot ); 
+end
+
+#Move back to orig coords:
+Pc2=Pc2.+T.FeMd[Indx,:];
+=#
