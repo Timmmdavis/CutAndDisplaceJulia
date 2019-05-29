@@ -6,13 +6,17 @@ function IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
 
 #Do for P1 P2: (Function at base of file)
+#@enter MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3); 
 (P1,P2,P3)=MakeEqEdgeTris(FeP1P2S,P1,P2,P3,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3); 
 
 #Remesh
 (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+
 (FaceNormalVector,MidPoint)=CreateFaceNormalAndMidPoint(Points,Triangles)
 (FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector);
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
+
+
 
 #Do for P1 P3: (Function at base of file)
 (P1,P3,P2)=MakeEqEdgeTris(FeP1P3S,P1,P3,P2,MidPoint,FaceNormalVector,SortedTriangles,ConnectedEdge,P1,P2,P3);
@@ -57,12 +61,12 @@ all defined in: GetCrackTipElements3Dt
 # The aim is to isoscelise edge triangles by finding the intersection between the edge MidPointVec and 
 # the longest inner edge. We then retriangulate with x as the new inner point
 #
-#   q                   Em              q
-# ¯.¯\¯¯¯¯¯⁄¯.¯   ¯.¯\¯¯¯•¯ ⁄¯.¯      ¯.¯\¯¯ ¯¯/¯.¯
-# ....\   ⁄.....  ....\  ↓⁄..... -- > ....\   /....
-# .....\⁄ ......  .....\⁄x......      .....\ /.....
-# .....I........  .....I........      ......x......     
-# ..............  ..............      ..I..........             
+#   q                   Em             q
+# ¯.¯\¯¯¯¯¯⁄¯.¯   ¯.¯\¯¯¯•¯⁄¯.¯      ¯.¯\¯•¯⁄¯.¯
+# ....\   ⁄.....  ....\  ↓⁄..... -- > ...\ ⁄....
+# .....\⁄ ......  .....\⁄x......      ....x.....
+# .....I........  .....I........      ..I.......     
+# ..............  ..............      ..........             
 #                    
 #                          
 #  
@@ -100,15 +104,23 @@ NewTri2Pc=[0. 0. 0.]
 #Index 2 say we dont move points attached to point c around
 skipindx=fill(false,n)
 SplittingEdge=[0. 0. 0.;0. 0. 0.]
-
+#Some arrays we work on
+Ang=0.
+tmp=0.
 
 for i=1:length(I)
     idx=I[i];
 
     #FeEv points from Pb to Pa 
-    AngEdge_Pa[idx]=acos(dot(vec(FePa2PcV[idx,:]),vec(.-FeEv[idx,:])))
-    AngEdge_Pb[idx]=acos(dot(vec(FePb2PcV[idx,:]),vec(FeEv[idx,:])))
-    AngEdge_Pc[idx]=acos(dot(vec(.-FePb2PcV[idx,:]),vec(.-FePa2PcV[idx,:])))
+    FeEv[idx,:]=FlipValue(FeEv[idx,:])
+        AngEdge_Pa[idx]=AngleBetweenVectors!(FePa2PcV[idx,:],FeEv[idx,:],tmp,AngEdge_Pa[idx])
+    FeEv[idx,:]=FlipValue(FeEv[idx,:])
+
+    AngEdge_Pb[idx]=AngleBetweenVectors!(FePb2PcV[idx,:],FeEv[idx,:],tmp,AngEdge_Pb[idx])
+    
+    FePb2PcV[idx,:]=FlipValue(FePb2PcV[idx,:]);FePa2PcV[idx,:]=FlipValue(FePa2PcV[idx,:])
+        AngEdge_Pc[idx]=AngleBetweenVectors!(FePb2PcV[idx,:],FePa2PcV[idx,:],tmp,AngEdge_Pc[idx])
+    FePb2PcV[idx,:]=FlipValue(FePb2PcV[idx,:]);FePa2PcV[idx,:]=FlipValue(FePa2PcV[idx,:])
 
     TotalAngDegrees=rad2deg(AngEdge_Pa[idx]+AngEdge_Pb[idx]+AngEdge_Pc[idx])
     TotalAngDegrees=round(TotalAngDegrees,digits=3)
@@ -125,41 +137,17 @@ for i=1:length(I)
         if rad2deg(AngEdge_Pa[idx])<10
             println("Very low angles - bad tris")
         end
-        #https://stackoverflow.com/questions/10551555/need-an-algorithm-for-3d-vectors-intersection
         
-        #Func using these values
-        r1=T.FeMd[idx,:] #MidPoint of the edge
-        r2=Pa[idx,:]
-        e1=FeM2Ev[idx,:]
-        e2=FePa2PcV[idx,:];
-        
-        u =dot(e1,e2)
-        t1=dot(r2-r1,e1)
-        t2=dot(r2-r1,e2)
-        d1 = (t1-u*t2)/(1.0-u*u)
-       # d2 = (t2-u*t1)/(u*u.-1.0)
-        p1=r1.+d1.*e1
-        #p2=r2.+d2.*e2
-        if u==1
-            println(p1)
-            println(p2)
-            println("lines are parallel")
-            
-        end
+        p1=FindIntersectionOf3DVectors(T.FeMd[idx,:],Pa[idx,:],FeM2Ev[idx,:],FePa2PcV[idx,:])
 
         #subdivide tri if new angle allows a fairly decent tri:
         NewPb2PcVec=normr([(p1[1]-Pb[idx,1]) (p1[2]-Pb[idx,2]) (p1[3]-Pb[idx,3])]);
-        if NewPb2PcVec!=FePb2PcV[idx,:]
-            Ang=acos(dot(vec(NewPb2PcVec),vec(FePb2PcV[idx,:])))
-        else
-            Ang=0.
-        end
+        Ang=AngleBetweenVectors!(NewPb2PcVec,FePb2PcV[idx,:],tmp,Ang)
         if rad2deg(abs(Ang))>45
             NewTriPa=[NewTriPa;[p1[1] p1[2] p1[3]]]
             NewTriPb=[NewTriPb;[Pb[idx,1] Pb[idx,2] Pb[idx,3]]]
             NewTriPc=[NewTriPc;[Pc[idx,1] Pc[idx,2] Pc[idx,3]]]
             skipindx[idx]=true
-
             #Find Connected triangle
             for j=1:3
                 NeighbourIndex=SortedTriangles[idx,j]
@@ -222,8 +210,7 @@ for i=1:length(I)
 
                     #Check normals are good
                     FNVnew=CreateTriangleNormal(NewTriPa[end,:],NewTriPb[end,:],NewTriPc[end,:])
-                    x=dot(FNVnew,FNVTri1)
-                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    Ang=AngleBetweenVectors!(FNVnew,FNVTri1,tmp,Ang)
                     if Ang>pi/2 
                         tmp=copy(NewTriPa[end,:])
                         NewTriPa[end,:]=copy(NewTriPc[end,:])
@@ -232,9 +219,8 @@ for i=1:length(I)
 
                     
                     FNVnew=CreateTriangleNormal(NewTri2Pa[end,:],NewTri2Pb[end,:],NewTri2Pc[end,:])
-                    x=dot(FNVnew,FNVTri2)
-                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
-                    if Ang>pi/2                      
+                    Ang=AngleBetweenVectors!(FNVnew,FNVTri2,tmp,Ang)
+                    if Ang>pi/2                     
                         tmp=copy(NewTri2Pa[end,:])
                         NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
                         NewTri2Pc[end,:]=copy(tmp)
@@ -260,40 +246,18 @@ for i=1:length(I)
             println("Very low angles - bad tris")
         end
 
-        #Func using these values
-        r1=T.FeMd[idx,:]    #MidPoint of the edge
-        r2=Pb[idx,:]        #CornerPoint
-        e1=FeM2Ev[idx,:]
-        e2=FePb2PcV[idx,:];
-        
-        u =dot(e1,e2)
-        t1=dot(r2-r1,e1)
-        t2=dot(r2-r1,e2)
-        d1 = (t1-u*t2)/(1.0-u*u)
-        #d2 = (t2-u*t1)/(u*u.-1.0)
-        p1=r1.+d1.*e1
-        #p2=r2.+d2.*e2
-        if u==1
-            println(p1)
-            println(p2)
-            println("lines are parallel")
-            
-        end
+        p1=FindIntersectionOf3DVectors(T.FeMd[idx,:],Pb[idx,:],FeM2Ev[idx,:],FePb2PcV[idx,:])
 
         #subdivide tri if new angle allows a fairly decent tri:
         NewPa2PcVec=normr([(p1[1]-Pa[idx,1]) (p1[2]-Pa[idx,2]) (p1[3]-Pa[idx,3])]);
-        if NewPa2PcVec!=FePa2PcV[idx,:]
-            Ang=acos(dot(vec(NewPa2PcVec),vec(FePa2PcV[idx,:])))
-        else
-            Ang=0.
-        end
+        
+        Ang=AngleBetweenVectors!(NewPa2PcVec,FePa2PcV[idx,:],tmp,Ang)
         if rad2deg(abs(Ang))>45
 
             NewTriPa=[NewTriPa;[Pa[idx,1] Pa[idx,2] Pa[idx,3]]]
             NewTriPb=[NewTriPb;[p1[1] p1[2] p1[3]]]
             NewTriPc=[NewTriPc;[Pc[idx,1] Pc[idx,2] Pc[idx,3]]]
             skipindx[idx]=true
-
             #Find Connected triangle
             for j=1:3
                 NeighbourIndex=SortedTriangles[idx,j]
@@ -357,8 +321,7 @@ for i=1:length(I)
 
                     #Check normals are good
                     FNVnew=CreateTriangleNormal(NewTriPa[end,:],NewTriPb[end,:],NewTriPc[end,:])
-                    x=dot(FNVnew,FNVTri1)
-                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    Ang=AngleBetweenVectors!(FNVnew,FNVTri1,tmp,Ang)
                     if Ang>pi/2 
                         tmp=copy(NewTriPa[end,:])
                         NewTriPa[end,:]=copy(NewTriPc[end,:])
@@ -367,8 +330,7 @@ for i=1:length(I)
 
                     
                     FNVnew=CreateTriangleNormal(NewTri2Pa[end,:],NewTri2Pb[end,:],NewTri2Pc[end,:])
-                    x=dot(FNVnew,FNVTri2)
-                    if abs(x)>1; Ang=0.; else; Ang=acos(x); end
+                    Ang=AngleBetweenVectors!(FNVnew,FNVTri1,tmp,Ang)
                     if Ang>pi/2                      
                         tmp=copy(NewTri2Pa[end,:])
                         NewTri2Pa[end,:]=copy(NewTri2Pc[end,:])
@@ -392,6 +354,101 @@ for i=1:length(I)
         #Use original
         PcNew[idx,:]=copy(Pc[idx,:])
     end
+
+end
+
+#Put Quat rotation here (commented at base)
+
+#Splitting certain triangles into 2 (based on area changes)
+if any(skipindx.==true)
+    #Remove first part
+    NewTriPa=NewTriPa[2:end,:]
+    NewTriPb=NewTriPb[2:end,:]
+    NewTriPc=NewTriPc[2:end,:]
+
+    #Remove first part
+    NewTri2Pa=NewTri2Pa[2:end,:]
+    NewTri2Pb=NewTri2Pb[2:end,:]
+    NewTri2Pc=NewTri2Pc[2:end,:]
+end
+
+#And clean up connected tris
+for i=1:length(I)
+
+
+    if skipindx[I[i]]==true
+        continue
+    end
+
+
+    OldPoint=copy(Pc[I[i],:])
+    NewPoint=PcNew[I[i],:];
+
+    #if the connected tri contains the old point
+    InPa=ismember(Pa,OldPoint);
+    InPb=ismember(Pb,OldPoint);
+    InPc=ismember(Pc,OldPoint);
+
+    #loop through and update to new point
+    for j=1:length(InPa)
+        if InPa[j]==true
+            Pa[j,:]=NewPoint;
+        end
+    end
+    
+    for j=1:length(InPb)
+        if InPb[j]==true
+            Pb[j,:]=NewPoint;
+        end
+    end    
+    
+    for j=1:length(InPc)  
+        if InPc[j]==true
+            Pc[j,:]=NewPoint;
+        end
+    end    
+
+    #if the connected tri contains the old point
+    InPa=ismember(NewTri2Pa,OldPoint);
+    InPb=ismember(NewTri2Pb,OldPoint);
+    InPc=ismember(NewTri2Pc,OldPoint);
+
+    #loop through and update to new point
+    for j=1:length(InPa)
+        if InPa[j]==true
+            NewTri2Pa[j,:]=NewPoint;
+        end
+    end
+    
+    for j=1:length(InPb)
+        if InPb[j]==true
+            NewTri2Pb[j,:]=NewPoint;
+        end
+    end    
+    
+    for j=1:length(InPc)  
+        if InPc[j]==true
+            NewTri2Pc[j,:]=NewPoint;
+        end
+    end  
+
+end
+
+Pc[I,:]=copy(PcNew[I,:]);
+
+#Splitting certain triangles into 2 (based on area changes)
+if any(skipindx.==true)
+    Pa=[Pa;NewTriPa]
+    Pb=[Pb;NewTriPb]
+    Pc=[Pc;NewTriPc]
+
+    Pa=[Pa;NewTri2Pa]
+    Pb=[Pb;NewTri2Pb]
+    Pc=[Pc;NewTri2Pc]
+
+end
+
+return Pa,Pb,Pc
 
 end
 
@@ -451,95 +508,3 @@ end
 #Move back to orig coords:
 Pc2=Pc2.+T.FeMd[Indx,:];
 =#
-
-#Splitting certain triangles into 2 (based on area changes)
-if any(skipindx.==true)
-    #Remove first part
-    NewTriPa=NewTriPa[2:end,:]
-    NewTriPb=NewTriPb[2:end,:]
-    NewTriPc=NewTriPc[2:end,:]
-
-    #Remove first part
-    NewTri2Pa=NewTri2Pa[2:end,:]
-    NewTri2Pb=NewTri2Pb[2:end,:]
-    NewTri2Pc=NewTri2Pc[2:end,:]
-end
-
-#And clean up connected tris
-for i=1:length(I)
-
-    if skipindx[I[i]]==true
-        continue
-    end
-
-    OldPoint=Pc[I[i],:]
-    NewPoint=PcNew[I[i],:];
-
-    #if the connected tri contains the old point
-    InPa=ismember(Pa,OldPoint);
-    InPb=ismember(Pb,OldPoint);
-    InPc=ismember(Pc,OldPoint);
-
-    #loop through and update to new point
-    for j=1:length(InPa)
-        if InPa[j]
-            Pa[j,:]=NewPoint;
-        end
-    end
-    
-    for j=1:length(InPb)
-        if InPb[j]
-            Pb[j,:]=NewPoint;
-        end
-    end    
-    
-    for j=1:length(InPc)  
-        if InPc[j]
-            Pc[j,:]=NewPoint;
-        end
-    end    
-
-    #if the connected tri contains the old point
-    InPa=ismember(NewTri2Pa,OldPoint);
-    InPb=ismember(NewTri2Pb,OldPoint);
-    InPc=ismember(NewTri2Pc,OldPoint);
-
-    #loop through and update to new point
-    for j=1:length(InPa)
-        if InPa[j]
-            NewTri2Pa[j,:]=NewPoint;
-        end
-    end
-    
-    for j=1:length(InPb)
-        if InPb[j]
-            NewTri2Pb[j,:]=NewPoint;
-        end
-    end    
-    
-    for j=1:length(InPc)  
-        if InPc[j]
-            NewTri2Pc[j,:]=NewPoint;
-        end
-    end  
-
-end
-
-Pc[I,:]=copy(PcNew[I,:]);
-
-#Splitting certain triangles into 2 (based on area changes)
-if any(skipindx.==true)
-    Pa=[Pa;NewTriPa]
-    Pb=[Pb;NewTriPb]
-    Pc=[Pc;NewTriPc]
-
-    Pa=[Pa;NewTri2Pa]
-    Pb=[Pb;NewTri2Pb]
-    Pc=[Pc;NewTri2Pc]
-
-end
-
-return Pa,Pb,Pc
-
-end
-

@@ -39,7 +39,11 @@ while rerunFunc==1
         #Remove first dud value
         newTris=copy(newTris[2:end,:])
         removeIndx=copy(removeIndx[2:end])
-
+        if isempty(newTris)==false
+            if newTris[1,:]==newTris[end,:]
+                newTris=copy(newTris[2:end,:])
+            end
+        end
         NoCollapsed=length(removeIndx)
         NoCreated=size(newTris,1)
         if NoCollapsed>0
@@ -71,9 +75,8 @@ while rerunFunc==1
             error("Remesh here")
         end
 
-
-
     end
+    
 
     #Now remove edges that have two outer edges
     (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);

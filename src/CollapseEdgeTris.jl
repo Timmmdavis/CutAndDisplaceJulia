@@ -40,13 +40,26 @@ newTris=fill(NaN,1,9)
 #If we remove but dont clean we need to rerun the func with this flag passed out
 rerunFunc=0
 Idx=0
-
-@bp
+k=0
+SensitiveModeOn=false
+Counter=0 
 
 #For each edge loop
 for i=1:length(UniqueEdges)
+	
+
 	#Run through list of this edge (Unique edges is a unit range)
-	for j=UniqueEdges[i] 
+	#Add 10 more loops to unit range to conver first tri - This assumes we dont
+	#have a crazy edge tri with loads of small segments
+	b=[vec(UniqueEdges[i]);vec(minimum(UniqueEdges[i]):minimum(UniqueEdges[i])+10)]
+
+	for j=b
+
+		Counter+=1
+		#Break early if we are past the first tri and close something
+		if Counter>maximum(UniqueEdges[i])
+			SensitiveModeOn=true
+		end
 
 		LeadingPointOld  =LeadingPoint
 		TrailingPointOld =TrailingPoint
@@ -58,7 +71,6 @@ for i=1:length(UniqueEdges)
 		(TrailingPoint,~)=GrabPoint(TrailingPoints,P1,P2,P3,j)
 		(InnerPoint,Idx) =GrabPoint(InnerPoints,P1,P2,P3,j)
 		
-		@bp 
 		
 		#Check if this edge shares the inner point with the old one -if so we collapse it
 		if InnerPoint==InnerPointOld
@@ -78,20 +90,21 @@ for i=1:length(UniqueEdges)
 				AngleSum=Ang
 				AreaSum=0.;
 			end
-			#
-			removeIndx=[removeIndx Idx] #add to list of tris to remove
+			#add to list of tris to remove
+			removeIndx=[removeIndx Idx] 
 
-			###############################################################
-			#Vectors pointing out from inner point on current tri
-			V1=normr([LeadingPoint[1]-InnerPoint[1]  LeadingPoint[2]-InnerPoint[2]  LeadingPoint[3]-InnerPoint[3]])
-			V2=normr([TrailingPoint[1]-InnerPoint[1] TrailingPoint[2]-InnerPoint[2] TrailingPoint[3]-InnerPoint[3]])
-			x=dot(V1,V2)
-			if abs(x)>1; Ang=0.; else; Ang=acos(x); end					  			
-			AngleSum+=Ang
-			#Sum of areas of each connected tri
-			AreaSum+=Area[Idx]
-			###############################################################
-
+			if Collapsing==true
+				###############################################################
+				#Vectors pointing out from inner point on current tri
+				V1=normr([LeadingPoint[1]-InnerPoint[1]  LeadingPoint[2]-InnerPoint[2]  LeadingPoint[3]-InnerPoint[3]])
+				V2=normr([TrailingPoint[1]-InnerPoint[1] TrailingPoint[2]-InnerPoint[2] TrailingPoint[3]-InnerPoint[3]])
+				x=dot(V1,V2)
+				if abs(x)>1; Ang=0.; else; Ang=acos(x); end					  			
+				AngleSum+=Ang
+				#Sum of areas of each connected tri
+				AreaSum+=Area[Idx]
+				###############################################################
+			end
 			#We are now collapsing the tri
 			Collapsing=true
 
@@ -120,13 +133,15 @@ for i=1:length(UniqueEdges)
 			( NewArea,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D( fillme[:,1],fillme[:,2],fillme[:,3],fillme[:,4],fillme[:,5],fillme[:,6],fillme[:,7],fillme[:,8],fillme[:,9] );
 			#AngleSum - if we have passed through over 180 degrees its bound to be bad
 			if NewArea[1]<(AreaSum/4) || rad2deg(AngleSum)>180 #way too small
-				@info NewArea[1] (AreaSum/4) rad2deg(AngleSum)
 				#Do nothing 
 				rerunFunc=1 #we will need to rerun
 				#break
 			else
-				println("Whoop")
 				newTris=[newTris; copy(fillme) ]
+			end
+
+			if SensitiveModeOn==true
+				break
 			end
 
 		end

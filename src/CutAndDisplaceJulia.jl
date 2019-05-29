@@ -112,8 +112,12 @@ include("CreateTrianglesPointsFromP1P2P3.jl")
 include("CalculateInternalTriAngles.jl")
 include("RemoveDodgyNewEdges.jl")
 include("ConnectedComponentsReader.jl")
-include("GetSortedEdgesOfMeshList.jl") #Rename to -> 
-include("CollapseEdgeTris.jl") #Rename to -> 
+include("GetSortedEdgesOfMeshList.jl")  
+include("CollapseEdgeTris.jl") 
+include("AngleBetweenVectors!.jl")  
+include("FlipValue.jl")
+include("FindIntersectionOf3DVectors.jl")
+
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")
