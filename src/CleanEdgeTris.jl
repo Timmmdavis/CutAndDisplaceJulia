@@ -29,10 +29,9 @@ i=1
 while rerunFunc==1
 
 
-    (newTris,removeIndx,rerunFunc)=CutAndDisplaceJulia.CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
+    (newTris,removeIndx,rerunFunc,P1,P2,P3,MidPoint)=CutAndDisplaceJulia.CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
     n=length(Triangles[:,1]);
-
-
+    
     #Only doing if there are changes
     if size(removeIndx)!=()
 
@@ -76,7 +75,7 @@ while rerunFunc==1
         end
 
     end
-    
+
 
     #Now remove edges that have two outer edges
     (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
@@ -106,6 +105,9 @@ while rerunFunc==1
             rerunFunc=1
         end
     end
+
+
+
 
 end
 

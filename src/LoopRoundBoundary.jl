@@ -78,40 +78,6 @@ for i=1:n_edges
 		Next2EdgeTriNonConnectedPoint,
 		removeindx)
 
-	#=
-	if mergeme==true
-
-		#Adding to list of new triangles
-		fillme[1:3].=EdgeTriInnerPoint;
-		fillme[4:6].=Next2EdgeTriNonConnectedPoint;
-		fillme[7:9].=EdgeTriNonConnectedPoint;
-		#make sure point ordering matches that of the normal direction
-		AvgVect=(FaceNormalVector[i,:].+FaceNormalVector[Next2EdgeTri,:])./2;
-		NewTriNormalVector = CreateTriangleNormal( fillme[1:3],fillme[4:6],fillme[7:9] );
-		C = dot(AvgVect,NewTriNormalVector);
-		if C<0
-		    fillme[1:3].=EdgeTriNonConnectedPoint ;
-		    fillme[7:9].=EdgeTriInnerPoint;
-		end  
-		if append==0
-		    newTris=copy(fillme)
-		else
-		    newTris=[newTris; copy(fillme) ]
-		end
-
-		#Adding to list of triangles to remove
-		fillme2[1]=i;
-		fillme2[2]=Next2EdgeTri;
-		if append==0
-		    removeIndx=fillme2
-		else
-		    removeIndx=[removeIndx; fillme2 ]
-		end    
-
-		#once we hit this the first time we want to add to the vectors
-		append=1; 
-	end
-	=#
 
 end
 return removeindx
@@ -119,25 +85,13 @@ end
 
 
 function TestEdgeConnectionsOfCurrentTri(
-	SortedTriangles,
-	triindx,
-	EdgeTri,
-	ConnectedEdge,
-	EdgeMidPoint,
-	Direction,
-	P1,
-	P2,
-	P3,
-	P1P2FreeFlg,
-	P2P3FreeFlg,
-	P1P3FreeFlg,
+	SortedTriangles,triindx,EdgeTri,
+	ConnectedEdge,EdgeMidPoint,Direction,
+	P1,P2,P3,
+	P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg,
 	MultiShareInnerPoint,
-	FeP1P2Indxs,
-	FeP2P3Indxs,
-	FeP1P3Indxs,
-	EdgeTriInnerPoint,
-	EdgeTriNonConnectedPoint,
-	Next2EdgeTriNonConnectedPoint,
+	FeP1P2Indxs,FeP2P3Indxs,FeP1P3Indxs,
+	EdgeTriInnerPoint,EdgeTriNonConnectedPoint,Next2EdgeTriNonConnectedPoint,
 	removeindx)
 
 #Find Connected triangle in the correct direction

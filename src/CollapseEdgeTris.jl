@@ -14,8 +14,31 @@ function CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
 # I=InnerPoint
 # Ev=EdgeVector
 
-(UniqueEdges,LeadingPoints,TrailingPoints,InnerPoints)=
-GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
+rerunFunc=1
+UniqueEdges=[]
+LeadingPoints=[]
+TrailingPoints=[]
+InnerPoints=[]
+Counter=0
+while rerunFunc==1
+	#Need to rerun if we remove triangles inside this
+	(UniqueEdges,LeadingPoints,TrailingPoints,InnerPoints,rerunFunc,P1,P2,P3,FaceNormalVector,MidPoint)=
+	GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
+	Counter+=1
+end
+
+#Index's of triangles we will remove after loop
+removeIndx=-1000; #To be removed
+#Memoryless vector to fill with the list of new points
+fillme=zeros(1,9)
+#Appending to this vector everytime we add a new tri
+newTris=fill(NaN,1,9)
+#We leave early if triangles changed inside GetSortedEdgesOfMeshList
+if Counter>1
+	rerunFunc=1
+	return newTris,removeIndx,rerunFunc,P1,P2,P3,MidPoint
+end
+
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 
@@ -31,12 +54,7 @@ Collapsing=false
 AngleSum=0.;
 AreaSum=0.
 
-#Index's of triangles we will remove after loop
-removeIndx=-1000; #To be removed
-#Memoryless vector to fill with the list of new points
-fillme=zeros(1,9)
-#Appending to this vector everytime we add a new tri
-newTris=fill(NaN,1,9)
+
 #If we remove but dont clean we need to rerun the func with this flag passed out
 rerunFunc=0
 Idx=0
@@ -50,8 +68,12 @@ for i=1:length(UniqueEdges)
 
 	#Run through list of this edge (Unique edges is a unit range)
 	#Add 10 more loops to unit range to conver first tri - This assumes we dont
-	#have a crazy edge tri with loads of small segments
-	b=[vec(UniqueEdges[i]);vec(minimum(UniqueEdges[i]):minimum(UniqueEdges[i])+10)]
+	#have a crazy edge tri with loads of small segments. Less than 10 if that loop only has < 10 segments
+	maxlength=length(UniqueEdges[i])-1
+	if maxlength>10
+		maxlength=10
+	end
+	b=[vec(UniqueEdges[i]);vec(minimum(UniqueEdges[i]):minimum(UniqueEdges[i])+maxlength)]
 
 	for j=b
 
@@ -151,7 +173,7 @@ for i=1:length(UniqueEdges)
 	end
 end
 
-return newTris,removeIndx,rerunFunc
+return newTris,removeIndx,rerunFunc,P1,P2,P3,MidPoint
 
 end
 
