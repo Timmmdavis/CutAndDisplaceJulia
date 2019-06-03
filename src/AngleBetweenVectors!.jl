@@ -14,9 +14,11 @@ end
 tmp=dot(v1,v2)
 
 #To avoid errors with acos
-if abs(tmp)>1
-	Ang=0.
-else 
+if (tmp)>1
+	Ang=acos(1)
+elseif (tmp)<-1
+	Ang=acos(-1)
+else
 	Ang=acos(tmp)
 end
 

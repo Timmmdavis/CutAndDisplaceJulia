@@ -1,4 +1,8 @@
-function CleanEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
+function CleanEdgeTris(Points,Triangles)
+
+#Some first parts
+(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 #Remove slither tris
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
@@ -26,8 +30,9 @@ P3=copy(P3[Good,1:3])
 rerunFunc=1 #sometime we need to run twice
 extrarun=0 #for good luck
 i=1
-while rerunFunc==1
+deleteme=0
 
+while rerunFunc==1
 
     (newTris,removeIndx,rerunFunc,P1,P2,P3,MidPoint)=CutAndDisplaceJulia.CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
     n=length(Triangles[:,1]);
@@ -47,6 +52,10 @@ while rerunFunc==1
         NoCreated=size(newTris,1)
         if NoCollapsed>0
             println("$NoCollapsed shared inner point edge triangles have been collapsed into $NoCreated triangles with unique inner points")
+        end
+        #Keep running if this is the case
+        if NoCreated==0
+            rerunFunc=1
         end
 
         Step=collect(1:n)
@@ -98,6 +107,10 @@ while rerunFunc==1
         error("Remesh here")
     end
 
+    #Reset this
+    if rerunFunc==1
+        extrarun=0
+    end
     #Rerun one extra time before exit
     if rerunFunc==0
         if extrarun==0
@@ -105,9 +118,6 @@ while rerunFunc==1
             rerunFunc=1
         end
     end
-
-
-
 
 end
 

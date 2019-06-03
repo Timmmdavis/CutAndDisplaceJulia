@@ -86,8 +86,6 @@ for i=1:lps
 	#Remesh using Polygon method in CGAL:
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
-	(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-	(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 	if draw==1
 		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-AfterPolygonRemeshingCGAL-$RandNum")
@@ -99,7 +97,7 @@ for i=1:lps
 	end
 
 	#Remesh edges
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
 		Makie.save("$i-$p-AfterCleaningEdgeTris-$RandNum.png", scene)
@@ -234,7 +232,6 @@ for i=1:lps
 			end
 			printstyled("Parts of fracture have been left behind \n",color=:green)
 			printstyled("Volume now $CrackVolume \n",color=:green)
-			@info typeof(CrackVolume)
 			sleep(2)
 		end
 		#Indexs of split mesh we dont want:

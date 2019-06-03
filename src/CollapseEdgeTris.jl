@@ -62,9 +62,18 @@ k=0
 SensitiveModeOn=false
 Counter=0 
 
+#Some arrays we work on
+Ang=0.
+tmp=0.
+
+
 #For each edge loop
 for i=1:length(UniqueEdges)
 	
+	#leave here
+	if rerunFunc==1
+		break
+	end
 
 	#Run through list of this edge (Unique edges is a unit range)
 	#Add 10 more loops to unit range to conver first tri - This assumes we dont
@@ -83,9 +92,9 @@ for i=1:length(UniqueEdges)
 			SensitiveModeOn=true
 		end
 
-		LeadingPointOld  =LeadingPoint
-		TrailingPointOld =TrailingPoint
-		InnerPointOld    =InnerPoint
+		LeadingPointOld  =copy(LeadingPoint)
+		TrailingPointOld =copy(TrailingPoint)
+		InnerPointOld    =copy(InnerPoint)
 		IdxOld=Idx
 
 		#Extract the points on the current bit of the edge
@@ -93,25 +102,33 @@ for i=1:length(UniqueEdges)
 		(TrailingPoint,~)=GrabPoint(TrailingPoints,P1,P2,P3,j)
 		(InnerPoint,Idx) =GrabPoint(InnerPoints,P1,P2,P3,j)
 		
-		
+		#reset some values
+		if InnerPoint!=InnerPointOld  && Collapsing==false
+			V1=normr([LeadingPoint[1]-InnerPoint[1]  LeadingPoint[2]-InnerPoint[2]  LeadingPoint[3]-InnerPoint[3]])
+			V2=normr([TrailingPoint[1]-InnerPoint[1] TrailingPoint[2]-InnerPoint[2] TrailingPoint[3]-InnerPoint[3]])
+			x=dot(V1,V2)
+			Ang=AngleBetweenVectors!(V1,V2,tmp,Ang)			  			
+			AngleSum=copy(Ang)
+			AreaSum=0.;
+		end
+
+
 		#Check if this edge shares the inner point with the old one -if so we collapse it
 		if InnerPoint==InnerPointOld
 
-			#Set the back point and reset some vars if we have just started collapsing
+
+
+			#Set the back point on the new tri
 			if Collapsing==false
 				BackPoint=TrailingPointOld
 				#Set the indx to remove inside
 				if IdxOld!=0
 					removeIndx=[removeIndx IdxOld] #add to list of tris to remove
 				end
-				#reset some values
-				V1=normr([LeadingPoint[1]-InnerPoint[1]  LeadingPoint[2]-InnerPoint[2]  LeadingPoint[3]-InnerPoint[3]])
-				V2=normr([TrailingPoint[1]-InnerPoint[1] TrailingPoint[2]-InnerPoint[2] TrailingPoint[3]-InnerPoint[3]])
-				x=dot(V1,V2)
-				if abs(x)>1; Ang=0.; else; Ang=acos(x); end					  			
-				AngleSum=Ang
-				AreaSum=0.;
 			end
+
+			#We are now collapsing the tri
+			Collapsing=true
 			#add to list of tris to remove
 			removeIndx=[removeIndx Idx] 
 
@@ -120,44 +137,48 @@ for i=1:length(UniqueEdges)
 				#Vectors pointing out from inner point on current tri
 				V1=normr([LeadingPoint[1]-InnerPoint[1]  LeadingPoint[2]-InnerPoint[2]  LeadingPoint[3]-InnerPoint[3]])
 				V2=normr([TrailingPoint[1]-InnerPoint[1] TrailingPoint[2]-InnerPoint[2] TrailingPoint[3]-InnerPoint[3]])
-				x=dot(V1,V2)
-				if abs(x)>1; Ang=0.; else; Ang=acos(x); end					  			
+				Ang=AngleBetweenVectors!(V1,V2,tmp,Ang)		
 				AngleSum+=Ang
 				#Sum of areas of each connected tri
 				AreaSum+=Area[Idx]
 				###############################################################
 			end
-			#We are now collapsing the tri
-			Collapsing=true
 
+
+		end
+
+	
+		#Next point along in list
+		(InnerPointNew,~) =GrabPoint(InnerPoints,P1,P2,P3,b[j-minimum(b)+2])
 		#The latest inner point doesnt match so create the new tri and start again
-		elseif InnerPoint!=InnerPointOld && Collapsing==true
+		if InnerPointNew!=InnerPointOld && Collapsing==true
 
 			Collapsing=false #reset to false
 
 			#If we get here we know that there is no edge connection to the current triangle
 			#Adding to list of new triangles
-			fillme[1:3].=InnerPointOld;
-			fillme[4:6].=LeadingPointOld;
+			fillme[1:3].=InnerPoint;
+			fillme[4:6].=LeadingPoint;
 			fillme[7:9].=BackPoint;
 
 			#make sure point ordering matches that of the normal direction
 			AvgVect = FaceNormalVector[Idx,:]
 			NewTriNormalVector = CreateTriangleNormal( fillme[1:3],fillme[4:6],fillme[7:9] );
-			AllignFlag = dot(AvgVect,NewTriNormalVector);
-			if AllignFlag<0
+			#Alligning
+			Ang=AngleBetweenVectors!(AvgVect,NewTriNormalVector,tmp,Ang)	
+			if abs(Ang)>(pi/2) #over 180
 				#flip order
 			    fillme[1:3].=BackPoint;
-			    fillme[7:9].=InnerPointOld;
+			    fillme[7:9].=InnerPoint;
 			end  
 
 			##Check that the area is retained, if not the new triangle is just bad
 			( NewArea,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D( fillme[:,1],fillme[:,2],fillme[:,3],fillme[:,4],fillme[:,5],fillme[:,6],fillme[:,7],fillme[:,8],fillme[:,9] );
 			#AngleSum - if we have passed through over 180 degrees its bound to be bad
-			if NewArea[1]<(AreaSum/4) || rad2deg(AngleSum)>180 #way too small
+			if NewArea[1]<(AreaSum/4) || rad2deg(AngleSum)>180 
 				#Do nothing 
 				rerunFunc=1 #we will need to rerun
-				#break
+				break
 			else
 				newTris=[newTris; copy(fillme) ]
 			end

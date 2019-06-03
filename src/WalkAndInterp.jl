@@ -36,7 +36,11 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	#if we broke out of last loop super early redo with a better sampling 
 	Minimum=3
 	if lps<Minimum 
-		Y = range(MinVal,stop=Y[Minimum],length=NumberOfIts); #linspace deprecated
+		if length(Y)==2
+			Y = range(MinVal,stop=Y[2],length=NumberOfIts); #linspace deprecated
+		else
+			Y = range(MinVal,stop=Y[Minimum],length=NumberOfIts); #linspace deprecated
+		end
 		X=zeros(size(Y));
 		breakat=[]
 		for i=1:length(Y)
