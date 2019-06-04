@@ -2,30 +2,40 @@ function CleanEdgeTris(Points,Triangles)
 
 #Some first parts
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
-
-#Remove slither tris
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
 #number of connected tris (Sorted tris rows not == to 0)
 NoConnections=sum(SortedTriangles.!=0,dims=2)
 
-#Remove any slither tris
-( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-Good=vec(fill(true,length(Area)))
+
+#Remove slither tris
+GoodTris=fill(true,length(Area))
 tol=mean(Area)/3
-for i=1:length(Good)
+for i=1:length(Area)
+    if isnan(Area[i])
+        GoodTris[i]=false
+    end
     if Area[i]<tol && NoConnections[i]<2 
-        Good[i]=false
+        GoodTris[i]=false
     end
 end
+P1=copy(P1[GoodTris,1:3])
+P2=copy(P2[GoodTris,1:3])
+P3=copy(P3[GoodTris,1:3])
+SlithersRemoved=sum(GoodTris.==false)
+println("$SlithersRemoved bad slither triangles have been removed")
 
-SlithersRemoved=sum(Good.==false)
-println("$SlithersRemoved slither triangles have been removed")
-P1=copy(P1[Good,1:3])
-P2=copy(P2[Good,1:3])
-P3=copy(P3[Good,1:3])
-(Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
-(FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
+if SlithersRemoved>0
+    (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+    ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+    (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+    (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
+    #number of connected tris (Sorted tris rows not == to 0)
+    NoConnections=sum(SortedTriangles.!=0,dims=2)
+end
+
+
 
 rerunFunc=1 #sometime we need to run twice
 extrarun=0 #for good luck

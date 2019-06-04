@@ -1,4 +1,4 @@
-function AreaOfTriangle3D( x1,y1,z1,x2,y2,z2,x3,y3,z3 )
+
 # AreaOfTriangle3d: Calculates the area of input triangles defined by the
 #                   vectors of points that are corner 1,2 & 3 of the
 #                   triangle. 
@@ -49,11 +49,14 @@ function AreaOfTriangle3D( x1,y1,z1,x2,y2,z2,x3,y3,z3 )
 #  Copyright 2017, Tim Davis, Potsdam University\The University of Aberdeen
 
 
+function AreaOfTriangle3D( x1,y1,z1,x2,y2,z2,x3,y3,z3 )
+
 #Calling internal function for segment distances (length between points or
 #edge lengths of the triangles).
 a=Distance3D(x1,y1,z1,x2,y2,z2); 
 b=Distance3D(x2,y2,z2,x3,y3,z3); 
 c=Distance3D(x3,y3,z3,x1,y1,z1) ;#Now finding the area with internal function for Heron's formula.
+
 (Area,HPerim) = HeronsFormula(a,b,c);
 
 return Area,HPerim 
@@ -69,8 +72,16 @@ Area=zeros(size(a))
 for i=1:length(a)
 	#Half the length of the triangle perimeter.
 	HPerim[i]=(a[i]+b[i]+c[i])/2; 
+
 	#Calculates the area.
-	Area[i]=sqrt(HPerim[i]*(HPerim[i]-a[i])*(HPerim[i]-b[i])*(HPerim[i]-c[i]));
+	try	Area[i]=sqrt(HPerim[i]*(HPerim[i]-a[i])*(HPerim[i]-b[i])*(HPerim[i]-c[i]));
+	catch
+		if a[i]+b[i]<c[i] || b[i]+c[i]<a[i] || a[i]+c[i]<b[i]
+			println("Not a tri (Probably a slither) - Remove Tri Indx == $i")
+			Area[i]=NaN
+		end
+	end
+
 end
 
 return Area,HPerim

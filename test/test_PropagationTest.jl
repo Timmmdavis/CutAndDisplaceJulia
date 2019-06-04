@@ -50,9 +50,9 @@ BetaFromVert=90-Beta;
 
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*Radius;
-Points[:,4]=Points[:,4].-3500; #2Km deep
+Points[:,4]=Points[:,4].-13500; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-lps=25;
+lps=100;
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 max_target_edge_length=maximum(HalfPerimeter)*(2/3)
@@ -104,7 +104,7 @@ for i=1:lps
 		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshAfterEdgeClean-PreIsocelise-$RandNum")
 		p+=1
 	end
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
 	#Recompute target_edge_length
 	max_target_edge_length=maximum(HalfPerimeter)*(2/3)
@@ -121,7 +121,7 @@ for i=1:lps
 		p+=1
 	end
 
-	n=length(Triangles[:,1]);
+	n=length(P1[:,1]);
 	n2=length(Points[:,1]);
 
 
