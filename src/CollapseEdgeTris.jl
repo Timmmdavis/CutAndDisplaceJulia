@@ -2,9 +2,9 @@ function CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
 ## The aim is to collapse edge triangles that share an inner point
 # We do this by looping round and checking if tris share a point inside the surface
 #													Ev
-#   T   C 	 	       T   C 		          T   ---> C
-# ¯.¯\¯¯|¯¯/¯.¯  ¯.¯\¯¯|¯¯/¯.¯       ¯.¯\¯¯ ¯¯/¯.¯
-# ....\ | /....  ....\ | /....  -- > ....\   /....
+#   T   C 	 	       T   C 		    b     T   ---> C
+# ‾‾‾\‾‾|‾‾/‾‾‾  ‾‾‾\‾‾|‾‾/‾‾‾       ‾‾‾\‾‾‾‾‾/‾‾‾
+# ....\1| /....  ....\ |2/....  -- > ....\ 3 /....
 # .....\|/.....  .....\|/.....       .....\ /.....
 # ......I......  ......I......       ......I......   
 #	    
@@ -13,6 +13,9 @@ function CollapseEdgeTris(P1,P2,P3,MidPoint,FaceNormalVector)
 # C=CurrentPoint (or LeadingPoint)
 # I=InnerPoint
 # Ev=EdgeVector
+# 1&2 = removeIndx's
+# 3 = added to 'newTris'
+# b = BackPoint (In last fig (b-T-I)=fillme )
 
 rerunFunc=1
 UniqueEdges=[]

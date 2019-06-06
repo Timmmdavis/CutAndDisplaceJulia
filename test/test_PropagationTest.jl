@@ -173,6 +173,9 @@ for i=1:lps
 
 
 	if draw==1
+		CutAndDisplaceJulia.ExportCrackMesh(P1,P2,P3,Dn,Dss,Dds,"$i-$p-MeshFilled-$RandNum")
+		p+=1
+		
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakieFilledFaces(Dn,"Dn",P1,P2,P3,cmap2)
 		Makie.save("$i-$p-SlipDistribution-$RandNum.png", scene)
 		p+=1

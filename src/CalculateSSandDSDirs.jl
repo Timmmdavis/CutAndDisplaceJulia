@@ -95,5 +95,5 @@ Vstrike = cross(eZ,[CosAx[i];CosAy[i];CosAz[i]]);
 end
 
 
-return(StrikeSlipCosine,DipSlipCosine)
+return StrikeSlipCosine,DipSlipCosine
 end

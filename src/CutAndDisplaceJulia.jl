@@ -118,6 +118,7 @@ include("AngleBetweenVectors!.jl")
 include("FlipValue.jl")
 include("FindIntersectionOf3DVectors.jl")
 include("IsosceliseEdgeTrisNew.jl")
+include("ExportCrackMesh.jl")
 
 
 #New Guys 07/02/2019
