@@ -76,6 +76,10 @@ P1Old=copy(P1)
 P2Old=copy(P2)
 P3Old=copy(P3)
 
+DecimatedTri=0
+
+
+
 #For each edge loop
 for i=1:length(UniqueEdges)
 
@@ -88,6 +92,25 @@ for i=1:length(UniqueEdges)
         (LeadingPoint,~) =GrabPointNew(LeadingPoints,P1,P2,P3,j)
         (TrailingPoint,~)=GrabPointNew(TrailingPoints,P1,P2,P3,j)
         (InnerPoint,Idx) =GrabPointNew(InnerPoints,P1,P2,P3,j)
+
+        for k=1:3
+            NeighbourIndex=SortedTriangles[Idx,k]
+            if NeighbourIndex==0
+                continue
+            end
+            if NeighbourIndex==DecimatedTri
+                #recomp the connected edge indx
+                (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+                (FaceNormalVector,MidPoint) = CreateFaceNormalAndMidPoint(Points,Triangles)
+                (UniqueEdges,LeadingPoints,TrailingPoints,InnerPoints,rerunFunc,P1,P2,P3,FaceNormalVector,MidPoint)=
+                CutAndDisplaceJulia.GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
+                (SortedTriangles,ConnectedEdge)=CutAndDisplaceJulia.ConnectedConstraints(P1,P2,P3,MidPoint);
+            end
+        end
+
+        if Idx==141
+          @bp
+        end
 
         Pa=LeadingPoint;
         Pb=TrailingPoint;
@@ -171,48 +194,159 @@ for i=1:length(UniqueEdges)
                    InPb=ismember(SplittingEdge,P2[NeighbourIndex,:]);
                    InPc=ismember(SplittingEdge,P3[NeighbourIndex,:]);
 
+
                    #The edge in question
                    if sum([InPa;InPb;InPc])==2
-                       #Describes if the connected edge is P1P2 P1P3 or P2P3
+                       #Describes if the connected edge (of the neightb0ur tri) is P1P2 P1P3 or P2P3
                        EdgeIndx=ConnectedEdge[Idx,k]
+                       
+                       #Checking that if we decimate the neighbour tri the next one along wont get stuck
+                       #I.e. looping it will still hit the same index for the neighbour
+                       NextTriEdgeIndx=[]
+                       
+                       if j!=maximum(b) #Dont do if not needed
+                          (~,IdxFuture) =GrabPointNew(InnerPoints,P1,P2,P3,b[j-minimum(b)+2])
+                          for p=1:3
+                             FuturesNeighbour=SortedTriangles[IdxFuture,p]
+                             if FuturesNeighbour==0
+                                 continue
+                             end
+                             if FuturesNeighbour==NeighbourIndex
+                                 #Grab the edge of the neighbour tri that shares with the future
+                                 NextTriEdgeIndx=ConnectedEdge[IdxFuture,p]
+                             end
+                          end
+                       end
+
+                      #Extract the points on the current bit of the edge
                        if EdgeIndx==12
 
-                           #Add the new tri
-                           NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
-                           NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
-                           NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
 
-                           #Change current tri in P1 P2 P3
-                           #P1 the same
-                           P2[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
-                           #P3 the same
+                            #Just need to make sure the new tri is not on this new edge
+                            if isempty(NextTriEdgeIndx)==false
+                                if NextTriEdgeIndx==13
+
+
+                                    #Add the new tri
+                                    NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
+                                    NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                    NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                                    #Change current tri in P1 P2 P3
+                                    P2[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                                elseif NextTriEdgeIndx==23
+
+                                  #Add the new tri
+                                  NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                                  NewTri2P2=[NewTri2P2;[p1[1] p1[2] p1[3]]]
+                                  NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                                   #Change current tri in P1 P2 P3
+                                  P1[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                                end
+                            else
+
+                                #Add the new tri
+                                NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
+                                NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                                 #Change current tri in P1 P2 P3
+                                 #P1 the same
+                                 P2[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+                                 #P3 the same
+                            end
 
                        elseif EdgeIndx==13
 
-                           #Add the new tri
-                           NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
-                           NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
-                           NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
-                           #Change current tri in P1 P2 P3
-                           #P1 the same
-                           #P2 the same
-                           P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+                           #Just need to make sure the new tri is not on this new edge
+                           if isempty(NextTriEdgeIndx)==false
+                               if NextTriEdgeIndx==12
+                                 
+                                  #Add the new tri
+                                  NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
+                                  NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                  NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+
+                                   #Change current tri in P1 P2 P3
+                                   P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                               elseif NextTriEdgeIndx==23
+
+                                  #Add the new tri
+                                  NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                                  NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                  NewTri2P3=[NewTri2P3;[p1[1] p1[2] p1[3]]]
+
+
+                                  #Change current tri in P1 P2 P3
+                                   P1[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                               end
+                           else
+
+                              #Add the new tri
+                              NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
+                              NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                              NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+
+                               #Change current tri in P1 P2 P3
+                               #P1 the same
+                               #P2 the same
+                               P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                           end
 
                        elseif EdgeIndx==23
 
-                           #Add the new tri
-                           NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
-                           NewTri2P2=[NewTri2P2;[p1[1] p1[2] p1[3]]]
-                           NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
-                           #Change current tri in P1 P2 P3
-                           #P1 the same
-                           #P2 the same
-                           P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+                           #Just need to make sure the new tri is not on this new edge
+                           if isempty(NextTriEdgeIndx)==false
+                               if NextTriEdgeIndx==12
+                                 
+                                   #Add the new tri
+                                   NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                                   NewTri2P2=[NewTri2P2;[p1[1] p1[2] p1[3]]]
+                                   NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                                   #Change current tri in P1 P2 P3
+                                   P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                               elseif NextTriEdgeIndx==13
+
+                                  #Add the new tri
+                                  NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                                  NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                  NewTri2P3=[NewTri2P3;[p1[1] p1[2] p1[3]]]
+
+
+                                  #Change current tri in P1 P2 P3
+                                   P2[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                               end
+                           else
+
+                              #Add the new tri
+                              NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                              NewTri2P2=[NewTri2P2;[p1[1] p1[2] p1[3]]]
+                              NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                               #Change current tri in P1 P2 P3
+                               #P1 the same
+                               #P2 the same
+                               P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                           end
 
                        end
+
+
 
                        #Check normals are good
                        FNVnew=CreateTriangleNormal(NewTriP1[end,:],NewTriP2[end,:],NewTriP3[end,:])
@@ -278,49 +412,160 @@ for i=1:length(UniqueEdges)
                    InPa=ismember(SplittingEdge,P1[NeighbourIndex,:]);
                    InPb=ismember(SplittingEdge,P2[NeighbourIndex,:]);
                    InPc=ismember(SplittingEdge,P3[NeighbourIndex,:]);
+
                    #The edge in question
                    if sum([InPa;InPb;InPc])==2
-                       #Describes if the connected edge is P1P2 P1P3 or P2P3
+                       #Describes if the connected edge (of the neightb0ur tri) is P1P2 P1P3 or P2P3
                        EdgeIndx=ConnectedEdge[Idx,k]
+                       
+                       #Checking that if we decimate the neighbour tri the next one along wont get stuck
+                       #I.e. looping it will still hit the same index for the neighbour
+                       NextTriEdgeIndx=[]
+                       
+                      if j!=maximum(b) #Dont do if not needed
+                         (~,IdxFuture) =GrabPointNew(InnerPoints,P1,P2,P3,b[j-minimum(b)+2])
+                         for p=1:3
+                            FuturesNeighbour=SortedTriangles[IdxFuture,p]
+                            if FuturesNeighbour==0
+                                continue
+                            end
+                            if FuturesNeighbour==NeighbourIndex
+                                #Grab the edge of the neighbour tri that shares with the future
+                                NextTriEdgeIndx=ConnectedEdge[IdxFuture,p]
+                            end
+                         end
+                      end
 
-
+                      #Extract the points on the current bit of the edge
+                      #Extract the points on the current bit of the edge
                        if EdgeIndx==12
 
-                           #Add the new tri
-                           NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
-                           NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
-                           NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
-                           #Change current tri in P1 P2 P3
-                           #P1 the same
-                           P2[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
-                           #P3 the same
+
+                            #Just need to make sure the new tri is not on this new edge
+                            if isempty(NextTriEdgeIndx)==false
+                                if NextTriEdgeIndx==13
+
+
+                                    #Add the new tri
+                                    NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
+                                    NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                    NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                                    #Change current tri in P1 P2 P3
+                                    P2[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                                elseif NextTriEdgeIndx==23
+
+                                  #Add the new tri
+                                  NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                                  NewTri2P2=[NewTri2P2;[p1[1] p1[2] p1[3]]]
+                                  NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                                   #Change current tri in P1 P2 P3
+                                  P1[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                                end
+                            else
+
+                                #Add the new tri
+                                NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
+                                NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                                 #Change current tri in P1 P2 P3
+                                 #P1 the same
+                                 P2[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+                                 #P3 the same
+                            end
 
                        elseif EdgeIndx==13
 
-                           #Add the new tri
-                           NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
-                           NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
-                           NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
-                           #Change current tri in P1 P2 P3
-                           #P1 the same
-                           #P2 the same
-                           P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+                           #Just need to make sure the new tri is not on this new edge
+                           if isempty(NextTriEdgeIndx)==false
+                               if NextTriEdgeIndx==12
+                                 
+                                  #Add the new tri
+                                  NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
+                                  NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                  NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+
+                                   #Change current tri in P1 P2 P3
+                                   P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                               elseif NextTriEdgeIndx==23
+
+                                  #Add the new tri
+                                  NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                                  NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                  NewTri2P3=[NewTri2P3;[p1[1] p1[2] p1[3]]]
+
+
+                                  #Change current tri in P1 P2 P3
+                                   P1[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                               end
+                           else
+
+                              #Add the new tri
+                              NewTri2P1=[NewTri2P1;[p1[1] p1[2] p1[3]]]
+                              NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                              NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+
+                               #Change current tri in P1 P2 P3
+                               #P1 the same
+                               #P2 the same
+                               P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                           end
 
                        elseif EdgeIndx==23
 
-                           #Add the new tri
-                           NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
-                           NewTri2P2=[NewTri2P2;[p1[1] p1[2] p1[3]]]
-                           NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
 
-                           #Change current tri in P1 P2 P3
-                           #P1 the same
-                           #P2 the same
-                           P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+                           #Just need to make sure the new tri is not on this new edge
+                           if isempty(NextTriEdgeIndx)==false
+                               if NextTriEdgeIndx==12
+                                 
+                                   #Add the new tri
+                                   NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                                   NewTri2P2=[NewTri2P2;[p1[1] p1[2] p1[3]]]
+                                   NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                                   #Change current tri in P1 P2 P3
+                                   P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                               elseif NextTriEdgeIndx==13
+
+                                  #Add the new tri
+                                  NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                                  NewTri2P2=[NewTri2P2;[P2[NeighbourIndex,1] P2[NeighbourIndex,2] P2[NeighbourIndex,3]]]
+                                  NewTri2P3=[NewTri2P3;[p1[1] p1[2] p1[3]]]
+
+
+                                  #Change current tri in P1 P2 P3
+                                   P2[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                               end
+                           else
+
+                              #Add the new tri
+                              NewTri2P1=[NewTri2P1;[P1[NeighbourIndex,1] P1[NeighbourIndex,2] P1[NeighbourIndex,3]]]
+                              NewTri2P2=[NewTri2P2;[p1[1] p1[2] p1[3]]]
+                              NewTri2P3=[NewTri2P3;[P3[NeighbourIndex,1] P3[NeighbourIndex,2] P3[NeighbourIndex,3]]]
+
+                               #Change current tri in P1 P2 P3
+                               #P1 the same
+                               #P2 the same
+                               P3[NeighbourIndex,:]=[p1[1] p1[2] p1[3]]
+
+                           end
 
                        end
+
+
 
 
                        #Check normals are good
@@ -335,7 +580,7 @@ for i=1:length(UniqueEdges)
 
                        
                        FNVnew=CreateTriangleNormal(NewTri2P1[end,:],NewTri2P2[end,:],NewTri2P3[end,:])
-                       Ang=AngleBetweenVectors!(FNVnew,FNVTri1,tmp,Ang)
+                       Ang=AngleBetweenVectors!(FNVnew,FNVTri2,tmp,Ang)
                        if Ang>pi/2                      
                            tmp=copy(NewTri2P1[end,:])
                            NewTri2P1[end,:]=copy(NewTri2P3[end,:])
@@ -461,9 +706,20 @@ for i=1:length(UniqueEdges)
 
    #Resetting for next loop
    (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+
+   ############################
+   OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-tester")
+   ############################
+
    (FaceNormalVector,MidPoint)=CreateFaceNormalAndMidPoint(Points,Triangles)
    (UniqueEdges,LeadingPoints,TrailingPoints,InnerPoints,rerunFunc,P1,P2,P3,FaceNormalVector,MidPoint)=
-   GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
+    GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
+
+    ############################
+    (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+    OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-testerAfter")
+    ############################
+
    (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint);
    n=Int(length(MidPoint)/3);
    skipindx=fill(false,n)

@@ -69,7 +69,7 @@ tmp=0.
 
 #For each edge loop
 for i=1:length(UniqueEdges)
-	
+
 	#leave here
 	if rerunFunc==1
 		break
@@ -148,7 +148,7 @@ for i=1:length(UniqueEdges)
 		end
 
 	
-		#Next point along in list
+		#Next point along in listq
 		(InnerPointNew,~) =GrabPoint(InnerPoints,P1,P2,P3,b[j-minimum(b)+2])
 		#The latest inner point doesnt match so create the new tri and start again
 		if InnerPointNew!=InnerPointOld && Collapsing==true
@@ -184,6 +184,7 @@ for i=1:length(UniqueEdges)
 			end
 
 			if SensitiveModeOn==true
+				rerunFunc=1
 				break
 			end
 

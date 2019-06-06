@@ -54,8 +54,10 @@ while rerunFunc==1
         newTris=copy(newTris[2:end,:])
         removeIndx=copy(removeIndx[2:end])
         if isempty(newTris)==false
-            if newTris[1,:]==newTris[end,:]
-                newTris=copy(newTris[2:end,:])
+            if size(newTris,1)>1
+                if newTris[1,:]==newTris[end,:]
+                    newTris=copy(newTris[2:end,:])
+                end
             end
         end
         NoCollapsed=length(removeIndx)
@@ -77,6 +79,9 @@ while rerunFunc==1
             end
         end
 
+        #Remove non unique rows (last thing we need is duplicate tris)
+        newTris=unique(newTris,dims=1) 
+
         P1=copy(P1[Good,1:3])
         P2=copy(P2[Good,1:3])
         P3=copy(P3[Good,1:3])
@@ -84,6 +89,8 @@ while rerunFunc==1
         P1=[P1;newTris[:,1:3]]
         P2=[P2;newTris[:,4:6]]
         P3=[P3;newTris[:,7:9]]
+
+        
 
         ## Recreate tri
         (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)

@@ -8,7 +8,7 @@ function GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
 #n*3 arrays where col 1 is P1 col2 P2 etc. Rows not equal to 0 are the index's
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-(FeP1P2S,FeP1P3S,FeP2P3S)=GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
+(P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
 (SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
 
 #number of connected tris (Sorted tris rows not == to 0)
@@ -17,7 +17,7 @@ EdgeTri=NoConnections.<3 #- edge tri
 TotalNoFreeEdges=sum(SortedTriangles.==0)
 
 #Number of edges:
-n_edges=sum([FeP1P2S.FreeFlg;FeP2P3S.FreeFlg;FeP1P3S.FreeFlg])
+n_edges=sum([P1P2FreeFlg;P2P3FreeFlg;P1P3FreeFlg])
 
 #Vector where going down through the rows we loop through the boundary with the index's of P1, P2 and P3
 #[P1  P2 P3  ]
@@ -174,11 +174,10 @@ while sum(SortedTriangles.!=0)!=length(SortedTriangles)
 			SortedTriangles[triindx,3]=-1
 		end
 
-
 		#Find next outer triangle along from this triangle (they share CurrentPoint on the outer edge)
 		(triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 		LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
-			P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S,FrontPointLoc,BackPointLoc,InnerPointLoc,NewTriIndex,NewCurrentEdge,
+			P1,P2,P3,P1P2FreeFlg,P1P3FreeFlg,P2P3FreeFlg,FrontPointLoc,BackPointLoc,InnerPointLoc,NewTriIndex,NewCurrentEdge,
 								NewCurrentPoint,NewTrailingPoint,NewInnerPoint,PaOrPb,onetwo,twothree,onethree,NoOfChoices)
 
 
@@ -189,6 +188,7 @@ while sum(SortedTriangles.!=0)!=length(SortedTriangles)
 		end
 
 		if FrontPointLoc[1]==BackPointLoc[1] || FrontPointLoc[1]==InnerPointLoc[1] || InnerPointLoc[1]==BackPointLoc[1]
+			@info triindx FrontPointLoc[1] BackPointLoc[1] InnerPointLoc[1]
 			error("Whats happening here")
 		end
 
@@ -228,7 +228,7 @@ end
 
 
 function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
-								P1,P2,P3,FeP1P2S,FeP1P3S,FeP2P3S,
+								P1,P2,P3,P1P2FreeFlg,P1P3FreeFlg,P2P3FreeFlg,
 								FrontPointLoc,BackPointLoc,InnerPointLoc,
 								NewTriIndex,NewCurrentEdge,
 								NewCurrentPoint,NewTrailingPoint,NewInnerPoint,PaOrPb,
@@ -254,8 +254,7 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 		Inside=findall(InP1)
 		for i=1:length(Inside)
 
-
-			if FeP1P2S.FreeFlg[Inside[i]]==true #Now check its a free edge
+			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
 		
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,P3,onetwo,
@@ -263,13 +262,12 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 
 			end
-			if FeP1P3S.FreeFlg[Inside[i]]==true
+			if P1P3FreeFlg[Inside[i]]==true
 
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,P2,onethree,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
 				
-
 			end
 
 		end
@@ -282,8 +280,7 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 		for i=1:length(Inside)
 
-
-			if FeP1P2S.FreeFlg[Inside[i]]==true #Now check its a free edge
+			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
 
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,P3,onetwo,
@@ -291,7 +288,7 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 
 
 			end
-			if FeP2P3S.FreeFlg[Inside[i]]==true
+			if P2P3FreeFlg[Inside[i]]==true
 
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,P1,twothree,
@@ -308,14 +305,14 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 		Inside=findall(InP3)
 		for i=1:length(Inside)
 
-			if FeP1P3S.FreeFlg[Inside[i]]==true #Now check its a free edge
+			if P1P3FreeFlg[Inside[i]]==true #Now check its a free edge
 
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,P2,onethree,
 					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
 
 			end
-			if FeP2P3S.FreeFlg[Inside[i]]==true
+			if P2P3FreeFlg[Inside[i]]==true
 
 				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,P1,twothree,
