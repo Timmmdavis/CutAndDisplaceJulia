@@ -23,7 +23,7 @@ function testProp()
 println("creating func vars")
 
 #Volume
-HeightCrack=50;
+HeightCrack=15; #50
 Radius=1500
 CrackVolume=(π*(Radius^2))*HeightCrack
 
@@ -56,7 +56,7 @@ lps=100;
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-target_edge_length=(mean(HalfPerimeter)*(2/3))*1.25
+target_edge_length=(mean(HalfPerimeter)*(2/3))*1.1
 
 #For the remeshing in CGAL to work correctly 
 (Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
@@ -141,8 +141,8 @@ for i=1:lps
 	Z=MidPoint[:,3];
 	Weight=(ρrock*g).*Z;
 	#Set BoundaryConditions
-	σxx = Weight.*0.8;
-	σyy = Weight.*0.8;
+	σxx = Weight.*0.9;
+	σyy = Weight.*0.9;
 	σzz = Weight;
 	σxy = zeros(n);    
 	σxz = zeros(n);
@@ -171,6 +171,8 @@ for i=1:lps
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
 
+	#Drop interpenetrating elements to 0
+	Dn[Dn.<0].=0.0 #Neg Els if they exist dropped to 0
 
 	if draw==1
 		CutAndDisplaceJulia.ExportCrackMesh(P1,P2,P3,Dn,Dss,Dds,"$i-$p-MeshFilled-$RandNum")
@@ -187,8 +189,7 @@ for i=1:lps
 	#Get tip elements
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 
-	#Remove closed elements
-	Dn[Dn.<0].=0.0 #Neg Els dropped to 0
+
 	ClosedEls=round.(Dn,digits=14).==0.0 #eps() <- 16
 	P1[ClosedEls,:].=NaN
 	P2[ClosedEls,:].=NaN
