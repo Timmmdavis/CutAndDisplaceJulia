@@ -120,6 +120,8 @@ include("FindIntersectionOf3DVectors.jl")
 include("IsosceliseEdgeTrisNew.jl")
 include("ExportCrackMesh.jl")
 include("STLExport.jl")
+include("CreateTriangleNormal!.jl")
+include("CreateMidPoint!.jl")
 
 
 #New Guys 07/02/2019
