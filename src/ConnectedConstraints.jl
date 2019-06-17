@@ -1,5 +1,6 @@
 function ConnectedConstraints(P1,P2,P3,MidPoint)
 
+num=length(P1[:,1]);
 
 #Checking 6 points
 (SixPntsP1P2)=CreateSortedEdgePoints(P1,P2);
@@ -9,29 +10,30 @@ function ConnectedConstraints(P1,P2,P3,MidPoint)
 #rows nos are index of tri, the three rows are filled with index's of
 #connected tris
 #SortedTris=Int.(zeros(length(P1[:,1]),3)); #zeros(length(P1[:,1]));
-SortedTris=fill(0,length(P1[:,1]),3)
+SortedTris=fill(0,num,3)
 #Col1=P1P2 Col2=P2P3 Col3=P1P3 - numbers are the connected tris edge row number
 #i.e. 23 is edge P2P3 of the connected tri 
-ConnectedEdge=fill(0,length(P1[:,1]),3)
+ConnectedEdge=fill(0,num,3)
 
 #Calculate half length of each triangles perimeter
-( ~,HPerimP ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+( ~,HPerimP ) = AreaOfTriangle3D( P1,P2,P3 );
 #Calculate the distance between all midpoints:
-num=length(MidPoint[:,1]);
+
 X=repeat(MidPoint[:,1],1,num)-repeat(MidPoint[:,1]',num,1);
 Y=repeat(MidPoint[:,2],1,num)-repeat(MidPoint[:,2]',num,1);
 Z=repeat(MidPoint[:,3],1,num)-repeat(MidPoint[:,3]',num,1);
 #Matrix of distances
 MidDist=zeros(size(X))
-for i=1:size(MidDist,1)
-    for j=1:size(MidDist,2)
+num2=size(MidDist,2);
+for i=1:num
+    for j=1:num2
         MidDist[i,j]=sqrt((X[i,j]^2)+(Y[i,j]^2)+(Z[i,j]^2));
     end
 end
 
 #Do Pa Pb connections
-for i=1:length(P1[:,1])
-	for j=1:length(P1[:,1])
+for i=1:num
+	for j=1:num
         
     #Check to see if its worth continuing, here if the distance between the
     #midpoints is further than the sum of the two triangle perimeters(/2) we

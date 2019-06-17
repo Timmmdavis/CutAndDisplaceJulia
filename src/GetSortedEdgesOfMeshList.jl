@@ -60,14 +60,19 @@ rerunFunc=0
 n=length(FaceNormalVector[:,1]);
 removeIndx=0
 
+n=size(SortedTriangles,1)
+n2=size(SortedTriangles,2)
+num=size(P1,1)
+num2=size(P1,2)
+
 #While sorted triangles still has edges we have not passed
 while sum(SortedTriangles.!=0)!=length(SortedTriangles) 
 
 	#Getting the trailing and leading pnt - finding the first triangle that is an edge in the list
 	#We change edges we have passed in the list to -1 leaving only edges we have not seen in the list as '0'
 	breaki=false
-	for i=1:size(SortedTriangles,1) #for each tri
-		for j=1:size(SortedTriangles,2) #for each potential connection
+	for i=1:n #for each tri
+		for j=1:n2 #for each potential connection
 
 			if SortedTriangles[i,j]==0 #Its a tri with a missing connection (free edge)
 
@@ -175,10 +180,10 @@ while sum(SortedTriangles.!=0)!=length(SortedTriangles)
 		end
 
 		#Find next outer triangle along from this triangle (they share CurrentPoint on the outer edge)
-		(triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
+		@time (triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 		LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 			P1,P2,P3,P1P2FreeFlg,P1P3FreeFlg,P2P3FreeFlg,FrontPointLoc,BackPointLoc,InnerPointLoc,NewTriIndex,NewCurrentEdge,
-								NewCurrentPoint,NewTrailingPoint,NewInnerPoint,PaOrPb,onetwo,twothree,onethree,NoOfChoices)
+								NewCurrentPoint,NewTrailingPoint,NewInnerPoint,PaOrPb,onetwo,twothree,onethree,NoOfChoices,num,num2)
 
 
 
@@ -232,7 +237,7 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 								FrontPointLoc,BackPointLoc,InnerPointLoc,
 								NewTriIndex,NewCurrentEdge,
 								NewCurrentPoint,NewTrailingPoint,NewInnerPoint,PaOrPb,
-								onetwo,twothree,onethree,NoOfChoices)
+								onetwo,twothree,onethree,NoOfChoices,num,num2)
 	
 	#Reset values
 	NewTriIndex[1]=0 #NewTriIndex
@@ -249,78 +254,78 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 	#To say we can go in two directions - if so the mesh must be cleaned before continuing
 	NoOfChoices[1]=0
 
-	InP1=ismember(P1,vec(CurrentPoint));
+	InP1=ismember(P1,CurrentPoint,num,num2);
 	if any(InP1) 
-		Inside=findall(InP1)
-		for i=1:length(Inside)
+		for i=1:num
+			if InP1[i]==false
+				continue
+			else
+				if P1P2FreeFlg[i]==true #Now check its a free edge
+			
+					(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
+					GetNewEdgePoint(i,CurrentPoint,TrailingPoint,P1,P2,P3,onetwo,
+						NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
 
-			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
-		
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,P3,onetwo,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
 
+				end
+				if P1P3FreeFlg[i]==true
 
+					(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
+					GetNewEdgePoint(i,CurrentPoint,TrailingPoint,P1,P3,P2,onethree,
+						NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
+					
+				end
 			end
-			if P1P3FreeFlg[Inside[i]]==true
-
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,P2,onethree,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
-				
-			end
-
 		end
 	end
 
 
-	InP2=ismember(P2,vec(CurrentPoint));
+	InP2=ismember(P2,CurrentPoint,num,num2);
 	if any(InP2) 
-		Inside=findall(InP2)
+		for i=1:num
+			if InP2[i]==false
+				continue
+			else
+				if P1P2FreeFlg[i]==true #Now check its a free edge
 
-		for i=1:length(Inside)
+					(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
+					GetNewEdgePoint(i,CurrentPoint,TrailingPoint,P1,P2,P3,onetwo,
+						NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
 
-			if P1P2FreeFlg[Inside[i]]==true #Now check its a free edge
+				end
+				if P2P3FreeFlg[i]==true
 
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P2,P3,onetwo,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
+					(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
+					GetNewEdgePoint(i,CurrentPoint,TrailingPoint,P2,P3,P1,twothree,
+						NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
 
-
+				end
 			end
-			if P2P3FreeFlg[Inside[i]]==true
-
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,P1,twothree,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
-
-			end
-
 		end
 	end
 
 
-	InP3=ismember(P3,vec(CurrentPoint));
+	InP3=ismember(P3,CurrentPoint,num,num2);
 	if any(InP3) 
-		Inside=findall(InP3)
-		for i=1:length(Inside)
+		for i=1:num
+			if InP3[i]==false
+				continue
+			else
+				if P1P3FreeFlg[i]==true #Now check its a free edge
 
-			if P1P3FreeFlg[Inside[i]]==true #Now check its a free edge
+					(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
+					GetNewEdgePoint(i,CurrentPoint,TrailingPoint,P1,P3,P2,onethree,
+						NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
 
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P1,P3,P2,onethree,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
+				end
+				if P2P3FreeFlg[i]==true
 
+					(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
+					GetNewEdgePoint(i,CurrentPoint,TrailingPoint,P2,P3,P1,twothree,
+						NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
+
+				end
 			end
-			if P2P3FreeFlg[Inside[i]]==true
-
-				(NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
-				GetNewEdgePoint(Inside[i],CurrentPoint,TrailingPoint,P2,P3,P1,twothree,
-					NewTriIndex,NewCurrentEdge,NewCurrentPoint,NewTrailingPoint,NewInnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)
-
-
-			end
-
 		end
 	end	
 
@@ -329,6 +334,8 @@ function LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 	TrailingPoint=NewTrailingPoint;
 	CurrentEdge=NewCurrentEdge;
 	InnerPoint=NewInnerPoint
+
+
 
 
 return triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices

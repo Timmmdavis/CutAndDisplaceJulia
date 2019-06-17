@@ -51,27 +51,55 @@
 
 function AreaOfTriangle3D( x1,y1,z1,x2,y2,z2,x3,y3,z3 )
 
+n=length(x1)
 #Calling internal function for segment distances (length between points or
 #edge lengths of the triangles).
-a=Distance3D(x1,y1,z1,x2,y2,z2); 
-b=Distance3D(x2,y2,z2,x3,y3,z3); 
-c=Distance3D(x3,y3,z3,x1,y1,z1) ;#Now finding the area with internal function for Heron's formula.
+a=Distance3D(x1,y1,z1,x2,y2,z2,n); 
+b=Distance3D(x2,y2,z2,x3,y3,z3,n); 
+c=Distance3D(x3,y3,z3,x1,y1,z1,n) ;#Now finding the area with internal function for Heron's formula.
 
-(Area,HPerim) = HeronsFormula(a,b,c);
+(Area,HPerim) = HeronsFormula(a,b,c,n);
 
 return Area,HPerim 
 
 end
 
-function HeronsFormula(a,b,c)  
+function AreaOfTriangle3D( P1::Array,P2::Array,P3::Array )
+
+n=size(P1,1)
+
+x1=view(P1,:,1)
+y1=view(P1,:,2)
+z1=view(P1,:,3)
+x2=view(P2,:,1)
+y2=view(P2,:,2)
+z2=view(P2,:,3)
+x3=view(P3,:,1)
+y3=view(P3,:,2)
+z3=view(P3,:,3)
+
+#Calling internal function for segment distances (length between points or
+#edge lengths of the triangles).
+a=Distance3D(x1,y1,z1,x2,y2,z2,n); 
+b=Distance3D(x2,y2,z2,x3,y3,z3,n); 
+c=Distance3D(x3,y3,z3,x1,y1,z1,n) ;#Now finding the area with internal function for Heron's formula.
+
+(Area,HPerim) = HeronsFormula(a,b,c,n);
+
+return Area,HPerim 
+
+end
+
+
+function HeronsFormula(a,b,c,n)  
 #Calculation for Heron's formula.    
 #Inputs a b c are the edge lengths of the triangle    
 
-HPerim=zeros(size(a))
-Area=zeros(size(a))
-for i=1:length(a)
+HPerim=zeros(n)
+Area=zeros(n)
+for i=1:n
 	#Half the length of the triangle perimeter.
-	HPerim[i]=(a[i]+b[i]+c[i])/2; 
+	HPerim[i]=(a[i]+b[i]+c[i])/2.0; 
 
 	#Calculates the area.
 	try	Area[i]=sqrt(HPerim[i]*(HPerim[i]-a[i])*(HPerim[i]-b[i])*(HPerim[i]-c[i]));
@@ -88,12 +116,12 @@ return Area,HPerim
 
 end
 
-function Distance3D(x1,y1,z1,x2,y2,z2)   
+function Distance3D(x1,y1,z1,x2,y2,z2,n)   
 #Internal function to find the edge lengths in 3D, Pythagoras therom.
 #Inputs are xyz locations of two points in 3D space. 
 
-Length=zeros(size(x1))
-for i=1:length(x1)
+Length=zeros(n)
+for i=1:n
 	#Squared Cartesian lengths.
 	SquaredLengths=(x1[i]-x2[i])^2+(y1[i]-y2[i])^2+(z1[i]-z2[i])^2;
 	#Sqrt.

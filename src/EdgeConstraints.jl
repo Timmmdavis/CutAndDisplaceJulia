@@ -25,15 +25,19 @@ function EdgeConstraints(P1,P2,P3,MidPoint)
 #  Author: Tim Davis
 #  Copyright 2017, Tim Davis, Potsdam University
 
+
+num=length(P1[:,1])
+
 #Checking 6 points
 (SixPntsP1P2)=CreateSortedEdgePoints(P1,P2);
 (SixPntsP2P3)=CreateSortedEdgePoints(P2,P3);
 (SixPntsP3P1)=CreateSortedEdgePoints(P3,P1);
 
+
 #Flags for free edges:
-P1P2FreeFlg=fill(true,length(P1[:,1])); #zeros(length(P1[:,1]));
-P2P3FreeFlg=fill(true,length(P1[:,1]));
-P3P1FreeFlg=fill(true,length(P1[:,1]));
+P1P2FreeFlg=fill(true,num); #zeros(length(P1[:,1]));
+P2P3FreeFlg=fill(true,num);
+P3P1FreeFlg=fill(true,num);
 
 #Calculate half length of each triangles perimeter
 ( ~,HPerimP ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
@@ -44,15 +48,16 @@ Y=repeat(MidPoint[:,2],1,num)-repeat(MidPoint[:,2]',num,1);
 Z=repeat(MidPoint[:,3],1,num)-repeat(MidPoint[:,3]',num,1);
 #Matrix of distances
 MidDist=zeros(size(X))
-for i=1:size(MidDist,1)
-    for j=1:size(MidDist,2)
+num2=size(MidDist,2)
+for i=1:num
+    for j=1:num2
         MidDist[i,j]=sqrt((X[i,j]^2)+(Y[i,j]^2)+(Z[i,j]^2));
     end
 end
 
 #Do Pa Pb connections
-for j=1:length(P1[:,1])
-	for i=1:length(P1[:,1])
+for j=1:num
+	for i=1:num
         
     #Check to see if its worth continuing, here if the distance between the
     #midpoints is further than the sum of the two triangle perimeters(/2) we
