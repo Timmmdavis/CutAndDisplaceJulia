@@ -43,20 +43,20 @@ Points[:,4]=X;
 =#
 
 #Pennys angle away from Z. 
-Beta=-45; 
+Beta=-45; #45 
 BetaFromVert=90-Beta;
 #Rotate this (YZ)
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
 
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*Radius;
-Points[:,4]=Points[:,4].-13500; #2Km deep
+Points[:,4]=Points[:,4].-2000; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=100;
 
 ( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-target_edge_length=(mean(HalfPerimeter)*(2/3))*1.1
+target_edge_length=(mean(HalfPerimeter)*(2/3))*1.5
 
 #For the remeshing in CGAL to work correctly 
 (Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
@@ -80,6 +80,10 @@ p=0
 for i=1:lps
 	p=1
 
+	xmid=mean(Points[:,2])
+	ymid=mean(Points[:,3])
+	zmid=mean(Points[:,4])
+	xrange=maximum(Points[:,2])-minimum(Points[:,2])
 
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-BeforePolygonRemshing-$RandNum")
 	
@@ -92,15 +96,19 @@ for i=1:lps
 		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-AfterPolygonRemeshingCGAL-$RandNum")
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+		scene=CutAndDisplaceJuliaPlots.SetLookDirection(scene,xmid,ymid,zmid,xrange,"y")
+
+
 		Makie.save("$i-$p-AfterIsoCGALRemeshing-$RandNum.png", scene)
 		p+=1
-		
+
 	end
 
 	#Remesh edges
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+		scene=CutAndDisplaceJuliaPlots.SetLookDirection(scene,xmid,ymid,zmid,xrange,"y")
 		Makie.save("$i-$p-AfterCleaningEdgeTris-$RandNum.png", scene)
 		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshAfterEdgeClean-PreIsocelise-$RandNum")
 		p+=1
@@ -117,6 +125,7 @@ for i=1:lps
 	if draw==1
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+		scene=CutAndDisplaceJuliaPlots.SetLookDirection(scene,xmid,ymid,zmid,xrange,"y")
 		Makie.save("$i-$p-AfterCleaningAndIsolating-$RandNum.png", scene)
 		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshBeforeSlipCalc-$RandNum")
 		p+=1
@@ -141,8 +150,8 @@ for i=1:lps
 	Z=MidPoint[:,3];
 	Weight=(ρrock*g).*Z;
 	#Set BoundaryConditions
-	σxx = Weight.*0.9;
-	σyy = Weight.*0.9;
+	σxx = Weight.*0.8;
+	σyy = Weight.*0.8;
 	σzz = Weight;
 	σxy = zeros(n);    
 	σxz = zeros(n);
@@ -170,6 +179,9 @@ for i=1:lps
 	#try	
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
+	
+	test=1
+	@info test maximum(Dn) minimum(Dn) 
 
 	#Drop interpenetrating elements to 0
 	Dn[Dn.<0].=0.0 #Neg Els if they exist dropped to 0
@@ -197,6 +209,8 @@ for i=1:lps
 	MidPoint[ClosedEls,:].=NaN
 	FaceNormalVector[ClosedEls,:].=NaN
 	nonNan=ClosedEls.==false;
+	println("No of closed els")
+	println(sum(ClosedEls))
 
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	
@@ -206,6 +220,7 @@ for i=1:lps
 	P1Open=copy(P1[nonNan,:])
 	P2Open=copy(P2[nonNan,:])
 	P3Open=copy(P3[nonNan,:])
+	DnOpen=copy(Dn[nonNan,:])
 	(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1Open,P2Open,P3Open)
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"$i-$p-CheckingConnectedComps-$RandNum")
 	println(OutputDirectory)
@@ -216,11 +231,11 @@ for i=1:lps
 
 		ComponentAreas=zeros(NoConnectedComponents)
 		ComponentVolumes=zeros(NoConnectedComponents)
-		( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+		( AreaOpen,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1Open[:,1],P1Open[:,2],P1Open[:,3],P2Open[:,1],P2Open[:,2],P2Open[:,3],P3Open[:,1],P3Open[:,2],P3Open[:,3] );
 		for i=1:NoConnectedComponents
 			CurrentIndx=findall(Flags.==i)
-			ComponentAreas[i]=sum(Area[CurrentIndx,:])
-			ComponentVolumes[i]=sum(Area[CurrentIndx,:].*Dn[CurrentIndx,:])
+			ComponentAreas[i]=sum(AreaOpen[CurrentIndx,:])
+			ComponentVolumes[i]=sum(AreaOpen[CurrentIndx,:].*DnOpen[CurrentIndx,:])
 		end
 		#The actual fracture (index in Flags), assumed to be the largest area connected component
 		(~,goodflag)=findmax(ComponentAreas) 
@@ -237,7 +252,7 @@ for i=1:lps
 			end
 			printstyled("Parts of fracture have been left behind \n",color=:green)
 			printstyled("Volume now $CrackVolume \n",color=:green)
-			sleep(2)
+			sleep(1)
 		end
 		#Indexs of split mesh we dont want:
 		BadComponents=findall(Flags.!=goodflag)
@@ -325,6 +340,7 @@ for i=1:lps
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1[nonNan,:],P2[nonNan,:],P3[nonNan,:])
 		scatter!(scene,[Px Py Pz],markersize = 50,limits=scene.limits)#
+		scene=CutAndDisplaceJuliaPlots.SetLookDirection(scene,xmid,ymid,zmid,xrange,"y")
 		Makie.save("$i-$p-AfterElsRemoved-$RandNum.png", scene)
 		p+=1
 	end
@@ -358,6 +374,7 @@ for i=1:lps
 	
 	if draw==1
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
+		scene=CutAndDisplaceJuliaPlots.SetLookDirection(scene,xmid,ymid,zmid,xrange,"y")
 		Makie.save("$i-$p-AfterAdvancingFrontCGALRemeshingAndCleaning-$RandNum.png", scene)
 		p+=1
 	end

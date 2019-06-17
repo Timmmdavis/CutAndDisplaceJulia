@@ -180,7 +180,7 @@ while sum(SortedTriangles.!=0)!=length(SortedTriangles)
 		end
 
 		#Find next outer triangle along from this triangle (they share CurrentPoint on the outer edge)
-		@time (triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
+		(triindx,CurrentPoint,TrailingPoint,CurrentEdge,InnerPoint,FrontPointLoc,BackPointLoc,InnerPointLoc,NoOfChoices)=
 		LoopingRoundBoundaries(triindx,CurrentPoint,TrailingPoint,CurrentEdge,
 			P1,P2,P3,P1P2FreeFlg,P1P3FreeFlg,P2P3FreeFlg,FrontPointLoc,BackPointLoc,InnerPointLoc,NewTriIndex,NewCurrentEdge,
 								NewCurrentPoint,NewTrailingPoint,NewInnerPoint,PaOrPb,onetwo,twothree,onethree,NoOfChoices,num,num2)

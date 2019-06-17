@@ -84,7 +84,7 @@ XYZNormalDisp=PointsFNVAvg.*DnAvg
 XYZStrikeSlipDisp=PointsSSCAvg.*DssAvg
 XYZDipSlipDisp=PointsDSCAvg.*DdsAvg
 
-@info maximum(Dn) maximum(DnAvg) maximum(XYZNormalDisp)
+
 
 #On the positive side of the mesh
 PointsPosSide=Points[:,2:4]+XYZNormalDisp
@@ -96,11 +96,8 @@ PointsNegSide=PointsNegSide-XYZStrikeSlipDisp
 PointsNegSide=PointsNegSide-XYZDipSlipDisp
 
 PointsNew=[PointsPosSide;PointsNegSide]
-@info size(PointsNew) maximum(Triangles)
 PointsNew=[1:size(PointsNew,1) PointsNew]
 TrianglesNew=[Triangles;reverse(Triangles.+maximum(Triangles),dims=2)] #reverse to flip normal on neg side
-
-@info size(PointsNew) size(TrianglesNew)
 
 OutputDirectory=CutAndDisplaceJulia.OFFExport(PointsNew,TrianglesNew,length(TrianglesNew[:,1]),length(PointsNew[:,1]),"$MeshOutputName")
 

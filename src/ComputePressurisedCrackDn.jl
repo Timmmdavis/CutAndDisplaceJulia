@@ -83,20 +83,22 @@ if any(Dn_.>0)
     I=1
     while any(Dn_.<0)
         I=I+1
-
         for j=1:length(InterpenIndx)
-            for i=1:n
+
             indx=InterpenIndx[j]
-            #Drop cols to 0 so closed elements opening have no opening influence on others opening (can still slip).
-            #  A (  row  |  col ) = 0
-            AinvF[indx,i]=0;
-            AinvF[indx+n,i]=0;
-            AinvF[indx+2*n,i]=0;
+
+            for i=1:n
+                #Drop cols to 0 so closed elements opening have no opening influence on others opening (can still slip).
+                #  A (  row  |  col ) = 0
+                AinvF[indx,i]=0;
+                AinvF[indx+n,i]=0;
+                AinvF[indx+2*n,i]=0;
+            end
+            
             #Drop rows to 0 so closed elements cannot open (can still slip).
             #  A (  row  |  col ) = 0
-            #Ainv[j,:]=Ainv[j,:].*0;
+            #AinvF[indx,:]=AinvF[indx,:].*0;
 
-            end
         end
 
         #Recompute D

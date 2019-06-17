@@ -326,6 +326,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 
     #Now compute the min result, more cracks require more output args
     println(OptimalPressure)
+    @info sum(Ainv.==0)
     (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);
     
     for i=1:NumOfFractures #For each crack
