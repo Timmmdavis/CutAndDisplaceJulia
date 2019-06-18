@@ -69,11 +69,11 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	Scl=(Statistics.mean(HalfPerimeter)/G); 
 	A=A*Scl; 
 
-	#Put inside structs
-	InvertedInfMatA=InfMat(inv(A)); #And invert here
+	#Invert Inf Mat and put inside structs
+	InvertedInfMatA=InfMat(inv(A)); 
 	b=BoundaryConditionsVec(b);
 
-	#Pass 2 fric func where inf mat is now computed
+	#Pass Inf Mat 2 fric func where friction solver is run
 	(Dn,Dss,Dds)=SlipCalculator3D(Scl,n,InvertedInfMatA,b,µ,Sf)
 
 end
