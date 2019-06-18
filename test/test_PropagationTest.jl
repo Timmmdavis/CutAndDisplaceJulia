@@ -23,7 +23,7 @@ function testProp()
 println("creating func vars")
 
 #Volume
-HeightCrack=15; #50
+HeightCrack=50; #50
 Radius=1500
 CrackVolume=(π*(Radius^2))*HeightCrack
 
@@ -50,7 +50,7 @@ BetaFromVert=90-Beta;
 
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*Radius;
-Points[:,4]=Points[:,4].-2000; #2Km deep
+Points[:,4]=Points[:,4].-13500; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=100;
 
@@ -140,7 +140,7 @@ for i=1:lps
 
 	#Elastic constants
 	G=ShearModulus(2.0e9); 
-	ν=PoissonsRatio(0.25);
+	ν=PoissonsRatio(0.25);#println("Pr is close to 0.5")
 	(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
 
 	#Density
@@ -203,39 +203,39 @@ for i=1:lps
 
 
 	ClosedEls=round.(Dn,digits=14).==0.0 #eps() <- 16
-	#Check that the holes touch the edge or dont delete these tris
-	P1Closed=copy(P1[ClosedEls,:])
-	P2Closed=copy(P2[ClosedEls,:])
-	P3Closed=copy(P3[ClosedEls,:])
-	(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1Closed,P2Closed,P3Closed)
-	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"$i-$p-CheckingHoleConnections-$RandNum")
-	println(OutputDirectory)
-	(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
-	Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
-	(SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
-    #number of connected tris (Sorted tris rows not == to 0)
-    NoConnections=sum(SortedTriangles.!=0,dims=2)
-	NoConnectedComponents=maximum(Flags)
-	ClosedElLocs=findal(ClosedEls)
-	for i=1:NoConnectedComponents
-		CurrentIndx=findall(Flags.==i)
-		if all(NoConnections[CurrentIndx,:].==3)
-			#Set so they are not closed
-			ClosedEls[ClosedElLocs[CurrentIndx]].=false
-		else 
-			#Close this part of the existing edge
-			continue
-		end
-	end
-
-	ClosedEls[nonNanidx[BadComponents]].=true
-
-	P1[ClosedEls,:].=NaN
-	P2[ClosedEls,:].=NaN
-	P3[ClosedEls,:].=NaN
-	MidPoint[ClosedEls,:].=NaN
-	FaceNormalVector[ClosedEls,:].=NaN
 	nonNan=ClosedEls.==false;
+	if any(ClosedEls)
+		#Check that the holes touch the edge otherwise dont delete these tris
+		P1Closed=copy(P1[ClosedEls,:])
+		P2Closed=copy(P2[ClosedEls,:])
+		P3Closed=copy(P3[ClosedEls,:])
+		(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1Closed,P2Closed,P3Closed)
+		OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"$i-$p-CheckingHoleConnections-$RandNum")
+		println(OutputDirectory)
+		(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
+		Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
+		(SortedTriangles,ConnectedEdge)=CutAndDisplaceJulia.ConnectedConstraints(P1,P2,P3,MidPoint)
+	    #number of connected tris (Sorted tris rows not == to 0)
+	    NoConnections=sum(SortedTriangles.!=0,dims=2)
+		NoConnectedComponents=maximum(Flags)
+		ClosedElLocs=findall(ClosedEls)
+		for i=1:NoConnectedComponents
+			CurrentIndx=findall(Flags.==i)
+			if all(NoConnections[ClosedElLocs[CurrentIndx,:]].==3)
+				#Set so they are not closed
+				ClosedEls[ClosedElLocs[CurrentIndx]].=false
+			else 
+				#Close this part of the existing edge
+				continue
+			end
+		end
+		P1[ClosedEls,:].=NaN
+		P2[ClosedEls,:].=NaN
+		P3[ClosedEls,:].=NaN
+		MidPoint[ClosedEls,:].=NaN
+		FaceNormalVector[ClosedEls,:].=NaN
+		nonNan=ClosedEls.==false;
+	end
 
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	

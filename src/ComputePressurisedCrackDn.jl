@@ -43,24 +43,24 @@ Dds=D[n*2+1:3*n];
 
 
 
-#=# # Way one (can have friction but ~2s per loop for 300+ tris)
+# Way one (can have friction but ~2s per loop for 300+ tris)
 if any(Flag.==0)
     println("it looks like you have elements that represent topography, deal with these correctly before passing into friction solver (see Davis 2019 ppr)")
 end
 if any(Dn_.>0)
-    Ainv=InfMat(Ainv); 
+    AinvF=InfMat(AinvF); 
     b=BoundaryConditionsVec(B);
-    µ=zeros(n);println("Setting arbitary fric params")
+    µ=fill(0.6,n);println("Setting arbitary fric params")
     Sf=zeros(n);
-    (Dn,Dss,Dds)=SlipCalculator3D(Scl,n,Ainv,b,µ,Sf)
+    (Dn,Dss,Dds)=SlipCalculator3D(Scl,n,AinvF,b,µ,Sf)
 else
     Dn=Dn_.*0; #Already closed (wont open, we dont care)
     Dss=Dss.*0;
     Dds=Dds.*0;
 end
-#SCALES INSIDE!=#
+#SCALES INSIDE!
 
-
+#=
 ## Way two (same result as one, no friction involved)
 # If we have negative volumes force these disps to negative
 for i=eachindex(NumOfFractures) #For each crack
@@ -122,6 +122,7 @@ end
 Dn=Dn.*Scl;
 Dss=Dss.*Scl;
 Dds=Dds.*Scl;
+=#
 
 return Dn,Dss,Dds
 

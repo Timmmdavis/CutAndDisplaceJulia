@@ -70,24 +70,24 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	A=A*Scl; 
 
 	#Put inside structs
-	A=InfMat(A);
+	C=InfMat(inv(A)); #And invert here
 	b=BoundaryConditionsVec(b);
 
+	AlreadyInvertedFlag=false
 	#Pass 2 fric func where inf mat is now computed
-	(Dn,Dss,Dds)=SlipCalculator3D(Scl,n,A,b,µ,Sf)
+	(Dn,Dss,Dds)=SlipCalculator3D(Scl,n,C,b,µ,Sf)
 
 end
 
 
-function SlipCalculator3D(Scl,n,A::InfMat,b::BoundaryConditionsVec,µ,Sf)
+function SlipCalculator3D(Scl,n,C::InfMat,b::BoundaryConditionsVec,µ,Sf,AlreadyInvertedFlag)
 	
 
-
-	#Therefore each col in [C] represents how much each 
+	#Each col in [C] represents how much each 
 	#element must displace to cause a traction
-	#of one unit at element i.
-	C = inv(A.A);	
+	#of one unit at element i. Inverted inf mat A
 
+	C=C.C #already inverted
 	D=C*b.b;
 
 	# Construct a and b for the equation [y]=[a][x]+[b] where
@@ -326,7 +326,6 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 
     #Now compute the min result, more cracks require more output args
     println(OptimalPressure)
-    @info sum(Ainv.==0)
     (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);
     
     for i=1:NumOfFractures #For each crack
