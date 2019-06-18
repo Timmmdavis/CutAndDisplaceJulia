@@ -33,7 +33,7 @@ SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SquareGrid.stl")
 (Points,Triangles)=CutAndDisplaceJulia.STLReader(SurfaceDir)
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 #Compute average face normal
-AvgFaceNormalVector=[mean(FaceNormalVector[:,1]) mean(FaceNormalVector[:,2]) mean(FaceNormalVector[:,3])]
+#AvgFaceNormalVector=[mean(FaceNormalVector[:,1]) mean(FaceNormalVector[:,2]) mean(FaceNormalVector[:,3])]
 
 #=
 #Flatten so normals point up
@@ -196,21 +196,46 @@ for i=1:lps
 	end
 
 	#Compute average face normal
-	AvgFaceNormalVector=[mean(FaceNormalVector[:,1]) mean(FaceNormalVector[:,2]) mean(FaceNormalVector[:,3])]
+	#AvgFaceNormalVector=[mean(FaceNormalVector[:,1]) mean(FaceNormalVector[:,2]) mean(FaceNormalVector[:,3])]
 
 	#Get tip elements
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 
 
 	ClosedEls=round.(Dn,digits=14).==0.0 #eps() <- 16
+	#Check that the holes touch the edge or dont delete these tris
+	P1Closed=copy(P1[ClosedEls,:])
+	P2Closed=copy(P2[ClosedEls,:])
+	P3Closed=copy(P3[ClosedEls,:])
+	(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1Closed,P2Closed,P3Closed)
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Pnts,Tris,length(Tris[:,1]),length(Pnts[:,1]),"$i-$p-CheckingHoleConnections-$RandNum")
+	println(OutputDirectory)
+	(OutputDirectory)=BuildCGAL.ConnectedComponentsCGAL(OutputDirectory)
+	Flags=CutAndDisplaceJulia.ConnectedComponentsReader(OutputDirectory)
+	(SortedTriangles,ConnectedEdge)=ConnectedConstraints(P1,P2,P3,MidPoint)
+    #number of connected tris (Sorted tris rows not == to 0)
+    NoConnections=sum(SortedTriangles.!=0,dims=2)
+	NoConnectedComponents=maximum(Flags)
+	ClosedElLocs=findal(ClosedEls)
+	for i=1:NoConnectedComponents
+		CurrentIndx=findall(Flags.==i)
+		if all(NoConnections[CurrentIndx,:].==3)
+			#Set so they are not closed
+			ClosedEls[ClosedElLocs[CurrentIndx]].=false
+		else 
+			#Close this part of the existing edge
+			continue
+		end
+	end
+
+	ClosedEls[nonNanidx[BadComponents]].=true
+
 	P1[ClosedEls,:].=NaN
 	P2[ClosedEls,:].=NaN
 	P3[ClosedEls,:].=NaN
 	MidPoint[ClosedEls,:].=NaN
 	FaceNormalVector[ClosedEls,:].=NaN
 	nonNan=ClosedEls.==false;
-	println("No of closed els")
-	println(sum(ClosedEls))
 
 	( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
 	
