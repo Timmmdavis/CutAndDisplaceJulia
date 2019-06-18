@@ -73,14 +73,13 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	C=InfMat(inv(A)); #And invert here
 	b=BoundaryConditionsVec(b);
 
-	AlreadyInvertedFlag=false
 	#Pass 2 fric func where inf mat is now computed
 	(Dn,Dss,Dds)=SlipCalculator3D(Scl,n,C,b,µ,Sf)
 
 end
 
 
-function SlipCalculator3D(Scl,n,C::InfMat,b::BoundaryConditionsVec,µ,Sf,AlreadyInvertedFlag)
+function SlipCalculator3D(Scl,n,C::InfMat,b::BoundaryConditionsVec,µ,Sf)
 	
 
 	#Each col in [C] represents how much each 
