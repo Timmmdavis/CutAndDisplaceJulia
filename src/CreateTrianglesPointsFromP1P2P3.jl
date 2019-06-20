@@ -8,7 +8,6 @@ Pnts=[P1;P2;P3]
 #Reduce and get index's of the new reduced points relative to old index's
 Points=unique(Pnts,dims=1) 
 PntsUniqueRowNos=UniqueRowNumberFinder(Pnts,Points)
-
 P1PntsUnique=PntsUniqueRowNos[1:n]
 P2PntsUnique=PntsUniqueRowNos[n+1:2*n]
 P3PntsUnique=PntsUniqueRowNos[n*2+1:3*n]
@@ -27,12 +26,19 @@ function UniqueRowNumberFinder(OriginalData,UniqueData)
 n=size(OriginalData,1)
 m=size(UniqueData,1)
 
-RowNos=zeros(n)
+RowNos=fill(0,n)
 #Lp to check that each col is unique - if so we then use the index of the 
 #new unqiue row
+counter=0
+flag=true
+p=1:3
 for i=1:n
 	for j=1:m
-		if OriginalData[i,:]==UniqueData[j,:]
+		flag=true 
+		flag=MatchingRow(OriginalData,UniqueData,i,j,p,flag)
+		if flag
+			#@info typeof(RowNos[i]) typeof(counter)
+			#poop
 			RowNos[i]=j
 		end
 	end	
