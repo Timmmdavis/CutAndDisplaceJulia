@@ -967,7 +967,7 @@ function AngSetupDispFSC(X,Y,Z,PA,PB,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 (SideVec,eZ,beta)=CalcSideVec(PA,PB)
 
 
-if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>0.436 #0.436 is around: (50*pi/360)
+if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>5e3 #5e3 is around: (5e5*pi/360)
 	#Simply add nothing to the values coming in
 else
 
@@ -1576,7 +1576,7 @@ function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,G,λ,ν,Vnorm,Vstrike,Vdip,
 # Calculate TD side vector and the angle of the angular dislocation pair
 (SideVec,eZ,beta)=CalcSideVec(PA,PB)
 
-if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>0.436 #0.436 is around: (50*pi/360)
+if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>5e3 #5e3 is around: (5e5*pi/360)
     #Inputs come out the same (we add 0...)
 else
     
