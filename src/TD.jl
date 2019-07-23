@@ -139,7 +139,7 @@ function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 eY,eZ,FillAList,FillBList,λ)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
 
-Threads.@threads for i=1:SzCmp #For every element (multithreaded)  
+Threads.@threads for i=1:SzCmp #For every element (multithreaded)    
 	#println("Multithreading off")
 
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
@@ -966,7 +966,8 @@ function AngSetupDispFSC(X,Y,Z,PA,PB,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 # Calculate TD side vector and the angle of the angular dislocation pair
 (SideVec,eZ,beta)=CalcSideVec(PA,PB)
 
-if abs(beta)<eps() || abs(pi-beta)<eps()
+
+if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>0.436 #0.436 is around: (50*pi/360)
 	#Simply add nothing to the values coming in
 else
 
@@ -1575,7 +1576,7 @@ function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,G,λ,ν,Vnorm,Vstrike,Vdip,
 # Calculate TD side vector and the angle of the angular dislocation pair
 (SideVec,eZ,beta)=CalcSideVec(PA,PB)
 
-if abs(beta)<eps() || abs(pi-beta)<eps()
+if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>0.436 #0.436 is around: (50*pi/360)
     #Inputs come out the same (we add 0...)
 else
     
