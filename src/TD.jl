@@ -137,21 +137,21 @@ function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 eY,eZ,FillAList,FillBList,λ,
-empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)=
+empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
 
 
-for i=1:SzCmp #For every element (multithreaded)    Threads.@threads 
-	println("Multithreading off")
+Threads.@threads for i=1:SzCmp #For every element (multithreaded)     
+	#println("Multithreading off")
 
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-	empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)=
+	empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)=
 	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
-	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)
+	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List)
 	#Allocate outside of funcs (using @view we just assign a pointer). 
 	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
 	if DispFlag==1
@@ -201,7 +201,7 @@ for i=1:SzCmp #For every element (multithreaded)    Threads.@threads
 				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)	
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)	
 
 	end
 
@@ -229,20 +229,20 @@ end
 
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 eY,eZ,FillAList,FillBList,λ,
-empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)=
+empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
 
-for i=1:SzCmp #For every element (multithreaded)  Threads.@threads 
+Threads.@threads for i=1:SzCmp #For every element (multithreaded)  
 	#println("Multithreading off")
 
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-	empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)=
+	empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)=
 	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
-	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)
+	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List)
 
 	if DispFlag==1
 		UxDnI  = zeros(size(X)); 
@@ -262,7 +262,7 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 				UxDnI, UyDnI, UzDnI,
 				UxDssI,UyDssI,UzDssI,
 				UxDdsI,UyDdsI,UzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)	
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)	
 
 				Ux.+=UxDnI.+UxDssI.+UxDdsI;
 				Uy.+=UyDnI.+UyDssI.+UyDdsI;
@@ -295,7 +295,7 @@ for i=1:SzCmp #For every element (multithreaded)  Threads.@threads
 				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
 
 				εxx.+=εxxDnI.+εxxDssI.+εxxDdsI;
 				εyy.+=εyyDnI.+εyyDssI.+εyyDdsI;
@@ -373,10 +373,12 @@ empty5List=zeros(SzCmp,9);
 empty6List=zeros(SzCmp,3);
 empty7List=zeros(SzCmp,3);
 empty8List=zeros(SzCmp,3);
+empty9List=zeros(SzCmp,3);
+empty10List=zeros(SzCmp,3);
 
 return SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 eY,eZ,FillAList,FillBList,λ,
-empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List
+empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List
 
 end
 
@@ -384,7 +386,7 @@ end
 function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 					VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 					FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
-					empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)
+					empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List)
 
 
 
@@ -411,6 +413,8 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	empty6=	view(empty6List,i,:);
 	empty7=	view(empty7List,i,:);
 	empty8=	view(empty8List,i,:);
+	empty9=	view(empty9List,i,:);
+	empty10=view(empty10List,i,:);
 
 	FillA=view(FillAList,i,:);
 	FillB=view(FillBList,i,:);
@@ -434,7 +438,7 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	return P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-		empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8
+		empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10
 
 end
 
@@ -448,7 +452,7 @@ function ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vs
 				UxDnI, UyDnI, UzDnI,
 				UxDssI,UyDssI,UzDssI,
 				UxDdsI,UyDdsI,UzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
 	
 
 	# Calculate main dislocation contribution to displacements
@@ -466,7 +470,7 @@ function ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vs
 		UxDnI, UyDnI, UzDnI,
 		UxDssI,UyDssI,UzDssI,
 		UxDdsI,UyDdsI,UzDdsI,
-		empty1,empty2,empty3,empty6,empty7,empty8);
+		empty1,empty2,empty3,empty6,empty7,empty8,empty9,empty10);
 
 		# Calculate image dislocation contribution to displacements
 		TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],ν,1,Vnormi,Vstrikei,Vdipi,
@@ -487,7 +491,7 @@ function ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,
 				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
 
 
 		# Calculate main dislocation contribution to strains
@@ -505,7 +509,7 @@ function ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,
 			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
 			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
-			empty1,empty2,empty3,empty4,empty6,empty7,empty8);	
+			empty1,empty2,empty3,empty4,empty6,empty7,empty8,empty9,empty10);	
 
 			# Calculate image dislocation contribution to strains 
 			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],G,λ,ν,1,Vnormi,Vstrikei,Vdipi,
@@ -974,7 +978,7 @@ function TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,Vnorm,Vstrike,Vdip,
 				UxDn, UyDn, UzDn,
 				UxDss,UyDss,UzDss,
 				UxDds,UyDds,UzDds,
-				empty1,empty2,empty3,empty6,empty7,empty8)
+				empty1,empty2,empty3,empty6,empty7,empty8,empty9,empty10)
 # TDdisp_HarFunc calculates the harmonic function contribution to the
 # displacements associated with a triangular dislocation in a half-space.
 # The function cancels the surface normal tractions induced by the main and
@@ -987,21 +991,21 @@ AngSetupDispFSC(X,Y,Z,P1,P2,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
 UxDds,UyDds,UzDds,
-empty1,empty2,empty3,empty6,empty7,empty8); 
+empty1,empty2,empty3,empty6,empty7,empty8,empty9,empty10); 
  
 # Side P2P3
 AngSetupDispFSC(X,Y,Z,P2,P3,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
 UxDds,UyDds,UzDds,
-empty1,empty2,empty3,empty6,empty7,empty8); 
+empty1,empty2,empty3,empty6,empty7,empty8,empty9,empty10); 
  
 # Side P3P1
 AngSetupDispFSC(X,Y,Z,P3,P1,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
 UxDds,UyDds,UzDds,
-empty1,empty2,empty3,empty6,empty7,empty8); 
+empty1,empty2,empty3,empty6,empty7,empty8,empty9,empty10); 
 
 end
 
@@ -1010,12 +1014,12 @@ function AngSetupDispFSC(X,Y,Z,PA,PB,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
  UxDds,UyDds,UzDds,
- ey1,ey2,ey3,VxR,VyR,VzR)
+ ey1,ey2,ey3,VxR,VyR,VzR,SideVec,eZ)
 # AngSetupFSC calculates the Free Surface Correction to displacements 
 # associated with angular dislocation pair on each TD side.
 
 # Calculate TD side vector and the angle of the angular dislocation pair
-(SideVec,eZ,beta)=CalcSideVec(PA,PB)
+(SideVec,eZ,beta)=CalcSideVec(PA,PB,SideVec,eZ)
 
 
 if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>5e3 #5e3 is around: (5e5*pi/360)
@@ -1163,15 +1167,21 @@ end	#if statement
 end
 
 
-function CalcSideVec(PA,PB)
+function CalcSideVec(PA,PB,SideVec,eZ)
 # Calculate TD side vector and the angle of the angular dislocation pair
 
-SideVec = PB-PA;
-eZ = [0.;0.;1.];
-
-
-G=-SideVec'*eZ/sqrt(SideVec[1]^2+SideVec[2]^2+SideVec[3]^2) 
-beta = acos(G[1]);
+for i=1:3
+	SideVec[i] = PB[i]-PA[i];
+end
+eZ[1]=0.
+eZ[2]=0.
+eZ[3]=1.
+local Sv=sqrt(SideVec[1]^2+SideVec[2]^2+SideVec[3]^2)
+#for i=1:3
+	#SideVec[i] = -SideVec[i];
+#end
+beta=dot(-SideVec,eZ)/Sv 
+beta = acos(beta);
 
 return(SideVec,eZ,beta)
 end
@@ -1594,7 +1604,7 @@ function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,G,λ,ν,Vnorm,Vstrike,Vdip,
 			 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 			 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 			 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-			 empty1,empty2,empty3,empty4,empty6,empty7,empty8);
+			 empty1,empty2,empty3,empty4,empty6,empty7,empty8,empty9,empty10);
 # TDstrain_HarFunc calculates the harmonic function contribution to the
 # strains and stresses associated with a triangular dislocation in a 
 # half-space. The function cancels the surface normal tractions induced by 
@@ -1606,14 +1616,14 @@ AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P1,P2,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-empty1,empty2,empty3,empty4,empty6,empty7,empty8);
+empty1,empty2,empty3,empty4,empty6,empty7,empty8,empty9,empty10);
  
 # P2P3
 AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P2,P3,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-empty1,empty2,empty3,empty4,empty6,empty7,empty8);
+empty1,empty2,empty3,empty4,empty6,empty7,empty8,empty9,empty10);
  
  
 # P3P1 
@@ -1621,7 +1631,7 @@ AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P3,P1,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-empty1,empty2,empty3,empty4,empty6,empty7,empty8);
+empty1,empty2,empty3,empty4,empty6,empty7,empty8,empty9,empty10);
 
 end
 
@@ -1630,12 +1640,12 @@ function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,G,λ,ν,Vnorm,Vstrike,Vdip,
 							εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 							εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
 							εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
-							ey1,ey2,ey3,AFlip,VxR,VyR,VzR);
+							ey1,ey2,ey3,AFlip,VxR,VyR,VzR,SideVec,eZ);
 # AngSetupFSC_S calculates the Free Surface Correction to strains and 
 # stresses associated with angular dislocation pair on each TD side.
 
 # Calculate TD side vector and the angle of the angular dislocation pair
-(SideVec,eZ,beta)=CalcSideVec(PA,PB)
+(SideVec,eZ,beta)=CalcSideVec(PA,PB,SideVec,eZ)
 
 if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>5e3 #5e3 is around: (5e5*pi/360)
     #Inputs come out the same (we add 0...)
