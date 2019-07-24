@@ -1029,6 +1029,7 @@ else
     #ey1=zeros(3);
     ey1[1] = SideVec[1];	
     ey1[2] = SideVec[2];	
+    ey1[3] = 0.;
     nrmey1 = sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)
     for i=1:3;
     	ey1[i] = ey1[i]/nrmey1;
@@ -1641,7 +1642,9 @@ if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>5e3 #5e3 is around: (
 else
     
 	#ey1=zeros(3);
-	ey1[1] = SideVec[1];	
+	ey1[1] = SideVec[1];
+	ey1[2] = 0.;
+	ey1[3] = 0.;	
 	ey1[2] = SideVec[2];	
 	nrmey1 = sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)
 	for i=1:3;
