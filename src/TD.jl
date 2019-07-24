@@ -136,18 +136,22 @@ function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 			DispFlag,StrainFlag,HSflag,StrainInfMat::StrainInf,DispInfMat::DispInf)
 
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-eY,eZ,FillAList,FillBList,λ)=
+eY,eZ,FillAList,FillBList,λ,
+empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
 
-Threads.@threads for i=1:SzCmp #For every element (multithreaded)    
-	#println("Multithreading off")
+
+for i=1:SzCmp #For every element (multithreaded)    Threads.@threads 
+	println("Multithreading off")
 
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
+	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+	empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)=
 	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z)
+	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
+	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)
 	#Allocate outside of funcs (using @view we just assign a pointer). 
 	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
 	if DispFlag==1
@@ -167,7 +171,8 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				UxDnI, UyDnI, UzDnI,
 				UxDssI,UyDssI,UzDssI,
-				UxDdsI,UyDdsI,UzDdsI)		
+				UxDdsI,UyDdsI,UzDdsI,
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)		
 	end
 	if StrainFlag==1
 		εxxDnI  = view(StrainInfMat.εxxDn,:,i);
@@ -195,12 +200,125 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
-				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)		
+				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)	
 
 	end
 
 end
 return(StrainInfMat,DispInfMat)
+end
+
+#Summing results
+function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
+			DispFlag,StrainFlag,HSflag,StrainInfVector::Strains,DispInfVector::Disps)
+
+if DispFlag==1
+	Ux  = zeros(size(X));
+	Uy  = zeros(size(X));
+	Uz  = zeros(size(X));
+end
+if StrainFlag==1
+	εxx  = zeros(size(X));
+	εyy  = zeros(size(X));
+	εzz  = zeros(size(X));
+	εxy  = zeros(size(X));
+	εxz  = zeros(size(X));
+	εyz  = zeros(size(X));
+end
+
+(SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+eY,eZ,FillAList,FillBList,λ,
+empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)=
+PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
+
+for i=1:SzCmp #For every element (multithreaded)  Threads.@threads 
+	#println("Multithreading off")
+
+	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+	empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)=
+	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
+	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
+	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)
+
+	if DispFlag==1
+		UxDnI  = zeros(size(X)); 
+		UyDnI  = zeros(size(X));
+		UzDnI  = zeros(size(X));
+		UxDssI = zeros(size(X));
+		UyDssI = zeros(size(X));
+		UzDssI = zeros(size(X));
+		UxDdsI = zeros(size(X));
+		UyDdsI = zeros(size(X));
+		UzDdsI = zeros(size(X));
+
+		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
+				UxDnI, UyDnI, UzDnI,
+				UxDssI,UyDssI,UzDssI,
+				UxDdsI,UyDdsI,UzDdsI,
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)	
+
+				Ux.+=UxDnI.+UxDssI.+UxDdsI;
+				Uy.+=UyDnI.+UyDssI.+UyDdsI;
+				Uz.+=UzDnI.+UzDssI.+UzDdsI;
+	end
+	if StrainFlag==1
+		εxxDnI  = zeros(size(X));
+		εyyDnI  = zeros(size(X));
+		εzzDnI  = zeros(size(X));
+		εxyDnI  = zeros(size(X));
+		εxzDnI  = zeros(size(X));
+		εyzDnI  = zeros(size(X));
+		εxxDssI = zeros(size(X));
+		εyyDssI = zeros(size(X));
+		εzzDssI = zeros(size(X));
+		εxyDssI = zeros(size(X));
+		εxzDssI = zeros(size(X));
+		εyzDssI = zeros(size(X));
+		εxxDdsI = zeros(size(X));
+		εyyDdsI = zeros(size(X));
+		εzzDdsI = zeros(size(X));
+		εxyDdsI = zeros(size(X));
+		εxzDdsI = zeros(size(X));
+		εyzDdsI = zeros(size(X));
+
+		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
+				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)
+
+				εxx.+=εxxDnI.+εxxDssI.+εxxDdsI;
+				εyy.+=εyyDnI.+εyyDssI.+εyyDdsI;
+				εzz.+=εzzDnI.+εzzDssI.+εzzDdsI;
+				εxy.+=εxyDnI.+εxyDssI.+εxyDdsI;
+				εxz.+=εxzDnI.+εxzDssI.+εxzDdsI;
+				εyz.+=εyzDnI.+εyzDssI.+εyzDdsI;					
+
+	end
+
+end
+if StrainFlag==1
+	StrainInfVector=Strains(εxx,εyy,εzz,εxy,εxz,εyz);
+	
+else
+	StrainInfVector=Strains([],[],[],[],[],[]);
+end
+if DispFlag==1
+	DispInfVector=Disps(Ux,	Uy,	Uz);
+else
+	DispInfVector=Disps([],	[],	[])
+end
+return(StrainInfVector,DispInfVector)
 end
 
 #Predefined inf mats
@@ -246,15 +364,30 @@ FillBList= zeros(SzCmp,3);
 #Elastic con
 λ=(2*G*ν)/(1-(2*ν));
 
+#Would not need as lists if we were not Multithreading
+empty1List=zeros(SzCmp,3);
+empty2List=zeros(SzCmp,3);
+empty3List=zeros(SzCmp,3);
+empty4List=zeros(SzCmp,9);
+empty5List=zeros(SzCmp,9);
+empty6List=zeros(SzCmp,3);
+empty7List=zeros(SzCmp,3);
+empty8List=zeros(SzCmp,3);
+
 return SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-eY,eZ,FillAList,FillBList,λ
+eY,eZ,FillAList,FillBList,λ,
+empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List
 
 end
 
 
 function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 					VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-					FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z)
+					FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
+					empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List)
+
+
+
 
 	P1=view(P1List,i,:);
 	P2=view(P2List,i,:);
@@ -269,7 +402,16 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	Vnormi=	view(VnormiList,i,:);
 	Vstrikei=view(VstrikeiList,i,:);
 	Vdipi=	view(VdipiList,i,:);
-	
+
+	empty1=	view(empty1List,i,:);
+	empty2=	view(empty2List,i,:);
+	empty3=	view(empty3List,i,:);
+	empty4=	view(empty4List,i,:);
+	empty5=	view(empty5List,i,:);
+	empty6=	view(empty6List,i,:);
+	empty7=	view(empty7List,i,:);
+	empty8=	view(empty8List,i,:);
+
 	FillA=view(FillAList,i,:);
 	FillB=view(FillBList,i,:);
 	
@@ -291,7 +433,8 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 
 	return P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi
+		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+		empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8
 
 end
 
@@ -304,7 +447,8 @@ function ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vs
 				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				UxDnI, UyDnI, UzDnI,
 				UxDssI,UyDssI,UzDssI,
-				UxDdsI,UyDdsI,UzDdsI)
+				UxDdsI,UyDdsI,UzDdsI,
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)
 	
 
 	# Calculate main dislocation contribution to displacements
@@ -312,7 +456,8 @@ function ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vs
 	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 	UxDnI, UyDnI, UzDnI,
 	UxDssI,UyDssI,UzDssI,
-	UxDdsI,UyDdsI,UzDdsI);
+	UxDdsI,UyDdsI,UzDdsI,
+	empty1,empty2,empty3);
 	 
 	if HSflag==1
 		
@@ -320,14 +465,16 @@ function ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vs
 		TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],ν,Vnorm,Vstrike,Vdip,
 		UxDnI, UyDnI, UzDnI,
 		UxDssI,UyDssI,UzDssI,
-		UxDdsI,UyDdsI,UzDdsI);
+		UxDdsI,UyDdsI,UzDdsI,
+		empty1,empty2,empty3,empty6,empty7,empty8);
 
 		# Calculate image dislocation contribution to displacements
 		TDdispFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],ν,1,Vnormi,Vstrikei,Vdipi,
 		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
 		UxDnI, UyDnI, UzDnI,
 		UxDssI,UyDssI,UzDssI,
-		UxDdsI,UyDdsI,UzDdsI);
+		UxDdsI,UyDdsI,UzDdsI,
+		empty1,empty2,empty3);
 
 	end #HsFlag
 
@@ -339,7 +486,8 @@ function ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,
 				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
 				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
-				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)
+				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
+				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8)
 
 
 		# Calculate main dislocation contribution to strains
@@ -347,7 +495,8 @@ function ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,
 		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 		εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 		εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
-		εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);	
+		εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
+		empty4,empty5);	
 		
 		if HSflag==1
 		
@@ -355,14 +504,16 @@ function ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,
 			TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss[i],Dds[i],Dn[i],G,λ,ν,Vnorm,Vstrike,Vdip,
 			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
-			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);	
+			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
+			empty1,empty2,empty3,empty4,empty6,empty7,empty8);	
 
 			# Calculate image dislocation contribution to strains 
 			TDstrainFS(X,Y,Z,P1i,P2i,P3i,Dss[i],Dds[i],Dn[i],G,λ,ν,1,Vnormi,Vstrikei,Vdipi,
 			p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
 			εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
 			εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
-			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI);
+			εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
+			empty4,empty5);
 
 
 		end #HS flag
@@ -371,114 +522,6 @@ end
 
 	
 
-
-#Summing results
-function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
-			DispFlag,StrainFlag,HSflag,StrainInfVector::Strains,DispInfVector::Disps)
-
-if DispFlag==1
-	Ux  = zeros(size(X));
-	Uy  = zeros(size(X));
-	Uz  = zeros(size(X));
-end
-if StrainFlag==1
-	εxx  = zeros(size(X));
-	εyy  = zeros(size(X));
-	εzz  = zeros(size(X));
-	εxy  = zeros(size(X));
-	εxz  = zeros(size(X));
-	εyz  = zeros(size(X));
-end
-
-(SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-eY,eZ,FillAList,FillBList,λ)=
-PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G)
-
-for i=1:SzCmp #For every element (multithreaded)  Threads.@threads 
-	#println("Multithreading off")
-
-	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
-	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
-	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z)
-
-	if DispFlag==1
-		UxDnI  = zeros(size(X)); 
-		UyDnI  = zeros(size(X));
-		UzDnI  = zeros(size(X));
-		UxDssI = zeros(size(X));
-		UyDssI = zeros(size(X));
-		UzDssI = zeros(size(X));
-		UxDdsI = zeros(size(X));
-		UyDdsI = zeros(size(X));
-		UzDdsI = zeros(size(X));
-
-		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
-				UxDnI, UyDnI, UzDnI,
-				UxDssI,UyDssI,UzDssI,
-				UxDdsI,UyDdsI,UzDdsI)	
-
-				Ux.+=UxDnI.+UxDssI.+UxDdsI;
-				Uy.+=UyDnI.+UyDssI.+UyDdsI;
-				Uz.+=UzDnI.+UzDssI.+UzDdsI;
-	end
-	if StrainFlag==1
-		εxxDnI  = zeros(size(X));
-		εyyDnI  = zeros(size(X));
-		εzzDnI  = zeros(size(X));
-		εxyDnI  = zeros(size(X));
-		εxzDnI  = zeros(size(X));
-		εyzDnI  = zeros(size(X));
-		εxxDssI = zeros(size(X));
-		εyyDssI = zeros(size(X));
-		εzzDssI = zeros(size(X));
-		εxyDssI = zeros(size(X));
-		εxzDssI = zeros(size(X));
-		εyzDssI = zeros(size(X));
-		εxxDdsI = zeros(size(X));
-		εyyDdsI = zeros(size(X));
-		εzzDdsI = zeros(size(X));
-		εxyDdsI = zeros(size(X));
-		εxzDdsI = zeros(size(X));
-		εyzDdsI = zeros(size(X));
-
-		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
-				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
-				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
-				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI)	
-
-				εxx.+=εxxDnI.+εxxDssI.+εxxDdsI;
-				εyy.+=εyyDnI.+εyyDssI.+εyyDdsI;
-				εzz.+=εzzDnI.+εzzDssI.+εzzDdsI;
-				εxy.+=εxyDnI.+εxyDssI.+εxyDdsI;
-				εxz.+=εxzDnI.+εxzDssI.+εxzDdsI;
-				εyz.+=εyzDnI.+εyzDssI.+εyzDdsI;					
-
-	end
-
-end
-if StrainFlag==1
-	StrainInfVector=Strains(εxx,εyy,εzz,εxy,εxz,εyz);
-	
-else
-	StrainInfVector=Strains([],[],[],[],[],[]);
-end
-if DispFlag==1
-	DispInfVector=Disps(Ux,	Uy,	Uz);
-else
-	DispInfVector=Disps([],	[],	[])
-end
-return(StrainInfVector,DispInfVector)
-end
-
 function CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,P1P2,P3P1)
 # Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
 # as an exception, if the normal vector points upward, the strike and dip 
@@ -486,8 +529,10 @@ function CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,P1P2,P3P1)
 # downward, the strike and dip vectors point Southward and Westward, 
 # respectively.
 
-P1P2.=P2.-P1;
-P3P1.=P3.-P1;
+for i=1:3
+	P1P2[i]=P2[i]-P1[i];
+	P3P1[i]=P3[i]-P1[i];
+end
 cross!(P1P2,P3P1,Vnorm);
 Vnorm.= Vnorm./sqrt(Vnorm[1]^2+Vnorm[2]^2+Vnorm[3]^2)
 cross!(eZ,Vnorm,Vstrike);
@@ -504,15 +549,16 @@ function TDdispFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,ImageFlag,Vnorm,Vstrike,Vdip,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,Pos,Neg,casezLog,
 				UxDn, UyDn, UzDn,
 				UxDss,UyDss,UzDss,
-				UxDds,UyDds,UzDds)
+				UxDds,UyDds,UzDds,
+				VxR,VyR,VzR)
 
 
 if ImageFlag==1; #This means we are computing the iamge dislocation
 
 	#Inverse rot mat
-	VxR=zeros(size(Vnorm));#Single alloc here!
-	VyR=zeros(size(Vnorm));
-	VzR=zeros(size(Vnorm));
+	#VxR=zeros(size(Vnorm));#Single alloc here!
+	#VyR=zeros(size(Vnorm));
+	#VzR=zeros(size(Vnorm));
 	VxR[1]=Vnorm[1]; VxR[2]=Vstrike[1]; VxR[3]=Vdip[1];
 	VyR[1]=Vnorm[2]; VyR[2]=Vstrike[2]; VyR[3]=Vdip[2];
 	VzR[1]=Vnorm[3]; VzR[2]=Vstrike[3]; VzR[3]=Vdip[3];
@@ -794,8 +840,8 @@ function TDSetupD(x,y,z,alpha,Dn,Dss,Dds,ν,TriVertex,SideVec,
 # slip vector components from ADCS into TDCS. It then calculates the 
 # displacements in ADCS and transforms them into TDCS.
 
-Ct=SideVec[3];
-St=SideVec[2];
+local Ct=SideVec[3];
+local St=SideVec[2];
 
 #Here we compute slip vectors for a unit dislocation (of the given magnitude) (StrikeSlip and Dipslip separately)
 # Transform the in-plane slip vector components from TDCS into ADCS
@@ -927,7 +973,8 @@ end
 function TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,Vnorm,Vstrike,Vdip,
 				UxDn, UyDn, UzDn,
 				UxDss,UyDss,UzDss,
-				UxDds,UyDds,UzDds)
+				UxDds,UyDds,UzDds,
+				empty1,empty2,empty3,empty6,empty7,empty8)
 # TDdisp_HarFunc calculates the harmonic function contribution to the
 # displacements associated with a triangular dislocation in a half-space.
 # The function cancels the surface normal tractions induced by the main and
@@ -939,19 +986,22 @@ function TDdisp_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,ν,Vnorm,Vstrike,Vdip,
 AngSetupDispFSC(X,Y,Z,P1,P2,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
-UxDds,UyDds,UzDds); 
+UxDds,UyDds,UzDds,
+empty1,empty2,empty3,empty6,empty7,empty8); 
  
 # Side P2P3
 AngSetupDispFSC(X,Y,Z,P2,P3,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
-UxDds,UyDds,UzDds); 
+UxDds,UyDds,UzDds,
+empty1,empty2,empty3,empty6,empty7,empty8); 
  
 # Side P3P1
 AngSetupDispFSC(X,Y,Z,P3,P1,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
 UxDn, UyDn, UzDn,
 UxDss,UyDss,UzDss,
-UxDds,UyDds,UzDds); 
+UxDds,UyDds,UzDds,
+empty1,empty2,empty3,empty6,empty7,empty8); 
 
 end
 
@@ -959,7 +1009,8 @@ end
 function AngSetupDispFSC(X,Y,Z,PA,PB,ν,Vnorm,Vstrike,Vdip,Dn,Dss,Dds,
  UxDn,UyDn,UzDn,
  UxDss,UyDss,UzDss,
- UxDds,UyDds,UzDds)
+ UxDds,UyDds,UzDds,
+ ey1,ey2,ey3,VxR,VyR,VzR)
 # AngSetupFSC calculates the Free Surface Correction to displacements 
 # associated with angular dislocation pair on each TD side.
 
@@ -975,12 +1026,16 @@ else
 	#println("reduce between here")
 	###############################
     
-	ey1=zeros(3);
-	ey1[1:2] = SideVec[1:2];	
-	ey1 = ey1/sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)  #could use :norm(ey1);
-	ey3 = -eZ;
-	ey2 = cross(ey3,ey1);
-	
+    #ey1=zeros(3);
+    ey1[1] = SideVec[1];	
+    ey1[2] = SideVec[2];	
+    nrmey1 = sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)
+    for i=1:3;
+    	ey1[i] = ey1[i]/nrmey1;
+    	ey3[i] = -eZ[i];
+    end  #could use :norm(ey1);
+    ey2 = cross(ey3,ey1);
+
 	# Transform coordinates from EFCS to the second ADCS
 	(y1B,y2B,y3B)=RotateObject3DNewCoords!(SideVec[1],SideVec[2],SideVec[3],0.,0.,0.,ey1,ey2,ey3)
 
@@ -1212,14 +1267,13 @@ function TDstrainFS(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,G,λ,ν,ImageFlag,Vnorm,Vstrike,Vd
 					p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,Pos,Neg,casezLog,
 		 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 		 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds)
+		 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
+		 RotInvMat,emptymat1by9)
 # TDstressFS 
 # Calculates stresses and strains associated with a triangular dislocation 
 # in an elastic full-space.
 
-
-if ImageFlag==1; #This means we are computing the iamge dislocation
-	RotInvMat=zeros(1,9); #Single alloc here!
+if ImageFlag==1; #This means we are computing the image dislocation
 	RotInvMat[1]=Vnorm[1]; RotInvMat[2]=Vstrike[1]; RotInvMat[3]=Vdip[1];
 	RotInvMat[4]=Vnorm[2]; RotInvMat[5]=Vstrike[2]; RotInvMat[6]=Vdip[2];
 	RotInvMat[7]=Vnorm[3]; RotInvMat[8]=Vstrike[3]; RotInvMat[9]=Vdip[3];
@@ -1243,40 +1297,40 @@ e13.=.-e13;
 TDSetupS(x,y,z,A,Dn,Dss,Dds,ν,p1,e13,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos); e13.=.-e13; #3allocs
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos,emptymat1by9); e13.=.-e13; #3allocs
  
 # Calculate second angular dislocation contribution
 TDSetupS(x,y,z,B,Dn,Dss,Dds,ν,p2,e12,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos); 
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos,emptymat1by9); 
  
 # Calculate third angular dislocation contribution
 TDSetupS(x,y,z,C,Dn,Dss,Dds,ν,p3,e23,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos);
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Pos,emptymat1by9);
 
 
 # Calculate first angular dislocation contribution NEG
 TDSetupS(x,y,z,A,Dn,Dss,Dds,ν,p1,e13,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg);
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg,emptymat1by9);
 
 # Calculate second angular dislocation contribution
 e12.=.-e12;
 TDSetupS(x,y,z,B,Dn,Dss,Dds,ν,p2,e12,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg); e12.=.-e12;
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg,emptymat1by9); e12.=.-e12;
  
 # Calculate third angular dislocation contribution 
 e23.=.-e23;
 TDSetupS(x,y,z,C,Dn,Dss,Dds,ν,p3,e23,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg); e23.=.-e23;
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Neg,emptymat1by9); e23.=.-e23;
 		
 # Calculate the strain tensor components in TDCS
 for i=eachindex(x)
@@ -1304,7 +1358,7 @@ for i=eachindex(x)
 	end
 end
 
-RotMat=zeros(1,9); #Single alloc here!
+RotMat=RotInvMat; 
 RotMat[1:3]=Vnorm; RotMat[4:6]=Vstrike; RotMat[7:9]=Vdip; 
 # Transform the strain tensor components from TDCS into EFCS
 (εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn) = TensorTransformation3D!(εxxDn,εyyDn,εzzDn,εxyDn,εxzDn,εyzDn,RotMat);
@@ -1333,13 +1387,14 @@ end
 function TDSetupS(x,y,z,alpha,Dn,Dss,Dds,ν,TriVertex,SideVec,
 				 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 				 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-				 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Index)
+				 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,Index,B)
 # TDSetupS transforms coordinates of the calculation points as well as 
 # slip vector components from ADCS into TDCS. It then calculates the 
 # strains in ADCS and transforms them into TDCS.
 
-Ct=SideVec[3];
-St=SideVec[2];
+local Ct=SideVec[3];
+local St=SideVec[2];
+
 
 #Here we compute slip vectors for a unit dislocation (of the given magnitude) (StrikeSlip and Dipslip separately)	
 # Transform the in-plane slip vector components from TDCS into ADCS
@@ -1366,7 +1421,7 @@ E5Dss0=Dss0/8/pi/E1;
 
 # Transform strains from ADCS into TDCS 
 #B=[[1. 0. 0.];[0. Ct St];[0. -St Ct]]	 # 3x3 Transformation matrix
-B=zeros(1,9); #Single alloc here!
+#B=zeros(1,9); #Single alloc here!
 B[1]=1.; B[5]=Ct; B[6]=-St; B[8]=St; B[9]=Ct; #Col wise indexing
 
 # Calculate strains associated with an angular dislocation in ADCS
@@ -1537,7 +1592,8 @@ end
 function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,G,λ,ν,Vnorm,Vstrike,Vdip,
 			 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 			 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-			 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
+			 εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
+			 empty1,empty2,empty3,empty4,empty6,empty7,empty8);
 # TDstrain_HarFunc calculates the harmonic function contribution to the
 # strains and stresses associated with a triangular dislocation in a 
 # half-space. The function cancels the surface normal tractions induced by 
@@ -1548,20 +1604,23 @@ function TDstrain_HarFunc(X,Y,Z,P1,P2,P3,Dss,Dds,Dn,G,λ,ν,Vnorm,Vstrike,Vdip,
 AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P1,P2,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
+empty1,empty2,empty3,empty4,empty6,empty7,empty8);
  
 # P2P3
 AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P2,P3,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds); 
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
+empty1,empty2,empty3,empty4,empty6,empty7,empty8);
  
  
 # P3P1 
 AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,P3,P1,G,λ,ν,Vnorm,Vstrike,Vdip,
 εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
+εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
+empty1,empty2,empty3,empty4,empty6,empty7,empty8);
 
 end
 
@@ -1569,7 +1628,8 @@ end
 function AngSetupStrainFSC(X,Y,Z,Dn,Dss,Dds,PA,PB,G,λ,ν,Vnorm,Vstrike,Vdip,
 							εxxDn, εyyDn, εzzDn, εxyDn, εxzDn, εyzDn,
 							εxxDss,εyyDss,εzzDss,εxyDss,εxzDss,εyzDss,
-							εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds);
+							εxxDds,εyyDds,εzzDds,εxyDds,εxzDds,εyzDds,
+							ey1,ey2,ey3,AFlip,VxR,VyR,VzR);
 # AngSetupFSC_S calculates the Free Surface Correction to strains and 
 # stresses associated with angular dislocation pair on each TD side.
 
@@ -1580,26 +1640,28 @@ if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>5e3 #5e3 is around: (
     #Inputs come out the same (we add 0...)
 else
     
-	ey1=zeros(3);
-	ey1[1:2] = SideVec[1:2];	
-	ey1 = ey1/sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)  #could use :norm(ey1);
-	ey3 = -eZ;
+	#ey1=zeros(3);
+	ey1[1] = SideVec[1];	
+	ey1[2] = SideVec[2];	
+	nrmey1 = sqrt(ey1[1]^2+ey1[2]^2+ey1[3]^2)
+	for i=1:3;
+		ey1[i] = ey1[i]/nrmey1;
+		ey3[i] = -eZ[i];
+	end  #could use :norm(ey1);
 	ey2 = cross(ey3,ey1);
-	
-
 
 	# Transform coordinates from EFCS to the second ADCS
 	(y1B,y2B,y3B)=RotateObject3DNewCoords!(SideVec[1],SideVec[2],SideVec[3],0.,0.,0.,ey1,ey2,ey3)
 
 	#Inverse rot mat
-	AFlip=zeros(1,9);
+	#AFlip=zeros(1,9);
 	AFlip[1]=ey1[1];AFlip[2]=ey1[2];AFlip[3]=ey1[3];
 	AFlip[4]=ey2[1];AFlip[5]=ey2[2];AFlip[6]=ey2[3];
 	AFlip[7]=ey3[1];AFlip[8]=ey3[2];AFlip[9]=ey3[3];
 	#AFlip = [ey1[1] ey1[2] ey1[3] ey2[1] ey2[2] ey2[3] ey3[1] ey3[2] ey3[3]]; # Transformation matri
 	
 	#Inverse rot mat
-	VxR=zeros(3,1);VyR=zeros(3,1);VzR=zeros(3,1)
+	#VxR=zeros(3,1);VyR=zeros(3,1);VzR=zeros(3,1)
 	VxR[1]=ey1[1];VyR[1]=ey1[2];VzR[1]=ey1[3];
 	VxR[2]=ey2[1];VyR[2]=ey2[2];VzR[2]=ey2[3];
 	VxR[3]=ey3[1];VyR[3]=ey3[2];VzR[3]=ey3[3];
