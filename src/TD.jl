@@ -138,13 +138,17 @@ function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 eY,eZ,FillAList,FillBList,λ,
 empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
-p1,p2,p3,x,y,z,p1i,p2i,p3i,xi,yi,zi,e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
-casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList)=
+p1List,p2List,p3List,p1iList,p2iList,p3iList,e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
+casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
 
 
-Threads.@threads for i=1:SzCmp #For every element (multithreaded)       
+Threads.@threads for i=1:SzCmp #For every element (multithreaded)   
 	#println("Multithreading off")
+
+	
+	#println(Threads.threadid())
+
 
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
@@ -154,9 +158,10 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
 	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
-	p1,p2,p3,x,y,z,p1i,p2i,p3i,xi,yi,zi,
+	p1List,p2List,p3List,p1iList,p2iList,p3iList,
 	e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
-	casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList)
+	casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)
+
 	#Allocate outside of funcs (using @view we just assign a pointer). 
 	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
 	if DispFlag==1
@@ -209,7 +214,7 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)	
 
 	end
-
+	
 end
 return(StrainInfMat,DispInfMat)
 end
@@ -235,11 +240,12 @@ end
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 eY,eZ,FillAList,FillBList,λ,
 empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
-p1,p2,p3,x,y,z,p1i,p2i,p3i,xi,yi,zi,e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
-casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList)=
+p1List,p2List,p3List,p1iList,p2iList,p3iList,e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
+casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
 
-Threads.@threads for i=1:SzCmp #For every element (multithreaded)  
+#DO NOT LOOP ME! (Check why...)
+for i=1:SzCmp 
 	#println("Multithreading off")
 
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
@@ -250,9 +256,11 @@ Threads.@threads for i=1:SzCmp #For every element (multithreaded)
 	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
 	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
-	p1,p2,p3,x,y,z,p1i,p2i,p3i,xi,yi,zi,
+	p1List,p2List,p3List,p1iList,p2iList,p3iList,
 	e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
-	casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList)
+	casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)
+
+
 
 	if DispFlag==1
 		UxDnI  = zeros(size(X)); 
@@ -387,18 +395,12 @@ empty8List=zeros(SzCmp,3);
 empty9List=zeros(SzCmp,3);
 empty10List=zeros(SzCmp,3);
 
-p1=zeros(3);
-p2=zeros(3);
-p3=zeros(3);
-p1i=zeros(3);
-p2i=zeros(3);
-p3i=zeros(3);
-x=copy(X);
-y=copy(Y);
-z=copy(Z);
-xi=copy(X);
-yi=copy(Y);
-zi=copy(Z);
+p1List=zeros(SzCmp,3);
+p2List=zeros(SzCmp,3);
+p3List=zeros(SzCmp,3);
+p1iList=zeros(SzCmp,3);
+p2iList=zeros(SzCmp,3);
+p3iList=zeros(SzCmp,3);
 
 
 e12List=zeros(SzCmp,3);
@@ -414,19 +416,20 @@ AiList=zeros(SzCmp,1);
 BiList=zeros(SzCmp,1);
 CiList=zeros(SzCmp,1);
 
-
-casepLogList=falses(SzCmp,length(X));
-casenLogList=falses(SzCmp,length(X));
-casezLogList=falses(SzCmp,length(X));
-casepLogiList=falses(SzCmp,length(X));
-casenLogiList=falses(SzCmp,length(X));
-casezLogiList=falses(SzCmp,length(X));
+lengthObs=length(X);
+#Removing allocs until thread thing is fixed
+casepLogList=[];#falses(SzCmp,lengthObs);
+casenLogList=[];#falses(SzCmp,lengthObs);
+casezLogList=[];#falses(SzCmp,lengthObs);
+casepLogiList=[];#falses(SzCmp,lengthObs);
+casenLogiList=[];#falses(SzCmp,lengthObs);
+casezLogiList=[];#falses(SzCmp,lengthObs);
 
 return SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 eY,eZ,FillAList,FillBList,λ,
 empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
-p1,p2,p3,x,y,z,p1i,p2i,p3i,xi,yi,zi,e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
-casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList
+p1List,p2List,p3List,p1iList,p2iList,p3iList,e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
+casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs
 
 end
 
@@ -435,13 +438,13 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 					VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 					FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
 					empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
-					p1,p2,p3,x,y,z,p1i,p2i,p3i,xi,yi,zi,
+					p1List,p2List,p3List,p1iList,p2iList,p3iList,
 					e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
-					casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList)
+					casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)
 
 
 	#All of the below could view based on thread no not i (and be init as smaller)
-	
+
 	P1=view(P1List,i,:);
 	P2=view(P2List,i,:);
 	P3=view(P3List,i,:);
@@ -456,6 +459,24 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	Vstrikei=view(VstrikeiList,i,:);
 	Vdipi=	view(VdipiList,i,:);
 
+	FillA=view(FillAList,i,:);
+	FillB=view(FillBList,i,:);
+
+	p1=view(p1List,i,:);
+	p2=view(p2List,i,:);
+	p3=view(p3List,i,:);
+	p1i=view(p1iList,i,:);
+	p2i=view(p2iList,i,:);
+	p3i=view(p3iList,i,:);
+
+	x=copy(X);
+	y=copy(Y);
+	z=copy(Z);
+	xi=copy(X);
+	yi=copy(Y);
+	zi=copy(Z);
+	
+	
 	empty1=	view(empty1List,i,:);
 	empty2=	view(empty2List,i,:);
 	empty3=	view(empty3List,i,:);
@@ -466,10 +487,8 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	empty8=	view(empty8List,i,:);
 	empty9=	view(empty9List,i,:);
 	empty10=view(empty10List,i,:);
-
-	FillA=view(FillAList,i,:);
-	FillB=view(FillBList,i,:);
-
+	
+	
 	A=	view(AList,i,:);
 	B=	view(BList,i,:);
 	C=	view(CList,i,:);
@@ -483,12 +502,22 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	e13i=view(e13iList,i,:);
 	e23i=view(e23iList,i,:);
 
-	casepLog=view(casepLogList,i,:);
-	casenLog=view(casenLogList,i,:);
-	casezLog=view(casezLogList,i,:);
-	casepLogi=view(casepLogiList,i,:);
-	casenLogi=view(casenLogiList,i,:);
-	casezLogi=view(casezLogiList,i,:);
+	#For some odd reason the following doesnt work when threaded:
+	#=
+	casepLog=view(casepLogList,i,1:lengthObs);
+	casenLog=view(casenLogList,i,1:lengthObs);
+	casezLog=view(casezLogList,i,1:lengthObs);
+	casepLogi=view(casepLogiList,i,1:lengthObs);
+	casenLogi=view(casenLogiList,i,1:lengthObs);
+	casezLogi=view(casezLogiList,i,1:lengthObs);
+	=#
+
+	casepLog=falses(lengthObs);
+	casenLog=falses(lengthObs);
+	casezLog=falses(lengthObs);
+	casepLogi=falses(lengthObs);
+	casenLogi=falses(lengthObs);
+	casezLogi=falses(lengthObs);
 
 	CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,FillA,FillB);
 	CalculateLocalTriCoords!(P1i,P2i,P3i,Vnormi,Vstrikei,Vdipi,eY,eZ,FillA,FillB);
@@ -497,10 +526,10 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	##Reducing Allocs further in these would be good!
 	(p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog)=
 	GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip,empty1,empty2,empty3,p1,p2,p3,x,y,z,
-	A,B,C,e12,e13,e23,casepLog,casenLog,casezLog)
+	A,B,C,e12,e13,e23,casepLog,casenLog,casezLog,i)
 	(p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi)=
 	GlobalToTDECoords(P1i,P2i,P3i,X,Y,Z,Vnormi,Vstrikei,Vdipi,empty1,empty2,empty3,p1i,p2i,p3i,xi,yi,zi,
-	Ai,Bi,Ci,e12i,e13i,e23i,casepLogi,casenLogi,casezLogi)
+	Ai,Bi,Ci,e12i,e13i,e23i,casepLogi,casenLogi,casezLogi,i)
 
 	if HSflag==1
 		AboveHalfSpace=false
@@ -769,7 +798,7 @@ end
 function GlobalToTDECoords(P1,P2,P3,X,Y,Z,Vnorm,Vstrike,Vdip,
 							Vx,Vy,Vz,p1,p2,p3,x,y,z,
 							A,B,C,e12,e13,e23,
-							casepLog,casenLog,casezLog)
+							casepLog,casenLog,casezLog,indx)
 # Transform coordinates from EFCS into TDCS
 
 #Inverse rot mat
@@ -791,10 +820,13 @@ for i=eachindex(z);z[i]=Z[i];end;
 (p1[1],p1[2],p1[3])=RotateObject3DNewCoords!(p1[1],p1[2],p1[3],P2[1],P2[2],P2[3],Vx,Vy,Vz)
 (p3[1],p3[2],p3[3])=RotateObject3DNewCoords!(p3[1],p3[2],p3[3],P2[1],P2[2],P2[3],Vx,Vy,Vz)#Vx,Vy,Vz
 
+
 #Get interior angles and vectors along the triangle edges. 
 (e12,e13,e23,A,B,C)=CalcTDVectsAndAngles(p1,p2,p3,A,B,C,e12,e13,e23) #7 allocs
 # Determine the best arteact-free configuration for each calculation point
 (casepLog,casenLog,casezLog) = trimodefinder(y,z,x,p1[2:3],p2[2:3],p3[2:3],casepLog,casenLog,casezLog);
+
+
 
 #Turn to cart index
 #casepLog=findall(casepLog);
@@ -891,6 +923,7 @@ e13=e13/sqrt(e13[1]^2+e13[2]^2+e13[3]^2);
 for i=eachindex(e23);e23[i]=p3[i]-p2[i];end
 e23=e23/sqrt(e23[1]^2+e23[2]^2+e23[3]^2);
 =#
+
 # Calculate the TD angles
 A=(e12[1]*e13[1])+(e12[2]*e13[2])+(e12[3]*e13[3]);
 A=acos(A);
@@ -925,7 +958,8 @@ p3_2_m_p1_2=p3[2]-p1[2];
 Base=(p2_2_m_p3_2*p1_1_m_p3_1+p3_1_m_p2_1*p1_2_m_p3_2);
 
 #reset
-for i=eachindex(casepLog)
+
+for i=eachindex(x)
 	casepLog[i]=false
 	casenLog[i]=false
 	casezLog[i]=false
@@ -990,7 +1024,7 @@ local SinT=SideVec[2];
 
 
 #Init arrays
-Ang=-pi+alpha;
+Ang=-pi+alpha[1];
 cosA = cos(Ang);
 sinA = sin(Ang);
 
@@ -1165,9 +1199,6 @@ if abs(beta)<eps() || abs(pi-beta)<eps() || abs(cot(beta))>5e3 #5e3 is around: (
 	#Simply add nothing to the values coming in
 else
 
-	#ALL ALLOCS BETWEEN HERE
-	#println("reduce between here")
-	###############################
     
     #ey1=zeros(3);
     ey1[1] = SideVec[1];	
@@ -1535,7 +1566,7 @@ local SinT=SideVec[2];
 (Dss0,Dds1)=RotateObject2D(0.,Dds,0.,0.,CosT,SinT)
 
 #Init arrays
-Ang=-pi+alpha;
+Ang=-pi+alpha[1];
 cosA = cos(Ang);
 sinA = sin(Ang);
 
@@ -1555,6 +1586,7 @@ E5Dss0=Dss0/8/pi/E1;
 # Transform strains from ADCS into TDCS 
 #B=[[1. 0. 0.];[0. CosT SinT];[0. -SinT CosT]]	 # 3x3 Transformation matrix
 #B=zeros(1,9); #Single alloc here!
+B[2]=0.; B[3]=0.; B[4]=0.; B[7]=0.; B[9]=0.;
 B[1]=1.; B[5]=CosT; B[6]=-SinT; B[8]=SinT; B[9]=CosT; #Col wise indexing
 
 # Calculate strains associated with an angular dislocation in ADCS
