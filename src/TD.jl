@@ -146,10 +146,6 @@ PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
 Threads.@threads for i=1:SzCmp #For every element (multithreaded)   
 	#println("Multithreading off")
 
-	
-	#println(Threads.threadid())
-
-
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
 	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
@@ -364,57 +360,64 @@ for i=1:SzCmp
 	P3iList[i,3] = -P3iList[i,3]
 end
 
-
 #Comp FaceNormalVector...
 
-VnormList  	= zeros(SzCmp,3); 
-VstrikeList = zeros(SzCmp,3); 
-VdipList  	= zeros(SzCmp,3); 
-VnormiList  = zeros(SzCmp,3); 
-VstrikeiList= zeros(SzCmp,3); 
-VdipiList  	= zeros(SzCmp,3); 
 
 #Some allocations out of loop
 eY = [0.;1.;0.];
 eZ = [0.;0.;1.];
-FillAList= zeros(SzCmp,3);
-FillBList= zeros(SzCmp,3); 
+
 
 #Elastic con
 λ=(2*G*ν)/(1-(2*ν));
 
+
+#Init arrays that are the size of the threads we use, each col is then allocated to that thread
+SzCmp2=Threads.nthreads()
+
+VnormList  	= zeros(SzCmp2,3); 
+VstrikeList = zeros(SzCmp2,3); 
+VdipList  	= zeros(SzCmp2,3); 
+VnormiList  = zeros(SzCmp2,3); 
+VstrikeiList= zeros(SzCmp2,3); 
+VdipiList  	= zeros(SzCmp2,3); 
+
+
+FillAList= zeros(SzCmp2,3);
+FillBList= zeros(SzCmp2,3); 
+
+p1List=zeros(SzCmp2,3);
+p2List=zeros(SzCmp2,3);
+p3List=zeros(SzCmp2,3);
+p1iList=zeros(SzCmp2,3);
+p2iList=zeros(SzCmp2,3);
+p3iList=zeros(SzCmp2,3);
+
 #Would not need as lists if we were not Multithreading
-empty1List=zeros(SzCmp,3);
-empty2List=zeros(SzCmp,3);
-empty3List=zeros(SzCmp,3);
-empty4List=zeros(SzCmp,9);
-empty5List=zeros(SzCmp,9);
-empty6List=zeros(SzCmp,3);
-empty7List=zeros(SzCmp,3);
-empty8List=zeros(SzCmp,3);
-empty9List=zeros(SzCmp,3);
-empty10List=zeros(SzCmp,3);
-
-p1List=zeros(SzCmp,3);
-p2List=zeros(SzCmp,3);
-p3List=zeros(SzCmp,3);
-p1iList=zeros(SzCmp,3);
-p2iList=zeros(SzCmp,3);
-p3iList=zeros(SzCmp,3);
+empty1List=zeros(SzCmp2,3);
+empty2List=zeros(SzCmp2,3);
+empty3List=zeros(SzCmp2,3);
+empty4List=zeros(SzCmp2,9);
+empty5List=zeros(SzCmp2,9);
+empty6List=zeros(SzCmp2,3);
+empty7List=zeros(SzCmp2,3);
+empty8List=zeros(SzCmp2,3);
+empty9List=zeros(SzCmp2,3);
+empty10List=zeros(SzCmp2,3);
 
 
-e12List=zeros(SzCmp,3);
-e13List=zeros(SzCmp,3);
-e23List=zeros(SzCmp,3);
-AList=zeros(SzCmp,1);
-BList=zeros(SzCmp,1);
-CList=zeros(SzCmp,1);
-e12iList=zeros(SzCmp,3);
-e13iList=zeros(SzCmp,3);
-e23iList=zeros(SzCmp,3);
-AiList=zeros(SzCmp,1);
-BiList=zeros(SzCmp,1);
-CiList=zeros(SzCmp,1);
+e12List=zeros(SzCmp2,3);
+e13List=zeros(SzCmp2,3);
+e23List=zeros(SzCmp2,3);
+AList=zeros(SzCmp2,1);
+BList=zeros(SzCmp2,1);
+CList=zeros(SzCmp2,1);
+e12iList=zeros(SzCmp2,3);
+e13iList=zeros(SzCmp2,3);
+e23iList=zeros(SzCmp2,3);
+AiList=zeros(SzCmp2,1);
+BiList=zeros(SzCmp2,1);
+CiList=zeros(SzCmp2,1);
 
 lengthObs=length(X);
 #Removing allocs until thread thing is fixed
@@ -443,6 +446,8 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 					casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)
 
 
+	
+
 	#All of the below could view based on thread no not i (and be init as smaller)
 
 	P1=view(P1List,i,:);
@@ -452,23 +457,6 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	P2i=view(P2iList,i,:);
 	P3i=view(P3iList,i,:);
 
-	Vnorm=	view(VnormList,i,:);
-	Vstrike=view(VstrikeList,i,:);
-	Vdip=	view(VdipList,i,:);
-	Vnormi=	view(VnormiList,i,:);
-	Vstrikei=view(VstrikeiList,i,:);
-	Vdipi=	view(VdipiList,i,:);
-
-	FillA=view(FillAList,i,:);
-	FillB=view(FillBList,i,:);
-
-	p1=view(p1List,i,:);
-	p2=view(p2List,i,:);
-	p3=view(p3List,i,:);
-	p1i=view(p1iList,i,:);
-	p2i=view(p2iList,i,:);
-	p3i=view(p3iList,i,:);
-
 	x=copy(X);
 	y=copy(Y);
 	z=copy(Z);
@@ -476,31 +464,51 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	yi=copy(Y);
 	zi=copy(Z);
 	
+	#Get the current thread ID. Only manipulate matrix inside this...
+	j=Threads.threadid()
+
+	Vnorm=	view(VnormList,j,:);
+	Vstrike=view(VstrikeList,j,:);
+	Vdip=	view(VdipList,j,:);
+	Vnormi=	view(VnormiList,j,:);
+	Vstrikei=view(VstrikeiList,j,:);
+	Vdipi=	view(VdipiList,j,:);
+
+	FillA=view(FillAList,j,:);
+	FillB=view(FillBList,j,:);
+
+	p1=view(p1List,j,:);
+	p2=view(p2List,j,:);
+	p3=view(p3List,j,:);
+	p1i=view(p1iList,j,:);
+	p2i=view(p2iList,j,:);
+	p3i=view(p3iList,j,:);
+
 	
-	empty1=	view(empty1List,i,:);
-	empty2=	view(empty2List,i,:);
-	empty3=	view(empty3List,i,:);
-	empty4=	view(empty4List,i,:);
-	empty5=	view(empty5List,i,:);
-	empty6=	view(empty6List,i,:);
-	empty7=	view(empty7List,i,:);
-	empty8=	view(empty8List,i,:);
-	empty9=	view(empty9List,i,:);
-	empty10=view(empty10List,i,:);
+	empty1=	view(empty1List,j,:);
+	empty2=	view(empty2List,j,:);
+	empty3=	view(empty3List,j,:);
+	empty4=	view(empty4List,j,:);
+	empty5=	view(empty5List,j,:);
+	empty6=	view(empty6List,j,:);
+	empty7=	view(empty7List,j,:);
+	empty8=	view(empty8List,j,:);
+	empty9=	view(empty9List,j,:);
+	empty10=view(empty10List,j,:);
 	
 	
-	A=	view(AList,i,:);
-	B=	view(BList,i,:);
-	C=	view(CList,i,:);
-	e12=view(e12List,i,:);
-	e13=view(e13List,i,:);
-	e23=view(e23List,i,:);
-	Ai=	view(AiList,i,:);
-	Bi=	view(BiList,i,:);
-	Ci=	view(CiList,i,:);
-	e12i=view(e12iList,i,:);
-	e13i=view(e13iList,i,:);
-	e23i=view(e23iList,i,:);
+	A=	view(AList,j,:);
+	B=	view(BList,j,:);
+	C=	view(CList,j,:);
+	e12=view(e12List,j,:);
+	e13=view(e13List,j,:);
+	e23=view(e23List,j,:);
+	Ai=	view(AiList,j,:);
+	Bi=	view(BiList,j,:);
+	Ci=	view(CiList,j,:);
+	e12i=view(e12iList,j,:);
+	e13i=view(e13iList,j,:);
+	e23i=view(e23iList,j,:);
 
 	#For some odd reason the following doesnt work when threaded:
 	#=
