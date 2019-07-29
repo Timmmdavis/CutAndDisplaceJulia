@@ -8,14 +8,17 @@ function testProp()
 
 	using AbstractPlotting
 	AbstractPlotting.__init__()
-	using DelimitedFiles
-	using Makie
-	using CutAndDisplaceJulia
 	using CutAndDisplaceJuliaPlots
+	using Makie
+
+	using DelimitedFiles
+	using CutAndDisplaceJulia
 	using Statistics
 	using BuildCGAL
 	using Debugger
-	cd(raw"C:\Users\timmm\Desktop\MeshProp")
+	cd(raw"C:\Users\Berlin\Desktop\MeshProp")
+	
+	using Plots; plot(rand(10))
 
 =#
 
@@ -23,8 +26,8 @@ function testProp()
 println("creating func vars")
 
 #Volume
-HeightCrack=50; #50
-Radius=1500
+HeightCrack=5; #50
+Radius=50
 CrackVolume=(π*(Radius^2))*HeightCrack
 
 #Load triangles and points from file (mesh)
@@ -43,20 +46,22 @@ Points[:,4]=X;
 =#
 
 #Pennys angle away from Z. 
-Beta=-45; #45 
+Beta=0; #45 
 BetaFromVert=90-Beta;
 #Rotate this (YZ)
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
 
+Radius=Radius/2 #start smaller...
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*Radius;
-Points[:,4]=Points[:,4].-13500; #2Km deep
+Points[:,4]=Points[:,4].-10000; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=100;
 
-( Area,HalfPerimeter ) = CutAndDisplaceJulia.AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
-max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-target_edge_length=(mean(HalfPerimeter)*(2/3))*1.5
+#Define a number of tris you want the mesh to have
+NoTris=300;
+(target_edge_length,max_target_edge_length)=
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,NoTris)
 
 #For the remeshing in CGAL to work correctly 
 (Triangles,Points)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
@@ -68,11 +73,14 @@ target_edge_length=(mean(HalfPerimeter)*(2/3))*1.5
 scene=[];limits=[];
 Px=[];Py=[];Pz=[];
 EdgePoints=[]
-draw=1
+draw=0
 if draw==0
 	println("Drawing off")
 end
-
+UsingPlots=1
+if UsingPlots==1
+	println("Plottingsimple on")
+end
 #If you run a few times this will help differntiate the results
 RandNum=rand(1:100)
 p=0
@@ -116,8 +124,8 @@ for i=1:lps
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
 	#Recompute target_edge_length
-	max_target_edge_length=maximum(HalfPerimeter)*(2/3)
-	#target_edge_length=mean(HalfPerimeter)*(2/3)
+	(target_edge_length,max_target_edge_length)=
+	CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,NoTris)
 
 
 
@@ -136,7 +144,8 @@ for i=1:lps
 
 
 	# Which bits we want to compute
-	HSFlag=1; #const 
+	HSFlag=0; #const
+	printstyled("Hs off \n",color=:cyan) 
 
 	#Elastic constants
 	G=ShearModulus(2.0e9); 
@@ -156,8 +165,13 @@ for i=1:lps
 	σxy = zeros(n);    
 	σxz = zeros(n);
 	σyz = zeros(n);
+	Tn=zeros(n)
 	#Bouyancy
-	Tn=Z.*(g*(ρrock-ρfluid)); println("Check P and T ppr for this eq")
+	println("Check P and T ppr for this eq")
+	ZInterface=Z#.+5000
+	for j=1:length(ZInterface)
+		Tn[j]=ZInterface[j]*(g*(ρrock-ρfluid)); #
+	end
 	Tss=zeros(n)
 	Tds=zeros(n)
 	Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
@@ -316,7 +330,7 @@ for i=1:lps
 
 	max_target_edge_length=maximum(HalfPerimeter[nonNan])*(2/3)
 	AvgTriangleEdgeLength=mean(HalfPerimeter[nonNan])*(2/3)
-	KCrit=5e7; #[50 MPa √m]
+	KCrit=0.05e7; #[5e7 = 50 MPa √m]
 
 	#Switch so new free elements are used but old ones no longer free edges
 	FeP1P2S.FreeFlg=NewFeP1P2.FreeFlg;
@@ -325,6 +339,28 @@ for i=1:lps
 
 	#Comp propagation on new els - stress intensity is NaN for new edges
 	(p1,p2,p3,StillEdge_P1P2,StillEdge_P1P3,StillEdge_P2P3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit,AvgTriangleEdgeLength )
+
+
+	if UsingPlots==1
+		a=1; #plot for y
+		b=3; #plot for z
+		XMid=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,a]
+			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,a]
+			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,a]]
+		YMid=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,b]
+			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,b]
+			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,b]]
+		StrainEnergyV=[FeP1P2S.StrainEnergy[FeP1P2S.FreeFlg,1]
+					  FeP1P3S.StrainEnergy[FeP1P3S.FreeFlg,1]
+					  FeP2P3S.StrainEnergy[FeP2P3S.FreeFlg,1]]	
+
+		fig = plot()
+		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="")
+		display(fig)
+		savefig("$i-$p-FaultEdges-$RandNum.png")
+		#return XMid, YMid, StrainEnergyV
+		
+	end
 
 	#New fracture tip points
 	Px=[p1[:,1]; p2[:,1]; p3[:,1]];

@@ -18,6 +18,7 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	X=zeros(size(Y));
 	breakat=[]
 	lps=0
+	max_reached=false
 	for i=1:length(Y)
 		lps+=1
 	    X[i]=ObjFunc(Y[i]);
@@ -27,15 +28,43 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	    end
 	    #break loop early if we have already hit DesiredVal
 	    if X[i]>Desired_X
+	    	max_reached=true
 	    	X=X[1:i];
 	    	Y=Y[1:i];
 	    	break
 	    end
 	end
 
+	
+	#if we broke out of first loop without reaching max increase max pressure
+	if max_reached==false
+		println("Didnt reach max - retrying")
+		Y = range(MaxVal,stop=MaxVal*2,length=NumberOfIts); #linspace deprecated
+		X=zeros(size(Y));
+		breakat=[]
+		lps=0
+		max_reached=false
+		for i=1:length(Y)
+			lps+=1
+		    X[i]=ObjFunc(Y[i]);
+		    #Stops bad knot vector error (sometimes the loops in the obj func are not enough to stop neg values coming out)
+		    if X[i]<0
+		    	X[i]=1e-12*i
+		    end
+		    #break loop early if we have already hit DesiredVal
+		    if X[i]>Desired_X
+		    	max_reached==true
+		    	X=X[1:i];
+		    	Y=Y[1:i];
+		    	break
+		    end
+		end
+	end
+
 	#if we broke out of last loop super early redo with a better sampling 
 	Minimum=3
 	if lps<Minimum 
+		println("droppingdownMaxPressure")
 		if length(Y)==2
 			Y = range(MinVal,stop=Y[2],length=NumberOfIts); #linspace deprecated
 		else
@@ -51,12 +80,15 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 		    end
 		    #break loop early if we have already hit DesiredVal
 		    if X[i]>Desired_X
+		    	max_reached==true
 		    	X=X[1:i];
 		    	Y=Y[1:i];
 		    	break
 		    end
 		end
 	end
+
+
 	
 	#@info X Y Desired_X
 	
