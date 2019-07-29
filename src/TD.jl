@@ -421,12 +421,12 @@ CiList=zeros(SzCmp2,1);
 
 lengthObs=length(X);
 #Removing allocs until thread thing is fixed
-casepLogList=[];#falses(SzCmp,lengthObs);
-casenLogList=[];#falses(SzCmp,lengthObs);
-casezLogList=[];#falses(SzCmp,lengthObs);
-casepLogiList=[];#falses(SzCmp,lengthObs);
-casenLogiList=[];#falses(SzCmp,lengthObs);
-casezLogiList=[];#falses(SzCmp,lengthObs);
+casepLogList=fill(false, SzCmp2,lengthObs) 
+casenLogList=fill(false, SzCmp2,lengthObs) 
+casezLogList=fill(false, SzCmp2,lengthObs) 
+casepLogiList=fill(false, SzCmp2,lengthObs) 
+casenLogiList=fill(false, SzCmp2,lengthObs) 
+casezLogiList=fill(false, SzCmp2,lengthObs) 
 
 return SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
 eY,eZ,FillAList,FillBList,λ,
@@ -509,23 +509,13 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	e12i=view(e12iList,j,:);
 	e13i=view(e13iList,j,:);
 	e23i=view(e23iList,j,:);
-
-	#For some odd reason the following doesnt work when threaded:
-	#=
-	casepLog=view(casepLogList,i,1:lengthObs);
-	casenLog=view(casenLogList,i,1:lengthObs);
-	casezLog=view(casezLogList,i,1:lengthObs);
-	casepLogi=view(casepLogiList,i,1:lengthObs);
-	casenLogi=view(casenLogiList,i,1:lengthObs);
-	casezLogi=view(casezLogiList,i,1:lengthObs);
-	=#
-
-	casepLog=falses(lengthObs);
-	casenLog=falses(lengthObs);
-	casezLog=falses(lengthObs);
-	casepLogi=falses(lengthObs);
-	casenLogi=falses(lengthObs);
-	casezLogi=falses(lengthObs);
+	
+	casepLog=view(casepLogList,j,:);
+	casenLog=view(casenLogList,j,:);
+	casezLog=view(casezLogList,j,:);
+	casepLogi=view(casepLogiList,j,:);
+	casenLogi=view(casenLogiList,j,:);
+	casezLogi=view(casezLogiList,j,:);
 
 	CalculateLocalTriCoords!(P1,P2,P3,Vnorm,Vstrike,Vdip,eY,eZ,FillA,FillB);
 	CalculateLocalTriCoords!(P1i,P2i,P3i,Vnormi,Vstrikei,Vdipi,eY,eZ,FillA,FillB);
