@@ -230,9 +230,9 @@ for i=1:lps
 	Tss=zeros(n)
 	Tds=zeros(n)
 
-	println("Flipped for testing")
+	#println("Flipped for testing")
 	for j=1:length(Z)
-		if Z[j]>interface;
+		if Z[j]<interface;
 			Tn[j]=((ρrock-ρfluid)*g).*Z[j]; #
 		else
 			Tn[j]=((ρrocklight-ρfluid)*g).*Z[j];
