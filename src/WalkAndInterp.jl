@@ -65,8 +65,8 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 	Minimum=3
 	if lps<Minimum 
 		println("droppingdownMaxPressure")
-		if length(Y)==2
-			Y = range(MinVal,stop=Y[2],length=NumberOfIts); #linspace deprecated
+		if length(Y)<=2
+			Y = range(MinVal,maximum(Y),length=NumberOfIts); #linspace deprecated
 		else
 			Y = range(MinVal,stop=Y[Minimum],length=NumberOfIts); #linspace deprecated
 		end
@@ -80,6 +80,7 @@ function WalkAndInterp(ObjFunc, MinVal,MaxVal, NumberOfIts,Desired_X)
 		    end
 		    #break loop early if we have already hit DesiredVal
 		    if X[i]>Desired_X
+		    	@bp
 		    	max_reached==true
 		    	X=X[1:i];
 		    	Y=Y[1:i];

@@ -6,6 +6,7 @@ function testProp()
 	new_image=raw"C:\Users\timmm\.julia\dev\PackageCompiler\sysimg\sys.dll"; 
 	run(`$exepath --quiet -J $new_image`)
 
+	using Revise
 	using AbstractPlotting
 	AbstractPlotting.__init__()
 	using CutAndDisplaceJuliaPlots
@@ -16,7 +17,7 @@ function testProp()
 	using Statistics
 	using BuildCGAL
 	using Debugger
-	cd(raw"C:\Users\Berlin\Desktop\MeshProp")
+	cd(raw"C:\Users\timmm\Desktop\MeshProp")
 	
 	using Plots; plot(rand(10))
 
@@ -27,7 +28,7 @@ println("creating func vars")
 
 #Volume
 HeightCrack=5; #50
-Radius=50
+Radius=250
 CrackVolume=(π*(Radius^2))*HeightCrack
 
 #Load triangles and points from file (mesh)
@@ -77,15 +78,27 @@ draw=0
 if draw==0
 	println("Drawing off")
 end
-UsingPlots=1
+saveallthemeshes=0
+if saveallthemeshes==0
+	println("Saving only selected meshes (debug is off)")
+end
+UsingPlots=0
 if UsingPlots==1
 	println("Plottingsimple on")
 end
 #If you run a few times this will help differntiate the results
 RandNum=rand(1:100)
 p=0
+SlowingFracture=0
+StallingFracture=0
+
+
 #Looping from here on in
 for i=1:lps
+
+	KCrit=0.005e7; #[5e7 = 50 MPa √m]
+
+
 	p=1
 
 	xmid=mean(Points[:,2])
@@ -101,7 +114,9 @@ for i=1:lps
 
 	if draw==1
 		p+=1
-		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-AfterPolygonRemeshingCGAL-$RandNum")
+		if saveallthemeshes==1
+			OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-AfterPolygonRemeshingCGAL-$RandNum")
+		end
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
 		scene=CutAndDisplaceJuliaPlots.SetLookDirection(scene,xmid,ymid,zmid,xrange,"y")
@@ -118,7 +133,9 @@ for i=1:lps
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
 		scene=CutAndDisplaceJuliaPlots.SetLookDirection(scene,xmid,ymid,zmid,xrange,"y")
 		Makie.save("$i-$p-AfterCleaningEdgeTris-$RandNum.png", scene)
-		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshAfterEdgeClean-PreIsocelise-$RandNum")
+		if saveallthemeshes==1
+			OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshAfterEdgeClean-PreIsocelise-$RandNum")
+		end
 		p+=1
 	end
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
@@ -128,20 +145,61 @@ for i=1:lps
 	CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,NoTris)
 
 
-
-
 	if draw==1
 		#@bp
 		scene=CutAndDisplaceJuliaPlots.DrawMeshMakie(P1,P2,P3)
 		scene=CutAndDisplaceJuliaPlots.SetLookDirection(scene,xmid,ymid,zmid,xrange,"y")
 		Makie.save("$i-$p-AfterCleaningAndIsolating-$RandNum.png", scene)
-		OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshBeforeSlipCalc-$RandNum")
+		if saveallthemeshes==1
+			OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-MeshBeforeSlipCalc-$RandNum")
+		end
 		p+=1
 	end
 
+	#=
+	#Check if two conditons are filled for n loops then we say the fracture is trapped
+	if i>1
+		nlps=5 
+
+		#Condition 1: If the strain energy is close to trapping the fracture for n
+		#loops (on whole tipline)
+		#1 == about to prop (larger is prop, smaller is stalled)
+		StrainEnergyNrm=StrainEnergyV./KCrit;
+		if all(StrainEnergyNrm<1.1) #10% leeway 
+			SlowingFracture+=1;
+		else
+			SlowingFracture=0
+		end
+
+		#Condition 2: If the fracture has not moved more than 10% of its xyz range for 5 loops
+		MaxElsOld=copy(MaxEls)
+		MinElsOld=copy(MinEls)
+		#Get max/min of x y and z (cols))
+		MaxEls=maximum(Pnts,dims=1)
+		MinEls=minimum(Pnts,dims=1)
+		#Get shifts in fracture
+		ShiftMax=MaxElsOld.-MaxEls
+		ShiftMin=MinElsOld.-MinEls
+		#Find range of old fracture
+		MinMaxRange=MaxElsOld.-MinElsOld
+		#Percent movement relative to previous range
+		ShiftMaxPercRange=(100./MinMaxRange).*ShiftMax
+		ShiftMinPercRange=(100./MinMaxRange).*ShiftMin
+
+		if any(ShiftMaxPercRange<10) || any(ShiftMinPercRange<10)
+			StallingFracture+=1;
+		else
+			StallingFracture=0
+		end
+
+		if SlowingFracture==nlps && StallingFracture==nlps
+			printstyled("Fracture has stalled \n",color=:green)
+		end
+	end
+	=#
+
 	n=length(P1[:,1]);
 	n2=length(Points[:,1]);
-
 
 	# Which bits we want to compute
 	HSFlag=0; #const
@@ -154,26 +212,39 @@ for i=1:lps
 
 	#Density
 	ρrock=2900;
+	ρrocklight=2300;
 	ρfluid=2600;
+	interface=-5000 #between light and heavy rock
 	g=9.81;
 	Z=MidPoint[:,3];
-	Weight=(ρrock*g).*Z;
+
 	#Set BoundaryConditions
-	σxx = Weight.*0.8;
-	σyy = Weight.*0.8;
-	σzz = Weight;
+	σxx = zeros(n);  
+	σyy = zeros(n);  
+	σzz = zeros(n);  
 	σxy = zeros(n);    
 	σxz = zeros(n);
 	σyz = zeros(n);
-	Tn=zeros(n)
 	#Bouyancy
-	println("Check P and T ppr for this eq")
-	ZInterface=Z#.+5000
-	for j=1:length(ZInterface)
-		Tn[j]=ZInterface[j]*(g*(ρrock-ρfluid)); #
-	end
+	Tn=zeros(n)
 	Tss=zeros(n)
 	Tds=zeros(n)
+
+	println("Flipped for testing")
+	for j=1:length(Z)
+		if Z[j]>interface;
+			Tn[j]=((ρrock-ρfluid)*g).*Z[j]; #
+		else
+			Tn[j]=((ρrocklight-ρfluid)*g).*Z[j];
+		end
+	end
+	@info maximum(Tn) minimum(Tn)
+	#Stops condition where no pressure will cause crack to fly open 
+	if maximum(Tn)>0
+		Tn=Tn.-maximum(Tn)
+	end
+	@info maximum(Tn) minimum(Tn)
+
 	Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 	Traction=Tractions(Tn,Tss,Tds);
 	BoundaryConditions=MixedBoundaryConditions(Stress,Traction)
@@ -190,15 +261,25 @@ for i=1:lps
 		end
 	end
 
+
+
+
 	#try	
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
-	
+
+
 	test=1
-	@info test maximum(Dn) minimum(Dn) 
+	@info test maximum(Dn) minimum(Dn) maximum(Dss) maximum(Dds)
+
 
 	#Drop interpenetrating elements to 0
 	Dn[Dn.<0].=0.0 #Neg Els if they exist dropped to 0
+
+
+	println("Removeme")
+	p+=1
+	CutAndDisplaceJulia.ExportCrackMesh(P1,P2,P3,Dn,Dss,Dds,"$i-$p-MeshFilled-$RandNum")
 
 	if draw==1
 		CutAndDisplaceJulia.ExportCrackMesh(P1,P2,P3,Dn,Dss,Dds,"$i-$p-MeshFilled-$RandNum")
@@ -311,7 +392,9 @@ for i=1:lps
 
 	if draw==1
 		(Tris2,Pnts2)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1[nonNan,:],P2[nonNan,:],P3[nonNan,:])
-		IgnoreMe=CutAndDisplaceJulia.OFFExport(Pnts2,Tris2,length(Tris2[:,1]),length(Pnts2[:,1]),"$i-$p-ClosedElsRemoved-$RandNum")
+		if saveallthemeshes==1
+			IgnoreMe=CutAndDisplaceJulia.OFFExport(Pnts2,Tris2,length(Tris2[:,1]),length(Pnts2[:,1]),"$i-$p-ClosedElsRemoved-$RandNum")
+		end
 		p+=1
 	end
 
@@ -330,7 +413,6 @@ for i=1:lps
 
 	max_target_edge_length=maximum(HalfPerimeter[nonNan])*(2/3)
 	AvgTriangleEdgeLength=mean(HalfPerimeter[nonNan])*(2/3)
-	KCrit=0.05e7; #[5e7 = 50 MPa √m]
 
 	#Switch so new free elements are used but old ones no longer free edges
 	FeP1P2S.FreeFlg=NewFeP1P2.FreeFlg;
@@ -340,6 +422,10 @@ for i=1:lps
 	#Comp propagation on new els - stress intensity is NaN for new edges
 	(p1,p2,p3,StillEdge_P1P2,StillEdge_P1P3,StillEdge_P2P3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit,AvgTriangleEdgeLength )
 
+	#Get vector of strain energy
+	StrainEnergyV=[FeP1P2S.StrainEnergy[FeP1P2S.FreeFlg,1]
+				  FeP1P3S.StrainEnergy[FeP1P3S.FreeFlg,1]
+				  FeP2P3S.StrainEnergy[FeP2P3S.FreeFlg,1]]	
 
 	if UsingPlots==1
 		a=1; #plot for y
@@ -350,9 +436,6 @@ for i=1:lps
 		YMid=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,b]
 			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,b]
 			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,b]]
-		StrainEnergyV=[FeP1P2S.StrainEnergy[FeP1P2S.FreeFlg,1]
-					  FeP1P3S.StrainEnergy[FeP1P3S.FreeFlg,1]
-					  FeP2P3S.StrainEnergy[FeP2P3S.FreeFlg,1]]	
 
 		fig = plot()
 		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="")

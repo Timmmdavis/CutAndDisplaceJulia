@@ -311,6 +311,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 		Norm=maximum(ApproxTractions[1:n])
 		println("Norm based on max traction needed for constant opening desired vol")
 		@info Norm
+		
 
         # Option 2:
         #Objective function to pass to the simple solver: 
@@ -318,7 +319,8 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);    
         #Assuming the Obj func returns volume (for given pressure) ^ just
         #change FIRST output in 'ComputePressurisedCrackDn.m' func above. 
-        (InternalPressures) = WalkAndInterp(ObjectiveFunction, 1e-9, 10, 100,Volume);
+        print("Dropped 100lps down to 50")
+        (InternalPressures) = WalkAndInterp(ObjectiveFunction, 1e-9, 10, 50,Volume);
         #Put in struct
         OptimalPressure=Tractions(InternalPressures,[],[]);
     end
