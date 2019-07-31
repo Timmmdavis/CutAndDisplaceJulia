@@ -74,7 +74,14 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	b=BoundaryConditionsVec(b);
 
 	#Pass Inf Mat 2 fric func where friction solver is run
-	(Dn,Dss,Dds)=SlipCalculator3D(Scl,n,InvertedInfMatA,b,µ,Sf)
+	(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=SlipCalculator3D(Scl,n,InvertedInfMatA,b,µ,Sf)
+
+	(Dn,Dss,Dds)=SlipCalculator3D(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,
+								  Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
+
+
+
+
 
 end
 
@@ -142,12 +149,38 @@ function SlipCalculator3D(Scl,n,InvertedInfMatA::InfMat,b::BoundaryConditionsVec
 		 (2*dµ)                          -ID      ZE     ZE ZE;
 		 (2*dµ)                           ZE     -ID     ZE ZE];
 
-	# Construct column vector [b].f
-	b =	[D[L1]-CDnTss*Sf-CDnTds*Sf; 
-		 D[L2]-CDssTss*Sf-CDssTds*Sf;
-		 D[L3]-CDdsTss*Sf-CDdsTds*Sf;
-		 2*Sf; 
-		 2*Sf];
+	## Construct column vector [b].f
+	#b =[D[L1]-CDnTss*Sf-CDnTds*Sf; 
+	#	 D[L2]-CDssTss*Sf-CDssTds*Sf;
+	#	 D[L3]-CDdsTss*Sf-CDdsTds*Sf;
+	#	 2*Sf; 
+	#	 2*Sf];
+
+	 # Construct column vector [b].f
+	 b =[-CDnTss*Sf-CDnTds*Sf; 
+	 	 -CDssTss*Sf-CDssTds*Sf;
+	 	 -CDdsTss*Sf-CDdsTds*Sf;
+	 	 2*Sf; 
+	 	 2*Sf];
+
+	FricMatPrepped=InfMat(a)
+	FricVectorWithoutDisp=BoundaryConditionsVec(b)
+	#Get arrays ready for fischer_newton
+	(Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=FischerNewton.InitArrays(n*5);
+
+
+	return(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
+
+end
+
+function SlipCalculator3D(FricMatPrepped::InfMat,FricVectorWithoutDisp::BoundaryConditionsVec,L1,L2,L3,L4,L5,Scl,D,
+						  Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
+
+	a=FricMatPrepped.A
+	b=FricVectorWithoutDisp.b
+	b[L1] .+=D[L1]; 
+	b[L2] .+=D[L2]; 
+	b[L3] .+=D[L3]; 
 
 	###################################################################                                                    
 	# Solve the linear complementarity problem (calling function that does this)
@@ -159,7 +192,7 @@ function SlipCalculator3D(Scl,n,InvertedInfMatA::InfMat,b::BoundaryConditionsVec
 	#######path
 
 	#######LCP solve
-	@time x = FischerNewton.fischer_newton(a,b); 
+	@time x = FischerNewton.fischer_newton(a,b,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys); 
 	#######LCP solve
 
 	println("LcpSpeed[s])");
@@ -234,6 +267,18 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	println("Norm based on max closing stress")
 	@info Norm
 
+	AinvF=InfMat(Ainv); 
+	println("Setting arbitary fric params")
+	µ=fill(0.6,n);
+	Sf=zeros(n);
+
+
+	B=BoundaryConditionsVec(b);
+	#Prep our fric mat early (no need to reallocate everytime)
+	(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,
+		Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=
+	SlipCalculator3D(Scl,n,AinvF,B,µ,Sf)
+
 
 	NumOfFractures=maximum(FractureFlag);
     NumOfFractures=convert(Int64,NumOfFractures)
@@ -296,7 +341,9 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         ## Option 1:
         #Objective function to pass to the simulated annealing solver: 
         ReturnVol=0; #Flag that means the obj func returns volumes 
-        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);
+        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
+        ReturnVol,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
+        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
         #Start value (multiplied by the scalar). 
         #Run the annealing. 
         (InternalPressures,fval) = anneal(ObjectiveFunction, X0);
@@ -317,13 +364,15 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         #Objective function to pass to the simple solver: 
         println("rturn vol is 1 for walk and interp")
         ReturnVol=0; #Flag that means the obj func returns volumes 
-        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);    
+        ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
+        ReturnVol,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
+        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
         #Assuming the Obj func returns volume (for given pressure) ^ just
         #change FIRST output in 'ComputePressurisedCrackDn.m' func above. 
-        print("Dropped 100lps down to 50")
+       
         println("Using Optim")
         
-        (res) =Optim.optimize(ObjectiveFunction, -1e-9, 10,method=Brent(),abs_tol=0.001)
+        (res) =Optim.optimize(ObjectiveFunction, -1e-9, 10,method=Brent(),abs_tol=0.001) #
       	println(summary(res))
       	println(Optim.minimizer(res))
       	println(Optim.minimum(res))
@@ -338,7 +387,9 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 
     #Now compute the min result, more cracks require more output args
     println(OptimalPressure)
-    (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);
+    (Dn,Dss,Dds)=ComputePressurisedCrackDn(OptimalPressure,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
+        ReturnVol,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
+        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
     
     for i=1:NumOfFractures #For each crack
         Indx=findall(FractureFlag.==i);

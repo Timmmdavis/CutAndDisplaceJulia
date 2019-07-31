@@ -1,5 +1,7 @@
 #If we have alreay found the optimum
-function ComputePressurisedCrackDn(x::Tractions,Flag,B_old,Ainv,Scl,Area,Pcalc,n,Volume,ReturnVol,NumOfFractures)
+function ComputePressurisedCrackDn(x::Tractions,Flag,B_old,Ainv,Scl,Area,Pcalc,n,Volume,
+    ReturnVol,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
+    D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
 
 #Setting up for the log descent (opening of parts of surface) 
 #x - constant fluid pressure defined by the simulated annealing algo
@@ -36,23 +38,22 @@ end
 #Equation
 D=Ainv*B;
 
-#Extract arrays
+##Extract arrays
 Dn_=D[1:n];
 Dss=D[n+1:2*n];
 Dds=D[n*2+1:3*n];
-
-
 
 # Way one (can have friction but ~2s per loop for 300+ tris)
 if any(Flag.==0)
     println("it looks like you have elements that represent topography, deal with these correctly before passing into friction solver (see Davis 2019 ppr)")
 end
 if any(Dn_.>0)
-    AinvF=InfMat(AinvF); 
-    b=BoundaryConditionsVec(B);
-    µ=fill(0.6,n);println("Setting arbitary fric params")
-    Sf=zeros(n);
-    (Dn,Dss,Dds)=SlipCalculator3D(Scl,n,AinvF,b,µ,Sf)
+
+    FricVectorWithoutDispIn=BoundaryConditionsVec(copy(FricVectorWithoutDisp.b))
+    (Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=FischerNewton.ResetInitArrays(Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys);
+    (Dn,Dss,Dds)=SlipCalculator3D(FricMatPrepped,FricVectorWithoutDispIn,L1,L2,L3,L4,L5,Scl,D,
+                                  Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
+
 else
     Dn=Dn_.*0; #Already closed (wont open, we dont care)
     Dss=Dss.*0;
@@ -129,10 +130,14 @@ return Dn,Dss,Dds
 end
 
 
-function ComputePressurisedCrackDn(x,Flag,B,Ainv,Scl,Area,Pcalc,NUM,Volume,ReturnVol,NumOfFractures)
+function ComputePressurisedCrackDn(x,Flag,B,Ainv,Scl,Area,Pcalc,n,Volume,
+    ReturnVol,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
+    D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
 
 CurrentPressure=Tractions(x,[],[]);
-(Dn,Dss,Dds)=ComputePressurisedCrackDn(CurrentPressure,Flag,B,Ainv,Scl,Area,Pcalc,NUM,Volume,ReturnVol,NumOfFractures)
+(Dn,Dss,Dds)=ComputePressurisedCrackDn(CurrentPressure,Flag,B,Ainv,Scl,Area,Pcalc,n,Volume,
+    ReturnVol,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
+    D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
 
 #Init some parameters before loop. 
 X=0.; 
