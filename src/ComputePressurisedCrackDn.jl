@@ -22,7 +22,6 @@ x=x.Tn
 
 #Making sure no replacement happens inside func
 B=copy(B_old);
-AinvF=copy(Ainv)
 
 #Add pressure to each seperate crack (different) 
 for i=1:NumOfFractures #For each crack
