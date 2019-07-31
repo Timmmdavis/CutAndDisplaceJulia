@@ -10,6 +10,7 @@ using Statistics
 using UnicodePlots
 using DataFrames
 using Printf
+using Optim
 
 ######################################################
 println("Remove me!")

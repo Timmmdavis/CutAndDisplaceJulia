@@ -315,12 +315,23 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 
         # Option 2:
         #Objective function to pass to the simple solver: 
-        ReturnVol=1; #Flag that means the obj func returns volumes 
+        println("rturn vol is 1 for walk and interp")
+        ReturnVol=0; #Flag that means the obj func returns volumes 
         ObjectiveFunction=x->ComputePressurisedCrackDn(x,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,ReturnVol,NumOfFractures);    
         #Assuming the Obj func returns volume (for given pressure) ^ just
         #change FIRST output in 'ComputePressurisedCrackDn.m' func above. 
         print("Dropped 100lps down to 50")
-        (InternalPressures) = WalkAndInterp(ObjectiveFunction, 1e-9, 10, 50,Volume);
+        println("Using Optim")
+        
+        (res) =Optim.optimize(ObjectiveFunction, -1e-9, 10,method=Brent(),abs_tol=0.001)
+      	println(summary(res))
+      	println(Optim.minimizer(res))
+      	println(Optim.minimum(res))
+      	println(Optim.iterations(res))
+		println(Optim.iteration_limit_reached(res))
+      	
+       	InternalPressures=Optim.minimizer(res)
+       	#(InternalPressures) = WalkAndInterp(ObjectiveFunction, 1e-9, 10, 50,Volume);
         #Put in struct
         OptimalPressure=Tractions(InternalPressures,[],[]);
     end
