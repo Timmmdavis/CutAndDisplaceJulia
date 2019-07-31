@@ -369,12 +369,23 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         #change FIRST output in 'ComputePressurisedCrackDn.m' func above. 
        
         println("Using Optim")
-        (res) =Optim.optimize(ObjectiveFunction, -1e-9, 10,method=Brent(),abs_tol=0.001) #
+        (res) =Optim.optimize(ObjectiveFunction, 0, 10,method=Brent(),abs_tol=0.001) #
+        println("GradientDescent")
+        
         #Catches error if the max is too small - we increase this and run again
         if round(Optim.minimum(res),digits=4)==round(Volume[1],digits=4) 
         	printstyled("Max pressure was too small - also switching to GoldenSection not Brent algo \n",color=:red)
         	(Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=FischerNewton.InitArrays(length(L1)*5);println("testing reinit")
-        	(res) =Optim.optimize(ObjectiveFunction, -1e-9, 500,method=GoldenSection()) #
+
+        	##Show that 50 is enough:
+        	HugeVol=ComputePressurisedCrackDn(50,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
+        	        1,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
+        	        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
+        	println("Volume with x of 50: $HugeVol")
+
+        	(res) =Optim.optimize(ObjectiveFunction, [0.1,], Newton(),Optim.Options(iterations = 2,store_trace = true,show_trace = true))
+        	#(res) =Optim.optimize(ObjectiveFunction, 0, 50,method=GoldenSection()) #
+
         end
       	println(summary(res))
       	println(Optim.minimizer(res))

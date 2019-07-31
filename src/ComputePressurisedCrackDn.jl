@@ -153,7 +153,7 @@ for i=1:NumOfFractures #For each crack
         X=Vol_i_Computed;
     else
         #Now compute the objective function 
-        X=X+abs(Vol_i_Expected-Vol_i_Computed);
+        X=X+abs(Vol_i_Expected-Vol_i_Computed)^2;
     end
 end
 
