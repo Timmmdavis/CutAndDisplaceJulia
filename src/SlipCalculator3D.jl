@@ -370,7 +370,6 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
        
         println("Using Optim")
         (res) =Optim.optimize(ObjectiveFunction, 0, 10,method=Brent(),abs_tol=0.001) #
-        println("GradientDescent")
         
         #Catches error if the max is too small - we increase this and run again
         if round(Optim.minimum(res),digits=4)==round(Volume[1],digits=4) 
@@ -383,7 +382,10 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         	        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
         	println("Volume with x of 50: $HugeVol")
 
-        	(res) =Optim.optimize(ObjectiveFunction, [0.1,], Newton(),Optim.Options(iterations = 2,store_trace = true,show_trace = true))
+        	(res) =Optim.optimize(ObjectiveFunction, [9,], Newton(),Optim.Options(iterations = 10,
+        																		  store_trace = true,
+        																		  show_trace = true,
+        																		  f_calls_limit=100)) #
         	#(res) =Optim.optimize(ObjectiveFunction, 0, 50,method=GoldenSection()) #
 
         end

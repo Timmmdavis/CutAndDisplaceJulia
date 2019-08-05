@@ -1,4 +1,4 @@
-function testProp()
+function testPropDELETE()
 #=
 
 	println("PackageCOMPILESTUFF")
@@ -36,8 +36,8 @@ CrackVolume=(π*(Radius^2))*HeightCrack
 
 #Load triangles and points from file (mesh)
 #SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
-SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SquareGrid.stl")
-(Points,Triangles)=CutAndDisplaceJulia.STLReader(SurfaceDir)
+SurfaceDir=raw"C:\Users\timmm\Desktop\MeshProp\70-2-AfterAdvancingFrontClean-27.off"
+(Points,Triangles)=CutAndDisplaceJulia.OFFReader(SurfaceDir)
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 #Compute average face normal
 #AvgFaceNormalVector=[mean(FaceNormalVector[:,1]) mean(FaceNormalVector[:,2]) mean(FaceNormalVector[:,3])]
@@ -47,7 +47,7 @@ SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SquareGrid.stl")
 X=Points[:,2];
 Points[:,2]=Points[:,4];
 Points[:,4]=X;
-=#
+
 
 #Pennys angle away from Z. 
 Beta=0; #45 
@@ -60,6 +60,9 @@ Radius=Radius*2 #start bigger...
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*Radius;
 Points[:,4]=Points[:,4].-10000; #2Km deep
+=#
+
+
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=100;
 
@@ -174,7 +177,7 @@ for i=1:lps
 			P3LastLoopCheck=P3LastLoop
 			FaceNormalVectorLastLoopCheck=FaceNormalVectorLastLoop
 		end
-		
+
 		InsidePrevious=CutAndDisplaceJulia.CheckIfInsidePreviousBoundary(MidPointLastLoopCheck,P1LastLoopCheck,P2LastLoopCheck,P3LastLoopCheck,
 																		FaceNormalVectorLastLoopCheck,
 																		P1,P2,P3,MidPoint,max_target_edge_length)
