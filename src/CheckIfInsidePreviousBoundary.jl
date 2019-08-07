@@ -7,6 +7,13 @@ function CheckIfInsidePreviousBoundary(MidPoint,P1,P2,P3,FaceNormalVector,
 #New mesh:
 #P1New,P2New,P3New
 
+#=
+using Plots
+fig = plot()
+scatter!([MidPointNew[:,1]],[MidPointNew[:,3]])
+scatter!([MidPoint[:,1]],[MidPoint[:,3]])
+=#
+
 
 #Get edge triangles
 (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1New,P2New,P3New,MidPointNew);
@@ -37,9 +44,14 @@ InnerPointOld    =[NaN NaN NaN]
 BackPoint    =[NaN NaN NaN] 
 
 #New coords
-V1=[0.,0.,1. ]; #Pointing up
+V1=[0. 0. 1. ]; #Pointing up
 #List we check for each edge if contained within our set padding
 PntList=fill(false,length(EdgePnts[:,1]))
+
+#n=length(EdgePnts[:,1])
+#X=zeros(n);
+#Y=zeros(n);
+#Z=zeros(n);
 
 SetRadius=max_target_edge_length
 
@@ -56,19 +68,27 @@ for i=1:length(UniqueEdges)
     (Pb,~) =GrabPointNew3(TrailingPoints,P1,P2,P3,j) #TrailingPoint
     #Midpoint of edge
     Pc=  [((Pa[1]+Pb[1])./2) ((Pa[2]+Pb[2])./2) ((Pa[3]+Pb[3])./2)];
-
     #Vector along the edge of the old mesh
     v=normr([(Pa[1]-Pb[1]) (Pa[2]-Pb[2]) (Pa[3]-Pb[3])]);
     #Length between Pa and Pb
     l=sqrt(((Pa[1]-Pb[1])^2)+((Pa[2]-Pb[2])^2)+((Pa[3]-Pb[3])^2));
     
+    X=copy(EdgePnts[:,1]);
+    Y=copy(EdgePnts[:,2]);
+    Z=copy(EdgePnts[:,3]);
+
     #Rotate all new edge points so the centre is Pc and PaPb is the Z-axis
-    (X,Y,Z) =RotateObject3DAllignVectors(v,V1,EdgePnts[:,1],EdgePnts[:,2],EdgePnts[:,3],Pc[1],Pc[2],Pc[3])
+    (X,Y,Z) =RotateObject3DAllignVectors(v,V1,X,Y,Z,Pc[1],Pc[2],Pc[3]);
+
+    #put midpoint at 0,0,0
+    X=X.-Pc[1];
+    Y=Y.-Pc[2];
+    Z=Z.-Pc[3];
 
     (~,ρ,z)=cart2pol(X,Y,Z)
 
     #If all
-    zbounds=(l/2+(max_target_edge_length\2)); #half the total length with some extra padding at either end
+    zbounds=(l/2+(max_target_edge_length/2)); #half the total length with some extra padding at either end
     for j=1:length(ρ)
       if ρ[j]<SetRadius && abs(z[j])<zbounds
         PntList[j]=true
@@ -77,7 +97,9 @@ for i=1:length(UniqueEdges)
 
     end
 
-end 
+end
+
+@bp 
 
 if all(PntList)
   InsidePrevious=true

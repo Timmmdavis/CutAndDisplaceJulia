@@ -4,7 +4,15 @@ os:
 julia:
 #  - nightly
   - 1.0
-  - 1.1.0
+#  - 1.1.0
+
+##If you want windows uncomment lines below:
+#matrix:
+#  include:
+#    - os: windows
+#      arch: x64
+#      julia: 1.0
+
   
 script:
 - julia -e 'import Pkg; Pkg.build(); Pkg.test(; coverage=true)'

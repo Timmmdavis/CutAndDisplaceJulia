@@ -20,7 +20,7 @@ function testPropDELETE()
 	cd(raw"C:\Users\timmm\Desktop\MeshProp")
 	
 
-	#using Debugger;using CutAndDisplaceJulia;using CutAndDisplaceJuliaPlots;using Statistics;using DelimitedFiles;using BuildCGAL;
+	#using Debugger;using CutAndDisplaceJulia;using CutAndDisplaceJuliaPlots;using Statistics;using DelimitedFiles;using BuildCGAL;using Plots; plot(rand(10))
 	
 	using Plots; plot(rand(10))
 
@@ -96,7 +96,7 @@ end
 #If you run a few times this will help differntiate the results
 RandNum=rand(1:100)
 p=0
-SlowingFracture=0
+
 StallingFracture=0
 MidPointLastLoop=[NaN];P1LastLoop=[NaN];P2LastLoop=[NaN];P3LastLoop=[NaN];FaceNormalVectorLastLoop=[NaN]
 MidPointLastLoopCheck=[NaN];P1LastLoopCheck=[NaN];P2LastLoopCheck=[NaN];P3LastLoopCheck=[NaN];FaceNormalVectorLastLoopCheck=[NaN]
@@ -181,7 +181,6 @@ for i=1:lps
 		InsidePrevious=CutAndDisplaceJulia.CheckIfInsidePreviousBoundary(MidPointLastLoopCheck,P1LastLoopCheck,P2LastLoopCheck,P3LastLoopCheck,
 																		FaceNormalVectorLastLoopCheck,
 																		P1,P2,P3,MidPoint,max_target_edge_length)
-
 		printstyled("InsideLoop \n",color=:red)
 		if InsidePrevious==true
 			StallingFracture+=1;
@@ -199,8 +198,7 @@ for i=1:lps
 
 		end
 
-		println("Slowing/Stalling:")
-		println(SlowingFracture) 
+		println("Current number of stalled loops:")
 		println(StallingFracture)
 		if StallingFracture>nlps
 			printstyled("Fracture has stalled \n",color=:green)
