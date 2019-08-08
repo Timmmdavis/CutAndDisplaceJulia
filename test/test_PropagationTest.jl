@@ -57,7 +57,7 @@ if Δρ>0
 else
 	CrackVolume=(KCrit^2*(1-ν))/(-Δρ*G*pi)
 end
-CrackVolume=CrackVolume*1000 #Making sure its critical
+CrackVolume=CrackVolume/4 #Making sure its critical
 
 NoTris=300;
 
@@ -517,12 +517,14 @@ for i=1:lps
 			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,b]
 			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,b]]
 
+			 #=
 		fig = plot()
 	
 		CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
 		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="")
 		display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
+		=#
 		
 	end
 
