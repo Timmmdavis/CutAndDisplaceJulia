@@ -30,7 +30,7 @@ function StrainEnergyRelease(K1,K2,K3,G,ν)
 #Wiki G-Criterion
 E=(2.0*G)*(1.0+ν);
 Eprime=E/(1-ν^2)
-StrainEnergy=sqrt.((abs.(K1).^2)+(abs.(K2).^2)+(Eprime/(2*G))*(abs.(K3).^2)./(2*G));
+StrainEnergy=sqrt.((abs.(K1).^2)+(abs.(K2).^2)+((Eprime/(2*G))*(abs.(K3).^2));
 
 ##from wiki (same result)
 #E=(2.0*G)*(1.0+ν);
