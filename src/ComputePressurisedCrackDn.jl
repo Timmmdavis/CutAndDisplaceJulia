@@ -54,6 +54,7 @@ if any(Dn_.>0)
                                   Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
 
 else
+    println("Ding ding ding")
     Dn=Dn_.*0; #Already closed (wont open, we dont care)
     Dss=Dss.*0;
     Dds=Dds.*0;

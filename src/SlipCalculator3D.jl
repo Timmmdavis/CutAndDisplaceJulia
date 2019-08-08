@@ -74,7 +74,8 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	b=BoundaryConditionsVec(b);
 
 	#Pass Inf Mat 2 fric func where friction solver is run
-	(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=SlipCalculator3D(Scl,n,InvertedInfMatA,b,µ,Sf)
+	(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,
+		Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=SlipCalculator3D(Scl,n,InvertedInfMatA,b,µ,Sf)
 
 	(Dn,Dss,Dds)=SlipCalculator3D(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,
 								  Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
@@ -307,7 +308,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 		        end
 		    end
             #Compting a good start prssure for each crack given the known opening
-            DesiredAverageHeight=(Volume[i]/sum(AreaFrak_n))./Scl;
+            DesiredAverageHeight=(Volume[i]/sum(AreaFrak_n)); error("Check scl here - what do we use for one crack below")#./Scl; 
 		    for j=eachindex(Indx)
 		        if Indx[j]==true
 		            DnAvg[j]=DnAvg[j]+DesiredAverageHeight;
@@ -348,15 +349,18 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
     	OptimalPressure=Tractions(InternalPressures,[],[]);
     else
 
+
 		#Compting a good start prssure for each crack given the known opening
-		DesiredAverageHeight=(Volume/sum(Area))./Scl;
+		DesiredAverageHeight=(Volume/sum(Area))./Scl; 
 		AvgDisps=[ones(n).*DesiredAverageHeight; zeros(n); zeros(n)]
 		ApproxTractions=A*AvgDisps; #ApproxTractions
+		#ApproxTractions=(A*AvgDisps)/Scl; #ApproxTractions
+		#println(maximum(ApproxTractions[1:n]));
 
 		Norm=maximum(ApproxTractions[1:n])
 		println("Norm based on max traction needed for constant opening desired vol")
 		@info Norm
-		
+		#Norm=Norm+1e8
 
         # Option 2:
         #Objective function to pass to the simple solver: 
@@ -371,8 +375,11 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         println("Using Optim")
         (res) =Optim.optimize(ObjectiveFunction, 0, 10,method=Brent(),abs_tol=0.001) #
         
+        #@info maximum(Ainv[:]) minimum(Ainv[:])
+
         #Catches error if the max is too small - we increase this and run again
-        if round(Optim.minimum(res),digits=4)==round(Volume[1],digits=4) 
+        if abs(abs(Volume[1])-abs(Optim.minimum(res)))>abs(Volume[1])
+
         	printstyled("Max pressure was too small - also switching to GoldenSection not Brent algo \n",color=:red)
         	(Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=FischerNewton.InitArrays(length(L1)*5);println("testing reinit")
 

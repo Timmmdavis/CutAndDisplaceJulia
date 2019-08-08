@@ -1,4 +1,4 @@
-function testProp()
+
 #=
 
 	println("PackageCOMPILESTUFF")
@@ -18,21 +18,65 @@ function testProp()
 	using BuildCGAL
 	using Debugger
 	cd(raw"C:\Users\timmm\Desktop\MeshProp")
-	
 
-	#using Debugger;using CutAndDisplaceJulia;using CutAndDisplaceJuliaPlots;using Statistics;using DelimitedFiles;using BuildCGAL;
-	
 	using Plots; plot(rand(10))
+
+	#=
+	cd(raw"C:\Users\timmm\Desktop\MeshProp");using Plots; plot(rand(10))
+	using Debugger;using CutAndDisplaceJulia;using CutAndDisplaceJuliaPlots;using Statistics;using DelimitedFiles;using BuildCGAL;
+	includet(raw)
+	=#
+	
 
 =#
 
-#Start creating vars for function: 
-println("creating func vars")
+#=
+#########################################################
+# Which bits we want to compute
+HSFlag=0; #const
+printstyled("Hs off \n",color=:cyan) 
+
+#Elastic constants
+G=ShearModulus(2.0e9); 
+ν=PoissonsRatio(0.25);#println("Pr is close to 0.5")
+(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
+
+#Density
+ρrock=2900;
+ρfluid=2600;
+#Gravitational acceleration
+g=9.81;
+
+Δρ=((ρrock-ρfluid)*g)
+
+KCrit=5e7; #[5e7 = 50 MPa √m]
 
 #Volume
-HeightCrack=5; #50
-Radius=250
-CrackVolume=(π*(Radius^2))*HeightCrack
+if Δρ>0
+	CrackVolume=(KCrit^2*(1-ν))/(Δρ*G*pi)
+else
+	CrackVolume=(KCrit^2*(1-ν))/(-Δρ*G*pi)
+end
+CrackVolume=CrackVolume*1000 #Making sure its critical
+
+NoTris=300;
+
+
+(PropFlag,maxX,minX,maxY,minY,maxZ,minZ)=testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
+
+#return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
+#CritVolFlag==1 - Reached surface
+#CritVolFlag==0 - Trapped
+=#
+
+#########################################################
+
+function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
+
+#Start creating vars for function: 
+println("creating func vars")
+@info HSFlag ν G Δρ KCrit CrackVolume NoTris
+
 
 #Load triangles and points from file (mesh)
 #SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
@@ -55,16 +99,23 @@ BetaFromVert=90-Beta;
 #Rotate this (YZ)
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
 
-Radius=Radius*2 #start bigger...
+#Eq (40) Pollard and Townsend
+if Δρ>0
+	Radius=(-KCrit/(-Δρ*sqrt(pi)))^(2/3)
+else
+	Radius=(-KCrit/(Δρ*sqrt(pi)))^(2/3)
+end
+Radius=Radius/5
+println("Start radius:")
+println(Radius)
 
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*Radius;
-Points[:,4]=Points[:,4].-10000; #2Km deep
+Points[:,4]=Points[:,4].-5000; #2Km deep
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=100;
 
 #Define a number of tris you want the mesh to have
-NoTris=300;
 (target_edge_length,max_target_edge_length)=
 CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,NoTris)
 
@@ -82,7 +133,7 @@ draw=0
 if draw==0
 	println("Drawing off")
 end
-saveallthemeshes=0
+saveallthemeshes=1
 if saveallthemeshes==0
 	println("Saving only selected meshes (debug is off)")
 end
@@ -100,7 +151,6 @@ MidPointLastLoopCheck=[NaN];P1LastLoopCheck=[NaN];P2LastLoopCheck=[NaN];P3LastLo
 #Looping from here on in
 for i=1:lps
 
-	KCrit=0.005e7; #[5e7 = 50 MPa √m]
 
 
 	p=1
@@ -198,6 +248,17 @@ for i=1:lps
 		println(StallingFracture)
 		if StallingFracture>nlps
 			printstyled("Fracture has stalled \n",color=:green)
+			
+			(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+			maxX=maximum(Pnts[:,2])
+			minX=minimum(Pnts[:,2])
+			maxY=maximum(Pnts[:,3])
+			minY=minimum(Pnts[:,3])
+			maxZ=maximum(Pnts[:,4])
+			minZ=minimum(Pnts[:,4])
+			CritVolFlag=0# - Trapped
+			return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
+			
 			break
 		end
 	end
@@ -206,21 +267,6 @@ for i=1:lps
 	n=length(P1[:,1]);
 	n2=length(Points[:,1]);
 
-	# Which bits we want to compute
-	HSFlag=0; #const
-	printstyled("Hs off \n",color=:cyan) 
-
-	#Elastic constants
-	G=ShearModulus(2.0e9); 
-	ν=PoissonsRatio(0.25);#println("Pr is close to 0.5")
-	(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
-
-	#Density
-	ρrock=2900;
-	ρrocklight=2300;
-	ρfluid=2600;
-	interface=-5000 #between light and heavy rock
-	g=9.81;
 	Z=MidPoint[:,3];
 
 	#Set BoundaryConditions
@@ -235,7 +281,12 @@ for i=1:lps
 	Tss=zeros(n)
 	Tds=zeros(n)
 
-	#println("Flipped for testing")
+	for j=1:length(Z)
+		Tn[j]=Δρ.*Z[j]; #
+	end
+	#=
+	ρrocklight=2300;
+	interface=-5000 #between light and heavy rock
 	for j=1:length(Z)
 		if Z[j]<interface;
 			Tn[j]=((ρrock-ρfluid)*g).*Z[j]; #
@@ -243,6 +294,7 @@ for i=1:lps
 			Tn[j]=((ρrocklight-ρfluid)*g).*Z[j];
 		end
 	end
+	=#
 	@info maximum(Tn) minimum(Tn)
 	#Stops condition where no pressure will cause crack to fly open 
 	if maximum(Tn)>0
@@ -262,17 +314,30 @@ for i=1:lps
 	if HSFlag==1
 		if any([P1[:,3];P2[:,3];P1[:,3]].>0)
 			printstyled("Fracture has hit the free surface \n",color=:green)
+
+			(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+			maxX=maximum(Pnts[:,2])
+			minX=minimum(Pnts[:,2])
+			maxY=maximum(Pnts[:,3])
+			minY=minimum(Pnts[:,3])
+			maxZ=maximum(Pnts[:,4])
+			minZ=minimum(Pnts[:,4])
+			CritVolFlag=1# - Made it to the surface
+			return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
+
 			break
 		end
 	end
 
 
+	@info HSFlag ν G Δρ KCrit CrackVolume NoTris
 
 
 	#try	
 	#Calculate slip on faces
 	(Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
 
+	@info HSFlag ν G Δρ KCrit CrackVolume NoTris
 
 	test=1
 	@info test maximum(Dn) minimum(Dn) maximum(Dss) maximum(Dds)
@@ -468,7 +533,19 @@ for i=1:lps
 
 	if isempty(Px)
 		printstyled("Fracture has stopped propagating \n",color=:green)
+
+		(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+		maxX=maximum(Pnts[:,2])
+		minX=minimum(Pnts[:,2])
+		maxY=maximum(Pnts[:,3])
+		minY=minimum(Pnts[:,3])
+		maxZ=maximum(Pnts[:,4])
+		minZ=minimum(Pnts[:,4])
+		CritVolFlag=0# - Made it to the surface
+		return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
+
 		break
+
 	end
 	
 	StillEdge_P1P2[ClosedEls].=false
