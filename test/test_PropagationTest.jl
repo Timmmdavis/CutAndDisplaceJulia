@@ -53,11 +53,11 @@ KCrit=5e7; #[5e7 = 50 MPa √m]
 
 #Volume
 if Δρ>0
-	CrackVolume=(KCrit^2*(1-ν))/(Δρ*G*pi)
+	CrackVolume=((KCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
 else
-	CrackVolume=(KCrit^2*(1-ν))/(-Δρ*G*pi)
+	CrackVolume=((-KCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
 end
-CrackVolume=CrackVolume/4 #Making sure its critical
+CrackVolume=CrackVolume*2 #Making sure its critical
 
 NoTris=300;
 
@@ -76,6 +76,7 @@ function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
 #Start creating vars for function: 
 println("creating func vars")
 @info HSFlag ν G Δρ KCrit CrackVolume NoTris
+
 
 
 #Load triangles and points from file (mesh)
@@ -517,14 +518,14 @@ for i=1:lps
 			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,b]
 			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,b]]
 
-			 #=
+			 
 		fig = plot()
 	
 		CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
 		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="")
 		display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
-		=#
+		
 		
 	end
 
