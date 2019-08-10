@@ -125,6 +125,8 @@ include("CreateTriangleNormal!.jl")
 include("CreateMidPoint!.jl")
 include("GetDesiredEdgeLength.jl")
 include("CheckIfInsidePreviousBoundary.jl")
+include("LoopResultsWriter.jl")
+
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

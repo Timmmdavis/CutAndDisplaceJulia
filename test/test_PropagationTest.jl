@@ -312,7 +312,7 @@ for i=1:lps
 	FractureElements=fill(1,n)
 
 	#Check if fracture has reached free surface
-	if HSFlag==1
+	#if HSFlag==1
 		if any([P1[:,3];P2[:,3];P1[:,3]].>0)
 			printstyled("Fracture has hit the free surface \n",color=:green)
 
@@ -328,7 +328,7 @@ for i=1:lps
 
 			break
 		end
-	end
+	#end
 
 
 	@info HSFlag ν G Δρ KCrit CrackVolume NoTris
@@ -521,7 +521,7 @@ for i=1:lps
 			 
 		fig = plot()
 	
-		CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
+		#CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
 		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="")
 		display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
