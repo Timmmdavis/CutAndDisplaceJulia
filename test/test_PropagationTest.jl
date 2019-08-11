@@ -102,17 +102,18 @@ BetaFromVert=90-Beta;
 
 #Eq (40) Pollard and Townsend
 if Δρ>0
-	Radius=(-KCrit/(-Δρ*sqrt(pi)))^(2/3)
+	CritRadius=(-KCrit/(-Δρ*sqrt(pi)))^(2/3)
 else
-	Radius=(-KCrit/(Δρ*sqrt(pi)))^(2/3)
+	CritRadius=(-KCrit/(Δρ*sqrt(pi)))^(2/3)
 end
-Radius=Radius/5
+StartRadius=CritRadius/1.5
+
 println("Start radius:")
-println(Radius)
+println(StartRadius)
 
 #Get crack to correct radius
-Points[:,2:4]=Points[:,2:4].*Radius;
-Points[:,4]=Points[:,4].-abs(Radius*5); #deeper than radius - always below surface
+Points[:,2:4]=Points[:,2:4].*StartRadius;
+Points[:,4]=Points[:,4].-abs(CritRadius*5); #deeper than radius - always below surface
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=100;
 

@@ -33,8 +33,8 @@ G=ShearModulus(2.0e9);
 (K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
 
 #Density
-ρrock=2900;
-ρfluid=2600;
+ρrock=2900.;
+ρfluid=2600.;
 #Gravitational acceleration
 g=9.81;
 
@@ -94,20 +94,23 @@ for i=1:10:100
 				PropFlag[1],maxX[1],minX[1],maxY[1],minY[1],maxZ[1],minZ[1]=NaN,NaN,NaN,NaN,NaN,NaN,NaN
 			end
 			printstyled("$errored[1] \n",color=:red) 
-			if errored[1]==true
-				error("it errored... why?")
-			end
+			#if errored[1]==true
+			#	error("it errored... why?")
+			#end
 		end
 
 		#Jump out
 		cd(OuterDir)
-
+		println(pwd())
+		sleep(2) #julia is too fast
 		#remove all meshes
 		rm(Dir1, recursive=true)
 		#recreate dir
 		println("Sleeping 10")
 		sleep(10) #stops issues with deleting meshes 
 		mkdir(Dir1)
+
+		@info PropFlag[1] maxX[1] minX[1] maxY[1] minY[1] maxZ[1] minZ[1] G ν g Δρ currentNoTris currentKCrit CrackVolumeIn
 
 		cd(Dir2)
 		filename="Results-Kcrit-$currentKCrit-Δρ-$Δρ-NoTris-$currentNoTris-GuessAnVolScl-$CrckVolScl"
