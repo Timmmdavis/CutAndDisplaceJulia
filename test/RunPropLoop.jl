@@ -51,9 +51,6 @@ PropFlag,maxX,minX,maxY,minY,maxZ,minZ=[NaN],[NaN],[NaN],[NaN],[NaN],[NaN],[NaN]
 KCrit=1e7; #[5e7 = 50 MPa √m]
 for i=1:10:100
 
-	if i>1
-		cd(Dir1)
-	end
 	currentKCrit=KCrit*i
 
 	#Volume
