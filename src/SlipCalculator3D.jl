@@ -369,24 +369,24 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         println("Before")
         @info HugeVol Volume[1] Norm
     	while HugeVol<Volume[1]
-    		Norm=Norm*1.15;
+    		Norm=Norm*1.05;
     		println("Scaling norm up")
     		HugeVol=ComputePressurisedCrackDn(10,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
 	        1,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
 	        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
     	end
-    	Reduce=0.1
-    	while HugeVol>Volume[1]*5
+    	Reduce=0.3
+    	while HugeVol>Volume[1]*2.5
     		Norm=Norm*(1-Reduce);
     		println("Scaling norm down")
-    		HugeVol=ComputePressurisedCrackDn(5,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
+    		HugeVol=ComputePressurisedCrackDn(10,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
 	        1,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
 	        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
 	        if HugeVol<Volume[1]
 	        	Norm=Norm/(1-Reduce);	#Put back and escape
 	        	Reduce=Reduce/2; #Reduce size
 	        	#Recomp before end of loop
-	        	HugeVol=ComputePressurisedCrackDn(5,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
+	        	HugeVol=ComputePressurisedCrackDn(10,FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
 		        1,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
 		        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
 	        end

@@ -81,8 +81,8 @@ println("creating func vars")
 
 #Load triangles and points from file (mesh)
 #SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"VertPenny-300-EqEdges.stl")
-SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"SquareGrid.stl")
-(Points,Triangles)=CutAndDisplaceJulia.STLReader(SurfaceDir)
+SurfaceDir=CutAndDisplaceJulia.LoadData(CutAndDisplaceJulia,"CircleMesh_1a_500Faces.off")
+(Points,Triangles)=CutAndDisplaceJulia.OFFReader(SurfaceDir)
 (FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 #Compute average face normal
 #AvgFaceNormalVector=[mean(FaceNormalVector[:,1]) mean(FaceNormalVector[:,2]) mean(FaceNormalVector[:,3])]
@@ -112,7 +112,7 @@ println(Radius)
 
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*Radius;
-Points[:,4]=Points[:,4].-5000; #2Km deep
+Points[:,4]=Points[:,4].-abs(Radius*5); #deeper than radius - always below surface
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=100;
 
@@ -134,7 +134,7 @@ draw=0
 if draw==0
 	println("Drawing off")
 end
-saveallthemeshes=1
+saveallthemeshes=0
 if saveallthemeshes==0
 	println("Saving only selected meshes (debug is off)")
 end
