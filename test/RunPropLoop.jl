@@ -62,9 +62,9 @@ for i=1:10:100
 
 	for j=1:2
 		if j==1
-			CrckVolScl=0.5
+			CrckVolScl=1.5833333
 		else
-			CrckVolScl=2
+			CrckVolScl=1.6777777
 		end
 		CrackVolumeIn=CrackVolume*CrckVolScl 
 		#Running with some catches
@@ -124,3 +124,5 @@ for i=1:10:100
 	end
 
 end
+
+cd(OuterDir)
