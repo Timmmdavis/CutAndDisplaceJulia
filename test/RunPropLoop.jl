@@ -2,7 +2,7 @@
 #includet(raw""C:\Users\Berlin\.julia\packages\CutAndDisplaceJulia\EW2Bp\test\test_PropagationTest.jl"")
 
 #Our working dir
-OuterDir=raw"C:\Users\Berlin\Desktop\MeshProp"
+OuterDir=raw"C:\Users\timmm\Desktop\MeshProp"
 cd(OuterDir)
 Dir1="WhereTheMeshesLive"
 if isdir(Dir1)
@@ -48,8 +48,8 @@ CrackVolumeIn=-79.
 PropFlag,maxX,minX,maxY,minY,maxZ,minZ=[NaN],[NaN],[NaN],[NaN],[NaN],[NaN],[NaN]
 
 
-KCrit=1e7; #[5e7 = 50 MPa √m]
-for i=1:10:100
+KCrit=1e6; #[5e7 = 50 MPa √m]
+for i=10:10:100;
 
 	currentKCrit=KCrit*i
 
@@ -62,25 +62,27 @@ for i=1:10:100
 
 	for j=1:2
 		if j==1
-			CrckVolScl=1.5833333
+			CrckVolScl=1.62
 		else
-			CrckVolScl=1.6777777
+			CrckVolScl=1.7
 		end
 		CrackVolumeIn=CrackVolume*CrckVolScl 
 		#Running with some catches
 		mxlps=4
 		x=0
+		currentNoTris=NoTris #reset
 		while errored[1]==true 
 			
 			x=x+1
 			errored[1]=false
-			currentNoTris=NoTris #reset
+			
 			try 
 				(PropFlaglp,maxXlp,minXlp,maxYlp,minYlp,maxZlp,minZlp)=testProp(HSFlag,ν,G,Δρ,currentKCrit,CrackVolumeIn,currentNoTris);
 				PropFlag[1],maxX[1],minX[1],maxY[1],minY[1],maxZ[1],minZ[1]=PropFlaglp,maxXlp,minXlp,maxYlp,minYlp,maxZlp,minZlp
 			catch
-				bounds=50 #between -25 and 25
-				Pertubation=(round.(rand(1).*bounds)).-bounds
+				bounds=100 #between -25 and 25
+				Pertubation=(round.(rand(1).*bounds))
+				currentNoTris=NoTris #reset
 				currentNoTris=currentNoTris+Pertubation[1] #try with new no
 				errored[1]=true
 				printstyled("Errored \n",color=:red) 
