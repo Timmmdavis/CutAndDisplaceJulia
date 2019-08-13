@@ -166,6 +166,7 @@ for i=1:lps
 	
 	#Remesh using Polygon method in CGAL:
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
+	println(OutputDirectory)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 
 	if draw==1

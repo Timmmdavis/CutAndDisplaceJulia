@@ -26,8 +26,13 @@ end
 print(io,"\r\n");
 close(io);
 
-#OutputDir
-OutputDirectory=string(pwd(),"\\$filename.off")
+if Sys.islinux()
+	#OutputDir
+	OutputDirectory=string(pwd(),"/$filename.off")
+else
+	#OutputDir
+	OutputDirectory=string(pwd(),"\\$filename.off")
+end
 
 return OutputDirectory
 end

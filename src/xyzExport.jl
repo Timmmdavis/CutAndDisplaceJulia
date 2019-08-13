@@ -16,8 +16,13 @@ end
 
 close(io);
 
-#OutputDir
-OutputDirectory=string(pwd(),"\\",filename,".xyz")
+if Sys.islinux()
+	#OutputDir
+	OutputDirectory=string(pwd(),"/$filename.xyz")
+else
+	#OutputDir
+	OutputDirectory=string(pwd(),"\\$filename.xyz")
+end
 
 return OutputDirectory
 end

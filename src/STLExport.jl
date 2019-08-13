@@ -52,8 +52,15 @@ end
 print(io,"\r\n");
 close(io);
 
-#OutputDir
-OutputDirectory=string(pwd(),"\\$filename.stl")
+if Sys.islinux()
+	#OutputDir
+	OutputDirectory=string(pwd(),"/$filename.stl")
+else
+	#OutputDir
+	OutputDirectory=string(pwd(),"\\$filename.stl")
+end
+
+
 
 return OutputDirectory
 end
