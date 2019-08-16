@@ -147,8 +147,8 @@ end
 RandNum=rand(1:100)
 p=0
 StallingFracture=0
-MidPointLastLoop=[NaN];P1LastLoop=[NaN];P2LastLoop=[NaN];P3LastLoop=[NaN];FaceNormalVectorLastLoop=[NaN]
-MidPointLastLoopCheck=[NaN];P1LastLoopCheck=[NaN];P2LastLoopCheck=[NaN];P3LastLoopCheck=[NaN];FaceNormalVectorLastLoopCheck=[NaN]
+MidPointLastLoop=[NaN];P1LastLoop=[NaN];P2LastLoop=[NaN];P3LastLoop=[NaN];FaceNormalVectorLastLoop=[NaN];AreaLastLoop=[NaN]
+MidPointLastLoopCheck=[NaN];P1LastLoopCheck=[NaN];P2LastLoopCheck=[NaN];P3LastLoopCheck=[NaN];FaceNormalVectorLastLoopCheck=[NaN];AreaLastLoopCheck=[NaN]
 
 #Looping from here on in
 for i=1:lps
@@ -227,6 +227,10 @@ for i=1:lps
 			P2LastLoopCheck=P2LastLoop
 			P3LastLoopCheck=P3LastLoop
 			FaceNormalVectorLastLoopCheck=FaceNormalVectorLastLoop
+			( AreaLastLoopCheck,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D(  P1LastLoopCheck[:,1],P1LastLoopCheck[:,2],P1LastLoopCheck[:,3],
+																	P2LastLoopCheck[:,1],P2LastLoopCheck[:,2],P2LastLoopCheck[:,3],
+																	P3LastLoopCheck[:,1],P3LastLoopCheck[:,2],P3LastLoopCheck[:,3] );
+			AreaLastLoopCheck=sum(AreaLastLoopCheck)
 		end
 
 		InsidePrevious=CutAndDisplaceJulia.CheckIfInsidePreviousBoundary(MidPointLastLoopCheck,P1LastLoopCheck,P2LastLoopCheck,P3LastLoopCheck,
@@ -246,12 +250,35 @@ for i=1:lps
 			P2LastLoopCheck=P2LastLoop
 			P3LastLoopCheck=P3LastLoop
 			FaceNormalVectorLastLoopCheck=FaceNormalVectorLastLoop
+			( AreaLastLoopCheck,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D(  P1LastLoopCheck[:,1],P1LastLoopCheck[:,2],P1LastLoopCheck[:,3],
+																	P2LastLoopCheck[:,1],P2LastLoopCheck[:,2],P2LastLoopCheck[:,3],
+																	P3LastLoopCheck[:,1],P3LastLoopCheck[:,2],P3LastLoopCheck[:,3] );
+			AreaLastLoopCheck=sum(AreaLastLoopCheck)
 
 		end
 
 		println("Current number of stalled loops:")
 		println(StallingFracture)
 		if StallingFracture>nlps
+			#Last little check
+			( AreaCurrent,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D(  P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+			AreaCurrent=sum(AreaCurrent)
+			if AreaCurrent>(AreaLastLoopCheck*2)
+				#reset
+				StallingFracture=0
+				#Set the mesh we check to the latest mesh
+				MidPointLastLoopCheck=MidPointLastLoop;
+				P1LastLoopCheck=P1LastLoop
+				P2LastLoopCheck=P2LastLoop
+				P3LastLoopCheck=P3LastLoop
+				FaceNormalVectorLastLoopCheck=FaceNormalVectorLastLoop
+				( AreaLastLoopCheck,~ ) = CutAndDisplaceJulia.AreaOfTriangle3D(  P1LastLoopCheck[:,1],P1LastLoopCheck[:,2],P1LastLoopCheck[:,3],
+																		P2LastLoopCheck[:,1],P2LastLoopCheck[:,2],P2LastLoopCheck[:,3],
+																		P3LastLoopCheck[:,1],P3LastLoopCheck[:,2],P3LastLoopCheck[:,3] );
+				AreaLastLoopCheck=sum(AreaLastLoopCheck)
+				continue
+			else
+
 			printstyled("Fracture has stalled \n",color=:green)
 			
 			(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
@@ -265,6 +292,8 @@ for i=1:lps
 			return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
 			
 			break
+
+			end
 		end
 	end
 
@@ -527,7 +556,7 @@ for i=1:lps
 			 
 		fig = plot()
 	
-		#CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
+		PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
 		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="", aspect_ratio=:equal)
 		#display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
@@ -666,3 +695,72 @@ CritVolFlag=4# - Stopped
 return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
 
 end
+
+
+
+
+
+
+function PlotMeshBoundary(MidPoint,P1,P2,P3,FaceNormalVector,fig)
+
+(UniqueEdges,LeadingPoints,TrailingPoints,InnerPoints,rerunFunc,P1,P2,P3,FaceNormalVector,MidPoint)=
+CutAndDisplaceJulia.GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
+
+(SortedTriangles,ConnectedEdge)=CutAndDisplaceJulia.ConnectedConstraints(P1,P2,P3,MidPoint);
+
+LeadingPoint=[0. 0. 0.]
+TrailingPoint=[0. 0. 0.]
+InnerPoint   =[0. 0. 0.]    
+LeadingPointOld  =[NaN NaN NaN] 
+TrailingPointOld =[NaN NaN NaN] 
+InnerPointOld    =[NaN NaN NaN] 
+BackPoint    =[NaN NaN NaN] 
+
+idxa=1
+idxb=3
+
+lps=0
+#For each edge loop
+for i=1:length(UniqueEdges)
+
+  b=vec(UniqueEdges[i])
+
+  for j=b
+
+    #Extract the points on the current bit of the edge
+    (LeadingPoint,~) =GrabPointNew5(LeadingPoints,P1,P2,P3,j)
+    (TrailingPoint,~)=GrabPointNew5(TrailingPoints,P1,P2,P3,j)
+    (InnerPoint,Idx) =GrabPointNew5(InnerPoints,P1,P2,P3,j)
+    Plots.plot!([LeadingPoint[idxa],TrailingPoint[idxa]],[LeadingPoint[idxb],TrailingPoint[idxb]],c=(:black), lab="")
+
+    
+    end
+
+end 
+return fig
+end
+
+
+function GrabPointNew5(PointsIdxList,P1,P2,P3,j)
+#Extract the points on the current bit of the edge
+Point=[0. 0. 0.]
+Indx=0
+for k=1:3
+    Idx=PointsIdxList[j,k]
+    if Idx==0
+        continue
+    elseif k==1
+        Point=P1[Idx,:]
+        Indx=Idx
+    elseif k==2
+        Point=P2[Idx,:]
+        Indx=Idx
+    elseif k==3
+        Point=P3[Idx,:]
+        Indx=Idx
+    end
+end
+
+return Point,Indx
+end
+
