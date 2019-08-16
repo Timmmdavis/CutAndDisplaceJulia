@@ -53,7 +53,16 @@ PntList=fill(false,length(EdgePnts[:,1]))
 #Y=zeros(n);
 #Z=zeros(n);
 
-SetRadius=max_target_edge_length
+#Radius based on a 1/4 max bound
+(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+maxX=maximum(Pnts[:,2])
+minX=minimum(Pnts[:,2])
+maxY=maximum(Pnts[:,3])
+minY=minimum(Pnts[:,3])
+maxZ=maximum(Pnts[:,4])
+minZ=minimum(Pnts[:,4])
+Ranges=maximum([maxX-minX maxY-minY maxZ-minZ]);
+SetRadius=Ranges/4#max_target_edge_length
 
 lps=0
 #For each edge loop - here we check if any points on the new boundary are outside a set cylinder radius of the old boundary
