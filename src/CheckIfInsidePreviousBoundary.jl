@@ -62,7 +62,7 @@ minY=minimum(Pnts[:,3])
 maxZ=maximum(Pnts[:,4])
 minZ=minimum(Pnts[:,4])
 Ranges=maximum([maxX-minX maxY-minY maxZ-minZ]);
-SetRadius=Ranges/4#max_target_edge_length
+SetRadius=Ranges/10 #10% of max range (any dir). max_target_edge_length
 
 lps=0
 #For each edge loop - here we check if any points on the new boundary are outside a set cylinder radius of the old boundary

@@ -164,6 +164,8 @@ for i=1:lps
 
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"$i-$p-BeforePolygonRemshing-$RandNum")
 	
+	@info StartRadius CritRadius target_edge_length OutputDirectory
+	
 	#Remesh using Polygon method in CGAL:
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	println(OutputDirectory)
@@ -334,7 +336,9 @@ for i=1:lps
 
 
 	@info HSFlag ν G Δρ KCrit CrackVolume NoTris
-
+	Gg=ShearModulus(G); 
+	νv=PoissonsRatio(ν);#println("Pr is close to 0.5")
+	(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(Gg,νv);
 
 	#try	
 	#Calculate slip on faces
@@ -524,7 +528,7 @@ for i=1:lps
 		fig = plot()
 	
 		#CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
-		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="")
+		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="", aspect_ratio=:equal)
 		#display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
 		
