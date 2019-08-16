@@ -1,5 +1,5 @@
 function LoopResultsWriter(filename,PropFlag,maxX,minX,maxY,minY,maxZ,minZ,
-							G,ν,g,Δρ,NoTris,KCrit,CrackVolumeIn)
+							G,ν,g,Δρ,NoTris,KCrit,CrackVolumeIn,CrackVolumeScl)
 
 #CutAndDisplaceJulia.STLExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]))
 #using Printf
@@ -8,7 +8,7 @@ function LoopResultsWriter(filename,PropFlag,maxX,minX,maxY,minY,maxZ,minZ,
 
 #create a new file for writing
 io = open("$filename.txt", "w+");
-write(io, "PropFlag maxX minX maxY minY maxZ minZ G ν g Δρ NoTris KCrit CrackVolumeIn");print(io,"\r\n");
+write(io, "PropFlag maxX minX maxY minY maxZ minZ G ν g Δρ NoTris KCrit CrackVolumeIn CrackVolumeScl");print(io,"\r\n");
 
 	#http://www.cplusplus.com/reference/cstdio/printf/
 	
@@ -29,6 +29,7 @@ write(io, "PropFlag maxX minX maxY minY maxZ minZ G ν g Δρ NoTris KCrit Crack
 	@printf(io,"%d", NoTris);	print(io," ");
 	@printf(io,"%f", KCrit);	print(io," ");	
 	@printf(io,"%f", CrackVolumeIn);	print(io," ");			
+	@printf(io,"%f", CrackVolumeScl);	print(io," ");			
 
 close(io);
 

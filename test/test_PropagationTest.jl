@@ -216,7 +216,7 @@ for i=1:lps
 	#Check if two conditons are filled for n loops then we say the fracture is trapped
 	printstyled("OutsideLoop \n",color=:green)
 	if i>1
-		nlps=3
+		nlps=15
 
 		if i==2
 			#Set the mesh we check to the latest mesh
@@ -525,7 +525,7 @@ for i=1:lps
 	
 		#CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
 		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="")
-		display(fig)
+		#display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
 		
 		
@@ -546,7 +546,7 @@ for i=1:lps
 		minY=minimum(Pnts[:,3])
 		maxZ=maximum(Pnts[:,4])
 		minZ=minimum(Pnts[:,4])
-		CritVolFlag=0# - Made it to the surface
+		CritVolFlag=2# - Stopped
 		return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
 
 		break
@@ -649,6 +649,16 @@ for i=1:lps
 
 end
 
-return P1,P2,P3,Px,Py,Pz
+printstyled("OverLooped \n",color=:green)
+
+(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+maxX=maximum(Pnts[:,2])
+minX=minimum(Pnts[:,2])
+maxY=maximum(Pnts[:,3])
+minY=minimum(Pnts[:,3])
+maxZ=maximum(Pnts[:,4])
+minZ=minimum(Pnts[:,4])
+CritVolFlag=4# - Stopped
+return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
 
 end

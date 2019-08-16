@@ -1,6 +1,7 @@
 
 #includet(raw""C:\Users\Berlin\.julia\packages\CutAndDisplaceJulia\EW2Bp\test\test_PropagationTest.jl"")
 
+
 #Our working dir
 OuterDir=raw"C:\Users\timmm\Desktop\MeshProp"
 cd(OuterDir)
@@ -40,7 +41,7 @@ g=9.81;
 
 Δρ=((ρrock-ρfluid)*g)
 
-NoTris=300;
+NoTris=500;
 errored=[true]
 currentNoTris=NoTris
 currentKCrit=-79.
@@ -49,7 +50,7 @@ PropFlag,maxX,minX,maxY,minY,maxZ,minZ=[NaN],[NaN],[NaN],[NaN],[NaN],[NaN],[NaN]
 
 
 KCrit=1e6; #[5e7 = 50 MPa √m]
-for i=10:10:100;
+for i=20:20:100;
 
 	currentKCrit=KCrit*i
 
@@ -60,12 +61,24 @@ for i=10:10:100;
 		CrackVolume=((-currentKCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
 	end
 
-	for j=1:2
+	for j=1:2 
 		if j==1
-			CrckVolScl=1.62
-		else
-			CrckVolScl=1.7
-		end
+			CrckVolScl=1.
+		elseif j==2
+			CrckVolScl=1.1
+		elseif j==3
+			CrckVolScl=1.2
+		elseif j==4
+			CrckVolScl=1.3
+		elseif j==5
+			CrckVolScl=1.4
+		elseif j==6
+			CrckVolScl=1.5	
+		elseif j==7
+			CrckVolScl=1.6
+		elseif j==8
+			CrckVolScl=1.7													
+		end									
 		CrackVolumeIn=CrackVolume*CrckVolScl 
 		#Running with some catches
 		mxlps=4
@@ -114,7 +127,7 @@ for i=10:10:100;
 		cd(Dir2)
 		filename="Results-Kcrit-$currentKCrit-Δρ-$Δρ-NoTris-$currentNoTris-GuessAnVolScl-$CrckVolScl"
 		OutputDirectory=CutAndDisplaceJulia.LoopResultsWriter(filename,PropFlag[1],maxX[1],minX[1],maxY[1],minY[1],maxZ[1],minZ[1],
-										  G,ν,g,Δρ,currentNoTris,currentKCrit,CrackVolumeIn)
+										  G,ν,g,Δρ,currentNoTris,currentKCrit,CrackVolumeIn,CrckVolScl)
 
 		#Jump out
 		cd(OuterDir)
