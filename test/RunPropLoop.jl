@@ -29,6 +29,8 @@ end
 Dir1FullPath=string(OuterDir,pth,Dir1)
 Dir2FullPath=string(OuterDir,pth,Dir2)
 
+#attempt to stop linux -too many plots error
+GR.inline("png")
 
 HSFlag=0; #const
 printstyled("Hs off \n",color=:cyan) 
@@ -145,13 +147,17 @@ for i=20:20:100;
 				#end
 			end
 
-
 			#Placing the last png from that loop in the results dir
 			filename="Results-Kcrit-$currentKCrit-Δρ-$Δρ-NoTris-$currentNoTris-GuessAnVolScl-$CrckVolScl"
-			NewPngStr=string(filename,".png")
-			ExistingPngStr=CutAndDisplaceJulia.FindingLastPng(Dir1FullPath)
-			mv(string(Dir1FullPath,pth,ExistingPngStr),string(Dir2FullPath,pth,NewPngStr); force=true);
-			sleep(1) #julia is too fast
+			#Try and move a png IF it exists
+			try
+				NewPngStr=string(filename,".png")
+				ExistingPngStr=CutAndDisplaceJulia.FindingLastPng(Dir1FullPath)
+				mv(string(Dir1FullPath,pth,ExistingPngStr),string(Dir2FullPath,pth,NewPngStr); force=true);
+				sleep(1) #julia is too fast
+			catch
+			end
+			
 
 			#Jump out
 			cd(OuterDir)

@@ -553,7 +553,9 @@ for i=1:lps
 			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,b]
 			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,b]]
 
-			 
+		#attempt to stop linux error
+		GR.inline("png")
+
 		fig = plot()
 	
 		PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
@@ -561,6 +563,8 @@ for i=1:lps
 		#display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
 		
+		#attempt to stop linux error
+		GR.inline("png")
 		
 	end
 
