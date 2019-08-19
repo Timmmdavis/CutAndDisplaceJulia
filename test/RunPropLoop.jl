@@ -3,7 +3,7 @@
 
 
 #Our working dir
-OuterDir=raw"C:\Users\timmm\Desktop\MeshProp"
+OuterDir="/home/tim/Desktop/MeshProp/"
 cd(OuterDir)
 Dir1="WhereTheMeshesLive"
 if isdir(Dir1)
@@ -59,7 +59,7 @@ PropFlag,maxX,minX,maxY,minY,maxZ,minZ=[NaN],[NaN],[NaN],[NaN],[NaN],[NaN],[NaN]
 KCrit=1e6; #[5e7 = 50 MPa √m]
 for i=20:20:100;
 
-	currentKCrit=KCrit*i
+
 
 	for j=1:4 
 		if j==1
@@ -84,6 +84,7 @@ for i=20:20:100;
 				ρrock=2900.;
 				ρfluid=1000.;
 				Δρ=((ρrock-ρfluid)*g)
+				currentKCrit=KCrit*i
 			elseif k==2
 				###########################################
 				#Magma vs Granite
@@ -94,6 +95,7 @@ for i=20:20:100;
 				ρrock=2900.;
 				ρfluid=2600.;
 				Δρ=((ρrock-ρfluid)*g)
+				currentKCrit=KCrit*i				
 			elseif k==3
 				###########################################
 				#Gelatin
