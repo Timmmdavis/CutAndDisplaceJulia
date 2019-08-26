@@ -11,6 +11,7 @@ using UnicodePlots
 using DataFrames
 using Printf
 using Optim
+using Elliptic
 
 ######################################################
 println("Remove me!")
@@ -53,7 +54,7 @@ struct MixedBoundaryConditionsFluidVolume;MixedBoundaryConditions;Volumes;	end
 
 
 println("I would prefer not be mutable")
-mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3;StrainEnergy; 	end
+mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3;StrainEnergy;Area; 	end
 
 export
     Stresses,
@@ -127,6 +128,8 @@ include("GetDesiredEdgeLength.jl")
 include("CheckIfInsidePreviousBoundary.jl")
 include("LoopResultsWriter.jl")
 include("FindingLastPng.jl")
+include("Tada_StrIntEllipseCrackTension.jl")
+
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")

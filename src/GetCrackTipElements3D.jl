@@ -76,21 +76,21 @@ function GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
 (P1P2FreeFlg,P2P3FreeFlg,P1P3FreeFlg)=EdgeConstraints(P1,P2,P3,MidPoint);
 
 #Do for P1 P2: (Function at base of file)
-(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P1P2FreeFlg,P1,P2,P3,MidPoint,FaceNormalVector);
+(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng,Area)=GetValues(P1P2FreeFlg,P1,P2,P3,MidPoint,FaceNormalVector);
 #Put in structure
-FeP1P2S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0);
+FeP1P2S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0,Area);
 
 
 #Do for P1 P3: (Function at base of file)
-(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P1P3FreeFlg,P1,P3,P2,MidPoint,FaceNormalVector);
+(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng,Area)=GetValues(P1P3FreeFlg,P1,P3,P2,MidPoint,FaceNormalVector);
 #Put in structure
-FeP1P3S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0);
+FeP1P3S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0,Area);
 
 
 #Do for P2 P3: (Function at base of file)
-(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng)=GetValues(P2P3FreeFlg,P2,P3,P1,MidPoint,FaceNormalVector);
+(Flg,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng,Area)=GetValues(P2P3FreeFlg,P2,P3,P1,MidPoint,FaceNormalVector);
 #Put in structure
-FeP2P3S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0);
+FeP2P3S=TriangleEdges(FeLe,FeMd,FeEv,FeM2Ev,Flg,FeM2ELe,IntAng,0.0,0.0,0.0,0.0,Area);
 
 return FeP1P2S,FeP1P3S,FeP2P3S
 end
@@ -98,6 +98,8 @@ end
 function GetValues(I,Pa,Pb,Pc,MidPoint,FaceNormalVector)
 #Fills array with values if the connection is a free edge. 
 #I=Flg;
+
+
 
 n=length(MidPoint)/3;
 n=convert(Int64,n)
@@ -213,7 +215,8 @@ for i=1:length(Indx)
     
 end 
 
+(Area,~)=AreaOfTriangle3D( Pa[:,1],Pa[:,2],Pa[:,3],Pb[:,1],Pb[:,2],Pb[:,3],Pc[:,1],Pc[:,2],Pc[:,3] )
 
-return I,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng
+return I,FeLe,FeMd,FeEv,FeM2Ev,FeM2ELe,IntAng,Area
 
 end

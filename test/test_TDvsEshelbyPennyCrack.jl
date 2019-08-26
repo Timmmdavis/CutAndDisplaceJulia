@@ -68,11 +68,13 @@ BoundaryConditions=Tractions(Tn,Tss,Tds)
 #Calculate slip on faces
 (Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FixedEls);
 
-## Vol Reduction:
+## Vol Reduction (one wall):
 #Numerical
 Vol1NumResultOpn=(sum(Area.*Dn)./2);
 #Analytical
 Vol1AnResultOpn=(((pi*(1-ν)*Tn[1]*(Radius^2))/(2*G))*(2/pi))*(1/0.75)
+#Vol1AnResultOpn=-(4*Tn[1]*Radius^3*(ν - 1))/(3*G);
+
 #Equation in PPR=
 Eq2=(100/Vol1AnResultOpn)*(Vol1AnResultOpn-Vol1NumResultOpn);
 

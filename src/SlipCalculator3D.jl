@@ -270,7 +270,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 
 	AinvF=InfMat(Ainv); 
 	println("Setting arbitary fric params")
-	µ=fill(0.6,n);
+	µ=fill(0.1,n);
 	Sf=zeros(n);
 	B=BoundaryConditionsVec(b);
 	#Prep our fric mat early (no need to reallocate everytime)

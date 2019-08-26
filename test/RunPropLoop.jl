@@ -3,7 +3,7 @@
 
 
 #Our working dir
-OuterDir="/home/tim/Desktop/MeshProp/"
+OuterDir=raw"C:\Users\timmm\Desktop\MeshProp"
 cd(OuterDir)
 Dir1="WhereTheMeshesLive"
 if isdir(Dir1)
@@ -30,7 +30,7 @@ Dir1FullPath=string(OuterDir,pth,Dir1)
 Dir2FullPath=string(OuterDir,pth,Dir2)
 
 #attempt to stop linux -too many plots error
-GR.inline("png")
+#GR.inline("png")
 
 HSFlag=0; #const
 printstyled("Hs off \n",color=:cyan) 
@@ -57,22 +57,22 @@ PropFlag,maxX,minX,maxY,minY,maxZ,minZ=[NaN],[NaN],[NaN],[NaN],[NaN],[NaN],[NaN]
 
 
 KCrit=1e6; #[5e7 = 50 MPa √m]
-for i=20:20:100;
+for i=10:10:100;
 
 
 
-	for j=1:4 
+	for j=1 
 		if j==1
-			CrckVolScl=1.3
+			CrckVolScl=1.8
 		elseif j==2
-			CrckVolScl=1.4
+			CrckVolScl=1.2
 		elseif j==3
-			CrckVolScl=1.5
+			CrckVolScl=1.7
 		elseif j==4
-			CrckVolScl=1.6													
+			CrckVolScl=1.9													
 		end					
 
-		for k=1:3
+		for k=1:2
 
 			if k==1
 				###########################################

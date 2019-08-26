@@ -1,5 +1,5 @@
 function Tada_StrIntInclinedPennyTension(Szz,Beta,Theta,Radius,nu)
-# NejatiEtAl2015_StrIntInclinedPennyTension: Returns the stress intensity 
+# Tada_StrIntInclinedPennyTension: Returns the stress intensity 
 #               factors at the tips of a penny shaped crack under tension.
 #				Equation from: Tada Stress analysis handbook P.24.22:
 #
@@ -47,7 +47,7 @@ function Tada_StrIntInclinedPennyTension(Szz,Beta,Theta,Radius,nu)
 #  Copyright 2017, Tim Davis, Potsdam University
 
 # ##Inclinded Penny crack - Tada Stress analysis handbook P.24.22:
-K1=ones(size(Theta))*(2*Szz*sqrt(Radius/pi)*sind(Beta)^2);
+K1=ones(size(Theta))*(2/pi)*(Szz*sind(Beta)^2)*sqrt(pi*Radius);;
 K2=(4/(pi*(2-nu)))*(Szz*sind(Beta)*cosd(Beta))*cosd.(Theta)*sqrt(pi*Radius);
 K3=((4*(1-nu))/(pi*(2-nu)))*(Szz*sind(Beta)*cosd(Beta))*sind.(Theta)*sqrt(pi*Radius);
 

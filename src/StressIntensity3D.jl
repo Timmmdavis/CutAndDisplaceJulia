@@ -141,7 +141,7 @@ FeM2EvFlt=copy(DssFlt);
 #FeEvFlt=DssFlt;
 V1[:,3].=1.0;
 
-#Loop to get the directions of the vectors in the coordiantes of the
+#Loop to get the directions of the vectors in the coordinates of the
 #triangle plane. 
 for i=1:Num
 
