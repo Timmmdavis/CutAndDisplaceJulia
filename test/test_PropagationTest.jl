@@ -106,7 +106,7 @@ if Δρ>0
 else
 	CritRadius=(-KCrit/(Δρ*sqrt(pi)))^(2/3)
 end
-StartRadius=CritRadius/1.5
+StartRadius=CritRadius/2.5
 
 println("Start radius:")
 println(StartRadius)
@@ -115,7 +115,7 @@ println(StartRadius)
 Points[:,2:4]=Points[:,2:4].*StartRadius;
 Points[:,4]=Points[:,4].-abs(CritRadius*5); #deeper than radius - always below surface
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-lps=100;
+lps=1000;
 
 #Define a number of tris you want the mesh to have
 (target_edge_length,max_target_edge_length)=
@@ -553,9 +553,10 @@ for i=1:lps
 			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,b]
 			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,b]]
 
-		#attempt to stop linux error
-		GR.inline("png")
-
+		if Sys.islinux()
+			#attempt to stop linux error
+			GR.inline("png")
+		end
 		fig = plot()
 	
 		PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
@@ -563,8 +564,10 @@ for i=1:lps
 		#display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
 		
-		#attempt to stop linux error
-		GR.inline("png")
+		if Sys.islinux()
+			#attempt to stop linux error
+			GR.inline("png")
+		end
 		
 	end
 
