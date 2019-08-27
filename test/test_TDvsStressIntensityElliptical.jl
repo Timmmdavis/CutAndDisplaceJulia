@@ -25,7 +25,7 @@ Points[:,3]=Points[:,3]*b;
 #Define a number of tris you want the mesh to have
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 (target_edge_length,max_target_edge_length)=
-CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,600)
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,1000)
 
 #Remesh using Polygon method in CGAL:
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -43,6 +43,7 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
+
 println("Doing 3x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
@@ -50,6 +51,9 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
+
+
+#=
 println("Doing 4x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
@@ -63,7 +67,6 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
 
 println("Doing 6x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -102,7 +105,7 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
+=#
 
 
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"OutMesh")
@@ -165,8 +168,17 @@ gr()
 
 y=[K1an K1];
 plot1=scatter(θ,K1an)
-scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10,title="Tht vs KI, An=y1 BEM=y2 NOTE Y-AXIS!")
-plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds),title="Tht vs KI, An=y1 BEM=y2 NOTE Y-AXIS!")
+scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10)
+plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds))
+
+#plot3 = plot()
+for i=1:length(P1[:,1])
+
+    Plots.plot!([P1[i,1],P2[i,1]],[P1[i,2],P2[i,2]], aspect_ratio=:equal,c=(:black), lab="")
+	Plots.plot!([P2[i,1],P3[i,1]],[P2[i,2],P3[i,2]], aspect_ratio=:equal,c=(:black), lab="")
+	Plots.plot!([P1[i,1],P3[i,1]],[P1[i,2],P3[i,2]], aspect_ratio=:equal,c=(:black), lab="")
+end 
+
 PLT=plot(plot1,plot2,layout=(2,1))
 display(PLT)
 
