@@ -129,6 +129,7 @@ include("CheckIfInsidePreviousBoundary.jl")
 include("LoopResultsWriter.jl")
 include("FindingLastPng.jl")
 include("Tada_StrIntEllipseCrackTension.jl")
+include("MovingAverageOfStressIntensity.jl")
 
 
 #New Guys 07/02/2019

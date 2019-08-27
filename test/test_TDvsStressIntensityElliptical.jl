@@ -25,7 +25,7 @@ Points[:,3]=Points[:,3]*b;
 #Define a number of tris you want the mesh to have
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 (target_edge_length,max_target_edge_length)=
-CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,1000)
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,550)
 
 #Remesh using Polygon method in CGAL:
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -144,23 +144,32 @@ FreeEdMdX=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,1];FeP1P3S.FeMd[FeP1P3S.FreeFlg,1];FeP2P
 FreeEdMdY=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,2];FeP1P3S.FeMd[FeP1P3S.FreeFlg,2];FeP2P3S.FeMd[FeP2P3S.FreeFlg,2]];
 FreeEdMdZ=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,3];FeP1P3S.FeMd[FeP1P3S.FreeFlg,3];FeP2P3S.FeMd[FeP2P3S.FreeFlg,3]];
 
+#Compute across each theta
+K1an,θ=CutAndDisplaceJulia.Tada_StrIntEllipseCrackTension(σzz[1],a,b,FreeEdMdX,FreeEdMdY)
+
+avgeverynth=3
+FeP1P2S,FeP1P3S,FeP2P3S=CutAndDisplaceJulia.MovingAverageOfStressIntensity(avgeverynth,P1,P2,P3,FaceNormalVector,MidPoint,FeP1P2S,FeP1P3S,FeP2P3S)
 
 #%Accumulate from structure into big vectors:
 K1=[FeP1P2S.K1[FeP1P2S.FreeFlg];FeP1P3S.K1[FeP1P3S.FreeFlg];FeP2P3S.K1[FeP2P3S.FreeFlg]];
 K2=[FeP1P2S.K2[FeP1P2S.FreeFlg];FeP1P3S.K2[FeP1P3S.FreeFlg];FeP2P3S.K2[FeP2P3S.FreeFlg]];
 K3=[FeP1P2S.K3[FeP1P2S.FreeFlg];FeP1P3S.K3[FeP1P3S.FreeFlg];FeP2P3S.K3[FeP2P3S.FreeFlg]];
 
-#Compute across each theta
-K1an,θ=CutAndDisplaceJulia.Tada_StrIntEllipseCrackTension(σzz[1],a,b,FreeEdMdX,FreeEdMdY)
 
 #Compute the percent error between analytical and numerical
 ResidualPercentK1=CutAndDisplaceJulia.BAsPercentOfA(K1an,K1);
+
+X=K1an-K1
+L2Norm=sqrt(sum(abs.(X).^2))
+@info L2Norm
 
 #To Draw
 IntAng=[FeP1P2S.IntAng[FeP1P2S.FreeFlg];FeP1P3S.IntAng[FeP1P3S.FreeFlg];FeP2P3S.IntAng[FeP2P3S.FreeFlg]];
 #mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3;StrainEnergy; 	end
 Area=[FeP1P2S.Area[FeP1P2S.FreeFlg];FeP1P3S.Area[FeP1P3S.FreeFlg];FeP2P3S.Area[FeP2P3S.FreeFlg]];
 
+
+Area=Area./IntAng
 
 using Plots
 gr()
