@@ -48,7 +48,7 @@ g=9.81;
 
 Δρ=((ρrock-ρfluid)*g)
 
-NoTris=300;
+NoTris=500;
 errored=[true]
 currentNoTris=NoTris
 currentKCrit=-79.
@@ -63,61 +63,73 @@ for i=10:10:100;
 
 	for j=1 
 		if j==1
-			CrckVolScl=1.8
+			CrckVolScl=1
 		elseif j==2
 			CrckVolScl=1.2
 		elseif j==3
-			CrckVolScl=1.7
+			CrckVolScl=1.3
 		elseif j==4
-			CrckVolScl=1.9													
-		end					
+			CrckVolScl=1.4												
+		elseif j==5
+			CrckVolScl=1.5
+		elseif j==6
+			CrckVolScl=1.6													
+		elseif j==7
+			CrckVolScl=1.7
+		elseif j==8
+			CrckVolScl=1.8												
+		elseif j==9
+			CrckVolScl=1.9
+		elseif j==10
+			CrckVolScl=2													
+		end				
 
 		for k=1:2
 
 			if k==1
 				###########################################
-				#Water vs squishy-Granite
+				#Cheb Basin
 				###########################################
-				G=ShearModulus(2.0e9); 
+				ρfluid=469.;
+				ρrock=2700.;
+				Δρ=((ρfluid-ρrock)*g)
 				ν=PoissonsRatio(0.25);#println("Pr is close to 0.5")
+				G=ShearModulus(50e9);
 				(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
-				ρrock=2900.;
-				ρfluid=1000.;
-				Δρ=((ρrock-ρfluid)*g)
-				currentKCrit=KCrit*i
+				currentKCrit=KCrit*i	
 			elseif k==2
 				###########################################
-				#Magma vs Granite
+				#Pohang
 				###########################################
-				G=ShearModulus(50.0e9); 
-				ν=PoissonsRatio(0.25);#println("Pr is close to 0.5")
+				ρfluid=1000.;
+				ρrock=2625.;
+				Δρ=((ρfluid-ρrock)*g)
+				ν=PoissonsRatio(0.265);#println("Pr is close to 0.5")
+				G=ShearModulus(30e9);
 				(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
-				ρrock=2900.;
-				ρfluid=2600.;
-				Δρ=((ρrock-ρfluid)*g)
-				currentKCrit=KCrit*i				
+				currentKCrit=KCrit*i		
 			elseif k==3
 				###########################################
 				#Gelatin
 				###########################################				
-				G=ShearModulus(10e3); 
-				ν=PoissonsRatio(0.4999);#println("Pr is close to 0.5")
-				(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
-				ρrock=1000.;
 				ρfluid=1.225;
-				Δρ=((ρrock-ρfluid)*g)
-				#For gelatin this is really small - 1-10pa
-				currentKCrit=i/10 
+				ρrock=1000.;
+				Δρ=((ρfluid-ρrock)*g)	
+				ν=PoissonsRatio(0.4999);#println("Pr is close to 0.5")
+				G=ShearModulus(500);
+				(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
+				#For gelatin this is really small - 1-100pa
+				currentKCrit=i
 			end
 
-			#Volume
-			if Δρ>0
-				CrackVolume=((currentKCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
-			else
-				CrackVolume=((-currentKCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
-			end
+			#Volume (low)
+			PKIc2=(currentKCrit^2)*pi
+			CrackVolume=real(-(3^(2/3)*PKIc2^(4/3)*(ν - 1))/(16*complex(Δρ)^(5/3)*G));
 
 			CrackVolumeIn=CrackVolume*CrckVolScl 
+
+			#@info CrackVolume Δρ G ν currentKCrit
+
 			#Running with some catches
 			mxlps=4
 			x=0

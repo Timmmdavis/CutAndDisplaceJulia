@@ -23,7 +23,7 @@
 
 	#=
 	cd(raw"C:\Users\timmm\Desktop\MeshProp");using Plots; plot(rand(10))
-	using Debugger;using CutAndDisplaceJulia;using CutAndDisplaceJuliaPlots;using Statistics;using DelimitedFiles;using BuildCGAL;
+	using Debugger;using CutAndDisplaceJulia;using Statistics;using DelimitedFiles;using BuildCGAL;using Plots
 	includet(raw)
 	=#
 	
@@ -100,12 +100,17 @@ BetaFromVert=90-Beta;
 #Rotate this (YZ)
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
 
-#Eq (40) Pollard and Townsend
-if Δρ>0
-	CritRadius=(-KCrit/(-Δρ*sqrt(pi)))^(2/3)
-else
-	CritRadius=(-KCrit/(Δρ*sqrt(pi)))^(2/3)
-end
+# Top tip critically stressed
+CritRadius=abs(real((complex(9*Δρ)^(1/3)*(pi*(KCrit^2))^(1/3)))/(4*Δρ))
+
+#=
+Δρ=-Δρ
+@info Δρ
+CrackVolume2=((KCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
+CritRadius2=(-KCrit/(-Δρ*sqrt(pi)))^(2/3)
+@info CritRadius CritRadius2 CrackVolume CrackVolume2
+=#
+
 StartRadius=CritRadius/2.5
 
 println("Start radius:")
@@ -343,7 +348,7 @@ for i=1:lps
 	Tds=zeros(n)
 
 	for j=1:length(Z)
-		Tn[j]=Δρ.*Z[j]; #
+		Tn[j]=-Δρ.*Z[j]; #
 	end
 	#=
 	ρrocklight=2300;
@@ -590,6 +595,12 @@ for i=1:lps
 	
 		PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
 		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="", aspect_ratio=:equal)
+		for i=1:length(P1LastLoop[:,1])
+		    Plots.plot!([P1LastLoop[i,a],P2LastLoop[i,a]],[P1LastLoop[i,b],P2LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
+			Plots.plot!([P2LastLoop[i,a],P3LastLoop[i,a]],[P2LastLoop[i,b],P3LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
+			Plots.plot!([P1LastLoop[i,a],P3LastLoop[i,a]],[P1LastLoop[i,b],P3LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
+		end 
+
 		#display(fig)
 		savefig("$i-$p-FaultEdges-$RandNum.png")
 		
