@@ -166,6 +166,7 @@ for i=1:lps
 	
 	@info StartRadius CritRadius target_edge_length OutputDirectory
 	
+	#=
 	#Remesh using Polygon method in CGAL:
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	println(OutputDirectory)
@@ -197,6 +198,32 @@ for i=1:lps
 		end
 		p+=1
 	end
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	=#
+
+	#Remesh using Polygon method in CGAL:
+	println("Remeshing once")
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
+	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
+	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+
+
+	#Do Twice:
+	println("Remeshing twice")
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
+	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
+	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+
+
+	println("Remeshing 3x")
+	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
+	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
+	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
 	#Recompute target_edge_length
@@ -519,12 +546,14 @@ for i=1:lps
 	max_target_edge_length=maximum(HalfPerimeter[nonNan])*(2/3)
 	AvgTriangleEdgeLength=mean(HalfPerimeter[nonNan])*(2/3)
 
-
-
 	#Switch so new free elements are used but old ones no longer free edges
 	FeP1P2S.FreeFlg=NewFeP1P2.FreeFlg;
 	FeP1P3S.FreeFlg=NewFeP1P3.FreeFlg;
 	FeP2P3S.FreeFlg=NewFeP2P3.FreeFlg;
+
+	#Average STRAIN ENERGY ONLY around border
+	avgeverynth=3
+	FeP1P2S,FeP1P3S,FeP2P3S=CutAndDisplaceJulia.MovingAverageOfStressIntensity(avgeverynth,P1,P2,P3,FaceNormalVector,MidPoint,FeP1P2S,FeP1P3S,FeP2P3S)
 
 	#Comp propagation on new els - stress intensity is NaN for new edges
 	(p1,p2,p3,StillEdge_P1P2,StillEdge_P1P3,StillEdge_P2P3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit,AvgTriangleEdgeLength )

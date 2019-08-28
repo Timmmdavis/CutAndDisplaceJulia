@@ -25,7 +25,7 @@ Points[:,3]=Points[:,3]*b;
 #Define a number of tris you want the mesh to have
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 (target_edge_length,max_target_edge_length)=
-CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,550)
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,1500)
 
 #Remesh using Polygon method in CGAL:
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -50,9 +50,6 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
-
-
 #=
 println("Doing 4x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -178,7 +175,7 @@ gr()
 y=[K1an K1];
 plot1=scatter(θ,K1an)
 scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10)
-plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds))
+plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds), lab="")
 
 #plot3 = plot()
 for i=1:length(P1[:,1])
