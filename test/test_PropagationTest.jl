@@ -120,7 +120,7 @@ println(StartRadius)
 Points[:,2:4]=Points[:,2:4].*StartRadius;
 Points[:,4]=Points[:,4].-abs(CritRadius*5); #deeper than radius - always below surface
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
-lps=1000;
+lps=2000;
 
 #Define a number of tris you want the mesh to have
 (target_edge_length,max_target_edge_length)=
@@ -433,7 +433,12 @@ for i=1:lps
 
 	#Get tip elements
 	(FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)
-
+	#Preclosure and playing with mesh - For running around boundary soon
+	P1pre=copy(P1)
+	P2pre=copy(P2)
+	P3pre=copy(P3)
+	MidPointpre=copy(MidPoint)
+	FaceNormalVectorpre=copy(FaceNormalVector)
 
 	ClosedEls=round.(Dn,digits=14).==0.0 #eps() <- 16
 	nonNan=ClosedEls.==false;
@@ -558,7 +563,7 @@ for i=1:lps
 
 	#Average STRAIN ENERGY ONLY around border
 	avgeverynth=3
-	FeP1P2S,FeP1P3S,FeP2P3S=CutAndDisplaceJulia.MovingAverageOfStressIntensity(avgeverynth,P1,P2,P3,FaceNormalVector,MidPoint,FeP1P2S,FeP1P3S,FeP2P3S)
+	FeP1P2S,FeP1P3S,FeP2P3S=CutAndDisplaceJulia.MovingAverageOfStressIntensity(avgeverynth,P1pre,P2pre,P3pre,FaceNormalVectorpre,MidPointpre,FeP1P2S,FeP1P3S,FeP2P3S)
 
 	#Comp propagation on new els - stress intensity is NaN for new edges
 	(p1,p2,p3,StillEdge_P1P2,StillEdge_P1P3,StillEdge_P2P3)=CutAndDisplaceJulia.PropagateFracture( FeP1P2S,FeP1P3S,FeP2P3S,FaceNormalVector,G,ν,KCrit,AvgTriangleEdgeLength )

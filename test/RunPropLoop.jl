@@ -48,7 +48,7 @@ g=9.81;
 
 Δρ=((ρrock-ρfluid)*g)
 
-NoTris=500;
+NoTris=650;
 errored=[true]
 currentNoTris=NoTris
 currentKCrit=-79.
@@ -57,34 +57,35 @@ PropFlag,maxX,minX,maxY,minY,maxZ,minZ=[NaN],[NaN],[NaN],[NaN],[NaN],[NaN],[NaN]
 
 
 KCrit=1e6; #[5e7 = 50 MPa √m]
-for i=10:10:100;
+for i=1:10:101;
 
+	#Go from 101:10:1
+	sclbackwards=(i[end]+1)-i[end];
 
-
-	for j=1 
+	for j=1:10 
 		if j==1
-			CrckVolScl=1
+			CrckVolScl=2
 		elseif j==2
-			CrckVolScl=1.2
-		elseif j==3
-			CrckVolScl=1.3
-		elseif j==4
-			CrckVolScl=1.4												
-		elseif j==5
-			CrckVolScl=1.5
-		elseif j==6
-			CrckVolScl=1.6													
-		elseif j==7
-			CrckVolScl=1.7
-		elseif j==8
-			CrckVolScl=1.8												
-		elseif j==9
 			CrckVolScl=1.9
+		elseif j==3
+			CrckVolScl=1.8
+		elseif j==4
+			CrckVolScl=1.7												
+		elseif j==5
+			CrckVolScl=1.6
+		elseif j==6
+			CrckVolScl=1.5													
+		elseif j==7
+			CrckVolScl=1.4
+		elseif j==8
+			CrckVolScl=1.3												
+		elseif j==9
+			CrckVolScl=1.2
 		elseif j==10
-			CrckVolScl=2													
+			CrckVolScl=1													
 		end				
 
-		for k=1:2
+		for k=1:3
 
 			if k==1
 				###########################################
@@ -96,7 +97,7 @@ for i=10:10:100;
 				ν=PoissonsRatio(0.25);#println("Pr is close to 0.5")
 				G=ShearModulus(50e9);
 				(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
-				currentKCrit=KCrit*i	
+				currentKCrit=KCrit*sclbackwards	
 			elseif k==2
 				###########################################
 				#Pohang
@@ -107,7 +108,7 @@ for i=10:10:100;
 				ν=PoissonsRatio(0.265);#println("Pr is close to 0.5")
 				G=ShearModulus(30e9);
 				(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
-				currentKCrit=KCrit*i		
+				currentKCrit=KCrit*sclbackwards		
 			elseif k==3
 				###########################################
 				#Gelatin
@@ -119,7 +120,7 @@ for i=10:10:100;
 				G=ShearModulus(500);
 				(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
 				#For gelatin this is really small - 1-100pa
-				currentKCrit=i
+				currentKCrit=sclbackwards
 			end
 
 			#Volume (low)
@@ -165,21 +166,22 @@ for i=10:10:100;
 			filename="Results-Kcrit-$currentKCrit-Δρ-$Δρ-NoTris-$currentNoTris-GuessAnVolScl-$CrckVolScl"
 			#Try and move a png IF it exists
 			try
-				NewPngStr=string(filename,".png")
-				ExistingPngStr=CutAndDisplaceJulia.FindingLastPng(Dir1FullPath)
-				mv(string(Dir1FullPath,pth,ExistingPngStr),string(Dir2FullPath,pth,NewPngStr); force=true);
-				sleep(1) #julia is too fast
+				#NewPngStr=string(filename,".png")
+				#ExistingPngStr=CutAndDisplaceJulia.FindingLastPng(Dir1FullPath)
+				#mv(string(Dir1FullPath,pth,ExistingPngStr),string(Dir2FullPath,pth,NewPngStr); force=true);
+				mv(Dir1FullPath,string(Dir2FullPath,pth,filename); force=true);
+				sleep(1) #julia is too fast #Sleeps 2 mins - should be enough to copy
 			catch
 			end
-			
+			sleep(120) #long enough to copy
 
 			#Jump out
 			cd(OuterDir)
 			println(pwd())
 			sleep(2) #julia is too fast
 
-			#remove all meshes
-			rm(Dir1, recursive=true)
+			#remove all meshes - copied already
+			#rm(Dir1, recursive=true)
 			#recreate dir
 			println("Sleeping 10")
 			sleep(10) #stops issues with deleting meshes 

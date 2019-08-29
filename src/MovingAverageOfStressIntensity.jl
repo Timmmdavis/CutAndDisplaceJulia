@@ -59,13 +59,13 @@ if avgeverynth==3
 			if isnan(avg)
 				continue
 			end
-	    	FeP1P3S.StrainEnergy[Idx_current]=(Vtrailing+FeP1P3S.StrainEnergy[Idx_current]+Vfuture)/3
+	    	FeP1P3S.StrainEnergy[Idx_current]=avg
 	    elseif k==3
 	    	avg=(Vtrailing+FeP1P2S.StrainEnergy[Idx_current]+Vfuture)/3    	
 	    	if isnan(avg)
 				continue
 			end
-	    	FeP1P2S.StrainEnergy[Idx_current]=(Vtrailing+FeP1P2S.StrainEnergy[Idx_current]+Vfuture)/3    	
+	    	FeP1P2S.StrainEnergy[Idx_current]=avg   	
 	    end       
 	    
 
