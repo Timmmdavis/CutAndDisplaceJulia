@@ -15,21 +15,21 @@ write(io, "PropFlag maxX minX maxY minY maxZ minZ G ν g Δρ NoTris KCrit Crack
 	#First line
 	#@printf(io,"  facet normal ")
 	@printf(io,"%d", PropFlag);	print(io," ");
-	@printf(io,"%f", maxX);		print(io," ");
-	@printf(io,"%f", minX);		print(io," ");
-	@printf(io,"%f", maxY);		print(io," ");
-	@printf(io,"%f", minY);		print(io," ");
-	@printf(io,"%f", maxZ);		print(io," ");
-	@printf(io,"%f", minZ);		print(io," ");	
+	@printf(io,"%e", maxX);		print(io," ");
+	@printf(io,"%e", minX);		print(io," ");
+	@printf(io,"%e", maxY);		print(io," ");
+	@printf(io,"%e", minY);		print(io," ");
+	@printf(io,"%e", maxZ);		print(io," ");
+	@printf(io,"%e", minZ);		print(io," ");	
 
-	@printf(io,"%f", G);		print(io," ");
-	@printf(io,"%f", ν);		print(io," ");
-	@printf(io,"%f", g);		print(io," ");
-	@printf(io,"%f", Δρ);		print(io," ");
+	@printf(io,"%e", G);		print(io," ");
+	@printf(io,"%e", ν);		print(io," ");
+	@printf(io,"%e", g);		print(io," ");
+	@printf(io,"%e", Δρ);		print(io," ");
 	@printf(io,"%d", NoTris);	print(io," ");
-	@printf(io,"%f", KCrit);	print(io," ");	
-	@printf(io,"%f", CrackVolumeIn);	print(io," ");			
-	@printf(io,"%f", CrackVolumeScl);	print(io," ");			
+	@printf(io,"%e", KCrit);	print(io," ");	
+	@printf(io,"%e", CrackVolumeIn);	print(io," ");			
+	@printf(io,"%e", CrackVolumeScl);	print(io," ");			
 
 close(io);
 
