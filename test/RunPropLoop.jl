@@ -169,6 +169,7 @@ for i=1:10:101;
 				#NewPngStr=string(filename,".png")
 				#ExistingPngStr=CutAndDisplaceJulia.FindingLastPng(Dir1FullPath)
 				#mv(string(Dir1FullPath,pth,ExistingPngStr),string(Dir2FullPath,pth,NewPngStr); force=true);
+				cd(OuterDir)
 				mv(Dir1FullPath,string(Dir2FullPath,pth,filename); force=true);
 				sleep(1) #julia is too fast #Sleeps 2 mins - should be enough to copy
 			catch
