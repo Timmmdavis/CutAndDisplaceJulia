@@ -26,34 +26,31 @@
 
 function StrainEnergyRelease(K1,K2,K3,G,ν)
 
-#=
-#Wiki G-Criterion - stress intensity factor page
 E=(2.0*G)*(1.0+ν);
 Eprime=E/(1-(ν^2))
+
+#=
+#Wiki G-Criterion - stress intensity factor page
 fracturetoughness=sqrt.((abs.(K1).^2)+(abs.(K2).^2)+((Eprime/(2*G))*(abs.(K3).^2)));
 =#
 
 
 #Tada G criterion p1.7 - Crack extension force
-E=(2.0*G)*(1.0+ν);
-Eprime=E/(1-(ν^2))
 #eq 20 tada
 G1=(abs.(K1).^2)./Eprime
 G2=(abs.(K2).^2)./Eprime
 G3=(abs.(K3).^2)./(2*G)
 #eq 19 tada
-Gc=G1+G2+G3 #energy release rate (strain energy) 
+StrainEnergy=G1+G2+G3 #energy release rate (strain energy) 
 #Sih Macdonald - Fracture mechaincs applied to engineering problems - strain energy density criterion
 #Base page 364 - Gc to KIc
-fracturetoughness=sqrt((Gc*E)/(1-(ν^2)))
-
+fracturetoughness=sqrt((StrainEnergy*E)/(1-(ν^2)))
 
 
 ##Previous (same as wiki but simple )
 #StrainEnergy=((abs.(K1).^2+abs.(K2).^2).*(1-ν)+abs.(K3).^2)./(2*G);
 
 ##From wikipedia strain erergy (same result)
-#E=(2.0*G)*(1.0+ν);
 #c1=(1.0-(ν^2.0))/E
 #c2=1.0/(2.0*G)
 #StrainEnergy=(abs.(K1).^2).*c1.+(abs.(K2).^2).*c1.+(abs.(K3).^2).*c2

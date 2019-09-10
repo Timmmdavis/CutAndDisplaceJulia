@@ -163,7 +163,7 @@ for i=1:10:101;
 			end
 
 			#Placing the last png from that loop in the results dir
-			filename="Results-Kcrit-$currentKCrit-Δρ-$Δρ-NoTris-$currentNoTris-GuessAnVolScl-$CrckVolScl"
+			filename="Results-Kcrit-$currentKCrit-Δρ-$Δρ-NoTris-$currentNoTris-GuessAnVolScl-$CrckVolScl-nu-$ν-mu-$G"
 			#Try and move a png IF it exists
 			try
 				#NewPngStr=string(filename,".png")
