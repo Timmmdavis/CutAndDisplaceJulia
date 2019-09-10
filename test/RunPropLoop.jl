@@ -60,7 +60,7 @@ KCrit=1e6; #[5e7 = 50 MPa √m]
 for i=1:10:101;
 
 	#Go from 101:10:1
-	sclbackwards=(i[end]+1)-i[end];
+	sclbackwards=(i[end]+1)-i;
 
 	for j=1:10 
 		if j==1
