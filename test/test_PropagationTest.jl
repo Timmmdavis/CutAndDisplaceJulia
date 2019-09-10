@@ -615,6 +615,7 @@ for i=1:lps
 			Plots.plot!([P1LastLoop[i,a],P3LastLoop[i,a]],[P1LastLoop[i,b],P3LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
 		end 
 
+		savefig("$i-$p-FaultEdges-$RandNum.png")
 		#display(fig)
 		
 		
