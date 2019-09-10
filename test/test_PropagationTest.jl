@@ -23,7 +23,7 @@
 
 	#=
 	cd(raw"C:\Users\timmm\Desktop\MeshProp");using Plots; plot(rand(10))
-	using Debugger;using CutAndDisplaceJulia;using Statistics;using DelimitedFiles;using BuildCGAL;using Plots
+	using Printf; using Debugger;using CutAndDisplaceJulia;using Statistics;using DelimitedFiles;using BuildCGAL;using Plots
 	includet(raw)
 	=#
 	
@@ -52,15 +52,11 @@ g=9.81;
 KCrit=5e7; #[5e7 = 50 MPa √m]
 
 #Volume
-if Δρ>0
-	CrackVolume=((KCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
-else
-	CrackVolume=((-KCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
-end
+PKIc2=(KCrit^2)*pi
+CrackVolume=real(-(3^(2/3)*PKIc2^(4/3)*(ν - 1))/(16*complex(Δρ)^(5/3)*G));
 CrackVolume=CrackVolume*2 #Making sure its critical
 
 NoTris=300;
-
 
 (PropFlag,maxX,minX,maxY,minY,maxZ,minZ)=testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
 
@@ -72,6 +68,7 @@ NoTris=300;
 #########################################################
 
 function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
+
 
 #Start creating vars for function: 
 println("creating func vars")
@@ -417,7 +414,7 @@ for i=1:lps
 
 	println("Removeme")
 	p+=1
-	CutAndDisplaceJulia.ExportCrackMesh(P1,P2,P3,Dn,Dss,Dds,"$i-$p-MeshFilled-$RandNum")
+	#CutAndDisplaceJulia.ExportCrackMesh(P1,P2,P3,Dn,Dss,Dds,"$i-$p-MeshFilled-$RandNum")
 
 	if draw==1
 		CutAndDisplaceJulia.ExportCrackMesh(P1,P2,P3,Dn,Dss,Dds,"$i-$p-MeshFilled-$RandNum")
@@ -582,15 +579,27 @@ for i=1:lps
 
 	if UsingPlots==1
 
+
 		a=1; #plot for y
 		b=3; #plot for z
+		c=2; #plot for z-
 		
-		XMid=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,a]
-			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,a]
-			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,a]]
-		YMid=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,b]
-			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,b]
-			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,b]]
+		XMid=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,1]
+			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,1]
+			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,1]]
+		YMid=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,2]
+			  FeP1P3S.FeMd[FeP1P3S.FreeFlg,2]
+			  FeP2P3S.FeMd[FeP2P3S.FreeFlg,2]]
+	  	ZMid=[FeP1P2S.FeMd[FeP1P2S.FreeFlg,3]
+	  		  FeP1P3S.FeMd[FeP1P3S.FreeFlg,3]
+	  	  	  FeP2P3S.FeMd[FeP2P3S.FreeFlg,3]]
+
+
+		TriDispWriter("$i-$p-MeshWithDisp-ForDrawing-$RandNum",P1LastLoop,P2LastLoop,P3LastLoop,Dn[nonNan,:],Dss[nonNan,:],Dds[nonNan,:])
+		CutAndDisplaceJulia.ExportCrackMesh(P1LastLoop,P2LastLoop,P3LastLoop,Dn[nonNan,:],Dss[nonNan,:],Dds[nonNan,:],"$i-$p-MeshFilled-ForDrawing-$RandNum")
+		EdgePointsWriter("$i-$p-MeshEdges-ForDrawing-$RandNum",XMid,YMid,ZMid,StrainEnergyV,KCrit)
+
+
 
 		if Sys.islinux()
 			#attempt to stop linux error
@@ -599,7 +608,7 @@ for i=1:lps
 		fig = plot()
 	
 		PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
-		scatter!([XMid],[YMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="", aspect_ratio=:equal)
+		scatter!([XMid],[ZMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="", aspect_ratio=:equal)
 		for i=1:length(P1LastLoop[:,1])
 		    Plots.plot!([P1LastLoop[i,a],P2LastLoop[i,a]],[P1LastLoop[i,b],P2LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
 			Plots.plot!([P2LastLoop[i,a],P3LastLoop[i,a]],[P2LastLoop[i,b],P3LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
@@ -607,7 +616,7 @@ for i=1:lps
 		end 
 
 		#display(fig)
-		savefig("$i-$p-FaultEdges-$RandNum.png")
+		
 		
 		if Sys.islinux()
 			#attempt to stop linux error
@@ -792,7 +801,6 @@ end
 return fig
 end
 
-
 function GrabPointNew5(PointsIdxList,P1,P2,P3,j)
 #Extract the points on the current bit of the edge
 Point=[0. 0. 0.]
@@ -816,3 +824,73 @@ end
 return Point,Indx
 end
 
+
+function EdgePointsWriter(filename,X,Y,Z,StrainEnergy,KCrit)
+#space delimted text file containing the edges of the mesh and the stresses at these. 
+
+#create a new file for writing
+io = open("$filename.txt", "w+");
+write(io, "X Y Z StrainEnergy KCrit");print(io,"\r\n");
+
+for i=1:length(X)
+
+	Printf.@printf(io,"%e",X[i]);print(io," ");
+	Printf.@printf(io,"%e",Y[i]);print(io," ");
+	Printf.@printf(io,"%e",Z[i]);print(io," ");
+	Printf.@printf(io,"%e",StrainEnergy[i]);print(io," ");
+	Printf.@printf(io,"%e",KCrit);print(io,"\r\n");
+
+end
+
+print(io,"\r\n");
+close(io);
+
+if Sys.islinux()
+	#OutputDir
+	OutputDirectory=string(pwd(),"/$filename.off")
+else
+	#OutputDir
+	OutputDirectory=string(pwd(),"\\$filename.off")
+end
+
+return OutputDirectory
+end
+
+function TriDispWriter(filename,P1,P2,P3,Dn,Dss,Dds)
+#space delimted text file containing the opening at each tri on the mesh
+
+#create a new file for writing
+io = open("$filename.txt", "w+");
+write(io, "P1x P1y P1z P2x P2y P2z P3x P3y P3z Dn Dss Dds");print(io,"\r\n");
+
+for i=1:length(P1[:,1])
+
+
+	Printf.@printf(io,"%e",P1[i,1]);print(io," ");
+	Printf.@printf(io,"%e",P1[i,2]);print(io," ");
+	Printf.@printf(io,"%e",P1[i,3]);print(io," ");
+	Printf.@printf(io,"%e",P2[i,1]);print(io," ");
+	Printf.@printf(io,"%e",P2[i,2]);print(io," ");
+	Printf.@printf(io,"%e",P2[i,3]);print(io," ");
+	Printf.@printf(io,"%e",P3[i,1]);print(io," ");
+	Printf.@printf(io,"%e",P3[i,2]);print(io," ");
+	Printf.@printf(io,"%e",P3[i,3]);print(io," ");
+	Printf.@printf(io,"%e",Dn[i]);print(io," ");
+	Printf.@printf(io,"%e",Dss[i]);print(io," ");
+	Printf.@printf(io,"%e",Dds[i]);print(io,"\r\n");
+
+end
+
+print(io,"\r\n");
+close(io);
+
+if Sys.islinux()
+	#OutputDir
+	OutputDirectory=string(pwd(),"/$filename.off")
+else
+	#OutputDir
+	OutputDirectory=string(pwd(),"\\$filename.off")
+end
+
+return OutputDirectory
+end

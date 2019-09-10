@@ -41,10 +41,10 @@ G1=(abs.(K1).^2)./Eprime
 G2=(abs.(K2).^2)./Eprime
 G3=(abs.(K3).^2)./(2*G)
 #eq 19 tada
-StrainEnergy=G1+G2+G3 #energy release rate (strain energy) 
+StrainEnergy=G1.+G2.+G3 #energy release rate (strain energy) 
 #Sih Macdonald - Fracture mechaincs applied to engineering problems - strain energy density criterion
 #Base page 364 - Gc to KIc
-fracturetoughness=sqrt((StrainEnergy*E)/(1-(ν^2)))
+fracturetoughness=sqrt.((StrainEnergy.*E)./(1-(ν^2)))
 
 
 ##Previous (same as wiki but simple )
