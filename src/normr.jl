@@ -8,11 +8,11 @@ function normr(A)
 
 B= Array{Float64}(undef, size(A)); 
 if size(A,1)==1 
-	B=normalize(vec(A))
+	B=LinearAlgebra.normalize(vec(A))
 else
 	
 	for i=1:size(A,1)
-		B[i,:]=normalize(A[i,:],2)
+		B[i,:]=LinearAlgebra.normalize(A[i,:],2)
 	end
 end
 

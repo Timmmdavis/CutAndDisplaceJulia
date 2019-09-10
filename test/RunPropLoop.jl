@@ -3,7 +3,12 @@
 
 
 #Our working dir
-OuterDir=raw"C:\Users\timmm\Desktop\MeshProp"
+if Sys.islinux()
+	OuterDir="/home/tim/Desktop/MeshProp"
+else
+	OuterDir=raw"C:\Users\timmm\Desktop\MeshProp"
+end
+
 cd(OuterDir)
 Dir1="WhereTheMeshesLive"
 if isdir(Dir1)
@@ -55,12 +60,13 @@ currentKCrit=-79.
 CrackVolumeIn=-79.
 PropFlag,maxX,minX,maxY,minY,maxZ,minZ=[NaN],[NaN],[NaN],[NaN],[NaN],[NaN],[NaN]
 
+list=1:10:101
 
 KCrit=1e6; #[5e7 = 50 MPa √m]
-for i=1:10:101;
+for i=1:length(list)
 
-	#Go from 101:10:1
-	sclbackwards=(i[end]+1)-i;
+    #Go from 101:10:1
+    sclbackwards=(list[end]+1)-list[i];
 
 	for j=1:10 
 		if j==1
