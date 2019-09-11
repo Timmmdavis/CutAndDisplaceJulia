@@ -135,7 +135,12 @@ for i=1:length(list)
 
 			CrackVolumeIn=CrackVolume*CrckVolScl 
 
-			#@info CrackVolume Δρ G ν currentKCrit
+			@info CrackVolume Δρ G ν currentKCrit
+
+			#Running with some catches
+			mxlps=4
+			x=0
+			currentNoTris=NoTris #reset
 
 			################################################
 			#MAKE SURE Dir2 IS NOT REMOVED AT THE TOP!!!
@@ -143,12 +148,12 @@ for i=1:length(list)
 			cd(OuterDir)
 			#Back into results dir
 			#cd(Dir2)
-			x=readdir(Dir2)
+			pathsindir=readdir(Dir2)
 			mnΔρ=-Δρ;
 			alreadycomputed=0
-			for q=1:length(x)
+			for q=1:length(pathsindir)
 				#get each part
-				xparts=split(x[q],"-")
+				xparts=split(pathsindir[q],"-")
 				if length(xparts)==14
 					#remove txt extension
 					Gname=split(xparts[14],".txt")
@@ -178,11 +183,7 @@ for i=1:length(list)
 			#Back into mesh dir
 			cd(Dir1)
 			################################################
-
-			#Running with some catches
-			mxlps=4
-			x=0
-			currentNoTris=NoTris #reset
+			
 			while errored[1]==true 
 				
 				x=x+1
