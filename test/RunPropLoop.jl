@@ -19,8 +19,8 @@ else
 end
 Dir2="WhereTheResultsLive"
 if isdir(Dir2)
-	rm(Dir2, recursive=true)
-	mkdir(Dir2)
+	#rm(Dir2, recursive=true)
+	#mkdir(Dir2)
 else
 	mkdir(Dir2)
 end
@@ -137,6 +137,48 @@ for i=1:length(list)
 
 			#@info CrackVolume Δρ G ν currentKCrit
 
+			################################################
+			#MAKE SURE Dir2 IS NOT REMOVED AT THE TOP!!!
+			#Jump out
+			cd(OuterDir)
+			#Back into results dir
+			#cd(Dir2)
+			x=readdir(Dir2)
+			mnΔρ=-Δρ;
+			alreadycomputed=0
+			for q=1:length(x)
+				#get each part
+				xparts=split(x[q],"-")
+				if length(xparts)==14
+					#remove txt extension
+					Gname=split(xparts[14],".txt")
+					Gname=Gname[1];
+					Gname=parse(Float64,Gname)
+					νname=parse(Float64,xparts[12])
+					mnΔρname=parse(Float64,xparts[6])
+					CrckVolSclname=parse(Float64,xparts[10])
+					currentKCritname=parse(Float64,xparts[3])
+					#@info mnΔρ mnΔρname ν νname G Gname CrckVolScl CrckVolSclname currentKCrit currentKCritname
+					if mnΔρ==mnΔρname && ν==νname && G==Gname && CrckVolScl==CrckVolSclname && currentKCrit==currentKCritname
+						#@info currentKCritname currentKCrit
+						alreadycomputed=1
+					end
+				end
+			end
+			if alreadycomputed==1
+				println("skipping")
+				filename="Results-Kcrit-$currentKCrit-Δρ-$Δρ-NoTris-$currentNoTris-GuessAnVolScl-$CrckVolScl-nu-$ν-mu-$G"
+				println(filename)
+				continue #Skip this loop
+			else
+				println("to be run")
+			end
+			#Jump out
+			cd(OuterDir)
+			#Back into mesh dir
+			cd(Dir1)
+			################################################
+
 			#Running with some catches
 			mxlps=4
 			x=0
@@ -215,3 +257,41 @@ for i=1:length(list)
 end
 
 cd(OuterDir)
+
+#=
+if k==1
+	###########################################
+	#Volcano - P&twnsend
+	###########################################
+	ρfluid=2700.;
+	ρrock=2900.;
+	Δρ=((ρfluid-ρrock)*g)
+	ν=PoissonsRatio(0.35);#println("Pr is close to 0.5")
+	G=ShearModulus(50e9);
+	(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
+	currentKCrit=KCrit*sclbackwards	
+elseif k==2
+	###########################################
+	#Pohang - sft rock
+	###########################################
+	ρfluid=1000.;
+	ρrock=2625.;
+	Δρ=((ρfluid-ρrock)*g)
+	ν=PoissonsRatio(0.265);#println("Pr is close to 0.5")
+	G=ShearModulus(3e9);
+	(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
+	currentKCrit=KCrit*sclbackwards		
+elseif k==3
+	###########################################
+	#Gelatin
+	###########################################				
+	ρfluid=920; #cooking oil https://www.answers.com/Q/What_is_the_density_of_oil_in_kg_m3
+	ρrock=1000.;
+	Δρ=((ρfluid-ρrock)*g)	
+	ν=PoissonsRatio(0.4999);#println("Pr is close to 0.5")
+	G=ShearModulus(500);
+	(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
+	#For gelatin this is really small - 1-100pa
+	currentKCrit=sclbackwards
+end
+=#
