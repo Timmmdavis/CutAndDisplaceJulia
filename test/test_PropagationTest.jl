@@ -54,6 +54,7 @@ KCrit=5e7; #[5e7 = 50 MPa √m]
 #Volume
 PKIc2=(KCrit^2)*pi
 CrackVolume=real(-(3^(2/3)*PKIc2^(4/3)*(ν - 1))/(16*complex(Δρ)^(5/3)*G));
+#EleoVol=(1/16)*((1-ν)/G)*(((9*pi^4)*(KCrit^8))/(Δρ^5))^(1/3)
 CrackVolume=CrackVolume*2 #Making sure its critical
 
 NoTris=300;
