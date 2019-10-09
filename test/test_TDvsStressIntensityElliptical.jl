@@ -16,7 +16,7 @@ Radius=maximum(Points[:,2])
 =#
 
 #Semiaxes= (a must be bigger than b (tada solution))
-a=3; 
+a=2; 
 b=1;
 Points[:,2]=Points[:,2]*a;
 Points[:,3]=Points[:,3]*b;
@@ -25,7 +25,7 @@ Points[:,3]=Points[:,3]*b;
 #Define a number of tris you want the mesh to have
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 (target_edge_length,max_target_edge_length)=
-CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,1500)
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,800)
 
 #Remesh using Polygon method in CGAL:
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -169,15 +169,25 @@ Area=[FeP1P2S.Area[FeP1P2S.FreeFlg];FeP1P3S.Area[FeP1P3S.FreeFlg];FeP2P3S.Area[F
 Area=Area./IntAng
 
 using Plots
-gr()
+pyplot()
 
 
-y=[K1an K1];
-plot1=scatter(θ,K1an)
-scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10)
-plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds), lab="")
+#plot1=scatter(θ,K1an,c=(:black))
+#using LaTeXStrings
+t=[181:0.01:360; 1:0.01:180];
+x = a.*cosd.(t) 
+y = a.*sind.(t) 
+K1an,t=CutAndDisplaceJulia.Tada_StrIntEllipseCrackTension(σzz[1],a,b,x,y)
+plot1=plot(rad2deg.(t),K1an./maximum(K1an),c=(:black), lab=latexstring(raw"$K_{I}$"))
+scatter!(rad2deg.(θ),K1./maximum(K1an),c=(:black),ms=1.5, lab=latexstring("BEM"))
+yaxis!("Stress intensity", (0,1.5))
+xaxis!(latexstring("\$\\theta^{\\circ}\$ angle around crack"), (-180,180))
+title!(latexstring("Elliptical crack in tension, \$a_x/a_y\$ = $a/$b"))
+#plot1=scatter(θ,K1an,'k')
+#scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10)
+#plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds), lab="")
 
-#plot3 = plot()
+plot2 = plot()
 for i=1:length(P1[:,1])
 
     Plots.plot!([P1[i,1],P2[i,1]],[P1[i,2],P2[i,2]], aspect_ratio=:equal,c=(:black), lab="")
@@ -185,9 +195,17 @@ for i=1:length(P1[:,1])
 	Plots.plot!([P1[i,1],P3[i,1]],[P1[i,2],P3[i,2]], aspect_ratio=:equal,c=(:black), lab="")
 end 
 
+yaxis!(latexstring("\$y\$"), (-1.2,1.2))
+xaxis!(latexstring("\$x\$"), (-2.2,2.2))
+annotate!(0, 1.1, text(latexstring("\$\\theta\$=90\$^{\\circ}\$"), 10, :center))
+annotate!(0, -1.1, text(latexstring("\$\\theta\$=-90\$^{\\circ}\$"), 10, :center))
+annotate!(2.1, 0, text(latexstring("\$\\theta\$=0\$^{\\circ}\$"), 10, :right))
+
+
 PLT=plot(plot1,plot2,layout=(2,1))
 display(PLT)
 
+#=
 #@info ResidualPercentK1 ResidualPercentK2 ResidualPercentK3
 MaxErrorK1=maximum(filter(!isnan,abs.(ResidualPercentK1))); 
 @info MaxErrorK1 
@@ -198,8 +216,7 @@ if MaxErrorK1>lim
 end
 
 println("Test Passed")
-
-
+=#
 
 
 
