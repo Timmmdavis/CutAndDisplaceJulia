@@ -57,45 +57,36 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
 println("Doing 5x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
 println("Doing 6x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
-
 println("Doing 7x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
-
 println("Doing 8x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
-
 println("Doing 9x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
-
 println("Doing 10x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
@@ -187,6 +178,7 @@ title!(latexstring("Elliptical crack in tension, \$a_x/a_y\$ = $a/$b"))
 #scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10)
 #plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds), lab="")
 
+
 plot2 = plot()
 for i=1:length(P1[:,1])
 
@@ -196,10 +188,10 @@ for i=1:length(P1[:,1])
 end 
 
 yaxis!(latexstring("\$y\$"), (-1.2,1.2))
-xaxis!(latexstring("\$x\$"), (-2.2,2.2))
+xaxis!(latexstring("\$x\$"), (-2.5,2.5))
 annotate!(0, 1.1, text(latexstring("\$\\theta\$=90\$^{\\circ}\$"), 10, :center))
 annotate!(0, -1.1, text(latexstring("\$\\theta\$=-90\$^{\\circ}\$"), 10, :center))
-annotate!(2.1, 0, text(latexstring("\$\\theta\$=0\$^{\\circ}\$"), 10, :right))
+annotate!(2.4, 0, text(latexstring("\$\\theta\$=0\$^{\\circ}\$"), 10, :right))
 
 
 PLT=plot(plot1,plot2,layout=(2,1))
@@ -214,7 +206,6 @@ lim=11; #Percent error limit
 if MaxErrorK1>lim
  	error("Residual displacement too high, some over $lim%")
 end
-
 println("Test Passed")
 =#
 
@@ -226,12 +217,9 @@ using UnicodePlots
 plt=scatterplot(vec(θ),vec(K1an), title = "StressIntensity around inclined penny subject to tension \n r=$Radius [m] σzz=$σzz [MPa] βFromZ=$BetaFromVert [°] G=$G [MPa] ν=$ν", name = "analytical KI", xlabel = "θ [°]", ylabel = "K", canvas = DotCanvas)
 scatterplot!(plt, vec(θ),vec(K1), color = :blue, name = "numerical KI $n tris")
 println(plt) #need when running as test case
-
 plt=scatterplot(vec(θ),vec(K2an), title = "StressIntensity around inclined penny subject to tension \n r=$Radius [m] σzz=$σzz [MPa] βFromZ=$BetaFromVert [°]  G=$G [MPa] ν=$ν", name = "analytical KII", xlabel = "θ [°]", ylabel = "K", canvas = DotCanvas)
 scatterplot!(plt, vec(θ),K2, color = :yellow, name = "numerical KII $n tris")
 println(plt) #need when running as test case
-
-
 plt=scatterplot(vec(θ),vec(K3an), title = "StressIntensity around inclined penny subject to tension \n r=$Radius [m] σzz=$σzz [MPa] βFromZ=$BetaFromVert [°]  G=$G [MPa] ν=$ν", name = "analytical KIII", xlabel = "θ [°]", ylabel = "K", canvas = DotCanvas)
 scatterplot!(plt, vec(θ),vec(K3), color = :magenta, name = "numerical KIII $n tris")
 println(plt) #need when running as test case

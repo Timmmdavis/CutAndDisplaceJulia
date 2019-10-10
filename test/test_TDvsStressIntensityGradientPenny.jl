@@ -167,33 +167,40 @@ y = a.*sind.(t)
 K1any,zz=CutAndDisplaceJulia.Tada_StrIntEllipseCrackTension(P,a,b,x,y)
 K1anx=CutAndDisplaceJulia.Tada_StrIntPennyGradient(Δρ,a,deg2rad.(t))
 K1an=K1any.+K1anx; #sum these
-plot1=plot(t,K1an./maximum(K1an),c=(:black), lab=latexstring(raw"$K_{I}$"))
+plot3=plot(t,K1an./maximum(K1an),c=(:black), lab=latexstring(raw"$K_{I}$"))
 scatter!(rad2deg.(θnum),K1./maximum(K1an),c=(:black),ms=1.5, lab=latexstring("BEM"))
 yaxis!("Stress intensity", (0,1.5))
 xaxis!(latexstring("\$\\theta^{\\circ}\$ angle around crack"), (-180,180))
-title!("Penny shaped crack, critically stressed")
+title!(latexstring("Penny crack, \$K_{Ic}=1\$"))
 #plot1=scatter(θ,K1an,'k')
 #scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10)
 #plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds), lab="")
 
-plot2 = plot()
+plot4 = plot()
+
+P1nrm=P1./a;
+P2nrm=P2./a;
+P3nrm=P3./a;
+
 for i=1:length(P1[:,1])
 
-    Plots.plot!([P1[i,1],P2[i,1]],[P1[i,3],P2[i,3]], aspect_ratio=:equal,c=(:black), lab="")
-	Plots.plot!([P2[i,1],P3[i,1]],[P2[i,3],P3[i,3]], aspect_ratio=:equal,c=(:black), lab="")
-	Plots.plot!([P1[i,1],P3[i,1]],[P1[i,3],P3[i,3]], aspect_ratio=:equal,c=(:black), lab="")
-
+    Plots.plot!([P1nrm[i,1],P2nrm[i,1]],[P1nrm[i,3],P2nrm[i,3]], aspect_ratio=:equal,c=(:black), lab="")
+	Plots.plot!([P2nrm[i,1],P3nrm[i,1]],[P2nrm[i,3],P3nrm[i,3]], aspect_ratio=:equal,c=(:black), lab="")
+	Plots.plot!([P1nrm[i,1],P3nrm[i,1]],[P1nrm[i,3],P3nrm[i,3]], aspect_ratio=:equal,c=(:black), lab="")
 end 
 
-yaxis!(latexstring("\$z\$"), (-1.5*a,1.5*a))
-xaxis!(latexstring("\$x\$"), (-1.5*a,1.5*a))
-annotate!(0, a*1.2, text(latexstring("\$\\theta\$=0\$^{\\circ}\$"), 10, :center))
-annotate!(a*-1.3, 0, text(latexstring("\$\\theta\$=-90\$^{\\circ}\$"), 10, :left))
-annotate!(a*1.3,  0, text(latexstring("\$\\theta\$=90\$^{\\circ}\$"), 10, :right))
+yaxis!(latexstring("\$z\$"), (-1.5,1.5))
+xaxis!(latexstring("\$x\$"), (-1.5,1.5))
+annotate!(0, 1.1, text(latexstring("\$\\theta\$=0\$^{\\circ}\$"), 10, :center))
+annotate!(-1.4, 0, text(latexstring("\$\\theta\$=-90\$^{\\circ}\$"), 10, :left))
+annotate!(1.4,  0, text(latexstring("\$\\theta\$=90\$^{\\circ}\$"), 10, :right))
 
 
-PLT=plot(plot1,plot2,layout=(2,1))
+PLT=plot(plot3,plot4,layout=(2,1))
 display(PLT)
+
+#If you want all plots
+#PLT=plot(plot2,plot1,plot4,plot3,layout=(2,2))
 
 #=
 #@info ResidualPercentK1 ResidualPercentK2 ResidualPercentK3
