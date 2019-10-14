@@ -130,7 +130,7 @@ include("LoopResultsWriter.jl")
 include("FindingLastPng.jl")
 include("Tada_StrIntEllipseCrackTension.jl")
 include("MovingAverageOfStressIntensity.jl")
-
+include("Tada_StrIntPennyGradient.jl")
 
 #New Guys 07/02/2019
 include("CalculateNormalTraction3D.jl")
