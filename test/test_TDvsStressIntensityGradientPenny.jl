@@ -50,7 +50,7 @@ BetaFromVert=90-Beta;
 #Define a number of tris you want themesh to have
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 (target_edge_length,max_target_edge_length)=
-CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,800)
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,650)
 
 #Remesh using Polygon method in CGAL:
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -59,6 +59,23 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
+P1,P2,P3,MidPoint,FaceNormalVector,Points,Triangles=
+CutAndDisplaceJulia.PutOnEdgeOfCirc(MidPoint,P1,P2,P3,FaceNormalVector,CritRadius,1,3)
+
+#=
+using Plots
+pyplot()
+plot4 = plot()
+P1nrm=P1./a;
+P2nrm=P2./a;
+P3nrm=P3./a;
+for i=1:length(P1nrm[:,1])
+    Plots.plot!([P1nrm[i,1],P2nrm[i,1]],[P1nrm[i,3],P2nrm[i,3]], aspect_ratio=:equal,c=(:black), lab="")
+	Plots.plot!([P2nrm[i,1],P3nrm[i,1]],[P2nrm[i,3],P3nrm[i,3]], aspect_ratio=:equal,c=(:black), lab="")
+	Plots.plot!([P1nrm[i,1],P3nrm[i,1]],[P1nrm[i,3],P3nrm[i,3]], aspect_ratio=:equal,c=(:black), lab="")
+end 
+display(plot4)
+=#
 
 #Do Twice:
 println("Doing twice")
@@ -68,11 +85,15 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
+P1,P2,P3,MidPoint,FaceNormalVector,Points,Triangles=
+CutAndDisplaceJulia.PutOnEdgeOfCirc(MidPoint,P1,P2,P3,FaceNormalVector,CritRadius,1,3)
 
 println("Doing 3x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 (OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
+P1,P2,P3,MidPoint,FaceNormalVector,Points,Triangles=
+CutAndDisplaceJulia.PutOnEdgeOfCirc(MidPoint,P1,P2,P3,FaceNormalVector,CritRadius,1,3)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
@@ -144,7 +165,11 @@ K3=[FeP1P2S.K3[FeP1P2S.FreeFlg];FeP1P3S.K3[FeP1P3S.FreeFlg];FeP2P3S.K3[FeP2P3S.F
 ResidualPercentK1=CutAndDisplaceJulia.BAsPercentOfA(K1an,K1);
 
 X=K1an-K1
+println("vertical sep")
+aaa=maximum(abs.(K1an.-K1))./maximum(K1an)
+println(aaa)
 L2Norm=sqrt(sum(abs.(X).^2))
+println("L2norm")
 @info L2Norm
 
 #To Draw
@@ -229,3 +254,4 @@ plt=scatterplot(vec(θ),vec(K3an), title = "StressIntensity around inclined penn
 scatterplot!(plt, vec(θ),vec(K3), color = :magenta, name = "numerical KIII $n tris")
 println(plt) #need when running as test case
 =#
+

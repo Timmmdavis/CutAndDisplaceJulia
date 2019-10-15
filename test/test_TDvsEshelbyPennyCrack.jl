@@ -73,7 +73,7 @@ BoundaryConditions=Tractions(Tn,Tss,Tds)
 Vol1NumResultOpn=(sum(Area.*Dn)./2);
 #Analytical
 Vol1AnResultOpn=(((pi*(1-ν)*Tn[1]*(Radius^2))/(2*G))*(2/pi))*(1/0.75)
-#Vol1AnResultOpn=-(4*Tn[1]*Radius^3*(ν - 1))/(3*G);
+Vol1AnResultOpnTada=(16*(1-(ν^2))/(3*E))*Tn[1]*(Radius^3) #Whole area
 
 #Equation in PPR=
 Eq2=(100/Vol1AnResultOpn)*(Vol1AnResultOpn-Vol1NumResultOpn);

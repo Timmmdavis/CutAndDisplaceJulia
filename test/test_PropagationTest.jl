@@ -54,8 +54,10 @@ KCrit=5e7; #[5e7 = 50 MPa √m]
 #Volume
 PKIc2=(KCrit^2)*pi
 CrackVolume=real(-(3^(2/3)*PKIc2^(4/3)*(ν - 1))/(16*complex(Δρ)^(5/3)*G));
-#EleoVol=(1/16)*((1-ν)/G)*(((9*pi^4)*(KCrit^8))/(Δρ^5))^(1/3)
 CrackVolume=CrackVolume*2 #Making sure its critical
+#EleoVol=(1/16)*((1-ν)/G)*(((9*pi^4)*(KCrit^8))/(Δρ^5))^(1/3)
+#CrackVolumeHigh=-(16*3^(2/3)*KCrit^2*pi^(4/3)*(KCrit^2)^(1/3)*(ν - 1))/(81*Δρ^(5/3)*G)
+#CHighSupp=(2^(2/3)*(9*Δρ)^(1/3)*(pi*KCrit^2)^(1/3))/(4*Δρ)
 
 NoTris=300;
 
@@ -616,9 +618,8 @@ for i=1:lps
 			Plots.plot!([P1LastLoop[i,a],P3LastLoop[i,a]],[P1LastLoop[i,b],P3LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
 		end 
 
-		savefig("$i-$p-FaultEdges-$RandNum.png")
 		#display(fig)
-		
+		savefig("$i-$p-FaultEdges-$RandNum.png")
 		
 		if Sys.islinux()
 			#attempt to stop linux error
