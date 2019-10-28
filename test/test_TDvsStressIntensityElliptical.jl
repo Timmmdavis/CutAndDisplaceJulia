@@ -20,12 +20,12 @@ a=2;
 b=1;
 Points[:,2]=Points[:,2]*a;
 Points[:,3]=Points[:,3]*b;
-
+CritRadius=1
 
 #Define a number of tris you want the mesh to have
-(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )#650
 (target_edge_length,max_target_edge_length)=
-CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,800)
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,1500)#650
 
 #Remesh using Polygon method in CGAL:
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -33,6 +33,20 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+
+
+#Put back into circle
+Points[:,2]=Points[:,2]./a;
+Points[:,3]=Points[:,3]./b;
+(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+P1,P2,P3,MidPoint,FaceNormalVector,Points,Triangles=
+CutAndDisplaceJulia.PutOnEdgeOfCirc(MidPoint,P1,P2,P3,FaceNormalVector,CritRadius,1,2)
+#Back 2 ellipse
+Points[:,2]=Points[:,2].*a;
+Points[:,3]=Points[:,3].*b;
+(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 
 #Do Twice:
@@ -43,6 +57,19 @@ OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 (P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
+
+#Put back into circle
+Points[:,2]=Points[:,2]./a;
+Points[:,3]=Points[:,3]./b;
+(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
+P1,P2,P3,MidPoint,FaceNormalVector,Points,Triangles=
+CutAndDisplaceJulia.PutOnEdgeOfCirc(MidPoint,P1,P2,P3,FaceNormalVector,CritRadius,1,2)
+#Back 2 ellipse
+Points[:,2]=Points[:,2].*a;
+Points[:,3]=Points[:,3].*b;
+(P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
+(FaceNormalVector,MidPoint)=CutAndDisplaceJulia.CreateFaceNormalAndMidPoint(Points,Triangles)
 
 println("Doing 3x")
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -148,7 +175,11 @@ K3=[FeP1P2S.K3[FeP1P2S.FreeFlg];FeP1P3S.K3[FeP1P3S.FreeFlg];FeP2P3S.K3[FeP2P3S.F
 ResidualPercentK1=CutAndDisplaceJulia.BAsPercentOfA(K1an,K1);
 
 X=K1an-K1
+println("vertical sep")
+aaa=maximum(abs.(K1an.-K1))./maximum(K1an)
+println(aaa)
 L2Norm=sqrt(sum(abs.(X).^2))
+println("L2norm")
 @info L2Norm
 
 #To Draw

@@ -50,7 +50,7 @@ BetaFromVert=90-Beta;
 #Define a number of tris you want themesh to have
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 (target_edge_length,max_target_edge_length)=
-CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,650)
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,1500) #650
 
 #Remesh using Polygon method in CGAL:
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
