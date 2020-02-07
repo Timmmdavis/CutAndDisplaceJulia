@@ -25,7 +25,7 @@ CritRadius=1
 #Define a number of tris you want the mesh to have
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )#650
 (target_edge_length,max_target_edge_length)=
-CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,1500)#650
+CutAndDisplaceJulia.GetDesiredEdgeLength(P1,P2,P3,650)#1500)#650
 
 #Remesh using Polygon method in CGAL:
 OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -224,7 +224,7 @@ scatter!(rad2deg.(θ),K1./maximum(K1an),c=(:black),ms=5, lab=latexstring("BEM"))
 yaxis!("Stress intensity", (0,1.2))
 xaxis!(latexstring("\$\\theta^{\\circ}\$ angle around crack"), (-180,180))
 #title!(latexstring("Elliptical crack, \$a_x/a_y\$ = $a/$b"))
-title!(latexstring("b) Tip-line \$K_I\$"))
+title!(latexstring("B) Tip-line \$K_I\$"))
 #plot1=scatter(θ,K1an,'k')
 #scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10)
 #plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds), lab="")
@@ -252,7 +252,7 @@ font.rotation = -90;
 annotate!(-xc-.3,0 , text(latexstring("\$\\theta\$=-90\$^{\\circ}\$"),  :center, font))
 font.rotation = 0;
 annotate!(0, zc+.2, text(latexstring("\$\\theta\$=0\$^{\\circ}\$"),  :center, font))
-title!("a) Mesh")
+title!("A) Mesh")
 plot!(xticks = -1:1:1)
 
 
