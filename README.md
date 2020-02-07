@@ -3,9 +3,20 @@
 [![Build Status](https://travis-ci.com/Timmmdavis/CutAndDisplaceJulia.svg?token=1HhESyMNyqzV8R22Pqq6&branch=master)](https://travis-ci.com/Timmmdavis/CutAndDisplaceJulia)
 [![Coverage Status](https://codecov.io/gh/Timmmdavis/CutAndDisplaceJulia/branch/master/graph/badge.svg?token=IbbZ8n4385)](https://codecov.io/gh/Timmmdavis/CutAndDisplaceJulia)
 
-![FaultsDisplacingUnderShearStress](https://github.com/Timmmdavis/HostingGifs/blob/master/MeshPropBothAnglesFast.gif)  
+![FractureAscendingDueToStressGradients](https://github.com/Timmmdavis/HostingGifs/blob/master/MeshPropBothAnglesFast.gif)  
 
-This repository contains CutAndDisplace working in Julia. 
+This repository contains https://github.com/Timmmdavis/CutAndDisplace but in Julia. 2D parts have not been implemented (only the analytical parts). 3D is working well. 
+
+For meshing I use: https://github.com/CGAL/cgal which I clumsily link to using https://github.com/Timmmdavis/BuildCGAL.
+For my non-linear solver (complimentarity conditions) I use: https://github.com/Timmmdavis/FischerNewton
+
+To get start with this open Julia (with bits like revise etc imported) and run (Windows):
+```
+using CutAndDisplaceJulia; 
+include(raw"C:\Users\UserName\...\CutAndDisplaceJulia\test\test_TDvsMogi.jl")
+```
+This is similar to the 'MainFrame.m' file in the MATLAB version. 
+
 The test folder contains some contains some simple benchmarks against analytical solutions in hope of catching regressions (run through Travis on each commit). Running through the full benchmarks in https://github.com/Timmmdavis/CutAndDisplace would be desirable to catch issues related to coordinates, sign etc. 
 
 To get the path:
