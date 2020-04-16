@@ -3,9 +3,8 @@ os:
   - linux
 julia:
 #  - nightly
-  - 1.0
-#  - 1.1.0
-
+#  - 1.0
+  - 1.4.0
 ##If you want windows uncomment lines below:
 #matrix:
 #  include:
