@@ -189,6 +189,7 @@ include("Okada1985RectangularDislocation.jl")
 include("Eshelby1957_PennyCrackSlipProfile.jl")
 include("Mogi1958_SphericalCavity.jl")
 include("Savage1984_GravityValleyStress.jl")
+include("Savage1984_GravityValleyStress_CoordsIn.jl")
 include("PollardSegall1987_FractureSlipProfile.jl")
 include("Burgmann1994_FractureLinearFrictionSlipProfile.jl")
 

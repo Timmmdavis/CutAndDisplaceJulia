@@ -1,4 +1,4 @@
-function Savage1984_GravityValleyStress(tectxx,rg,nu,a,b,u,v)
+function Savage1984_GravityValleyStress_CoordsIn(tectxx,rg,nu,a,b,x,y)
 # Savage1984_GravityValleyStress: Returns Cartesian stresses
 #       at grid points under a incised valley surface. Stress are
 #       due to unloading due to erosion and take into account
@@ -14,7 +14,7 @@ function Savage1984_GravityValleyStress(tectxx,rg,nu,a,b,u,v)
 #       and valleys (No. 84-827). US Geological Survey,.
 #
 # usage #1: 
-# [Sxx,Syy,Sxy,X,Y] = Savage1984_GravityValleyStress(tectxx,rg,nu,a,b,u,v)
+# [Sxx,Syy,Sxy,x,y] = Savage1984_GravityValleyStress_CoordsIn(tectxx,rg,nu,a,b,x,y)
 #
 # Arguments: (input)
 #   tectxx - Far field remote stress Sxx either pulling or pushing the
@@ -30,14 +30,12 @@ function Savage1984_GravityValleyStress(tectxx,rg,nu,a,b,u,v)
 #    a,b  - Parameters describing the valleys slope, see the paper for 
 #       a diagram.
 #
-#    u,v  - Observation points, these are mapped to a different
-#       location, just make sure these are below 0 and they will be
-#       below the valley surface. 
+#    x,y  - Observation points, actual x and y locations
 #
 #
 # Arguments: (output)
 #
-#    X,Y  - X and Y locations of the observation points.
+#    x,y  - same as inputs
 #
 # Sxx,Syy,Sxy - 2D stress tensor components returned on a grid. This is
 #        the total stress (including remote and gravitation
@@ -54,10 +52,10 @@ function Savage1984_GravityValleyStress(tectxx,rg,nu,a,b,u,v)
 # b=-1;
 # u= linspace(0,4,50);
 # v = linspace(-0.3265,-4,46);
-# [u,v] = meshgrid(u,v);
+# [x,y] = meshgrid(u,v);
 # 
-# [Sxx,Syy,Sxy,X,Y] =...
-# Savage1984_GravityValleyStress(tectx,rg,nu,a,b,u,v);
+# [Sxx,Syy,Sxy,x,y] =...
+# Savage1984_GravityValleyStress_CoordsIn(tectx,rg,nu,a,b,x,y);
 # 
 # DrawScatterPlots2d( X,Y,[],Sxx,Syy,Sxy )
 #
@@ -66,6 +64,9 @@ function Savage1984_GravityValleyStress(tectxx,rg,nu,a,b,u,v)
 # Copyright 2017, Tim Davis, Potsdam University\The University of Aberdeen
 # Modified from Steve Martel's fracture mechanics homework
 
+x=vec(x)
+y=vec(y)
+z=complex.(x,y)
 
 #rad is the small radius from point w = -ia.
 rad = 1.0e-04;
@@ -83,18 +84,29 @@ phiat = -(tectxx*b)/(4 .*(2 .*a+b));
 d2phia = -(tectxx*b*(4 .*a+b)*(b-12 .*a));
 d2phia = d2phia/(2 .*a*(2 .*a+b)*(4 .*a+b)^3);
 
-w = complex.(u, v);
+w=zeros(size(z))
+w=complex(w)
+for i=1:length(z)
+	if x[i]<=0
+		w[i]=(ai.+z[i]-sqrt.(z[i]^2 .-2 .*ai.*z[i]-4 .*a.*b.+ai.^2))./2
+	else
+		w[i]=(ai.+z[i]+sqrt.(z[i]^2 .-2 .*ai.*z[i]-4 .*a.*b.+ai.^2))./2
+	end
+end
+
+u=real(w)
+v=imag(w)
 
 r = sqrt.(u.^2 .+(v.+a).^2);
 
-#From equation 1.
-z = w.+(a .*b)./(w.-ai);
+
+
 
 wMai=(w.-ai);
 wPai=(w.+ai);
 
-X = real(z);
-Y = imag(z);
+X = x
+Y = y
 dz = (wMai.^2 .-a .*b)./(wMai.^2);
 #aw is a(w) given by equation 3 in text.
 awl = po*(4 .*a.+b)./(8 .*wMai);
@@ -172,6 +184,6 @@ Sxy = Sxy./2;
 Sxx = (sumy-dif)./2;
 Syy = (sumy+dif)./2;
 
-return Sxx,Syy,Sxy,X,Y
+return Sxx,Syy,Sxy,x,y
 
 end

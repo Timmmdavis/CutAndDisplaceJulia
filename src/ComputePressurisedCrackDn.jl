@@ -42,22 +42,29 @@ Dn_=D[1:n];
 Dss=D[n+1:2*n];
 Dds=D[n*2+1:3*n];
 
-# Way one (can have friction but ~2s per loop for 300+ tris)
+
 if any(Flag.==0)
-    println("it looks like you have elements that represent topography, deal with these correctly before passing into friction solver (see Davis 2019 ppr)")
-end
-if any(Dn_.>0)
 
-    FricVectorWithoutDispIn=BoundaryConditionsVec(copy(FricVectorWithoutDisp.b))
-    (Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=FischerNewton.ResetInitArrays(Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys);
-    (Dn,Dss,Dds)=SlipCalculator3D(FricMatPrepped,FricVectorWithoutDispIn,L1,L2,L3,L4,L5,Scl,D,
-                                  Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
-
+    (Dn,Dss,Dds)=IncludingTopoThanCanInterpenetrate(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,
+                                      Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys,Dn_,Dss,Dds,Flag,n)
 else
-    println("Ding ding ding")
-    Dn=Dn_.*0; #Already closed (wont open, we dont care)
-    Dss=Dss.*0;
-    Dds=Dds.*0;
+
+    # Way one (can have friction but ~2s per loop for 300+ tris)
+    if any(Dn_.>0)
+
+        FricVectorWithoutDispIn=BoundaryConditionsVec(copy(FricVectorWithoutDisp.b))
+
+        (Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=FischerNewton.ResetInitArrays(Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys);
+        (Dn,Dss,Dds)=SlipCalculator3D(FricMatPrepped,FricVectorWithoutDispIn,L1,L2,L3,L4,L5,Scl,D,
+                                      Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
+
+    else
+        println("Ding ding ding")
+        Dn=Dn_.*0; #Already closed (wont open, we dont care)
+        Dss=Dss.*0;
+        Dds=Dds.*0;
+    end
+
 end
 #SCALES INSIDE!
 
@@ -153,6 +160,7 @@ for i=1:NumOfFractures #For each crack
     if ReturnVol==1
         X=Vol_i_Computed;
     else
+        @info 1. Vol_i_Expected Vol_i_Computed x
         #Now compute the objective function 
         X=X+abs(Vol_i_Expected-Vol_i_Computed)^2;
     end
@@ -162,3 +170,47 @@ return X
 
 end
 
+
+function IncludingTopoThanCanInterpenetrate(FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,Scl,D,
+                                      Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys,Dn_,Dss,Dds,Flag,n)
+
+println("Topography (free-surface) elements included")
+#dealing with these correctly before passing into friction solver (see Davis 2019 ppr)
+
+
+fractures=findall(vec(Flag.!=0))
+freesurface=findall(vec(Flag.==0))
+
+
+if any(Dn_[fractures].>0)
+
+    FricVectorWithoutDispIn=copy(FricVectorWithoutDisp.b)
+    openingparts=FricVectorWithoutDispIn[1:n]
+    #Add something with a resonable scale so no neg parts exist in topo
+    arbitarydispvalue=abs(minimum(openingparts[freesurface])*2)
+    #Add to topo bits
+    openingparts[freesurface]=openingparts[freesurface].+arbitarydispvalue
+    #put back into main vec
+    FricVectorWithoutDispIn[1:n]=openingparts
+    FricVectorWithoutDispIn=BoundaryConditionsVec(FricVectorWithoutDispIn);
+
+
+    (Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=FischerNewton.ResetInitArrays(Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys);
+    (Dn,Dss,Dds)=SlipCalculator3D(FricMatPrepped,FricVectorWithoutDispIn,L1,L2,L3,L4,L5,Scl,D,
+                                  Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
+
+    #adjusting it back
+    if any(Flag.==0)
+        Dn=Dn.-arbitarydispvalue
+    end
+                                                            
+
+else
+    println("Ding ding ding")
+    Dn=Dn_.*0; #Already closed (wont open, we dont care)
+    Dss=Dss.*0;
+    Dds=Dds.*0;
+end
+
+return Dn,Dss,Dds
+end

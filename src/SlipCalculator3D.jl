@@ -394,6 +394,7 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
     	println("After")
     	@info HugeVol Volume[1] Norm
 
+
         # Option 2:
         #Objective function to pass to the simple solver: 
         println("rturn vol is 1 for walk and interp")
@@ -405,13 +406,18 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         #change FIRST output in 'ComputePressurisedCrackDn.m' func above. 
        
         println("Using Optim")
+
         (res) =Optim.optimize(ObjectiveFunction, 0, 10,method=Brent(),abs_tol=0.001) #
-        
-        #@info maximum(Ainv[:]) minimum(Ainv[:])
+               	
+	    VolOut=ComputePressurisedCrackDn(Optim.minimizer(res),FractureFlag,b,Ainv,Scl,Area,Norm,n,Volume,
+        1,NumOfFractures,FricMatPrepped,FricVectorWithoutDisp,L1,L2,L3,L4,L5,
+        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
 
         #Catches error if the max is too small - we increase this and run again
-        if abs(abs(Volume[1])-abs(Optim.minimum(res)))>abs(Volume[1])
+        @info 1. Volume[1] VolOut #(Volume[1]-VolOut)
+        if (Volume[1]-VolOut)>Volume[1]
 
+        	@info 1. Volume[1] VolOut (Volume[1]-VolOut)
         	printstyled("Max pressure was too small - also switching to GoldenSection not Brent algo \n",color=:red)
         	(Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)=FischerNewton.InitArrays(length(L1)*5);println("testing reinit")
 
@@ -421,11 +427,13 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
         	        D,Vects,Arrys,Flts,Ints,Mats,Bls,IntArrys)
         	println("Volume with x of 50: $HugeVol")
 
-        	(res) =Optim.optimize(ObjectiveFunction, [9,], Newton(),Optim.Options(iterations = 10,
+        	#=
+        	(res) =Optim.optimize(ObjectiveFunction, [9.,], Newton(),Optim.Options(iterations = 10,
         																		  store_trace = true,
         																		  show_trace = true,
         																		  f_calls_limit=100)) #
-        	#(res) =Optim.optimize(ObjectiveFunction, 0, 50,method=GoldenSection()) #
+        	=#
+        	(res) =Optim.optimize(ObjectiveFunction, 0, 50,method=GoldenSection()) #
 
         end
       	println(summary(res))
@@ -466,4 +474,3 @@ function SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,Boun
 	return Dn,Dss,Dds
 
 end
-
