@@ -156,7 +156,7 @@ include("RotateObject3DAllignVectors.jl")
 include("StressIntensity3D.jl")
 include("CalculateNormalShearTraction2D.jl")
 include("Tada_StrIntInclinedPennyTension.jl")
-
+include("DipAndAzimuth.jl")
 
 #Fluid filled crack bits
 include("WalkAndInterp.jl")
