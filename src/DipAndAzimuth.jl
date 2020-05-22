@@ -25,6 +25,7 @@ function DipAndAzimuth( Triangles,Points,FaceNormalVector )
 #  Azimuth         - Direction of the dip of the surface.
 #
 #  Strike          - Direction perpendicular to Azimuth (90 degrees counter
+#                   clockwise).
 #
 # Example usage:
 #
