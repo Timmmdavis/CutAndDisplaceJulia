@@ -123,15 +123,11 @@ for k = 1:length(xe); #for every element
 			YBi = (xMxe)*sb + (yAye)*cb;
 		end
 		
-		if StressFlag==1
-			# Calculate derivatives of the function f(x,y), eq 525 of C&S, p 81
-			#   which are used to calculate the displacement and stress components
-			# It is understood that X and Y refer to XB and YB
-			(Y2,XMa,XPa,XMa2,XPa2,R1S,R2S,R1S2,R2S2)=AbbreviateTerms(YB,XB,a[k])
-			if HSflag==1
-				# Same thing for the image dislocation
-				(Y2i,XMai,XPai,XMa2i,XPa2i,R1Si,R2Si,R1S2i,R2S2i)=AbbreviateTerms(YBi,XBi,a[k])
-			end
+		(Y2,XMa,XPa,XMa2,XPa2,R1S,R2S,R1S2,R2S2)=AbbreviateTerms(YB,XB,a[k])
+
+		if HSflag==1
+			# Same thing for the image dislocation
+			(Y2i,XMai,XPai,XMa2i,XPa2i,R1Si,R2Si,R1S2i,R2S2i)=AbbreviateTerms(YBi,XBi,a[k])
 		end
 			
 		if DispFlag==1
@@ -142,11 +138,15 @@ for k = 1:length(xe); #for every element
 				(FF2i,FF3i)=CompFF2AndFF3(R1Si,R2Si,con,XBi,YBi,XMai,XPai,a[k])
 			end
 		end		
+
+		(FF4,FF5,FF6,FF7)=CompFF4ToFF7(R1S,R2S,YB,XMa,XPa,XMa2,XPa2,R1S2,R2S2,Y2,con)
+		if HSflag==1
+			(FF4i,FF5i,FF6i,FF7i)=CompFF4ToFF7(R1Si,R2Si,YBi,XMai,XPai,XMa2i,XPa2i,R1S2i,R2S2i,Y2i,con)
+		end
 		
 		if StressFlag==1
-			(FF4,FF5,FF6,FF7)=CompFF4ToFF7(R1S,R2S,YB,XMa,XPa,XMa2,XPa2,R1S2,R2S2,Y2,con)
+			
 			if HSflag==1
-					(FF4i,FF5i,FF6i,FF7i)=CompFF4ToFF7(R1Si,R2Si,YBi,XMai,XPai,XMa2i,XPa2i,R1S2i,R2S2i,Y2i,con)
 					
 					# The halfspace examples of eqs 553a and b of C&S, p 91
 					# See Appendix A of: Martel, SJ and Langley, JS, 2006 Propagation of

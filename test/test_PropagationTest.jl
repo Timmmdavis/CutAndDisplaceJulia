@@ -101,7 +101,8 @@ BetaFromVert=90-Beta;
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
 
 # Top tip critically stressed
-CritRadius=abs(real((complex(9*Δρ)^(1/3)*(pi*(KCrit^2))^(1/3)))/(4*Δρ))
+#CritRadius=abs(real((complex(9*Δρ)^(1/3)*(pi*(KCrit^2))^(1/3)))/(4*Δρ))
+CritRadius=((3*sqrt(pi)*Kc)/(8*Δρ))^(2/3)
 
 #=
 Δρ=-Δρ
