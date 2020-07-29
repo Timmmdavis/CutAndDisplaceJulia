@@ -204,6 +204,7 @@ include("HookesLaw2DStress2Strain.jl")
 include("TensorTransformation3D.jl")
 include("TensorTransformation2D.jl")
 include("TensorTransformation3D!.jl")
+include("EigCalc3D.jl")
 
 #Normal line dislocation funcs
 include("LD.jl")
