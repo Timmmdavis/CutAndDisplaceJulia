@@ -116,6 +116,7 @@ version = "1.0.1"
 [[FastClosures]]
 git-tree-sha1 = "acebe244d53ee1b461970f8910c235b259e772ef"
 uuid = "9aa1b823-49e4-5ca5-8b0f-3971ec8bab6a"
+version = "0.3.2"
 
 [[FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays"]
@@ -173,6 +174,7 @@ version = "1.0.0"
 deps = ["LinearAlgebra", "Printf", "Random", "RecipesBase", "SparseArrays"]
 git-tree-sha1 = "3b7e2aac8c94444947facea7cc7ca91c49169be0"
 uuid = "42fd0dbc-a981-5370-80f2-aaf504508153"
+version = "0.8.4"
 
 [[IteratorInterfaceExtensions]]
 git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
@@ -195,6 +197,7 @@ version = "0.7.13"
 deps = ["LinearAlgebra", "LinearOperators", "Printf", "SparseArrays"]
 git-tree-sha1 = "cdd573617b93864b906ee7a487fd18db386dc2bd"
 uuid = "ba0b0d4f-ebba-5204-a429-3ac8c609bfb7"
+version = "0.5.1"
 
 [[LibGit2]]
 deps = ["Printf"]
@@ -217,6 +220,7 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 deps = ["FastClosures", "LinearAlgebra", "Printf", "SparseArrays", "TimerOutputs"]
 git-tree-sha1 = "e622d4b9bc550042e851e83a12056dc2e28ce352"
 uuid = "5c8ed15e-5a4c-59e4-a42b-c7e8811fb125"
+version = "1.1.0"
 
 [[Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -318,8 +322,9 @@ uuid = "c84ed2f1-dad5-54f0-aa8e-dbefe2724439"
 version = "0.4.0"
 
 [[RecipesBase]]
-git-tree-sha1 = "d352369b00094cadb43d694333b051b3d55abaf2"
+git-tree-sha1 = "58de8f7e33b7fda6ee39eff65169cd1e19d0c107"
 uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
+version = "1.0.2"
 
 [[Reexport]]
 deps = ["Pkg"]
