@@ -133,7 +133,7 @@ version = "2.3.0"
 deps = ["DelimitedFiles", "IterativeSolvers", "Krylov", "LinearAlgebra", "SparseArrays", "Test"]
 git-tree-sha1 = "da34f202860c7ebcb30998eccf27663ad134acc6"
 repo-rev = "master"
-repo-url = "https://github.com/Timmmdavis/FischerNewton"
+repo-url = "http://github.com/Timmmdavis/FischerNewton"
 uuid = "c8104aa0-3b89-11e9-0761-c1f9341838a7"
 version = "0.1.0"
 
