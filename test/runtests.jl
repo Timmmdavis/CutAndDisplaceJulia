@@ -10,14 +10,14 @@ quiet = length(ARGS) > 0 && ARGS[1] == "-q"
 anyerrors = false
 
 
-my_tests = ["test_TDvsOkada.jl",
+my_tests = ["test_TDvsBurgmannLinearFrictionCrack.jl",
+            "test_TDvsOkada.jl",
             "test_LDvsBarberGlideDisc.jl",
 			"test_ElasticConstantsCheck.jl",
 			"test_LDvsOkada.jl",
 			"test_TDvsEshelbyPennyCrack.jl",
             "test_TDvsMogi.jl",
             "test_TDvsSavageGravityValley.jl",
-            "test_TDvsBurgmannLinearFrictionCrack.jl",
             "test_TDvsStressIntensity.jl",
             "test_TractionFreeSurface.jl"]    
 			
