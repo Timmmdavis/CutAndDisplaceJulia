@@ -319,9 +319,9 @@ Threads.@threads for i=1:SzCmp
 				UxDdsI,UyDdsI,UzDdsI,
 				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)	
 
-				Ux.+=UxDnI[:,CurrentThread].+UxDssI[:,CurrentThread].+UxDdsI[:,CurrentThread];
-				Uy.+=UyDnI[:,CurrentThread].+UyDssI[:,CurrentThread].+UyDdsI[:,CurrentThread];
-				Uz.+=UzDnI[:,CurrentThread].+UzDssI[:,CurrentThread].+UzDdsI[:,CurrentThread];
+				Ux.+=UxDnI.+UxDssI.+UxDdsI;
+				Uy.+=UyDnI.+UyDssI.+UyDdsI;
+				Uz.+=UzDnI.+UzDssI.+UzDdsI;
 	end
 	if StrainFlag==1
 		εxxDnI  = view(εxxDnthreads,:,CurrentThread); 
@@ -372,12 +372,12 @@ Threads.@threads for i=1:SzCmp
 				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
 				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
 
-				εxx.+=εxxDnI[:,CurrentThread].+εxxDssI[:,CurrentThread].+εxxDdsI[:,CurrentThread];
-				εyy.+=εyyDnI[:,CurrentThread].+εyyDssI[:,CurrentThread].+εyyDdsI[:,CurrentThread];
-				εzz.+=εzzDnI[:,CurrentThread].+εzzDssI[:,CurrentThread].+εzzDdsI[:,CurrentThread];
-				εxy.+=εxyDnI[:,CurrentThread].+εxyDssI[:,CurrentThread].+εxyDdsI[:,CurrentThread];
-				εxz.+=εxzDnI[:,CurrentThread].+εxzDssI[:,CurrentThread].+εxzDdsI[:,CurrentThread];
-				εyz.+=εyzDnI[:,CurrentThread].+εyzDssI[:,CurrentThread].+εyzDdsI[:,CurrentThread];					
+				εxx.+=εxxDnI.+εxxDssI.+εxxDdsI;
+				εyy.+=εyyDnI.+εyyDssI.+εyyDdsI;
+				εzz.+=εzzDnI.+εzzDssI.+εzzDdsI;
+				εxy.+=εxyDnI.+εxyDssI.+εxyDdsI;
+				εxz.+=εxzDnI.+εxzDssI.+εxzDdsI;
+				εyz.+=εyzDnI.+εyzDssI.+εyzDdsI;					
 			
 	end
 
