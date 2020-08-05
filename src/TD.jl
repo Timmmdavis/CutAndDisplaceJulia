@@ -240,9 +240,39 @@ p1List,p2List,p3List,p1iList,p2iList,p3iList,e12List,e13List,e23List,AList,BList
 casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
 
-#DO NOT LOOP ME! (Check why...)
-for i=1:SzCmp 
+NoThreads=Threads.nthreads()
+
+UxDnthreads  = zeros(size(X),NoThreads); 
+UyDnthreads  = zeros(size(X),NoThreads);
+UzDnthreads  = zeros(size(X),NoThreads);
+UxDssthreads = zeros(size(X),NoThreads);
+UyDssthreads = zeros(size(X),NoThreads);
+UzDssthreads = zeros(size(X),NoThreads);
+UxDdsthreads = zeros(size(X),NoThreads);
+UyDdsthreads = zeros(size(X),NoThreads);
+UzDdsthreads = zeros(size(X),NoThreads);
+εxxDnthreads  = zeros(size(X),NoThreads); 
+εyyDnthreads  = zeros(size(X),NoThreads); 
+εzzDnthreads  = zeros(size(X),NoThreads); 
+εxyDnthreads  = zeros(size(X),NoThreads); 
+εxzDnthreads  = zeros(size(X),NoThreads); 
+εyzDnthreads  = zeros(size(X),NoThreads); 
+εxxDssthreads = zeros(size(X),NoThreads); 
+εyyDssthreads = zeros(size(X),NoThreads); 
+εzzDssthreads = zeros(size(X),NoThreads); 
+εxyDssthreads = zeros(size(X),NoThreads); 
+εxzDssthreads = zeros(size(X),NoThreads); 
+εyzDssthreads = zeros(size(X),NoThreads); 
+εxxDdsthreads = zeros(size(X),NoThreads); 
+εyyDdsthreads = zeros(size(X),NoThreads); 
+εzzDdsthreads = zeros(size(X),NoThreads); 
+εxyDdsthreads = zeros(size(X),NoThreads); 
+εxzDdsthreads = zeros(size(X),NoThreads); 
+εyzDdsthreads = zeros(size(X),NoThreads); 
+
+Threads.@threads for i=1:SzCmp 
 	#println("Multithreading off")
+	CurrentThread=Threads.threadid()
 
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
@@ -259,15 +289,16 @@ for i=1:SzCmp
 
 
 	if DispFlag==1
-		UxDnI  = zeros(size(X)); 
-		UyDnI  = zeros(size(X));
-		UzDnI  = zeros(size(X));
-		UxDssI = zeros(size(X));
-		UyDssI = zeros(size(X));
-		UzDssI = zeros(size(X));
-		UxDdsI = zeros(size(X));
-		UyDdsI = zeros(size(X));
-		UzDdsI = zeros(size(X));
+
+		UxDnI  = view(UxDnthreads,:,CurrentThread); 
+		UyDnI  = view(UyDnthreads,:,CurrentThread);
+		UzDnI  = view(UzDnthreads,:,CurrentThread);
+		UxDssI = view(UxDssthreads,:,CurrentThread);
+		UyDssI = view(UyDssthreads,:,CurrentThread);
+		UzDssI = view(UzDssthreads,:,CurrentThread);
+		UxDdsI = view(UxDdsthreads,:,CurrentThread);
+		UyDdsI = view(UyDdsthreads,:,CurrentThread);
+		UzDdsI = view(UzDdsthreads,:,CurrentThread);
 
 		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
@@ -278,29 +309,29 @@ for i=1:SzCmp
 				UxDdsI,UyDdsI,UzDdsI,
 				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)	
 
-				Ux.+=UxDnI.+UxDssI.+UxDdsI;
-				Uy.+=UyDnI.+UyDssI.+UyDdsI;
-				Uz.+=UzDnI.+UzDssI.+UzDdsI;
+				Ux.+=UxDnI[:,CurrentThread].+UxDssI[:,CurrentThread].+UxDdsI[:,CurrentThread];
+				Uy.+=UyDnI[:,CurrentThread].+UyDssI[:,CurrentThread].+UyDdsI[:,CurrentThread];
+				Uz.+=UzDnI[:,CurrentThread].+UzDssI[:,CurrentThread].+UzDdsI[:,CurrentThread];
 	end
 	if StrainFlag==1
-		εxxDnI  = zeros(size(X));
-		εyyDnI  = zeros(size(X));
-		εzzDnI  = zeros(size(X));
-		εxyDnI  = zeros(size(X));
-		εxzDnI  = zeros(size(X));
-		εyzDnI  = zeros(size(X));
-		εxxDssI = zeros(size(X));
-		εyyDssI = zeros(size(X));
-		εzzDssI = zeros(size(X));
-		εxyDssI = zeros(size(X));
-		εxzDssI = zeros(size(X));
-		εyzDssI = zeros(size(X));
-		εxxDdsI = zeros(size(X));
-		εyyDdsI = zeros(size(X));
-		εzzDdsI = zeros(size(X));
-		εxyDdsI = zeros(size(X));
-		εxzDdsI = zeros(size(X));
-		εyzDdsI = zeros(size(X));
+		εxxDnI  = view(εxxDnthreads,:,CurrentThread); 
+		εyyDnI  = view(εyyDnthreads,:,CurrentThread); 
+		εzzDnI  = view(εzzDnthreads,:,CurrentThread); 
+		εxyDnI  = view(εxyDnthreads,:,CurrentThread); 
+		εxzDnI  = view(εxzDnthreads,:,CurrentThread); 
+		εyzDnI  = view(εyzDnthreads,:,CurrentThread); 
+		εxxDssI = view(εxxDssthreads,:,CurrentThread); 
+		εyyDssI = view(εyyDssthreads,:,CurrentThread); 
+		εzzDssI = view(εzzDssthreads,:,CurrentThread); 
+		εxyDssI = view(εxyDssthreads,:,CurrentThread); 
+		εxzDssI = view(εxzDssthreads,:,CurrentThread); 
+		εyzDssI = view(εyzDssthreads,:,CurrentThread); 
+		εxxDdsI = view(εxxDdsthreads,:,CurrentThread); 
+		εyyDdsI = view(εyyDdsthreads,:,CurrentThread); 
+		εzzDdsI = view(εzzDdsthreads,:,CurrentThread); 
+		εxyDdsI = view(εxyDdsthreads,:,CurrentThread); 
+		εxzDdsI = view(εxzDdsthreads,:,CurrentThread); 
+		εyzDdsI = view(εyzDdsthreads,:,CurrentThread); 
 
 		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
@@ -311,13 +342,13 @@ for i=1:SzCmp
 				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
 				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
 
-				εxx.+=εxxDnI.+εxxDssI.+εxxDdsI;
-				εyy.+=εyyDnI.+εyyDssI.+εyyDdsI;
-				εzz.+=εzzDnI.+εzzDssI.+εzzDdsI;
-				εxy.+=εxyDnI.+εxyDssI.+εxyDdsI;
-				εxz.+=εxzDnI.+εxzDssI.+εxzDdsI;
-				εyz.+=εyzDnI.+εyzDssI.+εyzDdsI;					
-
+				εxx.+=εxxDnI[:,CurrentThread].+εxxDssI[:,CurrentThread].+εxxDdsI[:,CurrentThread];
+				εyy.+=εyyDnI[:,CurrentThread].+εyyDssI[:,CurrentThread].+εyyDdsI[:,CurrentThread];
+				εzz.+=εzzDnI[:,CurrentThread].+εzzDssI[:,CurrentThread].+εzzDdsI[:,CurrentThread];
+				εxy.+=εxyDnI[:,CurrentThread].+εxyDssI[:,CurrentThread].+εxyDdsI[:,CurrentThread];
+				εxz.+=εxzDnI[:,CurrentThread].+εxzDssI[:,CurrentThread].+εxzDdsI[:,CurrentThread];
+				εyz.+=εyzDnI[:,CurrentThread].+εyzDssI[:,CurrentThread].+εyzDdsI[:,CurrentThread];					
+			
 	end
 
 end
