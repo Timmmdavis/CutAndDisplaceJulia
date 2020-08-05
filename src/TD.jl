@@ -219,18 +219,48 @@ end
 function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 			DispFlag,StrainFlag,HSflag,StrainInfVector::Strains,DispInfVector::Disps)
 
+
+NoThreads=Threads.nthreads()
+
 if DispFlag==1
-	Ux  = zeros(size(X));
-	Uy  = zeros(size(X));
-	Uz  = zeros(size(X));
+	Ux  = zeros(length(X));
+	Uy  = zeros(length(X));
+	Uz  = zeros(length(X));	
+	UxDnthreads  = zeros(length(X),NoThreads); 
+	UyDnthreads  = zeros(length(X),NoThreads);
+	UzDnthreads  = zeros(length(X),NoThreads);
+	UxDssthreads = zeros(length(X),NoThreads);
+	UyDssthreads = zeros(length(X),NoThreads);
+	UzDssthreads = zeros(length(X),NoThreads);
+	UxDdsthreads = zeros(length(X),NoThreads);
+	UyDdsthreads = zeros(length(X),NoThreads);
+	UzDdsthreads = zeros(length(X),NoThreads);
 end
 if StrainFlag==1
-	εxx  = zeros(size(X));
-	εyy  = zeros(size(X));
-	εzz  = zeros(size(X));
-	εxy  = zeros(size(X));
-	εxz  = zeros(size(X));
-	εyz  = zeros(size(X));
+	εxx  = zeros(length(X));
+	εyy  = zeros(length(X));
+	εzz  = zeros(length(X));
+	εxy  = zeros(length(X));
+	εxz  = zeros(length(X));
+	εyz  = zeros(length(X));	
+	εxxDnthreads  = zeros(length(X),NoThreads); 
+	εyyDnthreads  = zeros(length(X),NoThreads); 
+	εzzDnthreads  = zeros(length(X),NoThreads); 
+	εxyDnthreads  = zeros(length(X),NoThreads); 
+	εxzDnthreads  = zeros(length(X),NoThreads); 
+	εyzDnthreads  = zeros(length(X),NoThreads); 
+	εxxDssthreads = zeros(length(X),NoThreads); 
+	εyyDssthreads = zeros(length(X),NoThreads); 
+	εzzDssthreads = zeros(length(X),NoThreads); 
+	εxyDssthreads = zeros(length(X),NoThreads); 
+	εxzDssthreads = zeros(length(X),NoThreads); 
+	εyzDssthreads = zeros(length(X),NoThreads); 
+	εxxDdsthreads = zeros(length(X),NoThreads); 
+	εyyDdsthreads = zeros(length(X),NoThreads); 
+	εzzDdsthreads = zeros(length(X),NoThreads); 
+	εxyDdsthreads = zeros(length(X),NoThreads); 
+	εxzDdsthreads = zeros(length(X),NoThreads); 
+	εyzDdsthreads = zeros(length(X),NoThreads); 
 end
 
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
@@ -239,36 +269,6 @@ empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,emp
 p1List,p2List,p3List,p1iList,p2iList,p3iList,e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
 casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
-
-NoThreads=Threads.nthreads()
-
-UxDnthreads  = zeros(size(X),NoThreads); 
-UyDnthreads  = zeros(size(X),NoThreads);
-UzDnthreads  = zeros(size(X),NoThreads);
-UxDssthreads = zeros(size(X),NoThreads);
-UyDssthreads = zeros(size(X),NoThreads);
-UzDssthreads = zeros(size(X),NoThreads);
-UxDdsthreads = zeros(size(X),NoThreads);
-UyDdsthreads = zeros(size(X),NoThreads);
-UzDdsthreads = zeros(size(X),NoThreads);
-εxxDnthreads  = zeros(size(X),NoThreads); 
-εyyDnthreads  = zeros(size(X),NoThreads); 
-εzzDnthreads  = zeros(size(X),NoThreads); 
-εxyDnthreads  = zeros(size(X),NoThreads); 
-εxzDnthreads  = zeros(size(X),NoThreads); 
-εyzDnthreads  = zeros(size(X),NoThreads); 
-εxxDssthreads = zeros(size(X),NoThreads); 
-εyyDssthreads = zeros(size(X),NoThreads); 
-εzzDssthreads = zeros(size(X),NoThreads); 
-εxyDssthreads = zeros(size(X),NoThreads); 
-εxzDssthreads = zeros(size(X),NoThreads); 
-εyzDssthreads = zeros(size(X),NoThreads); 
-εxxDdsthreads = zeros(size(X),NoThreads); 
-εyyDdsthreads = zeros(size(X),NoThreads); 
-εzzDdsthreads = zeros(size(X),NoThreads); 
-εxyDdsthreads = zeros(size(X),NoThreads); 
-εxzDdsthreads = zeros(size(X),NoThreads); 
-εyzDdsthreads = zeros(size(X),NoThreads); 
 
 Threads.@threads for i=1:SzCmp 
 	#println("Multithreading off")
@@ -299,6 +299,16 @@ Threads.@threads for i=1:SzCmp
 		UxDdsI = view(UxDdsthreads,:,CurrentThread);
 		UyDdsI = view(UyDdsthreads,:,CurrentThread);
 		UzDdsI = view(UzDdsthreads,:,CurrentThread);
+		#Reset to zero:
+		UxDnI.=0.
+		UyDnI.=0.
+		UzDnI.=0.
+		UxDssI.=0.
+		UyDssI.=0.
+		UzDssI.=0.		
+		UxDdsI.=0.
+		UyDdsI.=0.
+		UzDdsI.=0.				
 
 		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
@@ -332,6 +342,26 @@ Threads.@threads for i=1:SzCmp
 		εxyDdsI = view(εxyDdsthreads,:,CurrentThread); 
 		εxzDdsI = view(εxzDdsthreads,:,CurrentThread); 
 		εyzDdsI = view(εyzDdsthreads,:,CurrentThread); 
+		#Reset to zero:
+		εxxDnI.=0.
+		εyyDnI.=0.
+		εzzDnI.=0.
+		εxyDnI.=0.
+		εxzDnI.=0.
+		εyzDnI.=0.	
+		εxxDssI.=0.
+		εyyDssI.=0.
+		εzzDssI.=0.
+		εxyDssI.=0.
+		εxzDssI.=0.
+		εyzDssI.=0.	
+		εxxDdsI.=0.
+		εyyDdsI.=0.
+		εzzDdsI.=0.
+		εxyDdsI.=0.
+		εxzDdsI.=0.
+		εyzDdsI.=0.	
+
 
 		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
 				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
@@ -353,12 +383,25 @@ Threads.@threads for i=1:SzCmp
 
 end
 if StrainFlag==1
+	if size(X,2)!=1
+		εxx=reshape(εxx,size(X))
+		εyy=reshape(εyy,size(X))
+		εzz=reshape(εzz,size(X))
+		εxy=reshape(εxy,size(X))
+		εxz=reshape(εxz,size(X))
+		εyz=reshape(εyz,size(X))
+	end
 	StrainInfVector=Strains(εxx,εyy,εzz,εxy,εxz,εyz);
 	
 else
 	StrainInfVector=Strains([],[],[],[],[],[]);
 end
 if DispFlag==1
+	if size(X,2)!=1
+		Ux=reshape(Ux,size(X))
+		Uy=reshape(Uy,size(X))
+		Uz=reshape(Uz,size(X))
+	end	
 	DispInfVector=Disps(Ux,	Uy,	Uz);
 else
 	DispInfVector=Disps([],	[],	[])
