@@ -1,4 +1,4 @@
-function EigCalc3D(Sxx,Syy,Szz,Sxy,Sxz,Syz)
+function EigCalc2D(Sxx,Syy,Szz,Sxy,Sxz,Syz)
 # EigCalc2d: Calculates the 2D principal stress/strain magnitudes and 
 #                   directions from input tensors.
 #   
