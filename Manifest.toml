@@ -133,8 +133,8 @@ version = "2.5.2"
 
 [[FischerNewton]]
 deps = ["DelimitedFiles", "FastClosures", "IterativeSolvers", "Krylov", "LinearAlgebra", "LinearOperators", "RecipesBase", "SparseArrays", "Test"]
-git-tree-sha1 = "aa4e210260e740ca8977d267042d124537f05335"
-repo-rev = "master"
+git-tree-sha1 = "ba8498649a9cea41386ab19bd81c9685ca38dfb1"
+repo-rev = "2d29d10fca82cd0ae1910286c9a228bea4eb2dcb"
 repo-url = "https://github.com/Timmmdavis/FischerNewton"
 uuid = "c8104aa0-3b89-11e9-0761-c1f9341838a7"
 version = "0.1.0"
