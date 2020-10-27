@@ -50,7 +50,7 @@ tensor[3:N:end,2] = Syz[1:1:end,:];
 tensor[3:N:end,3] = Szz[1:1:end,:];
 
 #Eig can't handle nan's so we turn these to 0's and put the calculated s1s2s3 to nans after 
-NanFlag = isnan.(a);
+NanFlag = isnan.(tensor);
 if any(NanFlag)
 	tensor[NanFlag].=0;
 end
