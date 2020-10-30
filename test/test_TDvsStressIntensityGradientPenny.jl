@@ -192,16 +192,16 @@ y = a.*sind.(t)
 K1any,zz=CutAndDisplaceJulia.Tada_StrIntEllipseCrackTension(P,a,b,x,y)
 K1anx=CutAndDisplaceJulia.Tada_StrIntPennyGradient(Δρ,a,deg2rad.(t))
 K1an=K1any.+K1anx; #sum these
-plot3=plot(t,K1an./maximum(K1an),c=(:black), lab=latexstring(raw"$K_{I}$"))
+plot3=Plots.plot(t,K1an./maximum(K1an),c=(:black), lab=latexstring(raw"$K_{I}$"))
 scatter!(rad2deg.(θnum),K1./maximum(K1an),c=(:black),ms=1.5, lab=latexstring("BEM"))
 yaxis!("Stress intensity", (0,1.5))
 xaxis!(latexstring("\$\\theta^{\\circ}\$ angle around crack"), (-180,180))
-title!(latexstring("Penny crack, \$K_{Ic}=1\$"))
+Plots.title!(latexstring("Penny crack, \$K_{Ic}=1\$"))
 #plot1=scatter(θ,K1an,'k')
 #scatter!(θ,K1,zcolor=ResidualPercentK1, m=(:reds),markersize=(Area./maximum(Area)).*10)
 #plot2=scatter(FreeEdMdX,FreeEdMdY,markersize=(Area./maximum(Area)).*10, aspect_ratio=:equal,zcolor=ResidualPercentK1, m=(:reds), lab="")
 
-plot4 = plot()
+plot4 = Plots.plot()
 
 P1nrm=P1./a;
 P2nrm=P2./a;

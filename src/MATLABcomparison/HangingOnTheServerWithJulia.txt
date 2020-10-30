@@ -69,7 +69,7 @@ MY PBS script (submitted with: $ qsub X.pbs):
 #PBS -l nodes=4:ppn=12,walltime=00:05:00
 #PBS -N JuliaTest
 #PBS -q sec21-long
-#PBS -M davis@gfz-potsdam.de
+#PBS -M xyz@gfz-potsdam.de
 ###PBS -j oe
 ###PBS -o PBSoutput
 
@@ -115,7 +115,7 @@ A test PBS script (submitted with: $ qsub X.pbs):
 #PBS -l nodes=4:ppn=12,walltime=00:05:00
 #PBS -N test_julia
 #PBS -q sec21-long
-#PBS -M davis@gfz-potsdam.de
+#PBS -M xyz@gfz-potsdam.de
 #PBS -j oe
 
 echo ------------------------------------------------------

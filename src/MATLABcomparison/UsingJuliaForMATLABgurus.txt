@@ -1,4 +1,4 @@
-%Using Julia for MATLAB gurus
+%Using Julia for MATLAB gurus  - a few things that I found useful at the start...
 
 #Install Julia, PyPlot, PyCall, Python and Madplotlib
 

@@ -37,8 +37,6 @@ for i=1:n
 		flag=true 
 		flag=MatchingRow(OriginalData,UniqueData,i,j,p,flag)
 		if flag
-			#@info typeof(RowNos[i]) typeof(counter)
-			#poop
 			RowNos[i]=j
 		end
 	end	

@@ -1,5 +1,5 @@
 #Test case comparing to Penny shaped crack
-
+using LaTeXStrings
 #Start creating vars for function: 
 println("creating func vars")
 
@@ -231,6 +231,7 @@ title!(latexstring("B) Tip-line \$K_I\$"))
 plot!(xticks = -100:100:100)
 
 plot2 = plot()
+
 for i=1:length(P1[:,1])
 
     Plots.plot!([P1[i,1],P2[i,1]],[P1[i,2],P2[i,2]], aspect_ratio=:equal,c=(:black), lab="")

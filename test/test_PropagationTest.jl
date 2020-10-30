@@ -49,19 +49,15 @@ g=9.81;
 
 Δρ=((ρrock-ρfluid)*g)
 
-KCrit=5e7; #[5e7 = 50 MPa √m]
+Kc=5e7; #[5e7 = 50 MPa √m]
 
 #Volume
-PKIc2=(KCrit^2)*pi
-CrackVolume=real(-(3^(2/3)*PKIc2^(4/3)*(ν - 1))/(16*complex(Δρ)^(5/3)*G));
-CrackVolume=CrackVolume*2 #Making sure its critical
-#EleoVol=(1/16)*((1-ν)/G)*(((9*pi^4)*(KCrit^8))/(Δρ^5))^(1/3)
-#CrackVolumeHigh=-(16*3^(2/3)*KCrit^2*pi^(4/3)*(KCrit^2)^(1/3)*(ν - 1))/(81*Δρ^(5/3)*G)
-#CHighSupp=(2^(2/3)*(9*Δρ)^(1/3)*(pi*KCrit^2)^(1/3))/(4*Δρ)
+
+CrackVolume=real(((1-ν)/(16*G))*((9*π^4*Kc^8)/(complex(Δρ)^5))^(1/3))
 
 NoTris=300;
 
-(PropFlag,maxX,minX,maxY,minY,maxZ,minZ)=testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
+(PropFlag,maxX,minX,maxY,minY,maxZ,minZ)=testProp(HSFlag,ν,G,Δρ,Kc,CrackVolume,NoTris)
 
 #return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
 #CritVolFlag==1 - Reached surface
@@ -101,16 +97,8 @@ BetaFromVert=90-Beta;
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
 
 # Top tip critically stressed
-#CritRadius=abs(real((complex(9*Δρ)^(1/3)*(pi*(KCrit^2))^(1/3)))/(4*Δρ))
 CritRadius=((3*sqrt(pi)*Kc)/(8*Δρ))^(2/3)
 
-#=
-Δρ=-Δρ
-@info Δρ
-CrackVolume2=((KCrit/(Δρ*sqrt(pi)))^(8/3))*((-4*Δρ*(ν-1))/(3*G))
-CritRadius2=(-KCrit/(-Δρ*sqrt(pi)))^(2/3)
-@info CritRadius CritRadius2 CrackVolume CrackVolume2
-=#
 
 StartRadius=CritRadius/2.5
 
