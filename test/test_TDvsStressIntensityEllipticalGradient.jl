@@ -1,5 +1,5 @@
 #Test case comparing to Penny shaped crack
-using LaTeXStrings
+
 #Start creating vars for function: 
 println("creating func vars")
 
@@ -231,7 +231,6 @@ title!(latexstring("B) Tip-line \$K_I\$"))
 plot!(xticks = -100:100:100)
 
 plot2 = plot()
-
 for i=1:length(P1[:,1])
 
     Plots.plot!([P1[i,1],P2[i,1]],[P1[i,2],P2[i,2]], aspect_ratio=:equal,c=(:black), lab="")
@@ -270,6 +269,36 @@ plot!(	xtickfontsize=fntsml,
 
 plot!(size=(750,750))
 savefig("./all.pdf") 
+
+#=
+#Numerical
+plot3=scatter(MidPoint[:,1],MidPoint[:,2],marker_z=Dn, lab=latexstring(raw"Numerical Dn"))
+
+xc=a
+zc=b
+rx=vec(MidPoint[:,1])
+rz=vec(MidPoint[:,2])
+(c1,c2,k,k_prime,Kk,Ek,Q)=VelocityEllipticalCrackAscent.Assign_c1c2_andEllipticIntegrals(xc,zc)
+P0=p0;
+P1=p1x/zc;
+w_P0fll=zeros(size(rz));
+w_P1fll=zeros(size(rz));
+for i=1:length(rz)
+		(w_P0x,w_P1)=VelocityEllipticalCrackAscent.ComputeEllipticalCrackOpeningProfile(xc,zc,rx[i],rz[i],nu,E,k,k_prime,P1,P0,Q,c1,c2,Kk,Ek)
+		w_P0fll[i]=w_P0x;
+		w_P1fll[i]=w_P1;		
+end
+#opening both walls
+DnAn=(w_P0fll.+w_P1fll).*2
+#Analytical
+plot4=scatter(MidPoint[:,1],MidPoint[:,2],marker_z=DnAn, lab=latexstring(raw"Analytical Dn"))
+
+PLT2=plot(plot3,plot4,layout=(1,2))
+display(PLT2)
+
+plot!(size=(750,750))
+savefig("./all2.pdf") 
+=#
 
 #=
 #@info ResidualPercentK1 ResidualPercentK2 ResidualPercentK3
