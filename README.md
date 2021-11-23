@@ -8,9 +8,43 @@
 
 This repository contains https://github.com/Timmmdavis/CutAndDisplace but in Julia. 2D parts have not been implemented (only the analytical parts). 3D is working well. 
 
+## FischerNewtonError?
+
+When trying to build CutAndDisplaceJulia on a new PC:
+```
+using Pkg
+Pkg.add(url="git@github.com:Timmmdavis/CutAndDisplaceJulia")
+```
+I sometimes get the error:
+```
+  julia> Pkg.add(url="git@github.com:Timmmdavis/CutAndDisplaceJulia")
+       Cloning git-repo `git@github.com:Timmmdavis/CutAndDisplaceJulia`
+      Updating git-repo `git@github.com:Timmmdavis/CutAndDisplaceJulia`
+     Resolving package versions...
+  ERROR: Unsatisfiable requirements detected for package FischerNewton [c8104aa0]:
+   FischerNewton [c8104aa0] log:
+   ├─FischerNewton [c8104aa0] has no known versions!
+   └─restricted to versions * by CutAndDisplaceJulia [71562590] — no versions left
+     └─CutAndDisplaceJulia [71562590] log:
+       ├─possible versions are: 0.1.0 or uninstalled
+       └─CutAndDisplaceJulia [71562590] is fixed to version 0.1.0" )
+```
+then do: 
+```
+Pkg.add(url="git@github.com:Timmmdavis/FischerNewton")
+```
+Let everything install and repeat:
+```
+Pkg.add(url="git@github.com:Timmmdavis/CutAndDisplaceJulia")
+```
+and it should be fine. 
+
+
+## Meshing package:
 For meshing I use: https://github.com/CGAL/cgal which I clumsily link to using https://github.com/Timmmdavis/BuildCGAL.
 For my non-linear solver (complimentarity conditions) I use: https://github.com/Timmmdavis/FischerNewton
 
+## Calling a test case:
 To get start with this open Julia (with bits like revise etc imported) and run (Windows):
 ```
 using CutAndDisplaceJulia; 
@@ -23,13 +57,14 @@ The test folder contains some contains some simple benchmarks against analytical
 To get the path:
 > println(pathof(CutAndDisplaceJulia))
 
+## Some general info:
 In src the main functions are 
 LD.jl 
 and 
 TD.jl
 These compute stresses and displacements due to analytical line and triangular dislocations. 
 
-LD.jl I havent tested for unstable types etc, TD.jl I have. If hooked up to code it would be good to do thos. 
+LD.jl I havent tested for unstable types etc, TD.jl I have. If hooked up to code it would be good to do though. 
 For more improvements in TD.jl the functions CalculateLocalTriCoords and GlobalToTDECoords could be improved in terms of memory management. Also Parts in the 'FS' functions that are enabled when the 'ImageFlag' is set to 1. 
 I recommend removing Threads.@threads from the outer loop of these functions before debugging/working on the code.  
 
