@@ -144,7 +144,7 @@ For CutAndDisplaceJuliaPlots, use the test script from the GitHub readme.
 
 ## 5. Set Up CGAL Support
 
-CGAL is essential for mesh creation and manipulation, particularly for dyke propagation simulations. If you are on Linux, this is going to be easy. See https://github.com/Timmmdavis/BuildCGAL (CGAL-4.13.1)
+CGAL is essential for mesh creation and manipulation, particularly for dyke propagation simulations. If you are on Linux, this is going to be easy: see https://github.com/Timmmdavis/BuildCGAL (CGAL-4.13.1)
 
 ### Install 7-Zip
 
@@ -171,9 +171,9 @@ using BuildCGAL
 ```
 
 2. Install dependencies:
-   ```julia
-   include("C:/Users/USERNAME/.julia/packages/BuildCGAL/src/DownloadAndCheckAllCGALCompilerDependencies.jl")
-   ```
+```julia
+include("C:/Users/USERNAME/.julia/packages/BuildCGAL/src/DownloadAndCheckAllCGALCompilerDependencies.jl")
+```
    - You may need to run this multiple times
    - If links are broken, see the Troubleshooting section
 
