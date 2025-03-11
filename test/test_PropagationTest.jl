@@ -65,6 +65,9 @@ NoTris=300;
 =#
 
 #########################################################
+using Printf
+using Statistics
+using Plots
 
 function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
 
@@ -97,7 +100,7 @@ BetaFromVert=90-Beta;
 (Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
 
 # Top tip critically stressed
-CritRadius=((3*sqrt(pi)*Kc)/(8*Δρ))^(2/3)
+CritRadius=((3*sqrt(pi)*KCrit)/(8*abs(Δρ)))^(2/3)
 
 
 StartRadius=CritRadius/2.5
@@ -597,19 +600,52 @@ for i=1:lps
 			#attempt to stop linux error
 			GR.inline("png")
 		end
-		fig = plot()
-	
-		PlotMeshBoundary(MidPoint[nonNan,:],P1[nonNan,:],P2[nonNan,:],P3[nonNan,:],FaceNormalVector[nonNan,:],fig)
-		scatter!([XMid],[ZMid],zcolor=StrainEnergyV./KCrit, m=(:blues), lab="", aspect_ratio=:equal)
-		for i=1:length(P1LastLoop[:,1])
-		    Plots.plot!([P1LastLoop[i,a],P2LastLoop[i,a]],[P1LastLoop[i,b],P2LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
-			Plots.plot!([P2LastLoop[i,a],P3LastLoop[i,a]],[P2LastLoop[i,b],P3LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
-			Plots.plot!([P1LastLoop[i,a],P3LastLoop[i,a]],[P1LastLoop[i,b],P3LastLoop[i,b]], aspect_ratio=:equal,c=(:black), lab="")
-		end 
+		# Create the initial figure using Plots
+		fig = Plots.plot(aspect_ratio=:equal)
 
+		# Call your mesh boundary function with the figure
+		CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:], P1[nonNan,:], P2[nonNan,:], P3[nonNan,:], FaceNormalVector[nonNan,:], fig)
+
+		# Add the scatter plot with colors
+		Plots.scatter!(fig, 
+		    [XMid], [ZMid], 
+		    zcolor=StrainEnergyV./KCrit, 
+		    m=(:blues), 
+		    lab="", 
+		    aspect_ratio=:equal
+		)
+
+		# Add black lines for mesh boundaries
+		for i = 1:length(P1LastLoop[:,1])
+		    Plots.plot!(fig, 
+		        [P1LastLoop[i,a], P2LastLoop[i,a]], 
+		        [P1LastLoop[i,b], P2LastLoop[i,b]], 
+		        aspect_ratio=:equal, 
+		        c=(:black), 
+		        lab=""
+		    )
+		    Plots.plot!(fig, 
+		        [P2LastLoop[i,a], P3LastLoop[i,a]], 
+		        [P2LastLoop[i,b], P3LastLoop[i,b]], 
+		        aspect_ratio=:equal, 
+		        c=(:black), 
+		        lab=""
+		    )
+		    Plots.plot!(fig, 
+		        [P1LastLoop[i,a], P3LastLoop[i,a]], 
+		        [P1LastLoop[i,b], P3LastLoop[i,b]], 
+		        aspect_ratio=:equal, 
+		        c=(:black), 
+		        lab=""
+		    )
+		end
+
+		# Display the figure
 		#display(fig)
-		savefig("$i-$p-FaultEdges-$RandNum.png")
-		
+		#display(fig)
+		Plots.savefig("$i-$p-FaultEdges-$RandNum.png")
+		#Makie.save("$i-$p-FaultEdges-$RandNum.png", fig)
+
 		if Sys.islinux()
 			#attempt to stop linux error
 			GR.inline("png")
@@ -754,44 +790,6 @@ end
 
 
 
-function PlotMeshBoundary(MidPoint,P1,P2,P3,FaceNormalVector,fig)
-
-(UniqueEdges,LeadingPoints,TrailingPoints,InnerPoints,rerunFunc,P1,P2,P3,FaceNormalVector,MidPoint)=
-CutAndDisplaceJulia.GetSortedEdgesOfMeshList(P1,P2,P3,FaceNormalVector,MidPoint)
-
-(SortedTriangles,ConnectedEdge)=CutAndDisplaceJulia.ConnectedConstraints(P1,P2,P3,MidPoint);
-
-LeadingPoint=[0. 0. 0.]
-TrailingPoint=[0. 0. 0.]
-InnerPoint   =[0. 0. 0.]    
-LeadingPointOld  =[NaN NaN NaN] 
-TrailingPointOld =[NaN NaN NaN] 
-InnerPointOld    =[NaN NaN NaN] 
-BackPoint    =[NaN NaN NaN] 
-
-idxa=1
-idxb=3
-
-lps=0
-#For each edge loop
-for i=1:length(UniqueEdges)
-
-  b=vec(UniqueEdges[i])
-
-  for j=b
-
-    #Extract the points on the current bit of the edge
-    (LeadingPoint,~) =GrabPointNew5(LeadingPoints,P1,P2,P3,j)
-    (TrailingPoint,~)=GrabPointNew5(TrailingPoints,P1,P2,P3,j)
-    (InnerPoint,Idx) =GrabPointNew5(InnerPoints,P1,P2,P3,j)
-    Plots.plot!([LeadingPoint[idxa],TrailingPoint[idxa]],[LeadingPoint[idxb],TrailingPoint[idxb]],c=(:black), lab="")
-
-    
-    end
-
-end 
-return fig
-end
 
 function GrabPointNew5(PointsIdxList,P1,P2,P3,j)
 #Extract the points on the current bit of the edge

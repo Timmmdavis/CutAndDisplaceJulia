@@ -2,37 +2,33 @@
 #includet(raw""C:\Users\Berlin\.julia\packages\CutAndDisplaceJulia\EW2Bp\test\test_PropagationTest.jl"")
 
 
-#Our working dir
-if Sys.islinux()
-	OuterDir="/home/tim/Desktop/MeshProp"
-else
-	OuterDir=raw"C:\Users\timmm\Desktop\MeshProp"
-end
 
+#Our working dir
+OuterDir = pwd()
 cd(OuterDir)
-Dir1="WhereTheMeshesLive"
+
+Dir1 = "WhereTheMeshesLive"
 if isdir(Dir1)
 	rm(Dir1, recursive=true)
-	mkdir(Dir1)
+	mkdir(Dir1)    
 else
-	mkdir(Dir1)
+	mkdir(Dir1)	
 end
-Dir2="WhereTheResultsLive"
-if isdir(Dir2)
-	#rm(Dir2, recursive=true)
-	#mkdir(Dir2)
-else
-	mkdir(Dir2)
+
+Dir2 = "WhereTheResultsLive"
+if !isdir(Dir2)
+    mkdir(Dir2)
 end
-#Go into mesh dir to start
+
+# Go into mesh dir to start
 cd(Dir1)
-if Sys.islinux()
-	pth='/'
-else
-	pth='\\'
-end	
-Dir1FullPath=string(OuterDir,pth,Dir1)
-Dir2FullPath=string(OuterDir,pth,Dir2)
+
+# Use joinpath for cross-platform path handling
+Dir1FullPath = joinpath(OuterDir, Dir1)
+Dir2FullPath = joinpath(OuterDir, Dir2)
+
+
+
 
 #attempt to stop linux -too many plots error
 #GR.inline("png")
@@ -178,6 +174,9 @@ for i=1:length(list)
 			else
 				println("to be run")
 			end
+
+
+
 			#Jump out
 			cd(OuterDir)
 			#Back into mesh dir
@@ -211,6 +210,7 @@ for i=1:length(list)
 				#end
 			end
 
+			#=
 			#Placing the last png from that loop in the results dir
 			filename="Results-Kcrit-$currentKCrit-Δρ-$Δρ-NoTris-$currentNoTris-GuessAnVolScl-$CrckVolScl-nu-$ν-mu-$G"
 			#Try and move a png IF it exists
@@ -229,6 +229,7 @@ for i=1:length(list)
 			cd(OuterDir)
 			println(pwd())
 			sleep(2) #julia is too fast
+			
 
 			#remove all meshes - copied already
 			#rm(Dir1, recursive=true)
@@ -240,7 +241,9 @@ for i=1:length(list)
 			@info PropFlag[1] maxX[1] minX[1] maxY[1] minY[1] maxZ[1] minZ[1] G ν g Δρ currentNoTris currentKCrit CrackVolumeIn
 
 			cd(Dir2)
+			=#
 			
+			#=
 			OutputDirectory=CutAndDisplaceJulia.LoopResultsWriter(filename,PropFlag[1],maxX[1],minX[1],maxY[1],minY[1],maxZ[1],minZ[1],
 											  G,ν,g,Δρ,currentNoTris,currentKCrit,CrackVolumeIn,CrckVolScl)
 
@@ -250,6 +253,7 @@ for i=1:length(list)
 			cd(Dir1)
 			#Reset so the while loop is true again
 			errored[1]=true
+			=#
 
 		end
 
