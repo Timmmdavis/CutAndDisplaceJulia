@@ -108,13 +108,107 @@ Before installing, ensure you have:
 3. Open Julia as administrator (right-click and select "Run as administrator")
 
 ## 2. Install Required Packages
-
 In Julia, enter the package manager by typing `]` and run:
-
 ```julia
 ] add https://github.com/Timmmdavis/FischerNewton.git
 ] add https://github.com/Timmmdavis/CutAndDisplaceJulia.git
 ] add https://github.com/Timmmdavis/CutAndDisplaceJuliaPlots.git
+] add https://github.com/Timmmdavis/BuildCGAL.git
+```
+
+Paste the following into your Julia shell; we do this as 7zip in Julia moved directory and CMake needs it in a certain place
+
+<details>
+<summary>Click to expand 7zip file copy script</summary>
+
+```julia
+#!/usr/bin/env julia
+using Printf
+function copy_julia_files()
+    # Get Julia installation directory
+    julia_install_dir = Sys.BINDIR |> dirname
+    
+    println("Found Julia installation directory: ", julia_install_dir)
+    
+    # Source directory
+    source_dir = joinpath(julia_install_dir, "libexec", "julia")
+    
+    if !isdir(source_dir)
+        error("Source directory not found: $source_dir")
+    end
+    
+    # Target directories
+    target_dirs = [
+        joinpath(julia_install_dir, "bin"),
+        joinpath(julia_install_dir, "libexec")
+    ]
+    
+    # Check if running with admin privileges
+    is_admin = false
+    try
+        # This is a simple test to check for admin privileges
+        # Try to write to a file in a typically protected directory
+        test_file = joinpath(julia_install_dir, ".admin_test")
+        open(test_file, "w") do io
+            write(io, "test")
+        end
+        rm(test_file)
+        is_admin = true
+    catch
+        is_admin = false
+    end
+    
+    if !is_admin
+        error("This script requires administrator privileges to copy files to system directories.")
+    end
+    
+    # Find all files in source directory
+    source_files = readdir(source_dir, join=true)
+    
+    # Copy files to target directories
+    println("Copying files from: $source_dir")
+    
+    for target_dir in target_dirs
+        println("Copying to: $target_dir")
+        
+        # Create target directory if it doesn't exist
+        if !isdir(target_dir)
+            println("Creating directory: $target_dir")
+            mkdir(target_dir)
+        end
+        
+        # Copy each file
+        files_copied = 0
+        for source_file in source_files
+            file_name = basename(source_file)
+            target_file = joinpath(target_dir, file_name)
+            
+            try
+                cp(source_file, target_file, force=true)
+                files_copied += 1
+                @printf("  Copied: %s\n", file_name)
+            catch e
+                @printf("  Failed to copy %s: %s\n", file_name, e)
+            end
+        end
+        
+        println("  Successfully copied $files_copied files to $target_dir")
+    end
+    
+    println("\nOperation completed!")
+end
+# Run the function
+try
+    copy_julia_files()
+catch e
+    println("Error: ", e)
+    println("\nIf you're not running as administrator, please restart Julia with admin privileges and try again.")
+end
+```
+</details>
+
+Then 
+```julia
 ] add https://github.com/Timmmdavis/BuildCGAL.git
 ```
 
