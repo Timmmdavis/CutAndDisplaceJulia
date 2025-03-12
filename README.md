@@ -210,6 +210,10 @@ end
 Then 
 ```julia
 ] add https://github.com/Timmmdavis/BuildCGAL.git
+#If that fails try
+using Pkg
+Pkg.build("CMake")
+#Before repeating add BuildCGAL
 ```
 
 ## 3. Verify Your Installation
