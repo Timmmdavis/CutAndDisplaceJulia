@@ -256,13 +256,6 @@ If not
    - Edit PATH and add `C:\Program Files\7-Zip\`
    - Restart Julia
 
-### Configure Julia Environment
-
-- Locate your Julia installation directory
-- Copy files from `JULIA_INSTALL_DIR\libexec\julia` to both:
-  - `JULIA_INSTALL_DIR\bin`
-  - `JULIA_INSTALL_DIR\libexec`
-
 ## 6. Configure BuildCGAL
 
 1. Install the Revise package:
