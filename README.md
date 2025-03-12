@@ -269,6 +269,7 @@ using BuildCGAL
 ```julia
 include("C:/Users/USERNAME/.julia/packages/BuildCGAL/src/DownloadAndCheckAllCGALCompilerDependencies.jl")
 ```
+   - On Windows (12/3/25) I now download gcc via the https://www.msys2.org/ package. After installing this package, use the package manager to install MinGW: pacman -S mingw-w64-i686-toolchain. Go with the defaults and install everything. Check it runs in powershell using gcc –version, make sure the C:/msys64/mingw32/bin its on the path
    - You may need to run this multiple times
    - If links are broken, see the Troubleshooting section
 
@@ -279,6 +280,7 @@ include("C:/Users/USERNAME/.julia/packages/BuildCGAL/src/DownloadAndCheckAllCGAL
 ```julia
 BuildCGAL.Compile_CGAL_Meshing_Functions()
 ```
+I often get an error like "" but this should be fine.
 
 Test the compilation:
 ```julia
