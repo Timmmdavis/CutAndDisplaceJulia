@@ -245,7 +245,11 @@ For CutAndDisplaceJuliaPlots, use the test script from the GitHub readme.
 CGAL is essential for mesh creation and manipulation, particularly for dyke propagation simulations. If you are on Linux, this is going to be easy: see https://github.com/Timmmdavis/BuildCGAL (CGAL-4.13.1)
 
 ### Install 7-Zip
-
+Test is 7-Zip is installed 
+```julia
+println(try output = read(`7z`, String); "7zip is installed: " * strip(match(r"7-Zip\s+[\d\.]+(\s+\([^\)]+\))?", output).match) catch; try output = read(Sys.iswindows() ? `"C:\\Program Files\\7-Zip\\7z.exe"` : `7za`, String); "7zip is installed: " * strip(match(r"7-Zip\s+[\d\.]+(\s+\([^\)]+\))?", output).match) catch; "7zip is NOT installed" end end)
+```
+If not
 1. Download 7-Zip (64-bit, version 19.00+) from 7-zip.org
 2. Add to your system PATH:
    - Open "Environment Variables" in Windows
