@@ -53,7 +53,7 @@ if avgeverynth==3
 	    	VtrailingK3=FeP2P3S_K3[Idx_trailing]
 	    elseif k==2
 	    	Vtrailing=FeP1P3S_StrainEnergy[Idx_trailing]
-	    	VtrailingK1=FeP1P3S_K1[Idx_traili_g]
+	    	VtrailingK1=FeP1P3S_K1[Idx_trailing]
 	    	VtrailingK2=FeP1P3S_K2[Idx_trailing]
 	    	VtrailingK3=FeP1P3S_K3[Idx_trailing]	    	
 	    elseif k==3
@@ -182,7 +182,7 @@ if avgeverynth==5
 	    	VtrailingK3=FeP2P3S_K3[Idx_trailing]
 	    elseif k==2
 	    	Vtrailing=FeP1P3S_StrainEnergy[Idx_trailing]
-	    	VtrailingK1=FeP1P3S_K1[Idx_traili_g]
+	    	VtrailingK1=FeP1P3S_K1[Idx_trailing]
 	    	VtrailingK2=FeP1P3S_K2[Idx_trailing]
 	    	VtrailingK3=FeP1P3S_K3[Idx_trailing]	    	
 	    elseif k==3
@@ -199,7 +199,7 @@ if avgeverynth==5
 	    	VtrailingK3_2=FeP2P3S_K3[Idx_trailing]
 	    elseif k==2
 	    	Vtrailing_2=FeP1P3S_StrainEnergy[Idx_trailing]
-	    	VtrailingK1_2=FeP1P3S_K1[Idx_traili_g]
+	    	VtrailingK1_2=FeP1P3S_K1[Idx_trailing]
 	    	VtrailingK2_2=FeP1P3S_K2[Idx_trailing]
 	    	VtrailingK3_2=FeP1P3S_K3[Idx_trailing]	    	
 	    elseif k==3
