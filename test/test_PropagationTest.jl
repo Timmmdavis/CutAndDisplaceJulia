@@ -370,7 +370,7 @@ for i=1:lps
 
 	#Check if fracture has reached free surface
 	#if HSFlag==1
-		if any([P1[:,3];P2[:,3];P1[:,3]].>0)
+		if any([P1[:,3];P2[:,3];P3[:,3]].>0)
 			printstyled("Fracture has hit the free surface \n",color=:green)
 
 			(Tris,Pnts)=CutAndDisplaceJulia.CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
