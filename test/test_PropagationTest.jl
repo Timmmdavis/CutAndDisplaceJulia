@@ -67,7 +67,10 @@ NoTris=300;
 #########################################################
 using Printf
 using Statistics
-using Plots
+using CutAndDisplaceJulia, CutAndDisplaceJuliaPlots, BuildCGAL
+# Plots and Makie are installed as part of CutAndDisplaceJuliaPlots, so take them
+# from there rather than asking users to `] add` them separately.
+import CutAndDisplaceJuliaPlots: Plots, Makie
 
 function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
 

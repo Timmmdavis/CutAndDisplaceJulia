@@ -134,9 +134,12 @@ For CutAndDisplaceJuliaPlots, use the test script from its GitHub README.
 
 ## 4. Running a Dyke Propagation Simulation
 
-Navigate to your desired output directory and run:
+Start a fresh Julia session, go to the folder where you want the results, and run:
 
 ```julia
+using CutAndDisplaceJulia, CutAndDisplaceJuliaPlots, BuildCGAL
+cd("path/to/output/folder")   # results and figures are written here
+
 ModuleDir = dirname(dirname(pathof(CutAndDisplaceJulia)))
 TestScript = joinpath(ModuleDir, "test", "test_PropagationTest.jl")
 include(TestScript)
