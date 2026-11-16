@@ -95,20 +95,14 @@ Performance comparison for fullspace calculations:
 
 # Installation Guide
 
-## Prerequisites
-
-Before installing, ensure you have:
-- Administrator access to your computer
-- A path with no spaces (OneDrive and similar services may cause issues)
-
 ## 1. Install Julia
 
-1. Download and install Julia 1.11.3 from the official website
-2. **IMPORTANT**: Enable the "Add Julia to PATH" option during installation
-3. Open Julia as administrator (right-click and select "Run as administrator")
+Install Julia 1.11 or newer, ideally with [juliaup](https://julialang.org/install/). You don't need admin rights, and your folders can be anywhere (OneDrive and paths with spaces are fine).
 
-## 2. Install Required Packages
-In Julia, enter the package manager by typing `]` and run:
+## 2. Install the packages
+
+Start Julia, press `]` to enter the package manager, and run:
+
 ```julia
 ] add https://github.com/Timmmdavis/FischerNewton.git
 ] add https://github.com/Timmmdavis/CutAndDisplaceJulia.git
@@ -116,181 +110,29 @@ In Julia, enter the package manager by typing `]` and run:
 ] add https://github.com/Timmmdavis/BuildCGAL.git
 ```
 
-Paste the following into your Julia shell; we do this as 7zip in Julia moved directory and CMake needs it in a certain place
+Keep this order: FischerNewton is not in Julia's General registry, so it has to be added before CutAndDisplaceJulia.
 
-<details>
-<summary>Click to expand 7zip file copy script</summary>
+This installs everything, including CGAL. BuildCGAL downloads prebuilt CGAL meshing tools for your machine (Windows x86_64, Linux x86_64 or Apple Silicon Mac) and shows a progress bar while it does. Nothing is compiled, and no system settings or environment variables are changed.
+
+Prefer one line? This does the same thing:
 
 ```julia
-#!/usr/bin/env julia
-using Printf
-function copy_julia_files()
-    # Get Julia installation directory
-    julia_install_dir = Sys.BINDIR |> dirname
-    
-    println("Found Julia installation directory: ", julia_install_dir)
-    
-    # Source directory
-    source_dir = joinpath(julia_install_dir, "libexec", "julia")
-    
-    if !isdir(source_dir)
-        error("Source directory not found: $source_dir")
-    end
-    
-    # Target directories
-    target_dirs = [
-        joinpath(julia_install_dir, "bin"),
-        joinpath(julia_install_dir, "libexec")
-    ]
-    
-    # Check if running with admin privileges
-    is_admin = false
-    try
-        # This is a simple test to check for admin privileges
-        # Try to write to a file in a typically protected directory
-        test_file = joinpath(julia_install_dir, ".admin_test")
-        open(test_file, "w") do io
-            write(io, "test")
-        end
-        rm(test_file)
-        is_admin = true
-    catch
-        is_admin = false
-    end
-    
-    if !is_admin
-        error("This script requires administrator privileges to copy files to system directories.")
-    end
-    
-    # Find all files in source directory
-    source_files = readdir(source_dir, join=true)
-    
-    # Copy files to target directories
-    println("Copying files from: $source_dir")
-    
-    for target_dir in target_dirs
-        println("Copying to: $target_dir")
-        
-        # Create target directory if it doesn't exist
-        if !isdir(target_dir)
-            println("Creating directory: $target_dir")
-            mkdir(target_dir)
-        end
-        
-        # Copy each file
-        files_copied = 0
-        for source_file in source_files
-            file_name = basename(source_file)
-            target_file = joinpath(target_dir, file_name)
-            
-            try
-                cp(source_file, target_file, force=true)
-                files_copied += 1
-                @printf("  Copied: %s\n", file_name)
-            catch e
-                @printf("  Failed to copy %s: %s\n", file_name, e)
-            end
-        end
-        
-        println("  Successfully copied $files_copied files to $target_dir")
-    end
-    
-    println("\nOperation completed!")
-end
-# Run the function
-try
-    copy_julia_files()
-catch e
-    println("Error: ", e)
-    println("\nIf you're not running as administrator, please restart Julia with admin privileges and try again.")
-end
-```
-</details>
-
-Then 
-```julia
-] add https://github.com/Timmmdavis/BuildCGAL.git
-#If that fails try
-using Pkg
-Pkg.build("CMake")
-#Before repeating add BuildCGAL
+import Pkg; Pkg.add([Pkg.PackageSpec(url = "https://github.com/Timmmdavis/$p.git") for p in ("FischerNewton", "CutAndDisplaceJulia", "CutAndDisplaceJuliaPlots", "BuildCGAL")])
 ```
 
-## 3. Verify Your Installation
-
-Check that everything is working correctly:
+## 3. Check it works
 
 ```julia
-using FischerNewton
-using CutAndDisplaceJulia
-using CutAndDisplaceJuliaPlots
-using BuildCGAL
-```
-
-If no errors appear, your installation was successful.
-
-## 4. Test the Packages
-
-Run the test suites to ensure all functionality works as expected:
-
-```julia
+using FischerNewton, CutAndDisplaceJulia, CutAndDisplaceJuliaPlots, BuildCGAL
+BuildCGAL.tools_dir()       # where the CGAL tools were installed
+] test BuildCGAL            # runs every CGAL tool on sample meshes (a few seconds)
 ] test FischerNewton
 ] test CutAndDisplaceJulia
 ```
 
-For CutAndDisplaceJuliaPlots, use the test script from the GitHub readme.
+For CutAndDisplaceJuliaPlots, use the test script from its GitHub README.
 
-## 5. Set Up CGAL Support
-
-CGAL is essential for mesh creation and manipulation, particularly for dyke propagation simulations. If you are on Linux, this is going to be easy: see https://github.com/Timmmdavis/BuildCGAL (CGAL-4.13.1)
-
-### Install 7-Zip
-Test is 7-Zip is installed 
-```julia
-println(try output = read(`7z`, String); "7zip is installed: " * strip(match(r"7-Zip\s+[\d\.]+(\s+\([^\)]+\))?", output).match) catch; try output = read(Sys.iswindows() ? `"C:\\Program Files\\7-Zip\\7z.exe"` : `7za`, String); "7zip is installed: " * strip(match(r"7-Zip\s+[\d\.]+(\s+\([^\)]+\))?", output).match) catch; "7zip is NOT installed" end end)
-```
-If not
-1. Download 7-Zip (64-bit, version 19.00+) from 7-zip.org
-2. Add to your system PATH:
-   - Open "Environment Variables" in Windows
-   - Edit PATH and add `C:\Program Files\7-Zip\`
-   - Restart Julia
-
-## 6. Configure BuildCGAL
-
-1. Install the Revise package:
-```julia
-] add Revise
-using Revise
-using BuildCGAL
-```
-
-2. Install dependencies:
-```julia
-include("C:/Users/USERNAME/.julia/packages/BuildCGAL/src/DownloadAndCheckAllCGALCompilerDependencies.jl")
-```
-   - On Windows (12/3/25) I now download gcc via the https://www.msys2.org/ package. After installing this package, use the package manager to install MinGW: pacman -S mingw-w64-i686-toolchain. Go with the defaults and install everything. Check it runs in powershell using gcc –version, make sure the C:/msys64/mingw32/bin its on the path
-   - You may need to run this multiple times
-   - If links are broken, see the Troubleshooting section
-
-3. Add Boost to your environment variables (as instructed by the installer)
-
-### Compile CGAL Functions
-
-```julia
-BuildCGAL.Compile_CGAL_Meshing_Functions()
-```
-I often get an error like "" but this should be fine.
-
-Test the compilation:
-```julia
-cd("desired_output_path")
-] test BuildCGAL
-```
-
-Verify you see reasonable mesh outputs in your specified directory.
-
-## 7. Running a Dyke Propagation Simulation
+## 4. Running a Dyke Propagation Simulation
 
 Navigate to your desired output directory and run:
 
@@ -325,69 +167,25 @@ NoTris = 300
 
 Results will be saved to your current directory. View the meshes using meshlab.exe or the included plotting tools.
 
+
+## Docker
+
+To get a ready-to-run Linux environment instead, use the image in [`docker/`](docker):
+
+```bash
+docker build -t cutanddisplace-julia docker
+docker run -it --rm -v /path/to/local/folder:/data cutanddisplace-julia
+```
+
 ## Troubleshooting
 
-If you encounter issues with the CGAL installation, try these alternative approaches:
-
-### Alternative 1: Manual CMake Installation
-
-```julia
-] add CMake
-] precompile
-] build CMake
-
-# Add to PATH
-# C:\Users\USERNAME\.julia\packages\CMake\ULbyn\deps\usr\bin
-
-# Force source build if needed
-ENV["CMAKE_JL_BUILD_FROM_SOURCE"] = 1
-] build CMake
-```
-
-### Alternative 2: Manual MSYS2/MinGW Installation
-
-1. Download MSYS2 from msys2.org
-2. Open MSYS2 MINGW64 terminal and run:
-```
-pacman -S mingw-w64-i686-toolchain
-```
-3. Verify with:
-```
-gcc --version
-```
-
-### CMake Generator Issues
-
-If the MinGW Makefiles generator isn't found:
-```
-cmake --help
-```
-Try alternative generators like "MSYS Makefiles" or "NMake Makefiles"
-
-### Package Version Conflicts
-
-Create a local environment:
-```julia
-] activate .
-] add ./FischerNewton
-] add ./CutAndDisplaceJulia
-] add ./CutAndDisplaceJuliaPlots
-] add ./BuildCGAL
-```
-
-Or use development mode:
-```julia
-] dev ./FischerNewton
-] dev ./CutAndDisplaceJulia
-] dev ./CutAndDisplaceJuliaPlots
-] dev ./BuildCGAL
-```
-
-You may need to adjust Project.toml files manually for compatibility.
-
-### General Troubleshooting Tips
-
-- Ensure paths have no spaces and are properly quoted
-- Verify all environment variables are correctly set
-- Check that dependencies are in your PATH
-- For specific errors, search online using the exact error message
+- **`BuildCGAL has no prebuilt CGAL tools for this platform`**: you're on a platform without prebuilt binaries (for example an Intel Mac). Build the tools yourself from [BuildCGAL's `cgal_tools/` folder](https://github.com/Timmmdavis/BuildCGAL/tree/master/cgal_tools), then set `ENV["BUILDCGAL_TOOLS_DIR"]` to the folder containing them.
+- **`The prebuilt CGAL tools have not been downloaded yet`**: the download was interrupted. Run `] instantiate` or `] add https://github.com/Timmmdavis/BuildCGAL.git` again.
+- **Upgrading from an old install**: earlier versions of BuildCGAL added Make, MinGW, Boost and CGAL folders to your PATH and needed a 7-Zip copy step. None of that is needed now; see the [BuildCGAL README](https://github.com/Timmmdavis/BuildCGAL#upgrading-from-the-old-installer).
+- **Package version conflicts**: install into a separate project environment so other packages can't clash:
+  ```julia
+  ] activate CutAndDisplace   # creates ./CutAndDisplace/Project.toml
+  ] add https://github.com/Timmmdavis/FischerNewton.git
+  # ... then the other three as above
+  ```
+- **Working on the code itself**: use `] dev` with the local clones instead of `] add`.

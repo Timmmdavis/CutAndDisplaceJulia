@@ -1,40 +1,11 @@
 # Start with a Julia base image
 FROM julia:1.11.3
 
-# Install system dependencies including CGAL 4.13.1
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    libboost-all-dev \
-    libgmp-dev \
-    libmpfr-dev \
-    zlib1g-dev \
-    p7zip-full \
-    git \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
-
-# Download and install CGAL 4.13.1
-WORKDIR /tmp
-RUN wget https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.13.1/CGAL-4.13.1.tar.xz \
-    && tar -xf CGAL-4.13.1.tar.xz \
-    && cd CGAL-4.13.1 \
-    && mkdir build \
-    && cd build \
-    && cmake .. \
-    && make -j4 \
-    && make install \
-    && ldconfig \
-    && cd /tmp \
-    && rm -rf CGAL-4.13.1*
-
 # Set up the Julia environment
 WORKDIR /app
 
-# Set environment variables for CGAL
-ENV CGAL_DIR="/usr/local/lib/cmake/CGAL"
-
-# Install just the computational packages
+# Install just the computational packages. BuildCGAL downloads its prebuilt
+# CGAL tools here, so no compiler, Boost or CGAL build is needed in the image.
 RUN julia -e 'using Pkg; \
     Pkg.add(url="https://github.com/Timmmdavis/FischerNewton.git"); \
     Pkg.add(url="https://github.com/Timmmdavis/CutAndDisplaceJulia.git"); \
@@ -42,9 +13,8 @@ RUN julia -e 'using Pkg; \
     Pkg.add("Revise"); \
     Pkg.precompile()'
 
-# Set up CGAL with BuildCGAL
-RUN julia -e 'using BuildCGAL; \
-    BuildCGAL.Compile_CGAL_Meshing_Functions()'
+# Check the CGAL tools are installed and run on sample meshes
+RUN julia -e 'using Pkg; Pkg.test("BuildCGAL")'
 
 # Create a test script that demonstrates the functionality
 RUN echo 'println("=== CutAndDisplaceJulia Test Environment ===");\
@@ -88,13 +58,13 @@ end' > /app/dyke_test.jl
 # Create README with usage instructions in the container
 RUN echo '# CutAndDisplaceJulia Docker Container\n\
 \n\
-This container includes the computational components of CutAndDisplaceJulia with CGAL 4.13.1.\n\
+This container includes the computational components of CutAndDisplaceJulia with prebuilt CGAL tools (via BuildCGAL).\n\
 \n\
 ## Usage\n\
 \n\
 ### Basic Julia REPL with packages loaded:\n\
 ```\n\
-docker run -it --rm -v /path/to/local/folder:/data cutanddisplace-julia:4.13.1\n\
+docker run -it --rm -v /path/to/local/folder:/data cutanddisplace-julia\n\
 ```\n\
 \n\
 ### Running the dyke propagation test:\n\
