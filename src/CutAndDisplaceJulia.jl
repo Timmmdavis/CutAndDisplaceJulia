@@ -10,7 +10,6 @@ using Statistics
 using UnicodePlots
 using DataFrames
 using Printf
-using Optim
 using Elliptic
 
 ######################################################
@@ -51,6 +50,16 @@ struct FrictionParameters; 	   µ;Sf;  		     	end
 struct MixedBoundaryConditions;Stresses;Tractions;  end
 struct MixedBoundaryConditionsFriction;MixedBoundaryConditions;FrictionParameters;	end
 struct MixedBoundaryConditionsFluidVolume;MixedBoundaryConditions;Volumes;	end
+#Fixed mass of compressible fluid per crack. Equation of state rho = ρ0*(1 + (p + pshift - pa)/K)
+#with p the solved fluid pressure (same datum as your stresses). Ideal gas at constant temperature:
+#K = pa = a reference absolute pressure, ρ0 = gas density at pa; pshift = absolute pressure at the
+#stress datum (e.g. atmospheric if your stresses are zero at the surface). See IdealGasFluidMass.
+struct MixedBoundaryConditionsFluidMass;MixedBoundaryConditions;Masses;ρ0;K;pa;pshift;	end
+#Ideal gas (isothermal) with molar mass M [kg/mol] at temperature T [K]; pref: reference absolute pressure [Pa]
+function IdealGasFluidMass(BC::MixedBoundaryConditions,Masses,M,T,pref;patm=101325.0)
+	ρ0=pref*M/(8.314462618*T)
+	return MixedBoundaryConditionsFluidMass(BC,Masses,ρ0,pref,pref,patm)
+end
 
 
 println("I would prefer not be mutable")
@@ -65,6 +74,8 @@ export
 	MixedBoundaryConditions,
 	MixedBoundaryConditionsFriction,
 	MixedBoundaryConditionsFluidVolume,
+	MixedBoundaryConditionsFluidMass,
+	IdealGasFluidMass,
 	TriangleEdges
 
 println("I would also prefer not be mutable")
@@ -159,15 +170,13 @@ include("Tada_StrIntInclinedPennyTension.jl")
 include("DipAndAzimuth.jl")
 
 #Fluid filled crack bits
-include("WalkAndInterp.jl")
-include("ComputePressurisedCrackDn.jl")
-include("anneal.jl")
 include("PropagateFracture.jl")
 include("StrainEnergyRelease.jl")
 include("FindPropAngleAndPoint.jl")
 println("Scale length in here relative to energy")
 
 include("SlipCalculator3D.jl")
+include("FluidPressureSolver.jl")
 include("RepeatStruct.jl")
 include("SetupTractionVector.jl")
 include("LoadData.jl")
