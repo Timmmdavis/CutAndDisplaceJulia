@@ -143,7 +143,7 @@ casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
 
 
-Threads.@threads for i=1:SzCmp #For every element (multithreaded)   
+Threads.@threads :static for i=1:SzCmp #For every element (multithreaded; :static keeps threadid() fixed per iteration)   
 	#println("Multithreading off")
 
 	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
@@ -220,7 +220,9 @@ function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 			DispFlag,StrainFlag,HSflag,StrainInfVector::Strains,DispInfVector::Disps)
 
 
-NoThreads=Threads.nthreads()
+# One buffer column per possible thread id. From Julia 1.12 thread ids can exceed
+# nthreads() (an interactive thread is added), so size by maxthreadid() where available.
+NoThreads=isdefined(Threads, :maxthreadid) ? Threads.maxthreadid() : Threads.nthreads()
 
 if DispFlag==1
 	Ux  = zeros(length(X));
@@ -270,7 +272,7 @@ p1List,p2List,p3List,p1iList,p2iList,p3iList,e12List,e13List,e23List,AList,BList
 casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
 
-Threads.@threads for i=1:SzCmp 
+Threads.@threads :static for i=1:SzCmp # :static keeps threadid() fixed per iteration
 	#println("Multithreading off")
 	CurrentThread=Threads.threadid()
 
@@ -447,7 +449,7 @@ eZ = [0.;0.;1.];
 
 
 #Init arrays that are the size of the threads we use, each col is then allocated to that thread
-SzCmp2=Threads.nthreads()
+SzCmp2=isdefined(Threads, :maxthreadid) ? Threads.maxthreadid() : Threads.nthreads()  # see NoThreads above
 
 VnormList  	= zeros(SzCmp2,3); 
 VstrikeList = zeros(SzCmp2,3); 
