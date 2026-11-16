@@ -599,60 +599,12 @@ for i=1:lps
 
 
 
-		if Sys.islinux()
-			#attempt to stop linux error
-			GR.inline("png")
-		end
-		# Create the initial figure using Plots
-		fig = Plots.plot(aspect_ratio=:equal)
-
-		# Call your mesh boundary function with the figure
-		CutAndDisplaceJuliaPlots.PlotMeshBoundary(MidPoint[nonNan,:], P1[nonNan,:], P2[nonNan,:], P3[nonNan,:], FaceNormalVector[nonNan,:], fig)
-
-		# Add the scatter plot with colors
-		Plots.scatter!(fig, 
-		    [XMid], [ZMid], 
-		    zcolor=StrainEnergyV./KCrit, 
-		    m=(:blues), 
-		    lab="", 
-		    aspect_ratio=:equal
-		)
-
-		# Add black lines for mesh boundaries
-		for i = 1:length(P1LastLoop[:,1])
-		    Plots.plot!(fig, 
-		        [P1LastLoop[i,a], P2LastLoop[i,a]], 
-		        [P1LastLoop[i,b], P2LastLoop[i,b]], 
-		        aspect_ratio=:equal, 
-		        c=(:black), 
-		        lab=""
-		    )
-		    Plots.plot!(fig, 
-		        [P2LastLoop[i,a], P3LastLoop[i,a]], 
-		        [P2LastLoop[i,b], P3LastLoop[i,b]], 
-		        aspect_ratio=:equal, 
-		        c=(:black), 
-		        lab=""
-		    )
-		    Plots.plot!(fig, 
-		        [P1LastLoop[i,a], P3LastLoop[i,a]], 
-		        [P1LastLoop[i,b], P3LastLoop[i,b]], 
-		        aspect_ratio=:equal, 
-		        c=(:black), 
-		        lab=""
-		    )
-		end
-
-		# Display the figure
-		#display(fig)
-		#display(fig)
-		Plots.savefig("$i-$p-FaultEdges-$RandNum.png")
-		#Makie.save("$i-$p-FaultEdges-$RandNum.png", fig)
-
-		if Sys.islinux()
-			#attempt to stop linux error
-			GR.inline("png")
-		end
+		# Per-step crack figure (CutAndDisplaceJuliaPlots.PlotCrackState, CairoMakie): x–z, y–z and map
+		# views of the opened crack, coloured by opening, tip line coloured by KI/Kc (~0.2 s per step)
+		CrackFig=CutAndDisplaceJuliaPlots.PlotCrackState(P1LastLoop,P2LastLoop,P3LastLoop,vec(Dn[nonNan]);
+			TipXYZ=[XMid YMid ZMid],TipK=StrainEnergyV,Kc=KCrit,
+			meta=(step=i,V=sum(Area[nonNan].*Dn[nonNan])))
+		CutAndDisplaceJuliaPlots.SaveFig("$i-$p-CrackViews-$RandNum.png",CrackFig)
 		
 	end
 
