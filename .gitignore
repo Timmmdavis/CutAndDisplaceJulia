@@ -1,2 +1,4 @@
 
 #*.ts
+test/UnitTests/figures/
+*.cov

@@ -139,7 +139,7 @@ w=normr([(Pb[I,1]-Pc[I,1]) (Pb[I,2]-Pc[I,2]) (Pb[I,3]-Pc[I,3])]);
 
 Indx=findall(I);
 for i = 1:length(Indx)
-        IntAng[Indx[i]]=rad2deg(acos(dot(v[i,:],w[i,:])));
+        IntAng[Indx[i]]=rad2deg(acos(clamp(dot(v[i,:],w[i,:]),-1.0,1.0))); #clamp: rounding past ±1
 end
 
 

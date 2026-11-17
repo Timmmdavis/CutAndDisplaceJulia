@@ -43,7 +43,7 @@ b=Radius_b;
 
 # Theta           - The parametric angle on the crack wall, measured counter-clockwise 
 #                   away from semiaxis a (in crack plane), radians. See Fig one page P.26.1
-H=sqrt.((a^2).-(xLocCrackWall.^2) )
+H=sqrt.(max.((a^2).-(xLocCrackWall.^2),0.0)) #max: points just outside the ellipse (rounding)
 θ = atan.(H,xLocCrackWall)
 for i=1:length(θ) 
 	if yLocCrackWall[i]<0

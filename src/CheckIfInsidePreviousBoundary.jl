@@ -108,7 +108,6 @@ for i=1:length(UniqueEdges)
 
 end
 
-@bp 
 
 if all(PntList)
   InsidePrevious=true

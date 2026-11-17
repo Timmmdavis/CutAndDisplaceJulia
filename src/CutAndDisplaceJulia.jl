@@ -10,14 +10,11 @@ using Statistics
 using UnicodePlots
 using DataFrames
 using Printf
-using Optim
 using Elliptic
 
 ######################################################
-println("Remove me!")
-using Debugger
 #=
-#Assuming the func has a @bp statement
+#To debug: add Debugger to your own environment, put @bp in the function, then:
 using Debugger
 include(raw("functionpath"))
 @enter function
@@ -53,7 +50,7 @@ struct MixedBoundaryConditionsFriction;MixedBoundaryConditions;FrictionParameter
 struct MixedBoundaryConditionsFluidVolume;MixedBoundaryConditions;Volumes;	end
 
 
-println("I would prefer not be mutable")
+#TODO (Tim): I would prefer these not be mutable
 mutable struct TriangleEdges;FeLe;FeMd;FeEv;FeM2Ev;FreeFlg;FeM2ELe;IntAng;K1;K2;K3;StrainEnergy;Area; 	end
 
 export
@@ -67,7 +64,7 @@ export
 	MixedBoundaryConditionsFluidVolume,
 	TriangleEdges
 
-println("I would also prefer not be mutable")
+#TODO (Tim): I would also prefer these not be mutable
 #Init some types for influence matricies
 mutable struct TractionInf; 	
 	DnTn;	DnTss;	DnTds	
@@ -108,7 +105,6 @@ include("FindConnectedTriangles.jl")
 include("ismember.jl")
 include("MatchingRow.jl")
 include("CreateSortedEdgePoints.jl")
-include("IsosceliseEdgeTris.jl")
 include("CleanEdgeTris.jl")
 include("CreateTrianglesPointsFromP1P2P3.jl")
 include("CalculateInternalTriAngles.jl")
@@ -119,7 +115,7 @@ include("CollapseEdgeTris.jl")
 include("AngleBetweenVectors!.jl")  
 include("FlipValue.jl")
 include("FindIntersectionOf3DVectors.jl")
-include("IsosceliseEdgeTrisNew.jl")
+include("IsosceliseEdgeTris.jl")
 include("ExportCrackMesh.jl")
 include("STLExport.jl")
 include("CreateTriangleNormal!.jl")
@@ -129,6 +125,7 @@ include("CheckIfInsidePreviousBoundary.jl")
 include("LoopResultsWriter.jl")
 include("FindingLastPng.jl")
 include("Tada_StrIntEllipseCrackTension.jl")
+include("Atroshchenko_StrIntEllipseCrackGradient.jl")
 include("MovingAverageOfStressIntensity.jl")
 include("Tada_StrIntPennyGradient.jl")
 include("PutOnEdgeOfCirc.jl")
@@ -159,15 +156,13 @@ include("Tada_StrIntInclinedPennyTension.jl")
 include("DipAndAzimuth.jl")
 
 #Fluid filled crack bits
-include("WalkAndInterp.jl")
-include("ComputePressurisedCrackDn.jl")
-include("anneal.jl")
 include("PropagateFracture.jl")
 include("StrainEnergyRelease.jl")
 include("FindPropAngleAndPoint.jl")
-println("Scale length in here relative to energy")
+#TODO (Tim): scale length in here relative to energy
 
 include("SlipCalculator3D.jl")
+include("FluidPressureSolver.jl")
 include("RepeatStruct.jl")
 include("SetupTractionVector.jl")
 include("LoadData.jl")

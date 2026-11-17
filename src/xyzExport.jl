@@ -16,13 +16,8 @@ end
 
 close(io);
 
-if Sys.islinux()
-	#OutputDir
-	OutputDirectory=string(pwd(),"/$filename.xyz")
-else
-	#OutputDir
-	OutputDirectory=string(pwd(),"\\$filename.xyz")
-end
+#OutputDir (joinpath uses the right separator on Windows, macOS and Linux)
+OutputDirectory=joinpath(pwd(),"$filename.xyz")
 
 return OutputDirectory
 end

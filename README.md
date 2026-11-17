@@ -1,7 +1,7 @@
 # CutAndDisplaceJulia
 
-[![Build Status](https://travis-ci.com/Timmmdavis/CutAndDisplaceJulia.svg?token=1HhESyMNyqzV8R22Pqq6&branch=master)](https://travis-ci.com/Timmmdavis/CutAndDisplaceJulia)
-[![Coverage Status](https://codecov.io/gh/Timmmdavis/CutAndDisplaceJulia/branch/master/graph/badge.svg?token=IbbZ8n4385)](https://codecov.io/gh/Timmmdavis/CutAndDisplaceJulia)
+[//]: #[![Build Status](https://travis-ci.com/Timmmdavis/CutAndDisplaceJulia.svg?token=1HhESyMNyqzV8R22Pqq6&branch=master)](https://travis-ci.com/Timmmdavis/CutAndDisplaceJulia)
+[![Coverage Status](https://codecov.io/github/Timmmdavis/CutAndDisplaceJulia/graph/badge.svg?token=IbbZ8n4385)](https://codecov.io/github/Timmmdavis/CutAndDisplaceJulia)
 [![DOI](https://zenodo.org/badge/155747027.svg)](https://zenodo.org/badge/latestdoi/155747027)
 
 ![FractureAscendingDueToStressGradients](https://github.com/Timmmdavis/HostingGifs/blob/master/MeshPropBothAnglesFast.gif)  
@@ -148,8 +148,7 @@ TestScript = joinpath(ModuleDir, "test", "test_PropagationTest.jl")
 include(TestScript)
 
 # Configuration
-HSFlag = 0  # Constant
-printstyled("Hs off \n", color=:cyan) 
+HSFlag = 0  # 0 = full space, 1 = half space
 
 # Elastic constants
 G = ShearModulus(2.0e9)
@@ -163,13 +162,22 @@ g = 9.81
 Δρ = ((ρrock-ρfluid)*g)
 Kc = 5e7  # 50 MPa √m
 
-# Crack volume calculation
-CrackVolume = real(((1-ν)/(16*G))*((9*π^4*Kc^8)/(complex(Δρ)^5))^(1/3))
-NoTris = 300
+# Starting crack and rock stress
+Dip = 90.0          # dip of the starting crack in degrees (90 = vertical)
+StressRatio = 1.0   # horizontal / vertical rock stress (1 = isotropic; below 1 a dipping crack turns towards vertical)
+NoTris = 300        # approximate number of triangles in the crack mesh
 
-# Run simulation
-(PropFlag, maxX, minX, maxY, minY, maxZ, minZ) = testProp(HSFlag, ν, G, Δρ, Kc, CrackVolume, NoTris)
+# Volume needed to ascend: a dipping crack has less buoyancy along it, so needs a larger volume
+CrackVolume = DykeCriticalVolume(ν, G, Kc, Δρ; Dip = Dip, StressRatio = StressRatio, ρrock = ρrock)
+println("Crack volume: ", round(CrackVolume, sigdigits = 4), " m³")
+
+# Run simulation: stops when the crack reaches the surface (PropFlag = 1) or is trapped (PropFlag = 0).
+# The rock is loaded as stresses (vertical ρrock*g*z, horizontal StressRatio times that) and the fluid as tractions on the crack.
+(PropFlag, maxX, minX, maxY, minY, maxZ, minZ) = testProp(HSFlag, ν, G, Δρ, Kc, CrackVolume, NoTris;
+                                                           ρrock = ρrock, Dip = Dip, StressRatio = StressRatio)
 ```
+
+With `StressRatio` below 1 a vertical crack stays buoyant only while `ρrock*StressRatio > ρfluid`.
 
 Results will be saved to your current directory. View the meshes using meshlab.exe or the included plotting tools.
 

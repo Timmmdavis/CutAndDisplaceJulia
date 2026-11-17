@@ -94,12 +94,8 @@ while rerunFunc==1
                     ConnectedNormal=FaceNormalVector[SortedTriangles[i,j],:]
                     CurrentNormal=FaceNormalVector[i,:]
                     CosCurve=dot(vec(ConnectedNormal),vec(CurrentNormal))
-                    #Catches errors when vectors are not quite perfect
-                    if CosCurve>1.
-                        AngBetweenNormals=1.
-                    else
-                        AngBetweenNormals=acos(CosCurve)
-                    end
+                    #Catches errors when vectors are not quite perfect (dot just past ±1)
+                    AngBetweenNormals=acos(clamp(CosCurve,-1.0,1.0))
 
 
                     if AngBetweenNormals>(pi/2) #bigger than 90

@@ -8,11 +8,7 @@ ModuleDir=splitdir(ModuleDir); #remove file name
 ModuleDir=ModuleDir[1];
 ModuleDir=splitdir(ModuleDir); #out of src
 ModuleDir=ModuleDir[1];
-if Sys.iswindows()
-    SurfaceDir=string(ModuleDir,string("\\test\\",DataNameAsString))
-else
-	SurfaceDir=string(ModuleDir,string("/test/",DataNameAsString))
-end
+SurfaceDir=joinpath(ModuleDir,"test",DataNameAsString)
 
 
 end

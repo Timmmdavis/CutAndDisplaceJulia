@@ -20,13 +20,8 @@ else
 	mkdir(Dir2)
 end
 
-if Sys.islinux()
-	pth='/'
-else
-	pth='\\'
-end	
-Dir1FullPath=string(OuterDir,pth,Dir1)
-Dir2FullPath=string(OuterDir,pth,Dir2)
+Dir1FullPath=joinpath(OuterDir,Dir1)
+Dir2FullPath=joinpath(OuterDir,Dir2)
 
 
 Results=readdlm("ResultsTable.txt", ',')
@@ -118,7 +113,7 @@ for i=2:size(Results,1)
 	try
 		NewPngStr=string(filename,".png")
 		ExistingPngStr=CutAndDisplaceJulia.FindingLastPng(Dir1FullPath)
-		mv(string(Dir1FullPath,pth,ExistingPngStr),string(Dir2FullPath,pth,NewPngStr); force=true);
+		mv(joinpath(Dir1FullPath,ExistingPngStr),joinpath(Dir2FullPath,NewPngStr); force=true);
 		sleep(1) #julia is too fast
 	catch
 	end

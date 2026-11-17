@@ -19,9 +19,10 @@ P3toP2Vec=normr(P2.-P3)
 
 for i = 1:n
 
-    IntAngA[i]=acos(dot(P1toP2Vec[i,:],P1toP3Vec[i,:]))
-    IntAngB[i]=acos(dot(P2toP1Vec[i,:],P2toP3Vec[i,:]))
-    IntAngC[i]=acos(dot(P3toP1Vec[i,:],P3toP2Vec[i,:]))
+    #clamp: rounding can push the dot product of unit vectors just past ±1 (acos would throw)
+    IntAngA[i]=acos(clamp(dot(P1toP2Vec[i,:],P1toP3Vec[i,:]),-1.0,1.0))
+    IntAngB[i]=acos(clamp(dot(P2toP1Vec[i,:],P2toP3Vec[i,:]),-1.0,1.0))
+    IntAngC[i]=acos(clamp(dot(P3toP1Vec[i,:],P3toP2Vec[i,:]),-1.0,1.0))
 
 end
 

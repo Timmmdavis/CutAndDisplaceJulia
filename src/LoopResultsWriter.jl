@@ -34,7 +34,7 @@ write(io, "PropFlag maxX minX maxY minY maxZ minZ G ν g Δρ NoTris KCrit Crack
 close(io);
 
 #OutputDir
-OutputDirectory=string(pwd(),"\\$filename.txt")
+OutputDirectory=joinpath(pwd(),"$filename.txt")
 
 return OutputDirectory
 end

@@ -1,5 +1,6 @@
 function ExportCrackMesh(P1,P2,P3,Dn,Dss,Dds,MeshOutputName)
-#To export the actual crack shape (size opening/shearing)
+#To export the actual crack shape (size opening/shearing): the two walls as one closed .off surface,
+#each wall moved by ±(Dn,Dss,Dds)/2 (point values = average of the connected triangles, 0 on the rim)
 #MeshOutputName - a string i.e. MeshOutputName="Mesh"
 #This function guarantees that no duplicate points exist
 (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
@@ -79,10 +80,11 @@ DnAvg=DnAvg./NoConnectedTris
 DssAvg=DssAvg./NoConnectedTris
 DdsAvg=DdsAvg./NoConnectedTris
 
-#How much we displace the point by
-XYZNormalDisp=PointsFNVAvg.*DnAvg
-XYZStrikeSlipDisp=PointsSSCAvg.*DssAvg
-XYZDipSlipDisp=PointsDSCAvg.*DdsAvg
+#How much we displace the point by. Dn, Dss and Dds are the relative displacements between the
+#two walls, so each wall moves half of them (the gap between the exported walls is then Dn).
+XYZNormalDisp=PointsFNVAvg.*DnAvg./2
+XYZStrikeSlipDisp=PointsSSCAvg.*DssAvg./2
+XYZDipSlipDisp=PointsDSCAvg.*DdsAvg./2
 
 
 

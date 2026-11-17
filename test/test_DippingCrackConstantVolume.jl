@@ -85,7 +85,7 @@ FractureElements=FractureElements.+1; #single fracture
 #Calculate slip on faces
 (Dn, Dss, Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,HSFlag,BoundaryConditions,FractureElements);
 
-@bp
+#@bp
 
 #Get tip elements
 (FeP1P2S,FeP1P3S,FeP2P3S)=CutAndDisplaceJulia.GetCrackTipElements3D(MidPoint,P1,P2,P3,FaceNormalVector)

@@ -69,111 +69,46 @@
 # Open src version of : TR = triangulation(Triangles,Points(:,2),Points(:,3),Points(:,4)); E = edges(TR); %Gives all connected edges. 
 # https://de.mathworks.com/matlabcentral/fileexchange/32727-fast-loop-mesh-subdivision
 
+#(The MATLAB version was only partly translated to Julia and always stopped with an error; this
+#Julia version gives the same outputs. Triangles that share an edge share two point indices.)
 function FindConnectedTriangles(Triangles,MidPoint)
 
-length(2)
-mnTriangulation=Triangles;
-nNumTriangles = size(mnTriangulation, 1);
-# - Collect all edges
-mnAllEdges = [[mnTriangulation[:, 1:2]   (1:nNumTriangles)]
-              [mnTriangulation[:, 2:3]   (1:nNumTriangles)]
-              [mnTriangulation[:, 3] mnTriangulation[:, 1] (1:nNumTriangles)]];
+nNumTriangles=size(Triangles,1)
 
-mnAllEdges[:, 1:2]=sort(mnAllEdges[:, 1:2],dims=2);
-
-# - Collect the edges list
-#E = unique(mnAllEdges[:, 1:2], "rows");
-E = Matrix(unique(DataFrame(mnAllEdges[:, 1:2])));
-
-NoEdges=size(E,1);
-AllTriangleNos=zeros(2,NoEdges);
-#Will need loop
-#Going to create a list the size of E that says which two triangles are connected to each other. 
-for i=1:NoEdges
-
-    bIna=sum(Int.(in.(Triangles,[E[i,:]])),dims=2)
-    bIna=bIna.==2; #Creating indentity matrix where triangles have two adjacent edges at E1
-    TriangleNos=findall(vec(bIna))
-    #@info TriangleNos bIna
-    AllTriangleNos[1,i]=TriangleNos[1]; 
-    if length(TriangleNos)==2
-        AllTriangleNos[2,i]=TriangleNos[2];   #Gives a matrix where each column is an edge connection with a triangle or TWO. 
-    end  
-end
-lengthz=length(Triangles[:,1]);
-
-SortedTriangles=zeros(lengthz,6);
-SortTri=zeros(3,lengthz); #Just associated vertex's
-
-#To findall number of connections for each triangle
-for i=1:lengthz
-    indices = findall(any(AllTriangleNos.==i));     
-    
-    
-    Flag=findall(AllTriangleNos[:,indices[1]].==i);
-    TriNo=AllTriangleNos[:,indices[1]];
-    error("here")
-    TriNo[Flag,:]=[];
-    
-    SortTri[1,i]=TriNo;
-    
-    b=length(indices);    
-    if b==1             #Stops unconnected triangles breaking loop
-        continue
-    end
-    Flag=AllTriangleNos[:,indices[2]]==i;
-    TriNo=AllTriangleNos[:,indices[2]];
-    TriNo[Flag,:]=[];
-    SortTri[2,i]=TriNo;
-
-
-    if b==2           #Stops triangles with two connections breaking loop
-        continue
-    end
-    Flag=AllTriangleNos[:,indices[3]]==i;
-    TriNo=AllTriangleNos[:,indices[3]];
-    TriNo[Flag,:]=[];
-    SortTri[3,i]=TriNo;
-    #Gives list of each triangles connection in each set of two rows. 0 is
-    #no connection/an edge. 
-end
-
-SortTri=SortTri';
-SortTri = sort(SortTri,2,"descend"); #Sorting so 0's are always last row. Useful for loops later. 
-#Ie if only 2 connections only loop through size twice not three times. 
-SortedTriangles[:,2]=SortTri[:,1];SortedTriangles[:,4]=SortTri[:,2];SortedTriangles[:,6]=SortTri[:,3];
-Ascend=[1:lengthz]';
-SortedTriangles[:,1]=Ascend;SortedTriangles[:,3]=Ascend;SortedTriangles[:,5]=Ascend;
-#List of every triangle and connections. 
-
-#Creating list of how many connections each tri has (can be used in loops
-#later) 
-Noconnections = SortTri<=0;
-Noconnections=(zeros(1,lengthz)+3)'- sum(Noconnections,2);
-Noconnections=[Ascend,Noconnections];
-
-ConnectionDist1=zeros(lengthz,3);
-ConnectionDist2=zeros(lengthz,3);
-ConnectionDist3=zeros(lengthz,3);
-
-for i=1:lengthz
-    if Noconnections[i,2]==0
-        continue
-    end
-    ConnectionDist1=MidPoint[SortedTriangles[:,1],:]-MidPoint[SortedTriangles[:,2],:];
-    if Noconnections[i,2] == 2
-        ConnectionDist2[i,:]=MidPoint[SortedTriangles[i,3],:]-MidPoint[SortedTriangles[i,4],:];
-    end
-    if Noconnections(i,2) == 3
-        ConnectionDist2[i,:]=MidPoint[SortedTriangles[i,3],:]-MidPoint[SortedTriangles[i,4],:];
-        ConnectionDist3[i,:]=MidPoint[SortedTriangles[i,4],:]-MidPoint[SortedTriangles[i,5],:];
+#Every edge (sorted pair of point indices) and the triangles that use it
+EdgeTris=Dict{Tuple{Int,Int},Vector{Int}}()
+for i=1:nNumTriangles
+    for (a,b) in ((1,2),(2,3),(3,1))
+        e=minmax(Int(Triangles[i,a]),Int(Triangles[i,b]))
+        push!(get!(EdgeTris,e,Int[]),i)
     end
 end
-ConnectionDistListXYZ=[ConnectionDist1;ConnectionDist2;ConnectionDist3];
-TotalConnectionDistance=sqrt((ConnectionDistListXYZ[:,1].^2)+(ConnectionDistListXYZ[:,2].^2)+(ConnectionDistListXYZ[:,3].^2));
-TotalConnectionDistance=reshape(TotalConnectionDistance,[],3);
 
+#Up to three connected triangles for each triangle (0 = no connection, an edge of the mesh),
+#connections first
+SortTri=zeros(Int,nNumTriangles,3)
+for (e,tris) in EdgeTris
+    length(tris)==2 || continue
+    (t1,t2)=tris
+    SortTri[t1,findfirst(==(0),SortTri[t1,:])]=t2
+    SortTri[t2,findfirst(==(0),SortTri[t2,:])]=t1
+end
+
+#Columns 1,3,5: the triangle's index; columns 2,4,6: the connected triangles
+Ascend=collect(1:nNumTriangles)
+SortedTriangles=[Ascend SortTri[:,1] Ascend SortTri[:,2] Ascend SortTri[:,3]]
+
+#Number of connections of each triangle: [index count]
+Noconnections=[Ascend vec(sum(SortTri.!=0,dims=2))]
+
+#Distance between the triangle's midpoint and each connected triangle's midpoint (0 if none)
+TotalConnectionDistance=zeros(nNumTriangles,3)
+for i=1:nNumTriangles, k=1:3
+    j=SortTri[i,k]
+    j==0 && continue
+    TotalConnectionDistance[i,k]=sqrt(sum((MidPoint[i,:].-MidPoint[j,:]).^2))
+end
 
 return TotalConnectionDistance,SortedTriangles,Noconnections
-end
 
+end

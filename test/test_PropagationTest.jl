@@ -1,83 +1,93 @@
-
-#=
-
-	println("PackageCOMPILESTUFF")
-	exepath=raw"C:\Users\timmm\AppData\Local\Julia-1.1.0\bin\julia.exe"; 
-	new_image=raw"C:\Users\timmm\.julia\dev\PackageCompiler\sysimg\sys.dll"; 
-	run(`$exepath --quiet -J $new_image`)
-
-	using Revise
-	using AbstractPlotting
-	AbstractPlotting.__init__()
-	using CutAndDisplaceJuliaPlots
-	using Makie
-
-	using DelimitedFiles
-	using CutAndDisplaceJulia
-	using Statistics
-	using BuildCGAL
-	using Debugger
-	cd(raw"C:\Users\timmm\Desktop\MeshProp")
-
-	using Plots; plot(rand(10))
-
-	#=
-	cd(raw"C:\Users\timmm\Desktop\MeshProp");using Plots; plot(rand(10))
-	using Printf; using Debugger;using CutAndDisplaceJulia;using Statistics;using DelimitedFiles;using BuildCGAL;using Plots
-	includet(raw)
-	=#
-	
-
-=#
-
-#=
-#########################################################
-# Which bits we want to compute
-HSFlag=0; #const
-printstyled("Hs off \n",color=:cyan) 
-
-#Elastic constants
-G=ShearModulus(2.0e9); 
-ν=PoissonsRatio(0.25);#println("Pr is close to 0.5")
-(K,E,λ,ν,G) = CutAndDisplaceJulia.ElasticConstantsCheck(G,ν);
-
-#Density
-ρrock=2900;
-ρfluid=2600;
-#Gravitational acceleration
-g=9.81;
-
-Δρ=((ρrock-ρfluid)*g)
-
-Kc=5e7; #[5e7 = 50 MPa √m]
-
-#Volume
-
-CrackVolume=real(((1-ν)/(16*G))*((9*π^4*Kc^8)/(complex(Δρ)^5))^(1/3))
-
-NoTris=300;
-
-(PropFlag,maxX,minX,maxY,minY,maxZ,minZ)=testProp(HSFlag,ν,G,Δρ,Kc,CrackVolume,NoTris)
-
-#return(CritVolFlag,maxX,minX,maxY,minY,maxZ,minZ)
-#CritVolFlag==1 - Reached surface
-#CritVolFlag==0 - Trapped
-=#
+# Buoyancy-driven ascent of a fluid-filled crack (dyke) with a fixed fluid volume: testProp.
+#
+# Usage (see also README section 4):
+#
+#   using CutAndDisplaceJulia, CutAndDisplaceJuliaPlots, BuildCGAL
+#   include(joinpath(dirname(dirname(pathof(CutAndDisplaceJulia))), "test", "test_PropagationTest.jl"))
+#   cd("path/to/output/folder")                      # results and figures are written here
+#
+#   (K, E, λ, ν, G) = CutAndDisplaceJulia.ElasticConstantsCheck(ShearModulus(2.0e9), PoissonsRatio(0.25))
+#   ρrock = 2900; ρfluid = 2600; g = 9.81
+#   Δρ = (ρrock - ρfluid) * g                        # [Pa/m]
+#   Kc = 5e7                                         # fracture toughness [Pa√m] (50 MPa√m)
+#   Dip = 60.0                                       # dip of the starting crack [deg] (90 = vertical)
+#   StressRatio = 1.0                                # horizontal / vertical rock stress
+#   CrackVolume = DykeCriticalVolume(ν, G, Kc, Δρ; Dip = Dip, StressRatio = StressRatio, ρrock = ρrock)
+#   (PropFlag, maxX, minX, maxY, minY, maxZ, minZ) =
+#       testProp(0, ν, G, Δρ, Kc, CrackVolume, 300; ρrock = ρrock, Dip = Dip, StressRatio = StressRatio)
+#
+# PropFlag (CritVolFlag): 1 = the crack reached the surface, 0 = it was trapped (the run stops).
 
 #########################################################
 using Printf
 using Statistics
 using CutAndDisplaceJulia, CutAndDisplaceJuliaPlots, BuildCGAL
-# Plots and Makie are installed as part of CutAndDisplaceJuliaPlots, so take them
-# from there rather than asking users to `] add` them separately.
-import CutAndDisplaceJuliaPlots: Plots, Makie
+# Makie is installed as part of CutAndDisplaceJuliaPlots (only used when draw=1 below)
+import CutAndDisplaceJuliaPlots: Makie
 
-function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris)
+"""
+    DykeBuoyancyGradient(Δρ, Dip; StressRatio = 1.0, ρrock = nothing, g = 9.81)
+
+Pressure gradient [Pa/m] driving the crack up-dip: the fluid against the rock normal stress,
+resolved along a crack dipping `Dip` degrees (90 = vertical).
+  Isotropic rock stress (StressRatio = 1):  Δρ*sin(Dip)
+  σh = StressRatio*σv:  g*[ρrock*(cos²Dip + StressRatio*sin²Dip) - ρfluid]*sin(Dip),  ρfluid = ρrock - Δρ/g
+"""
+function DykeBuoyancyGradient(Δρ, Dip; StressRatio = 1.0, ρrock = nothing, g = 9.81)
+    if StressRatio == 1
+        return Δρ * sind(Dip)
+    end
+    ρrock === nothing && error("give ρrock when StressRatio != 1")
+    ρfluid = ρrock - Δρ / g
+    return g * (ρrock * (cosd(Dip)^2 + StressRatio * sind(Dip)^2) - ρfluid) * sind(Dip)
+end
+
+"""
+    DykeCriticalVolume(ν, G, KCrit, Δρ; Dip = 90.0, StressRatio = 1.0, ρrock = nothing)
+
+Fluid volume [m³] at which a buoyant penny-shaped crack starts to ascend (top tip at KCrit), using
+the driving gradient along the crack. A dipping crack (or σh < σv) has less drive along it and so
+needs a LARGER volume: e.g. a 45° crack in isotropic stress needs about 1.8x the vertical volume.
+"""
+function DykeCriticalVolume(ν, G, KCrit, Δρ; Dip = 90.0, StressRatio = 1.0, ρrock = nothing)
+    Δρd = DykeBuoyancyGradient(Δρ, Dip; StressRatio = StressRatio, ρrock = ρrock)
+    Δρd > 0 || error("No net buoyancy along the crack for these settings (gradient = $Δρd Pa/m)")
+    return real(((1 - ν) / (16 * G)) * ((9 * π^4 * KCrit^8) / (complex(Δρd)^5))^(1 / 3))
+end
+
+"""
+    testProp(HSFlag, ν, G, Δρ, KCrit, CrackVolume, NoTris; ρrock, Dip = 90.0, StressRatio = 1.0)
+
+Propagates a fluid-filled crack holding a fixed volume, from a penny-shaped start, until it reaches
+the free surface (z = 0) or is trapped (stops growing).
+
+  HSFlag       0 = full space; 1 = half space (free-surface effect on the stresses)
+  ν, G         Poisson's ratio and shear modulus [Pa] (from ElasticConstantsCheck)
+  Δρ           (ρrock - ρfluid)*g [Pa/m]
+  KCrit        fracture toughness [Pa√m]
+  CrackVolume  fluid volume [m³]; DykeCriticalVolume gives the volume needed to ascend at a given dip
+  NoTris       approximate number of triangles in the crack mesh
+  ρrock        rock density [kg/m³] (required); the fluid density is ρrock - Δρ/g
+  Dip          dip of the starting penny [deg], 90 = vertical
+  StressRatio  horizontal / vertical rock stress (1 = isotropic)
+
+Loading: stresses are the rock (σzz = ρrock*g*z, σxx = σyy = StressRatio*σzz, resolved on the crack);
+tractions are the fluid inside (its weight, -ρfluid*g*z, plus the uniform pressure solved for to hold
+CrackVolume). With StressRatio = 1 the net load is the buoyancy Δρ*z.
+
+Each step writes the opened mesh (*-MeshWithDisp-ForDrawing-*.txt), tip points
+(*-MeshEdges-ForDrawing-*.txt) and a figure (*-CrackViews-*.png) to the current folder.
+Returns (CritVolFlag, maxX, minX, maxY, minY, maxZ, minZ); CritVolFlag 1 = reached the surface.
+"""
+function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris; ρrock=nothing, Dip=90.0, StressRatio=1.0)
+g=9.81
+ρrock === nothing && error("testProp: give the rock density, e.g. testProp(...; ρrock = 2900)")
+ρfluid=ρrock-Δρ/g   #fluid density [kg/m³]
 
 
 #Start creating vars for function: 
 println("creating func vars")
-@info HSFlag ν G Δρ KCrit CrackVolume NoTris
+@info HSFlag ν G Δρ KCrit CrackVolume NoTris Dip StressRatio
 
 
 
@@ -96,14 +106,18 @@ Points[:,2]=Points[:,4];
 Points[:,4]=X;
 =#
 
-#Pennys angle away from Z. 
-Beta=0; #45 
-BetaFromVert=90-Beta;
-#Rotate this (YZ)
-(Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(BetaFromVert),sind(BetaFromVert))
+#Tilt the penny (rotation in the y-z plane) so it dips Dip degrees (90 = vertical)
+(Points[:,3],Points[:,4])=CutAndDisplaceJulia.RotateObject2D!(Points[:,3],Points[:,4],0.0,0.0,cosd(Dip),sind(Dip))
 
-# Top tip critically stressed
-CritRadius=((3*sqrt(pi)*KCrit)/(8*abs(Δρ)))^(2/3)
+# Radius and volume at which the top tip is critically stressed, using the drive along the crack
+ΔρDip=DykeBuoyancyGradient(Δρ,Dip;StressRatio=StressRatio,ρrock=ρrock,g=g)
+CritRadius=((3*sqrt(pi)*KCrit)/(8*abs(ΔρDip)))^(2/3)
+CritVolume=DykeCriticalVolume(ν,G,KCrit,Δρ;Dip=Dip,StressRatio=StressRatio,ρrock=ρrock)
+printstyled("""
+testProp: dip $(Dip)°, σh/σv = $(StressRatio)
+          fluid volume $(round(CrackVolume,sigdigits=4)) m³, critical volume for this dip $(round(CritVolume,sigdigits=4)) m³ (ratio $(round(CrackVolume/CritVolume,sigdigits=3)))
+""",color=:cyan)
+CrackVolume<CritVolume && printstyled("The volume is below critical: the crack is likely to be trapped\n",color=:yellow)
 
 
 StartRadius=CritRadius/2.5
@@ -198,7 +212,7 @@ for i=1:lps
 		end
 		p+=1
 	end
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 	=#
 
 	#Remesh using Polygon method in CGAL:
@@ -207,7 +221,7 @@ for i=1:lps
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
 
 	#Do Twice:
@@ -216,7 +230,7 @@ for i=1:lps
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
 
 	println("Remeshing 3x")
@@ -224,7 +238,7 @@ for i=1:lps
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
 	#Recompute target_edge_length
 	(target_edge_length,max_target_edge_length)=
@@ -330,38 +344,21 @@ for i=1:lps
 
 	Z=MidPoint[:,3];
 
-	#Set BoundaryConditions
-	σxx = zeros(n);  
-	σyy = zeros(n);  
-	σzz = zeros(n);  
-	σxy = zeros(n);    
-	σxz = zeros(n);
-	σyz = zeros(n);
-	#Bouyancy
-	Tn=zeros(n)
-	Tss=zeros(n)
-	Tds=zeros(n)
-
-	for j=1:length(Z)
-		Tn[j]=-Δρ.*Z[j]; #
-	end
-	#=
-	ρrocklight=2300;
-	interface=-5000 #between light and heavy rock
-	for j=1:length(Z)
-		if Z[j]<interface;
-			Tn[j]=((ρrock-ρfluid)*g).*Z[j]; #
-		else
-			Tn[j]=((ρrocklight-ρfluid)*g).*Z[j];
-		end
-	end
-	=#
-	@info maximum(Tn) minimum(Tn)
-	#Stops condition where no pressure will cause crack to fly open 
-	if maximum(Tn)>0
-		Tn=Tn.-maximum(Tn)
-	end
-	@info maximum(Tn) minimum(Tn)
+	#Boundary conditions (tension positive; z is negative below the free surface at z = 0)
+	#Stresses: the rock. Vertical = ρrock*g*z, horizontal = StressRatio * vertical. Resolved on the crack
+	#these give normal (and, on a dipping crack with StressRatio != 1, shear) tractions.
+	σzz = ρrock*g.*Z
+	σxx = StressRatio.*σzz
+	σyy = StressRatio.*σzz
+	σxy = zeros(n)
+	σxz = zeros(n)
+	σyz = zeros(n)
+	#Tractions: the fluid inside the crack, pushing the walls apart: its weight (fluid pressure
+	#increasing with depth). SlipCalculator3D adds the uniform fluid pressure that holds CrackVolume
+	#(solved for, so no offset or shift is needed here).
+	Tn  = -ρfluid*g.*Z
+	Tss = zeros(n)
+	Tds = zeros(n)
 
 	Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 	Traction=Tractions(Tn,Tss,Tds);
@@ -790,13 +787,8 @@ end
 print(io,"\r\n");
 close(io);
 
-if Sys.islinux()
-	#OutputDir
-	OutputDirectory=string(pwd(),"/$filename.off")
-else
-	#OutputDir
-	OutputDirectory=string(pwd(),"\\$filename.off")
-end
+#OutputDir (joinpath uses the right separator on Windows, macOS and Linux)
+OutputDirectory=joinpath(pwd(),"$filename.off")
 
 return OutputDirectory
 end
@@ -829,13 +821,8 @@ end
 print(io,"\r\n");
 close(io);
 
-if Sys.islinux()
-	#OutputDir
-	OutputDirectory=string(pwd(),"/$filename.off")
-else
-	#OutputDir
-	OutputDirectory=string(pwd(),"\\$filename.off")
-end
+#OutputDir (joinpath uses the right separator on Windows, macOS and Linux)
+OutputDirectory=joinpath(pwd(),"$filename.off")
 
 return OutputDirectory
 end

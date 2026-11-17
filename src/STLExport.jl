@@ -52,13 +52,8 @@ end
 print(io,"\r\n");
 close(io);
 
-if Sys.islinux()
-	#OutputDir
-	OutputDirectory=string(pwd(),"/$filename.stl")
-else
-	#OutputDir
-	OutputDirectory=string(pwd(),"\\$filename.stl")
-end
+#OutputDir (joinpath uses the right separator on Windows, macOS and Linux)
+OutputDirectory=joinpath(pwd(),"$filename.stl")
 
 
 
