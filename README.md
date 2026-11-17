@@ -137,8 +137,11 @@ For CutAndDisplaceJuliaPlots, use the test script from its GitHub README.
 Start a fresh Julia session, go to the folder where you want the results, and run:
 
 ```julia
+# Results and figures are written here
+cd("path/to/output/folder")   
+
+#Then load packages we will use
 using CutAndDisplaceJulia, CutAndDisplaceJuliaPlots, BuildCGAL
-cd("path/to/output/folder")   # results and figures are written here
 
 ModuleDir = dirname(dirname(pathof(CutAndDisplaceJulia)))
 TestScript = joinpath(ModuleDir, "test", "test_PropagationTest.jl")
