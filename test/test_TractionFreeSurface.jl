@@ -42,7 +42,10 @@ function TestBoundaryConditionIsSatisfied(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVe
 	@info maximum(abs.(Tn))
 	@info maximum(abs.(Tss))
 	@info maximum(abs.(Tds))
-	if any(abs.([Tn;Tds;Tss]).>1e-8) # Good enough approximation of traction free
+	#Good enough approximation of traction free. The loads are unit stresses, and what is left of them is
+	#~1e-8 (6.6e-9 on Linux, 1.0e-8 on Windows, 1.2e-8 on macOS: floating-point round-off, which differs
+	#between the platforms' linear algebra libraries), so the check allows 1e-7.
+	if any(abs.([Tn;Tds;Tss]).>1e-7)
 		error("The solution is not correctly satisfying constraints that the surface is traction free")
 	end	
 
