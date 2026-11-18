@@ -131,6 +131,13 @@ BuildCGAL.tools_dir()       # where the CGAL tools were installed
 
 For CutAndDisplaceJuliaPlots, use the test script from its GitHub README.
 
+`] test CutAndDisplaceJulia` skips the tests that need CGAL. To run all the unit tests, including the CGAL
+meshing ones, and save their figures (in `test/UnitTests/figures`):
+
+```julia
+include(joinpath(pkgdir(CutAndDisplaceJulia), "test", "UnitTests", "RunUnitTests.jl"))
+```
+
 ## 4. Running a Dyke Propagation Simulation
 
 Start a fresh Julia session, go to the folder where you want the results, and run:
@@ -177,6 +184,9 @@ println("Crack volume: ", round(CrackVolume, sigdigits = 4), " m³")
 ```
 
 With `StressRatio` below 1 a vertical crack stays buoyant only while `ρrock*StressRatio > ρfluid`.
+
+By default the crack is remeshed at one edge length each step. Add `Meshing = :graded` to the `testProp` call for a
+graded mesh instead: small triangles along the crack front, growing inwards, for about the same number of triangles.
 
 Results will be saved to your current directory. View the meshes using meshlab.exe or the included plotting tools.
 

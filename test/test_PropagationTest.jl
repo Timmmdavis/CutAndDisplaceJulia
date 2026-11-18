@@ -70,6 +70,14 @@ the free surface (z = 0) or is trapped (stops growing).
   ρrock        rock density [kg/m³] (required); the fluid density is ρrock - Δρ/g
   Dip          dip of the starting penny [deg], 90 = vertical
   StressRatio  horizontal / vertical rock stress (1 = isotropic)
+  Meshing      :uniform (default) = remesh at one edge length h set by NoTris (PolygonRemeshingCGAL,
+               3 passes, + CleanEdgeTris/IsosceliseEdgeTris).
+               :graded = GradedRemesh: equilateral tip triangles along the front, growing by
+               Growth per row to GradedCoarsening*h inside. The defaults (tip elements 1.4h/2 ≈
+               0.7h, interior 1.4h) give about as many triangles as :uniform, so runs cost the same.
+  FrontRefinement  (graded only) interior size / front edge length
+  GradedCoarsening (graded only) interior size / h
+  Growth       (graded only) size ratio from one row of triangles to the next
 
 Loading: stresses are the rock (σzz = ρrock*g*z, σxx = σyy = StressRatio*σzz, resolved on the crack);
 tractions are the fluid inside (its weight, -ρfluid*g*z, plus the uniform pressure solved for to hold
@@ -79,7 +87,9 @@ Each step writes the opened mesh (*-MeshWithDisp-ForDrawing-*.txt), tip points
 (*-MeshEdges-ForDrawing-*.txt) and a figure (*-CrackViews-*.png) to the current folder.
 Returns (CritVolFlag, maxX, minX, maxY, minY, maxZ, minZ); CritVolFlag 1 = reached the surface.
 """
-function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris; ρrock=nothing, Dip=90.0, StressRatio=1.0)
+function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris; ρrock=nothing, Dip=90.0, StressRatio=1.0,
+                  Meshing=:uniform, FrontRefinement=2, GradedCoarsening=1.4, Growth=1.3)
+Meshing in (:uniform,:graded) || error("testProp: Meshing must be :uniform or :graded")
 g=9.81
 ρrock === nothing && error("testProp: give the rock density, e.g. testProp(...; ρrock = 2900)")
 ρfluid=ρrock-Δρ/g   #fluid density [kg/m³]
@@ -215,6 +225,7 @@ for i=1:lps
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 	=#
 
+	if Meshing==:uniform
 	#Remesh using Polygon method in CGAL:
 	println("Remeshing once")
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
@@ -239,6 +250,22 @@ for i=1:lps
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+
+	else
+	#Graded mesh: tip elements of size GradedCoarsening*h/FrontRefinement on the front, each with its own
+	#equilateral rim triangle, growing to GradedCoarsening*h inside. FrontCleanup first does one uniform remesh at h
+	#(as above) so the new front from AdvancingFrontCGAL is evenly spaced before it is refined.
+	#CleanEdgeTris and IsosceliseEdgeTris are still run, as in the uniform case; on this mesh they
+	#change nothing.
+	println("Graded remeshing")
+	hg=GradedCoarsening*target_edge_length
+	(Points,Triangles)=CutAndDisplaceJulia.GradedRemesh(Points,Triangles,hg,hg/FrontRefinement,
+	                       BuildCGAL.GradedRemeshingCGAL;
+	                       growth=Growth,FrontCleanup=true)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	println("Graded mesh: $(size(Triangles,1)) triangles")
+	end
 
 	#Recompute target_edge_length
 	(target_edge_length,max_target_edge_length)=
@@ -547,6 +574,10 @@ for i=1:lps
 
 	max_target_edge_length=maximum(HalfPerimeter[nonNan])*(2/3)
 	AvgTriangleEdgeLength=mean(HalfPerimeter[nonNan])*(2/3)
+	#Graded mesh: the many small tip elements would make the mean edge (and so the largest step a
+	#tip can take, in PropagateFracture) much smaller. Use the interior size h so a step is the
+	#same length as on the uniform mesh.
+	Meshing==:graded && (AvgTriangleEdgeLength=target_edge_length)
 
 	#Switch so new free elements are used but old ones no longer free edges
 	FeP1P2S.FreeFlg=NewFeP1P2.FreeFlg;
@@ -776,11 +807,11 @@ write(io, "X Y Z StrainEnergy KCrit");print(io,"\r\n");
 
 for i=1:length(X)
 
-	Printf.@printf(io,"%e",X[i]);print(io," ");
-	Printf.@printf(io,"%e",Y[i]);print(io," ");
-	Printf.@printf(io,"%e",Z[i]);print(io," ");
-	Printf.@printf(io,"%e",StrainEnergy[i]);print(io," ");
-	Printf.@printf(io,"%e",KCrit);print(io,"\r\n");
+	print(io,X[i]);print(io," ");
+	print(io,Y[i]);print(io," ");
+	print(io,Z[i]);print(io," ");
+	print(io,StrainEnergy[i]);print(io," ");
+	print(io,KCrit);print(io,"\r\n");
 
 end
 
@@ -803,18 +834,18 @@ write(io, "P1x P1y P1z P2x P2y P2z P3x P3y P3z Dn Dss Dds");print(io,"\r\n");
 for i=1:length(P1[:,1])
 
 
-	Printf.@printf(io,"%e",P1[i,1]);print(io," ");
-	Printf.@printf(io,"%e",P1[i,2]);print(io," ");
-	Printf.@printf(io,"%e",P1[i,3]);print(io," ");
-	Printf.@printf(io,"%e",P2[i,1]);print(io," ");
-	Printf.@printf(io,"%e",P2[i,2]);print(io," ");
-	Printf.@printf(io,"%e",P2[i,3]);print(io," ");
-	Printf.@printf(io,"%e",P3[i,1]);print(io," ");
-	Printf.@printf(io,"%e",P3[i,2]);print(io," ");
-	Printf.@printf(io,"%e",P3[i,3]);print(io," ");
-	Printf.@printf(io,"%e",Dn[i]);print(io," ");
-	Printf.@printf(io,"%e",Dss[i]);print(io," ");
-	Printf.@printf(io,"%e",Dds[i]);print(io,"\r\n");
+	print(io,P1[i,1]);print(io," ");
+	print(io,P1[i,2]);print(io," ");
+	print(io,P1[i,3]);print(io," ");
+	print(io,P2[i,1]);print(io," ");
+	print(io,P2[i,2]);print(io," ");
+	print(io,P2[i,3]);print(io," ");
+	print(io,P3[i,1]);print(io," ");
+	print(io,P3[i,2]);print(io," ");
+	print(io,P3[i,3]);print(io," ");
+	print(io,Dn[i]);print(io," ");
+	print(io,Dss[i]);print(io," ");
+	print(io,Dds[i]);print(io,"\r\n");
 
 end
 

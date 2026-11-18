@@ -22,6 +22,7 @@ my_tests = ["test_TDvsBurgmannLinearFrictionCrack.jl",
             "test_TractionFreeSurface.jl",
             "test_TDvsStressIntensityElliptical.jl",
             "test_TDvsStressIntensityEllipticalGradient.jl",
+            "test_TDvsStressIntensityEllipticalFixedVolume.jl",
             "test_TDvsStressIntensityGradientPenny.jl",
             # Unit tests of separate parts of the code. Figures, and the CGAL and plotting
             # tests, only when run through UnitTests/RunUnitTests.jl
@@ -34,7 +35,9 @@ my_tests = ["test_TDvsBurgmannLinearFrictionCrack.jl",
             "UnitTests/ut_07_StressIntensityAndPropagation.jl",
             "UnitTests/ut_08_PlottingCrackViews.jl",
             "UnitTests/ut_09_StallCheckAndExport.jl",
-            "UnitTests/ut_10_DipAzimuthAndNeighbours.jl"]
+            "UnitTests/ut_10_DipAzimuthAndNeighbours.jl",
+            "UnitTests/ut_11_GradedRemesh.jl",
+            "UnitTests/ut_12_FluidSolverReduced.jl"]
 			
 println("Running tests:")
 
