@@ -130,7 +130,7 @@ testProp: dip $(Dip)°, σh/σv = $(StressRatio)
 CrackVolume<CritVolume && printstyled("The volume is below critical: the crack is likely to be trapped\n",color=:yellow)
 
 
-StartRadius=CritRadius/2.5
+StartRadius=CritRadius/10
 
 println("Start radius:")
 println(StartRadius)
