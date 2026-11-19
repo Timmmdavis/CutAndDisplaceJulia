@@ -11,6 +11,7 @@ using UnicodePlots
 using DataFrames
 using Printf
 using Elliptic
+using Optim
 
 ######################################################
 #=
@@ -106,7 +107,6 @@ include("ismember.jl")
 include("MatchingRow.jl")
 include("CreateSortedEdgePoints.jl")
 include("CleanEdgeTris.jl")
-include("GradedRemesh.jl")
 include("CreateTrianglesPointsFromP1P2P3.jl")
 include("CalculateInternalTriAngles.jl")
 include("RemoveDodgyNewEdges.jl")
@@ -117,6 +117,7 @@ include("AngleBetweenVectors!.jl")
 include("FlipValue.jl")
 include("FindIntersectionOf3DVectors.jl")
 include("IsosceliseEdgeTris.jl")
+include("IsosceliseEdgeTrisNew.jl")
 include("ExportCrackMesh.jl")
 include("STLExport.jl")
 include("CreateTriangleNormal!.jl")
@@ -163,7 +164,9 @@ include("FindPropAngleAndPoint.jl")
 #TODO (Tim): scale length in here relative to energy
 
 include("SlipCalculator3D.jl")
-include("FluidPressureSolver.jl")
+include("WalkAndInterp.jl")
+include("ComputePressurisedCrackDn.jl")
+include("anneal.jl")
 include("RepeatStruct.jl")
 include("SetupTractionVector.jl")
 include("LoadData.jl")

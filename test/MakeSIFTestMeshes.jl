@@ -14,7 +14,7 @@ function RemeshCleanIsoscelise(Points,Triangles,target_edge_length)
 	f=CutAndDisplaceJulia.OFFExport(Points,Triangles,size(Triangles,1),size(Points,1),"BeforePolygonRemshing")
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(BuildCGAL.PolygonRemeshingCGAL(f,target_edge_length))
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 	return Points,Triangles
 end
 

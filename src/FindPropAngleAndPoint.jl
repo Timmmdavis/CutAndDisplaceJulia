@@ -84,15 +84,3 @@ function FindPropAngleAndPoint( Fe,FaceNormalVector,I,MaxStrainEnergy,AvgTriangl
 return NwPntCX,NwPntCY,NwPntCZ,Ang
 end
 
-
-
-#Evaluate an interpolation at Desired_X; NaN if it is outside the range (no extrapolation).
-#(Moved here from WalkAndInterp.jl, which was only used by the old fluid volume solver.)
-function TryInterp(itp,Desired_X) 
-	try 
-		Yv=itp(Desired_X); 
-	catch
-		println("increase MinVal and MaxVal limits, no extrapolation set")
-		Yv=NaN;
-	end
-end

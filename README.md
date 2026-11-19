@@ -185,8 +185,7 @@ println("Crack volume: ", round(CrackVolume, sigdigits = 4), " m³")
 
 With `StressRatio` below 1 a vertical crack stays buoyant only while `ρrock*StressRatio > ρfluid`.
 
-By default the crack is remeshed at one edge length each step. Add `Meshing = :graded` to the `testProp` call for a
-graded mesh instead: small triangles along the crack front, growing inwards, for about the same number of triangles.
+The crack is remeshed at one edge length each step.
 
 Results will be saved to your current directory. View the meshes using meshlab.exe or the included plotting tools.
 
