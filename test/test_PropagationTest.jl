@@ -34,12 +34,14 @@ resolved along a crack dipping `Dip` degrees (90 = vertical).
   σh = StressRatio*σv:  g*[ρrock*(cos²Dip + StressRatio*sin²Dip) - ρfluid]*sin(Dip),  ρfluid = ρrock - Δρ/g
 """
 function DykeBuoyancyGradient(Δρ, Dip; StressRatio = 1.0, ρrock = nothing, g = 9.81)
+    s = sind(Dip)
     if StressRatio == 1
-        return Δρ * sind(Dip)
+        return Δρ * s
     end
     ρrock === nothing && error("give ρrock when StressRatio != 1")
     ρfluid = ρrock - Δρ / g
-    return g * (ρrock * (cosd(Dip)^2 + StressRatio * sind(Dip)^2) - ρfluid) * sind(Dip)
+    ρeff_normal = ρrock * (cosd(Dip)^2 + StressRatio * s^2)
+    return g * (ρeff_normal - ρfluid) * s
 end
 
 """
