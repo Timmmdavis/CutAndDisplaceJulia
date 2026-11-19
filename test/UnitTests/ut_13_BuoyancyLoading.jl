@@ -33,12 +33,19 @@ include(joinpath(@__DIR__,"UnitTestHelpers.jl"))
 	@test all(Z.<0)                                      #below the surface
 
 	#Rock stress + fluid weight, as in testProp
-	function BuoyancyLoading(StressRatio)
+	#Normalise=true shifts the net normal load so its maximum is zero, as testProp does before the volume solve
+	#(the load is about -Δρ*depth, far beyond the pressure range the volume solve searches; a uniform shift is
+	#absorbed by the uniform pressure it solves for)
+	function BuoyancyLoading(StressRatio; Normalise=false)
 		σzz=ρrock*g.*Z
 		σh=StressRatio.*σzz
 		Stress=Stresses(σh,σh,σzz,zeros(n),zeros(n),zeros(n))
-		Traction=Tractions(-ρfluid*g.*Z,zeros(n),zeros(n))
-		return MixedBoundaryConditions(Stress,Traction)
+		TnFluid=-ρfluid*g.*Z
+		if Normalise
+			(TnStress,~,~)=CutAndDisplaceJulia.CalculateNormalAndShearTractions3D(σh,σh,σzz,zeros(n),zeros(n),zeros(n),FaceNormalVector)
+			TnFluid=TnFluid.-maximum(TnFluid.+TnStress)
+		end
+		return MixedBoundaryConditions(Stress,Tractions(TnFluid,zeros(n),zeros(n)))
 	end
 
 	#Stress intensity at the tips: tip positions and K1
@@ -72,7 +79,7 @@ include(joinpath(@__DIR__,"UnitTestHelpers.jl"))
 	@test Centroid(DnDown)<Zc
 
 	#3. Fixed fluid volume (as testProp): the critical volume, rock + fluid weight
-	BC=MixedBoundaryConditionsFluidVolume(BuoyancyLoading(1.0),Vcrit)
+	BC=MixedBoundaryConditionsFluidVolume(BuoyancyLoading(1.0;Normalise=true),Vcrit)
 	(Dn,Dss,Dds)=CutAndDisplaceJulia.SlipCalculator3D(P1,P2,P3,ν,G,λ,MidPoint,FaceNormalVector,0,BC,fill(1,n))
 	@test sum(Area.*Dn) ≈ Vcrit rtol=0.02
 	@test Centroid(Dn)>Zc

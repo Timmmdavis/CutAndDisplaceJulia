@@ -364,15 +364,15 @@ for i=1:lps
 	Tn  = -ρfluid*g.*Z
 	Tss = zeros(n)
 	Tds = zeros(n)
-	#Stops condition where no pressure will cause crack to fly open: the net normal load (fluid + resolved
-	#stress) must not be positive anywhere, or the volume at zero pressure is already too big.
-	#(Below the surface with StressRatio*ρrock > ρfluid this is already the case and nothing is shifted.)
+	#Normalise the load: shift the net normal load (fluid weight + resolved rock stress) so its maximum is zero.
+	#Deep down this net load is hugely negative (about -Δρ*depth, MPa), far more than the fluid pressure range
+	#SlipCalculator3D searches (it scales that range by the largest closing load). A uniform shift is absorbed by
+	#the uniform fluid pressure it solves for, so the solution is unchanged, but the pressure needed is then only
+	#what the gradient asks for and the volume solve works. (The original script did this too.)
 	(TnStress,~,~)=CutAndDisplaceJulia.CalculateNormalAndShearTractions3D(σxx,σyy,σzz,σxy,σxz,σyz,FaceNormalVector)
 	TnNet=Tn.+TnStress
 	@info maximum(TnNet) minimum(TnNet)
-	if maximum(TnNet)>0
-		Tn=Tn.-maximum(TnNet)
-	end
+	Tn=Tn.-maximum(TnNet)
 
 	Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 	Traction=Tractions(Tn,Tss,Tds);
