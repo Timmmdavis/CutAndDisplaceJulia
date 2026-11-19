@@ -143,74 +143,77 @@ casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
 
 
-Threads.@threads :static for i=1:SzCmp #For every element (multithreaded; :static keeps threadid() fixed per iteration)   
-	#println("Multithreading off")
+nchunks = Threads.nthreads()
+# Each chunk owns its scratch and output slots even if its task changes threads.
+Threads.@threads for chunk in 1:nchunks
+	first_source = fld((chunk - 1) * SzCmp, nchunks) + 1
+	last_source = fld(chunk * SzCmp, nchunks)
+	for i in first_source:last_source
+		(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+		empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)=
+		ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
+		VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+		FillAList,FillBList,eY,eZ,HSflag,i,chunk,X,Y,Z,
+		empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
+		p1List,p2List,p3List,p1iList,p2iList,p3iList,
+		e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
+		casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)
 
-	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-	empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)=
-	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
-	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
-	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
-	p1List,p2List,p3List,p1iList,p2iList,p3iList,
-	e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
-	casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)
+		#Allocate outside of funcs (using @view we just assign a pointer).
+		#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
+		if DispFlag==1
+			UxDnI  = view(DispInfMat.DnUx,:,i); #only 48bytes alloc, note its the same as @view UxDn[:,i];
+			UyDnI  = view(DispInfMat.DnUy,:,i);
+			UzDnI  = view(DispInfMat.DnUz,:,i);
+			UxDssI = view(DispInfMat.DssUx,:,i);
+			UyDssI = view(DispInfMat.DssUy,:,i);
+			UzDssI = view(DispInfMat.DssUz,:,i);
+			UxDdsI = view(DispInfMat.DdsUx,:,i);
+			UyDdsI = view(DispInfMat.DdsUy,:,i);
+			UzDdsI = view(DispInfMat.DdsUz,:,i);
 
-	#Allocate outside of funcs (using @view we just assign a pointer). 
-	#See Gotcha #5 https://www.juliabloggers.com/7-julia-gotchas-and-how-to-handle-them/
-	if DispFlag==1
-		UxDnI  = view(DispInfMat.DnUx,:,i); #only 48bytes alloc, note its the same as @view UxDn[:,i];
-		UyDnI  = view(DispInfMat.DnUy,:,i);
-		UzDnI  = view(DispInfMat.DnUz,:,i);
-		UxDssI = view(DispInfMat.DssUx,:,i);
-		UyDssI = view(DispInfMat.DssUy,:,i);
-		UzDssI = view(DispInfMat.DssUz,:,i);
-		UxDdsI = view(DispInfMat.DdsUx,:,i);
-		UyDdsI = view(DispInfMat.DdsUy,:,i);
-		UzDdsI = view(DispInfMat.DdsUz,:,i);
+			ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+					p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+					p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+					HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
+					UxDnI, UyDnI, UzDnI,
+					UxDssI,UyDssI,UzDssI,
+					UxDdsI,UyDdsI,UzDdsI,
+					empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
+		end
+		if StrainFlag==1
+			εxxDnI  = view(StrainInfMat.εxxDn,:,i);
+			εyyDnI  = view(StrainInfMat.εyyDn,:,i);
+			εzzDnI  = view(StrainInfMat.εzzDn,:,i);
+			εxyDnI  = view(StrainInfMat.εxyDn,:,i);
+			εxzDnI  = view(StrainInfMat.εxzDn,:,i);
+			εyzDnI  = view(StrainInfMat.εyzDn,:,i);
+			εxxDssI = view(StrainInfMat.εxxDss,:,i);
+			εyyDssI = view(StrainInfMat.εyyDss,:,i);
+			εzzDssI = view(StrainInfMat.εzzDss,:,i);
+			εxyDssI = view(StrainInfMat.εxyDss,:,i);
+			εxzDssI = view(StrainInfMat.εxzDss,:,i);
+			εyzDssI = view(StrainInfMat.εyzDss,:,i);
+			εxxDdsI = view(StrainInfMat.εxxDds,:,i);
+			εyyDdsI = view(StrainInfMat.εyyDds,:,i);
+			εzzDdsI = view(StrainInfMat.εzzDds,:,i);
+			εxyDdsI = view(StrainInfMat.εxyDds,:,i);
+			εxzDdsI = view(StrainInfMat.εxzDds,:,i);
+			εyzDdsI = view(StrainInfMat.εyzDds,:,i);
 
-		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
-				UxDnI, UyDnI, UzDnI,
-				UxDssI,UyDssI,UzDssI,
-				UxDdsI,UyDdsI,UzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)		
+			ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+					p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+					p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+					HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
+					εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+					εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+					εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
+					empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
+
+		end
 	end
-	if StrainFlag==1
-		εxxDnI  = view(StrainInfMat.εxxDn,:,i);
-		εyyDnI  = view(StrainInfMat.εyyDn,:,i);
-		εzzDnI  = view(StrainInfMat.εzzDn,:,i);
-		εxyDnI  = view(StrainInfMat.εxyDn,:,i);
-		εxzDnI  = view(StrainInfMat.εxzDn,:,i);
-		εyzDnI  = view(StrainInfMat.εyzDn,:,i);
-		εxxDssI = view(StrainInfMat.εxxDss,:,i);
-		εyyDssI = view(StrainInfMat.εyyDss,:,i);
-		εzzDssI = view(StrainInfMat.εzzDss,:,i);
-		εxyDssI = view(StrainInfMat.εxyDss,:,i);
-		εxzDssI = view(StrainInfMat.εxzDss,:,i);
-		εyzDssI = view(StrainInfMat.εyzDss,:,i);
-		εxxDdsI = view(StrainInfMat.εxxDds,:,i);
-		εyyDdsI = view(StrainInfMat.εyyDds,:,i);
-		εzzDdsI = view(StrainInfMat.εzzDds,:,i);
-		εxyDdsI = view(StrainInfMat.εxyDds,:,i);
-		εxzDdsI = view(StrainInfMat.εxzDds,:,i);
-		εyzDdsI = view(StrainInfMat.εyzDds,:,i);
-
-		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
-				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
-				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
-				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)	
-
-	end
-	
 end
 return(StrainInfMat,DispInfMat)
 end
@@ -220,49 +223,47 @@ function TD(X,Y,Z,P1List,P2List,P3List,Dss,Dds,Dn,ν,G,
 			DispFlag,StrainFlag,HSflag,StrainInfVector::Strains,DispInfVector::Disps)
 
 
-# One buffer column per possible thread id. From Julia 1.12 thread ids can exceed
-# nthreads() (an interactive thread is added), so size by maxthreadid() where available.
-NoThreads=isdefined(Threads, :maxthreadid) ? Threads.maxthreadid() : Threads.nthreads()
+nchunks = Threads.nthreads()
 
 if DispFlag==1
-	Ux  = zeros(length(X));
-	Uy  = zeros(length(X));
-	Uz  = zeros(length(X));	
-	UxDnthreads  = zeros(length(X),NoThreads); 
-	UyDnthreads  = zeros(length(X),NoThreads);
-	UzDnthreads  = zeros(length(X),NoThreads);
-	UxDssthreads = zeros(length(X),NoThreads);
-	UyDssthreads = zeros(length(X),NoThreads);
-	UzDssthreads = zeros(length(X),NoThreads);
-	UxDdsthreads = zeros(length(X),NoThreads);
-	UyDdsthreads = zeros(length(X),NoThreads);
-	UzDdsthreads = zeros(length(X),NoThreads);
+	UxTotals = zeros(length(X),nchunks);
+	UyTotals = zeros(length(X),nchunks);
+	UzTotals = zeros(length(X),nchunks);
+	UxDnthreads  = zeros(length(X),nchunks);
+	UyDnthreads  = zeros(length(X),nchunks);
+	UzDnthreads  = zeros(length(X),nchunks);
+	UxDssthreads = zeros(length(X),nchunks);
+	UyDssthreads = zeros(length(X),nchunks);
+	UzDssthreads = zeros(length(X),nchunks);
+	UxDdsthreads = zeros(length(X),nchunks);
+	UyDdsthreads = zeros(length(X),nchunks);
+	UzDdsthreads = zeros(length(X),nchunks);
 end
 if StrainFlag==1
-	εxx  = zeros(length(X));
-	εyy  = zeros(length(X));
-	εzz  = zeros(length(X));
-	εxy  = zeros(length(X));
-	εxz  = zeros(length(X));
-	εyz  = zeros(length(X));	
-	εxxDnthreads  = zeros(length(X),NoThreads); 
-	εyyDnthreads  = zeros(length(X),NoThreads); 
-	εzzDnthreads  = zeros(length(X),NoThreads); 
-	εxyDnthreads  = zeros(length(X),NoThreads); 
-	εxzDnthreads  = zeros(length(X),NoThreads); 
-	εyzDnthreads  = zeros(length(X),NoThreads); 
-	εxxDssthreads = zeros(length(X),NoThreads); 
-	εyyDssthreads = zeros(length(X),NoThreads); 
-	εzzDssthreads = zeros(length(X),NoThreads); 
-	εxyDssthreads = zeros(length(X),NoThreads); 
-	εxzDssthreads = zeros(length(X),NoThreads); 
-	εyzDssthreads = zeros(length(X),NoThreads); 
-	εxxDdsthreads = zeros(length(X),NoThreads); 
-	εyyDdsthreads = zeros(length(X),NoThreads); 
-	εzzDdsthreads = zeros(length(X),NoThreads); 
-	εxyDdsthreads = zeros(length(X),NoThreads); 
-	εxzDdsthreads = zeros(length(X),NoThreads); 
-	εyzDdsthreads = zeros(length(X),NoThreads); 
+	εxxTotals = zeros(length(X),nchunks);
+	εyyTotals = zeros(length(X),nchunks);
+	εzzTotals = zeros(length(X),nchunks);
+	εxyTotals = zeros(length(X),nchunks);
+	εxzTotals = zeros(length(X),nchunks);
+	εyzTotals = zeros(length(X),nchunks);
+	εxxDnthreads  = zeros(length(X),nchunks);
+	εyyDnthreads  = zeros(length(X),nchunks);
+	εzzDnthreads  = zeros(length(X),nchunks);
+	εxyDnthreads  = zeros(length(X),nchunks);
+	εxzDnthreads  = zeros(length(X),nchunks);
+	εyzDnthreads  = zeros(length(X),nchunks);
+	εxxDssthreads = zeros(length(X),nchunks);
+	εyyDssthreads = zeros(length(X),nchunks);
+	εzzDssthreads = zeros(length(X),nchunks);
+	εxyDssthreads = zeros(length(X),nchunks);
+	εxzDssthreads = zeros(length(X),nchunks);
+	εyzDssthreads = zeros(length(X),nchunks);
+	εxxDdsthreads = zeros(length(X),nchunks);
+	εyyDdsthreads = zeros(length(X),nchunks);
+	εzzDdsthreads = zeros(length(X),nchunks);
+	εxyDdsthreads = zeros(length(X),nchunks);
+	εxzDdsthreads = zeros(length(X),nchunks);
+	εyzDdsthreads = zeros(length(X),nchunks);
 end
 
 (SzCmp,P1iList,P2iList,P3iList,VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
@@ -272,119 +273,128 @@ p1List,p2List,p3List,p1iList,p2iList,p3iList,e12List,e13List,e23List,AList,BList
 casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)=
 PrepForLoop(P1List,P2List,P3List,Dss,Dds,Dn,ν,G,X,Y,Z)
 
-Threads.@threads :static for i=1:SzCmp # :static keeps threadid() fixed per iteration
-	#println("Multithreading off")
-	CurrentThread=Threads.threadid()
-
-	(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-	p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-	p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-	empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)=
-	ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
-	VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-	FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
-	empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
-	p1List,p2List,p3List,p1iList,p2iList,p3iList,
-	e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
-	casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)
+# Each chunk owns its scratch and output slots even if its task changes threads.
+Threads.@threads for chunk in 1:nchunks
+	first_source = fld((chunk - 1) * SzCmp, nchunks) + 1
+	last_source = fld(chunk * SzCmp, nchunks)
+	for i in first_source:last_source
 
 
+		(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+		p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+		p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+		empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)=
+		ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
+		VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
+		FillAList,FillBList,eY,eZ,HSflag,i,chunk,X,Y,Z,
+		empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
+		p1List,p2List,p3List,p1iList,p2iList,p3iList,
+		e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
+		casepLogList,casenLogList,casezLogList,casepLogiList,casenLogiList,casezLogiList,lengthObs)
 
-	if DispFlag==1
 
-		UxDnI  = view(UxDnthreads,:,CurrentThread); 
-		UyDnI  = view(UyDnthreads,:,CurrentThread);
-		UzDnI  = view(UzDnthreads,:,CurrentThread);
-		UxDssI = view(UxDssthreads,:,CurrentThread);
-		UyDssI = view(UyDssthreads,:,CurrentThread);
-		UzDssI = view(UzDssthreads,:,CurrentThread);
-		UxDdsI = view(UxDdsthreads,:,CurrentThread);
-		UyDdsI = view(UyDdsthreads,:,CurrentThread);
-		UzDdsI = view(UzDdsthreads,:,CurrentThread);
-		#Reset to zero:
-		UxDnI.=0.
-		UyDnI.=0.
-		UzDnI.=0.
-		UxDssI.=0.
-		UyDssI.=0.
-		UzDssI.=0.		
-		UxDdsI.=0.
-		UyDdsI.=0.
-		UzDdsI.=0.				
 
-		ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
-				UxDnI, UyDnI, UzDnI,
-				UxDssI,UyDssI,UzDssI,
-				UxDdsI,UyDdsI,UzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)	
+		if DispFlag==1
 
-				Ux.+=UxDnI.+UxDssI.+UxDdsI;
-				Uy.+=UyDnI.+UyDssI.+UyDdsI;
-				Uz.+=UzDnI.+UzDssI.+UzDdsI;
+			UxDnI  = view(UxDnthreads,:,chunk);
+			UyDnI  = view(UyDnthreads,:,chunk);
+			UzDnI  = view(UzDnthreads,:,chunk);
+			UxDssI = view(UxDssthreads,:,chunk);
+			UyDssI = view(UyDssthreads,:,chunk);
+			UzDssI = view(UzDssthreads,:,chunk);
+			UxDdsI = view(UxDdsthreads,:,chunk);
+			UyDdsI = view(UyDdsthreads,:,chunk);
+			UzDdsI = view(UzDdsthreads,:,chunk);
+			#Reset to zero:
+			UxDnI.=0.
+			UyDnI.=0.
+			UzDnI.=0.
+			UxDssI.=0.
+			UyDssI.=0.
+			UzDssI.=0.
+			UxDdsI.=0.
+			UyDdsI.=0.
+			UzDdsI.=0.
+
+			ComputeDispInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+					p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+					p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+					HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
+					UxDnI, UyDnI, UzDnI,
+					UxDssI,UyDssI,UzDssI,
+					UxDdsI,UyDdsI,UzDdsI,
+					empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
+
+					@views UxTotals[:,chunk] .+= UxDnI.+UxDssI.+UxDdsI;
+					@views UyTotals[:,chunk] .+= UyDnI.+UyDssI.+UyDdsI;
+					@views UzTotals[:,chunk] .+= UzDnI.+UzDssI.+UzDdsI;
+		end
+		if StrainFlag==1
+			εxxDnI  = view(εxxDnthreads,:,chunk);
+			εyyDnI  = view(εyyDnthreads,:,chunk);
+			εzzDnI  = view(εzzDnthreads,:,chunk);
+			εxyDnI  = view(εxyDnthreads,:,chunk);
+			εxzDnI  = view(εxzDnthreads,:,chunk);
+			εyzDnI  = view(εyzDnthreads,:,chunk);
+			εxxDssI = view(εxxDssthreads,:,chunk);
+			εyyDssI = view(εyyDssthreads,:,chunk);
+			εzzDssI = view(εzzDssthreads,:,chunk);
+			εxyDssI = view(εxyDssthreads,:,chunk);
+			εxzDssI = view(εxzDssthreads,:,chunk);
+			εyzDssI = view(εyzDssthreads,:,chunk);
+			εxxDdsI = view(εxxDdsthreads,:,chunk);
+			εyyDdsI = view(εyyDdsthreads,:,chunk);
+			εzzDdsI = view(εzzDdsthreads,:,chunk);
+			εxyDdsI = view(εxyDdsthreads,:,chunk);
+			εxzDdsI = view(εxzDdsthreads,:,chunk);
+			εyzDdsI = view(εyzDdsthreads,:,chunk);
+			#Reset to zero:
+			εxxDnI.=0.
+			εyyDnI.=0.
+			εzzDnI.=0.
+			εxyDnI.=0.
+			εxzDnI.=0.
+			εyzDnI.=0.
+			εxxDssI.=0.
+			εyyDssI.=0.
+			εzzDssI.=0.
+			εxyDssI.=0.
+			εxzDssI.=0.
+			εyzDssI.=0.
+			εxxDdsI.=0.
+			εyyDdsI.=0.
+			εzzDdsI.=0.
+			εxyDdsI.=0.
+			εxzDdsI.=0.
+			εyzDdsI.=0.
+
+
+			ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
+					p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
+					p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
+					HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
+					εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
+					εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
+					εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
+					empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
+
+					@views εxxTotals[:,chunk] .+= εxxDnI.+εxxDssI.+εxxDdsI;
+					@views εyyTotals[:,chunk] .+= εyyDnI.+εyyDssI.+εyyDdsI;
+					@views εzzTotals[:,chunk] .+= εzzDnI.+εzzDssI.+εzzDdsI;
+					@views εxyTotals[:,chunk] .+= εxyDnI.+εxyDssI.+εxyDdsI;
+					@views εxzTotals[:,chunk] .+= εxzDnI.+εxzDssI.+εxzDdsI;
+					@views εyzTotals[:,chunk] .+= εyzDnI.+εyzDssI.+εyzDdsI;
+
+		end
 	end
-	if StrainFlag==1
-		εxxDnI  = view(εxxDnthreads,:,CurrentThread); 
-		εyyDnI  = view(εyyDnthreads,:,CurrentThread); 
-		εzzDnI  = view(εzzDnthreads,:,CurrentThread); 
-		εxyDnI  = view(εxyDnthreads,:,CurrentThread); 
-		εxzDnI  = view(εxzDnthreads,:,CurrentThread); 
-		εyzDnI  = view(εyzDnthreads,:,CurrentThread); 
-		εxxDssI = view(εxxDssthreads,:,CurrentThread); 
-		εyyDssI = view(εyyDssthreads,:,CurrentThread); 
-		εzzDssI = view(εzzDssthreads,:,CurrentThread); 
-		εxyDssI = view(εxyDssthreads,:,CurrentThread); 
-		εxzDssI = view(εxzDssthreads,:,CurrentThread); 
-		εyzDssI = view(εyzDssthreads,:,CurrentThread); 
-		εxxDdsI = view(εxxDdsthreads,:,CurrentThread); 
-		εyyDdsI = view(εyyDdsthreads,:,CurrentThread); 
-		εzzDdsI = view(εzzDdsthreads,:,CurrentThread); 
-		εxyDdsI = view(εxyDdsthreads,:,CurrentThread); 
-		εxzDdsI = view(εxzDdsthreads,:,CurrentThread); 
-		εyzDdsI = view(εyzDdsthreads,:,CurrentThread); 
-		#Reset to zero:
-		εxxDnI.=0.
-		εyyDnI.=0.
-		εzzDnI.=0.
-		εxyDnI.=0.
-		εxzDnI.=0.
-		εyzDnI.=0.	
-		εxxDssI.=0.
-		εyyDssI.=0.
-		εzzDssI.=0.
-		εxyDssI.=0.
-		εxzDssI.=0.
-		εyzDssI.=0.	
-		εxxDdsI.=0.
-		εyyDdsI.=0.
-		εzzDdsI.=0.
-		εxyDdsI.=0.
-		εxzDdsI.=0.
-		εyzDdsI.=0.	
-
-
-		ComputeStrainInfluences(P1,P2,P3,P1i,P2i,P3i,Vnorm,Vstrike,Vdip,Vnormi,Vstrikei,Vdipi,
-				p1,p2,p3,x,y,z,e12,e13,e23,A,B,C,casepLog,casenLog,casezLog,
-				p1i,p2i,p3i,xi,yi,zi,e12i,e13i,e23i,Ai,Bi,Ci,casepLogi,casenLogi,casezLogi,
-				HSflag,X,Y,Z,i,Dn,Dds,Dss,G,ν,λ,
-				εxxDnI, εyyDnI, εzzDnI, εxyDnI, εxzDnI, εyzDnI,
-				εxxDssI,εyyDssI,εzzDssI,εxyDssI,εxzDssI,εyzDssI,
-				εxxDdsI,εyyDdsI,εzzDdsI,εxyDdsI,εxzDdsI,εyzDdsI,
-				empty1,empty2,empty3,empty4,empty5,empty6,empty7,empty8,empty9,empty10)
-
-				εxx.+=εxxDnI.+εxxDssI.+εxxDdsI;
-				εyy.+=εyyDnI.+εyyDssI.+εyyDdsI;
-				εzz.+=εzzDnI.+εzzDssI.+εzzDdsI;
-				εxy.+=εxyDnI.+εxyDssI.+εxyDdsI;
-				εxz.+=εxzDnI.+εxzDssI.+εxzDdsI;
-				εyz.+=εyzDnI.+εyzDssI.+εyzDdsI;					
-			
-	end
-
 end
 if StrainFlag==1
+	εxx = vec(sum(εxxTotals; dims=2))
+	εyy = vec(sum(εyyTotals; dims=2))
+	εzz = vec(sum(εzzTotals; dims=2))
+	εxy = vec(sum(εxyTotals; dims=2))
+	εxz = vec(sum(εxzTotals; dims=2))
+	εyz = vec(sum(εyzTotals; dims=2))
 	if size(X,2)!=1
 		εxx=reshape(εxx,size(X))
 		εyy=reshape(εyy,size(X))
@@ -399,6 +409,9 @@ else
 	StrainInfVector=Strains([],[],[],[],[],[]);
 end
 if DispFlag==1
+	Ux = vec(sum(UxTotals; dims=2))
+	Uy = vec(sum(UyTotals; dims=2))
+	Uz = vec(sum(UzTotals; dims=2))
 	if size(X,2)!=1
 		Ux=reshape(Ux,size(X))
 		Uy=reshape(Uy,size(X))
@@ -448,8 +461,8 @@ eZ = [0.;0.;1.];
 λ=(2*G*ν)/(1-(2*ν));
 
 
-#Init arrays that are the size of the threads we use, each col is then allocated to that thread
-SzCmp2=isdefined(Threads, :maxthreadid) ? Threads.maxthreadid() : Threads.nthreads()  # see NoThreads above
+# One scratch row per independently scheduled source chunk.
+SzCmp2=Threads.nthreads()
 
 VnormList  	= zeros(SzCmp2,3); 
 VstrikeList = zeros(SzCmp2,3); 
@@ -515,7 +528,7 @@ end
 
 function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 					VnormList,VstrikeList,VdipList,VnormiList,VstrikeiList,VdipiList,
-					FillAList,FillBList,eY,eZ,HSflag,i,X,Y,Z,
+					FillAList,FillBList,eY,eZ,HSflag,i,chunk,X,Y,Z,
 					empty1List,empty2List,empty3List,empty4List,empty5List,empty6List,empty7List,empty8List,empty9List,empty10List,
 					p1List,p2List,p3List,p1iList,p2iList,p3iList,
 					e12List,e13List,e23List,AList,BList,CList,e12iList,e13iList,e23iList,AiList,BiList,CiList,
@@ -540,8 +553,8 @@ function ViewInLoop(P1List,P2List,P3List,P1iList,P2iList,P3iList,
 	yi=copy(Y);
 	zi=copy(Z);
 	
-	#Get the current thread ID. Only manipulate matrix inside this...
-	j=Threads.threadid()
+	# Use the scratch row owned by this chunk.
+	j=chunk
 
 	Vnorm=	view(VnormList,j,:);
 	Vstrike=view(VstrikeList,j,:);
