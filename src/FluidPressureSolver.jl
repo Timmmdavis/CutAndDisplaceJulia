@@ -43,10 +43,10 @@
 # Singular Jacobians: on an open element the friction strength mu*0+Sf is zero, so the upper and lower
 # friction bounds coincide; only the difference y2-x4 (=Dss) is fixed and x4, y2 can move together.
 # The Newton Jacobian is therefore usually exactly singular. This is a property of the formulation, not
-# bad scaling. It is handled by a tiny diagonal shift (cheap), and where the linearised system is also
-# inconsistent (the shifted step blows up and the line search fails) by a pivoted QR, which gives the
-# minimum-norm least-squares step. If the reduced solve still does not converge, the full system is
-# solved with pivoted QR as a fallback (slow but robust).
+# bad scaling. Those steps are solved as a Levenberg-Marquardt step (see NewtonSolve), which never moves along
+# the undetermined directions: x4 and y2 stay where they are instead of being sent off together. (Adding a
+# diagonal shift to J itself, i.e. regularised LU, sends them to ~1/shift, x4 of 1e9-1e13, and the iteration then
+# stalls.) If the reduced solve still does not converge, the full system is solved the same way as a fallback.
 ###################################################################
 
 
@@ -90,7 +90,7 @@ Solve the fluid volume mixed LCP (see the top of FluidPressureSolver.jl):
 for x, y (5n) and the crack pressures P (one per crack).
 
 Uses the reduced Newton system. It normally converges in 7-15 iterations, so it is stopped after 30, or
-earlier if it stalls, and the full Newton system (pivoted QR) is then solved instead.
+earlier if it stalls, and the full Newton system is then solved instead.
 """
 function FluidVolumeFischerNewton(a,b,g,w,V;Tolerance=1e-10,MaxIterations=100)
 	out=FluidVolumeNewton(a,b,g,w,V,true;Tolerance=Tolerance,MaxIterations=min(MaxIterations,30))
@@ -104,6 +104,7 @@ end
 
 Newton's method for the fluid volume mixed LCP (used by FluidVolumeFischerNewton). Reduced=true solves the
 reduced system and stops early if it stalls; Reduced=false solves the full system.
+The Newton system is usually singular after the first step (see the top of this file and NewtonSolve).
 """
 function FluidVolumeNewton(a,b,g,w,V,Reduced;Tolerance=1e-10,MaxIterations=100)
 
@@ -168,19 +169,17 @@ function FluidVolumeNewton(a,b,g,w,V,Reduced;Tolerance=1e-10,MaxIterations=100)
 			@views J[na+1:end,1:na].=wa[:,Act]
 			J[na+1:end,na+1:end].=wg
 			rhs=[-F[Act]-qy[Act].*(a[Act,Triv]*dxTriv)./Scale; -F[N+1:N+m]-wa[:,Triv]*dxTriv]
-			(sol,Singular,Regularised)=NewtonSolve(J,rhs,Singular,true)
+			(sol,Singular)=NewtonSolve(J,rhs,Singular,normF)
 			Expand=sol->(dx=zeros(N); dx[Triv]=dxTriv; dx[Act]=sol[1:na]; (dx,sol[na+1:na+m]))
 		else
 			J=[(Diagonal(px)+Diagonal(qy)*a)./Scale   (Diagonal(qy)*g)./Scale;
 			   wa                                       wg                    ]
-			(sol,Singular,Regularised)=NewtonSolve(J,-F,Singular,false)
+			(sol,Singular)=NewtonSolve(J,-F,Singular,normF)
 			Expand=sol->(sol[1:N],sol[N+1:N+m])
 		end
 		(dx,dP)=Expand(sol)
 
 		#Backtracking line search on 0.5*|F|^2, keeping x >= 0.
-		#If a regularised step needs a tiny τ, the linearised system was inconsistent (not just singular) and the
-		#diagonal shift has blown the step up: redo this step with pivoted QR (minimum-norm least squares).
 		f=0.5*dot(F,F)
 		τ=1.0
 		while true
@@ -192,11 +191,6 @@ function FluidVolumeNewton(a,b,g,w,V,Reduced;Tolerance=1e-10,MaxIterations=100)
 				break
 			end
 			τ=τ/2
-			if Regularised && τ<2.0^-10
-				(dx,dP)=Expand(qr(J,ColumnNorm())\(Reduced ? rhs : -F))
-				Regularised=false
-				τ=1.0
-			end
 		end
 	end
 
@@ -204,23 +198,26 @@ function FluidVolumeNewton(a,b,g,w,V,Reduced;Tolerance=1e-10,MaxIterations=100)
 end
 
 """
-	(s,Singular,Regularised)=NewtonSolve(J,r,Singular,Regularise)
+	(s,Singular)=NewtonSolve(J,r,Singular,normF)
 
-Newton step s from J*s=r. A plain LU is tried until the Jacobian has once been found singular (it then stays
-singular, see the top of FluidPressureSolver.jl). For a singular J: Regularise=true uses an LU of J plus a tiny
-diagonal shift (1e-8 of its largest entry: picks the minimum-change step in the undetermined directions; cheap);
-otherwise, or if that also fails, a pivoted QR (minimum-norm least squares; robust, ~10x slower than LU).
-Regularised says whether the shifted LU was used. J is not changed.
+Newton step s from J*s=r. A plain LU until the Jacobian has once been found singular (it then stays singular, see
+the top of this file). Then a Levenberg-Marquardt step: with the columns of J scaled to unit length (Js),
+(Js'*Js+mu*I)*z=Js'*r with mu=normF^2 (normF: the current residual, max|F|). Js'*r has no part along the
+undetermined directions (the null space of J), so the step never moves along them, and with mu=|F|^2 it converges
+quadratically even at a singular solution. Pivoted QR (minimum-norm) if the Cholesky factorisation fails.
 """
-function NewtonSolve(J,r,Singular,Regularise)
+function NewtonSolve(J,r,Singular,normF)
 	if !Singular
 		F=lu(J,check=false)
-		issuccess(F) && return F\r,false,false
-		Singular=true
+		issuccess(F) && return F\r,false
 	end
-	if Regularise
-		F=lu(J+(1e-8*maximum(abs,J))*I,check=false)
-		issuccess(F) && return F\r,true,true
-	end
-	return qr(J,ColumnNorm())\r,true,false
+	cn=[norm(view(J,:,k)) for k in axes(J,2)]
+	cn[cn.==0].=1.0
+	Js=J./cn'
+	A=Js'*Js
+	μ=min(normF,1.0)^2
+	for k in axes(A,1); A[k,k]+=μ; end
+	F=cholesky!(Symmetric(A),check=false)
+	issuccess(F) || return qr(J,ColumnNorm())\r,true
+	return (F\(Js'*r))./cn,true
 end

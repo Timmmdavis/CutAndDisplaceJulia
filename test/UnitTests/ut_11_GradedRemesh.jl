@@ -149,8 +149,17 @@ TriMinAngles(X,T)=[minimum(begin a,b,c=X[t[i],:],X[t[mod1(i+1,3)],:],X[t[mod1(i+
 		@test minimum(TriMinAngles(X,Tg))>10                          #measured 13°: the sharpest kinks
 		(Q1,Q2,Q3,Tc2,Pc2,MP,FNV)=CutAndDisplaceJulia.CleanEdgeTris(Pg,Tg)
 		(S1,S2,S3,Ti2,Pi2,MP2,FNV2)=CutAndDisplaceJulia.IsosceliseEdgeTris(MP,Q1,Q2,Q3,Tc2,Pc2,FNV)
-		@test size(Ti2,1)==size(Tg,1)
-		@test length(CutAndDisplaceJulia.GradedRemeshBorderLoops(Ti2)[1])==length(L)
+		#(at the sharpest kinks IsosceliseEdgeTris may split a rim triangle rather than squeeze its neighbours, so the
+		# triangle count can grow; what must hold is that the front is untouched and every front edge then has an
+		# isosceles rim triangle with an inner point of its own)
+		Lc=CutAndDisplaceJulia.GradedRemeshBorderLoops(Ti2)[1]; Xc=Pi2[:,2:4]
+		@test length(Lc)==length(L)
+		@test maximum(minimum(norm(Xc[i,:]-X[j,:]) for j in L) for i in Lc)<1e-9    #the same front points
+		FE2=[(Lc[k],Lc[mod1(k+1,length(Lc))]) for k in eachindex(Lc)]
+		RT2=[findfirst(r->(a in r)&&(b in r),collect(eachrow(Ti2))) for (a,b) in FE2]
+		In2=[first(setdiff(Ti2[t,:],[a,b])) for ((a,b),t) in zip(FE2,RT2)]
+		@test allunique(In2)
+		@test all(abs(norm(Xc[c,:]-Xc[a,:])-norm(Xc[c,:]-Xc[b,:]))<1e-6*norm(Xc[b,:]-Xc[a,:]) for ((a,b),c) in zip(FE2,In2))
 		push!(Results,("Wavy front (as in the loop)",Pg,Tg,RimTri,[norm(X[a,:]-X[b,:]) for (a,b) in FrontEdges]))
 
 		if MakeFigures

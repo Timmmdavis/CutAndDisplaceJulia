@@ -38,6 +38,8 @@ end
 	#Stage 2: make the rim triangles closer to isosceles
 	Before=deepcopy((Q1,Q2,Q3))
 	(S1,S2,S3,Tris2,Pts2,MidPoint2,FaceNormalVector2)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint1,Q1,Q2,Q3,Tris1,Pts1,FaceNormalVector1)
+	#all its outputs describe the same triangles (the propagation loop uses both Triangles and MidPoint)
+	@test size(Tris2,1)==size(S1,1)==size(MidPoint2,1)==size(FaceNormalVector2,1)
 	(Area2,~)=TriAreas(S1,S2,S3)
 	(Rim2,MinAng2)=RimTrianglesAndAngles(S1,S2,S3,FaceNormalVector2,MidPoint2)
 	@test sum(Area2) ≈ sum(Area1) rtol=1e-10        #inner points move, the outline does not
