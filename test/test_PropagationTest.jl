@@ -73,10 +73,12 @@ the free surface (z = 0) or is trapped (stops growing).
   Dip          dip of the starting penny [deg], 90 = vertical
   StressRatio  horizontal / vertical rock stress (1 = isotropic)
 
-Loading: the rock stress (σzz = ρrock*g*z, σxx = σyy = StressRatio*σzz, tension positive) resolved on the
-crack, and the weight of the fluid inside it. The uniform fluid pressure that holds CrackVolume is solved
-for by SlipCalculator3D (Brent search). With StressRatio = 1 the net load is the buoyancy Δρ*z, i.e.
-exactly the loading used before StressRatio was added.
+Loading (z up, z < 0 below the surface; everything opening-positive, as in SlipCalculator3D, where a larger
+normal load opens the crack more): the rock stress (σzz = ρrock*g*z, σxx = σyy = StressRatio*σzz, tension
+positive) resolved on the crack, plus the weight of the fluid inside it as a traction, Tn = -ρfluid*g*z.
+For StressRatio = 1 the net load is Δρ*z: it increases upwards, so the crack opens most at the top and
+climbs. The uniform fluid pressure that holds CrackVolume is added by SlipCalculator3D (Brent search).
+UnitTests/ut_13_BuoyancyLoading.jl checks this loading and the direction of opening.
 
 Each step writes the opened mesh (*-MeshWithDisp-ForDrawing-*.txt), tip points
 (*-MeshEdges-ForDrawing-*.txt) and a figure (*-CrackViews-*.png) to the current folder.
@@ -356,15 +358,15 @@ for i=1:lps
 	σxy = zeros(n)
 	σxz = zeros(n)
 	σyz = zeros(n)
-	#SlipCalculator3D takes the load on the crack faces as (minus) the net opening load: the rock stress enters
-	#negated and the fluid weight as +ρfluid*g*z (compressive on the walls). Resolved on the crack this gives
-	#Tn = -(ρrock-ρfluid)*g*z = -Δρ*z for StressRatio = 1, as in the original script.
-	σxx=-σxx; σyy=-σyy; σzz=-σzz
-	Tn  = ρfluid*g.*Z
+	#Fluid weight in the crack, as a traction (opening-positive: fluid pressure pushes the walls apart and
+	#increases with depth, -ρfluid*g*z). Together with the rock stress above, resolved on the crack by
+	#SlipCalculator3D, the net load is (ρrock*StressRatio-ρfluid)*g*z on a vertical crack: Δρ*z if isotropic.
+	Tn  = -ρfluid*g.*Z
 	Tss = zeros(n)
 	Tds = zeros(n)
 	#Stops condition where no pressure will cause crack to fly open: the net normal load (fluid + resolved
 	#stress) must not be positive anywhere, or the volume at zero pressure is already too big.
+	#(Below the surface with StressRatio*ρrock > ρfluid this is already the case and nothing is shifted.)
 	(TnStress,~,~)=CutAndDisplaceJulia.CalculateNormalAndShearTractions3D(σxx,σyy,σzz,σxy,σxz,σyz,FaceNormalVector)
 	TnNet=Tn.+TnStress
 	@info maximum(TnNet) minimum(TnNet)

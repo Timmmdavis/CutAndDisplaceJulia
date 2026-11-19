@@ -32,7 +32,8 @@ my_tests = ["test_TDvsBurgmannLinearFrictionCrack.jl",
             "UnitTests/ut_07_StressIntensityAndPropagation.jl",
             "UnitTests/ut_08_PlottingCrackViews.jl",
             "UnitTests/ut_09_StallCheckAndExport.jl",
-            "UnitTests/ut_10_DipAzimuthAndNeighbours.jl"]
+            "UnitTests/ut_10_DipAzimuthAndNeighbours.jl",
+            "UnitTests/ut_13_BuoyancyLoading.jl"]
 			
 println("Running tests:")
 
