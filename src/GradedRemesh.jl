@@ -191,7 +191,15 @@ function GradedRemeshRunCGAL(GradedRemesher,Points,Triangles,h,hf,Fixed;growth=1
 		OFFReader(GradedRemesher(f,h,hf;growth=growth,ProtectFront=ProtectFront,FixedVerticesTxt=fx,
 		                         band=band,smooth=smooth))
 	end
-	rm(Dir;recursive=true,force=true)
+	#Windows can briefly lock files in the temp folder (antivirus etc.): retry, and never stop the run for a failed clean-up
+	for attempt in 1:5
+		try
+			rm(Dir;recursive=true,force=true)
+			break
+		catch
+			attempt==5 ? @warn("Could not delete temp folder $Dir (left in place)") : sleep(0.5)
+		end
+	end
 	return P,T
 end
 

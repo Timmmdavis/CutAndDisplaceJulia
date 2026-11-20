@@ -33,16 +33,19 @@ resolved along a crack dipping `Dip` degrees (90 = vertical).
   Isotropic rock stress (StressRatio = 1):  Δρ*sin(Dip)
   σh = StressRatio*σv:  g*[ρrock*(cos²Dip + StressRatio*sin²Dip) - ρfluid]*sin(Dip),  ρfluid = ρrock - Δρ/g
 """
+
 function DykeBuoyancyGradient(Δρ, Dip; StressRatio = 1.0, ρrock = nothing, g = 9.81)
-    s = sind(Dip)
-    if StressRatio == 1
-        return Δρ * s
-    end
-    ρrock === nothing && error("give ρrock when StressRatio != 1")
-    ρfluid = ρrock - Δρ / g
-    ρeff_normal = ρrock * (cosd(Dip)^2 + StressRatio * s^2)
-    return g * (ρeff_normal - ρfluid) * s
+
+	ρfluid=ρrock-Δρ/g   #fluid density [kg/m³]
+	ρrockH=ρrock*StressRatio
+	ΔρH=(ρrockH-ρfluid)*g
+	#@info Δρ ΔρH ρfluid ρrock ρrockH
+	#error("Here")
+
+	return sind(Dip)*ΔρH
+
 end
+
 
 """
     DykeCriticalVolume(ν, G, KCrit, Δρ; Dip = 90.0, StressRatio = 1.0, ρrock = nothing)
@@ -72,19 +75,26 @@ the free surface (z = 0) or is trapped (stops growing).
   ρrock        rock density [kg/m³] (required); the fluid density is ρrock - Δρ/g
   Dip          dip of the starting penny [deg], 90 = vertical
   StressRatio  horizontal / vertical rock stress (1 = isotropic)
+  Meshing      :uniform (default) = remesh at one edge length h set by NoTris (PolygonRemeshingCGAL,
+               3 passes, + CleanEdgeTris/IsosceliseEdgeTris).
+               :graded = GradedRemesh: equilateral tip triangles along the front, growing by
+               Growth per row to GradedCoarsening*h inside. The defaults (tip elements 1.4h/2 ≈
+               0.7h, interior 1.4h) give about as many triangles as :uniform, so runs cost the same.
+  FrontRefinement  (graded only) interior size / front edge length
+  GradedCoarsening (graded only) interior size / h
+  Growth       (graded only) size ratio from one row of triangles to the next
 
-Loading (z up, z < 0 below the surface; everything opening-positive, as in SlipCalculator3D, where a larger
-normal load opens the crack more): the rock stress (σzz = ρrock*g*z, σxx = σyy = StressRatio*σzz, tension
-positive) resolved on the crack, plus the weight of the fluid inside it as a traction, Tn = -ρfluid*g*z.
-For StressRatio = 1 the net load is Δρ*z: it increases upwards, so the crack opens most at the top and
-climbs. The uniform fluid pressure that holds CrackVolume is added by SlipCalculator3D (Brent search).
-UnitTests/ut_13_BuoyancyLoading.jl checks this loading and the direction of opening.
+Loading: stresses are the rock (σzz = ρrock*g*z, σxx = σyy = StressRatio*σzz, resolved on the crack);
+tractions are the fluid inside (its weight, -ρfluid*g*z, plus the uniform pressure solved for to hold
+CrackVolume). With StressRatio = 1 the net load is the buoyancy Δρ*z.
 
 Each step writes the opened mesh (*-MeshWithDisp-ForDrawing-*.txt), tip points
 (*-MeshEdges-ForDrawing-*.txt) and a figure (*-CrackViews-*.png) to the current folder.
 Returns (CritVolFlag, maxX, minX, maxY, minY, maxZ, minZ); CritVolFlag 1 = reached the surface.
 """
-function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris; ρrock=nothing, Dip=90.0, StressRatio=1.0)
+function testProp(HSFlag,ν,G,Δρ,KCrit,CrackVolume,NoTris; ρrock=nothing, Dip=90.0, StressRatio=1.0,
+                  Meshing=:uniform, FrontRefinement=2, GradedCoarsening=1.4, Growth=1.3)
+Meshing in (:uniform,:graded) || error("testProp: Meshing must be :uniform or :graded")
 g=9.81
 ρrock === nothing && error("testProp: give the rock density, e.g. testProp(...; ρrock = 2900)")
 ρfluid=ρrock-Δρ/g   #fluid density [kg/m³]
@@ -125,14 +135,14 @@ testProp: dip $(Dip)°, σh/σv = $(StressRatio)
 CrackVolume<CritVolume && printstyled("The volume is below critical: the crack is likely to be trapped\n",color=:yellow)
 
 
-StartRadius=CritRadius/2.5
+StartRadius=CritRadius/2.
 
 println("Start radius:")
 println(StartRadius)
 
 #Get crack to correct radius
 Points[:,2:4]=Points[:,2:4].*StartRadius;
-Points[:,4]=Points[:,4].-abs(CritRadius*5); #deeper than radius - always below surface
+Points[:,4]=Points[:,4].-abs(StartRadius*5); #deeper than radius - always below surface
 (P1,P2,P3)=CutAndDisplaceJulia.CreateP1P2P3( Triangles,Points )
 lps=2000;
 
@@ -217,16 +227,17 @@ for i=1:lps
 		end
 		p+=1
 	end
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 	=#
 
+	if Meshing==:uniform
 	#Remesh using Polygon method in CGAL:
 	println("Remeshing once")
 	OutputDirectory=CutAndDisplaceJulia.OFFExport(Points,Triangles,length(Triangles[:,1]),length(Points[:,1]),"BeforePolygonRemshing")
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
 
 	#Do Twice:
@@ -235,7 +246,7 @@ for i=1:lps
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
 
 	println("Remeshing 3x")
@@ -243,8 +254,23 @@ for i=1:lps
 	(OutputDirectory)=BuildCGAL.PolygonRemeshingCGAL(OutputDirectory,target_edge_length)
 	(Points,Triangles)=CutAndDisplaceJulia.OFFReader(OutputDirectory)
 	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
-	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTrisNew(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
 
+	else
+	#Graded mesh: tip elements of size GradedCoarsening*h/FrontRefinement on the front, each with its own
+	#equilateral rim triangle, growing to GradedCoarsening*h inside. FrontCleanup first does one uniform remesh at h
+	#(as above) so the new front from AdvancingFrontCGAL is evenly spaced before it is refined.
+	#CleanEdgeTris and IsosceliseEdgeTris are still run, as in the uniform case; on this mesh they
+	#change nothing.
+	println("Graded remeshing")
+	hg=GradedCoarsening*target_edge_length
+	(Points,Triangles)=CutAndDisplaceJulia.GradedRemesh(Points,Triangles,hg,hg/FrontRefinement,
+	                       BuildCGAL.GradedRemeshingCGAL;
+	                       growth=Growth,FrontCleanup=true)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.CleanEdgeTris(Points,Triangles)
+	(P1,P2,P3,Triangles,Points,MidPoint,FaceNormalVector)=CutAndDisplaceJulia.IsosceliseEdgeTris(MidPoint,P1,P2,P3,Triangles,Points,FaceNormalVector)
+	println("Graded mesh: $(size(Triangles,1)) triangles")
+	end
 
 	#Recompute target_edge_length
 	(target_edge_length,max_target_edge_length)=
@@ -351,28 +377,20 @@ for i=1:lps
 	Z=MidPoint[:,3];
 
 	#Boundary conditions (tension positive; z is negative below the free surface at z = 0)
-	#Rock stress: vertical = ρrock*g*z, horizontal = StressRatio * vertical.
+	#Stresses: the rock. Vertical = ρrock*g*z, horizontal = StressRatio * vertical. Resolved on the crack
+	#these give normal (and, on a dipping crack with StressRatio != 1, shear) tractions.
 	σzz = ρrock*g.*Z
 	σxx = StressRatio.*σzz
 	σyy = StressRatio.*σzz
 	σxy = zeros(n)
 	σxz = zeros(n)
 	σyz = zeros(n)
-	#Fluid weight in the crack, as a traction (opening-positive: fluid pressure pushes the walls apart and
-	#increases with depth, -ρfluid*g*z). Together with the rock stress above, resolved on the crack by
-	#SlipCalculator3D, the net load is (ρrock*StressRatio-ρfluid)*g*z on a vertical crack: Δρ*z if isotropic.
+	#Tractions: the fluid inside the crack, pushing the walls apart: its weight (fluid pressure
+	#increasing with depth). SlipCalculator3D adds the uniform fluid pressure that holds CrackVolume
+	#(solved for, so no offset or shift is needed here).
 	Tn  = -ρfluid*g.*Z
 	Tss = zeros(n)
 	Tds = zeros(n)
-	#Normalise the load: shift the net normal load (fluid weight + resolved rock stress) so its maximum is zero.
-	#Deep down this net load is hugely negative (about -Δρ*depth, MPa), far more than the fluid pressure range
-	#SlipCalculator3D searches (it scales that range by the largest closing load). A uniform shift is absorbed by
-	#the uniform fluid pressure it solves for, so the solution is unchanged, but the pressure needed is then only
-	#what the gradient asks for and the volume solve works. (The original script did this too.)
-	(TnStress,~,~)=CutAndDisplaceJulia.CalculateNormalAndShearTractions3D(σxx,σyy,σzz,σxy,σxz,σyz,FaceNormalVector)
-	TnNet=Tn.+TnStress
-	@info maximum(TnNet) minimum(TnNet)
-	Tn=Tn.-maximum(TnNet)
 
 	Stress=Stresses(σxx,σyy,σzz,σxy,σxz,σyz);
 	Traction=Tractions(Tn,Tss,Tds);
@@ -561,6 +579,10 @@ for i=1:lps
 
 	max_target_edge_length=maximum(HalfPerimeter[nonNan])*(2/3)
 	AvgTriangleEdgeLength=mean(HalfPerimeter[nonNan])*(2/3)
+	#Graded mesh: the many small tip elements would make the mean edge (and so the largest step a
+	#tip can take, in PropagateFracture) much smaller. Use the interior size h so a step is the
+	#same length as on the uniform mesh.
+	Meshing==:graded && (AvgTriangleEdgeLength=target_edge_length)
 
 	#Switch so new free elements are used but old ones no longer free edges
 	FeP1P2S.FreeFlg=NewFeP1P2.FreeFlg;

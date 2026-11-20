@@ -138,56 +138,91 @@ meshing ones, and save their figures (in `test/UnitTests/figures`):
 include(joinpath(pkgdir(CutAndDisplaceJulia), "test", "UnitTests", "RunUnitTests.jl"))
 ```
 
-## 4. Running a Dyke Propagation Simulation
+## 4. Running a Dyke Propagation Simulation in a Valley
+
+A buoyant, fluid-filled crack is started below an incised valley and propagated until it reaches the valley
+surface or is trapped. The rock is loaded with the plane-strain Savage et al. (1984) gravity solution for a
+valley (no tectonic stress), and the fluid as tractions on the crack. Axes: x across the valley, y along it,
+z up (z = 0 is the original flat surface, so z < 0 below it).
 
 Start a fresh Julia session, go to the folder where you want the results, and run:
 
 ```julia
 # Results and figures are written here
-cd("path/to/output/folder")   
+cd("path/to/output/folder")
 
-#Then load packages we will use
+# Load the packages and the test
 using CutAndDisplaceJulia, CutAndDisplaceJuliaPlots, BuildCGAL
-
 ModuleDir = dirname(dirname(pathof(CutAndDisplaceJulia)))
-TestScript = joinpath(ModuleDir, "test", "test_PropagationTest.jl")
-include(TestScript)
+include(joinpath(ModuleDir, "test", "test_PropagationValleyStress.jl"))
 
-# Configuration
-HSFlag = 0  # 0 = full space, 1 = half space
+# ---------------------------------------------------------------------------------------------
+# Solver settings
+# ---------------------------------------------------------------------------------------------
+HSFlag = 0                 # 0 = full space, 1 = half space (free-surface correction in the BEM)
+NoTris = 350               # approximate number of triangles in the crack mesh
+Meshing = :graded          # :uniform = one edge length everywhere; :graded = small triangles along the crack front,
+                           #   growing inwards, for about the same number of triangles
 
-# Elastic constants
-G = ShearModulus(2.0e9)
-ν = PoissonsRatio(0.25)
+# ---------------------------------------------------------------------------------------------
+# Physical parameters of the rock and the fluid
+# ---------------------------------------------------------------------------------------------
+G = ShearModulus(2.0e9)    # shear modulus of the rock [Pa]
+ν = PoissonsRatio(0.25)    # Poisson's ratio of the rock, used by the BEM (the valley loading has its own, see νLoad)
 (K, E, λ, ν, G) = CutAndDisplaceJulia.ElasticConstantsCheck(G, ν)
+Kc = 5e7                   # fracture toughness of the rock [Pa√m] (50 MPa√m); the crack grows where KI reaches this
 
-# Material properties
-ρrock = 2900
-ρfluid = 2600
-g = 9.81
-Δρ = ((ρrock-ρfluid)*g)
-Kc = 5e7  # 50 MPa √m
+# ---------------------------------------------------------------------------------------------
+# Body forces (gravity and the densities that set the buoyancy)
+# ---------------------------------------------------------------------------------------------
+ρrock = 2900               # rock density [kg/m³]; gives the lithostatic stress ρrock*g*|z|
+ρfluid = 2600              # fluid (magma) density [kg/m³]; its weight acts on the crack walls
+g = 9.81                   # gravitational acceleration [m/s²]
+Δρ = (ρrock - ρfluid)*g    # buoyancy gradient [Pa/m]; sets the critical radius and critical volume
 
-# Starting crack and rock stress
-Dip = 90.0          # dip of the starting crack in degrees (90 = vertical)
-StressRatio = 1.0   # horizontal / vertical rock stress (1 = isotropic; below 1 a dipping crack turns towards vertical)
-NoTris = 300        # approximate number of triangles in the crack mesh
+# ---------------------------------------------------------------------------------------------
+# The valley (Savage et al. 1984): surface z = a²b/(u²+a²) in the conformal coordinate u
+# ---------------------------------------------------------------------------------------------
+ValleyWidth = 2000.0       # a [m]: width of the valley (larger = wider, gentler valley)
+ValleyDepth = -1000.0      # b [m]: depth of the valley floor below the original surface, NEGATIVE. Needs b > -a
+νLoad = 0.5                # Poisson's ratio of the stress solution only (0.5 = isotropic far field, σxx = σzz).
+                           #   The out-of-plane stress is σyy = νLoad*(σxx + σzz) (plane strain)
 
-# Volume needed to ascend: a dipping crack has less buoyancy along it, so needs a larger volume
-CrackVolume = DykeCriticalVolume(ν, G, Kc, Δρ; Dip = Dip, StressRatio = StressRatio, ρrock = ρrock)
-println("Crack volume: ", round(CrackVolume, sigdigits = 4), " m³")
+# ---------------------------------------------------------------------------------------------
+# Where the crack starts (all distances in units of the valley width a)
+# ---------------------------------------------------------------------------------------------
+XFactor = 1.0              # crack centre at x = XFactor*a: horizontal distance from the valley axis (x = 0)
+DepthFactor = 0.5          # crack centre at z = b - DepthFactor*a: distance below the valley floor level
+# The crack starts as a penny whose plane contains the most compressive principal stress at its centre
+# (its normal is the least compressive direction), so it opens against the least compressive stress.
 
-# Run simulation: stops when the crack reaches the surface (PropFlag = 1) or is trapped (PropFlag = 0).
-# The rock is loaded as stresses (vertical ρrock*g*z, horizontal StressRatio times that) and the fluid as tractions on the crack.
-(PropFlag, maxX, minX, maxY, minY, maxZ, minZ) = testProp(HSFlag, ν, G, Δρ, Kc, CrackVolume, NoTris;
-                                                           ρrock = ρrock, Dip = Dip, StressRatio = StressRatio)
+# ---------------------------------------------------------------------------------------------
+# How big the crack is and how much fluid it holds (relative to the flat, pre-valley critical values:
+# a vertical crack under the lithostatic gradient, ρrock*g against ρfluid*g)
+# ---------------------------------------------------------------------------------------------
+RadiusFactor = 0.5         # start radius = RadiusFactor * critical radius (below 1: smaller than critical)
+VolumeFactor = 1.2         # fluid volume = VolumeFactor * critical volume (below 1 the crack is likely trapped)
+
+# ---------------------------------------------------------------------------------------------
+# Run: stops when the crack reaches the valley surface (PropFlag = 1) or is trapped (PropFlag = 0)
+# ---------------------------------------------------------------------------------------------
+(PropFlag, maxX, minX, maxY, minY, maxZ, minZ) = testPropagationValleyStress(HSFlag, ν, G, Δρ, Kc, NoTris;
+    ρrock = ρrock, ValleyWidth = ValleyWidth, ValleyDepth = ValleyDepth, νLoad = νLoad,
+    XFactor = XFactor, DepthFactor = DepthFactor,
+    RadiusFactor = RadiusFactor, VolumeFactor = VolumeFactor, Meshing = Meshing)
 ```
 
-With `StressRatio` below 1 a vertical crack stays buoyant only while `ρrock*StressRatio > ρfluid`.
+Before the first step a figure of the setup, `ValleyStress-Setup.png`, is written to the current folder. It
+is in units of `a` and shows the valley surface, the most compressive stress (colour and bars) and the crack,
+with a zoom on the crack so it is visible whatever its size.
 
-The crack is remeshed at one edge length each step.
+`PropFlag` is 1 if the crack reached the valley surface, 0 if it was trapped (stopped growing), 2 if no part of
+the front could propagate and 4 if the loop limit was reached. The crack is remeshed every step (see `Meshing`).
+Results will be saved to your current directory. View the meshes using meshlab.exe or the included
+plotting tools.
 
-Results will be saved to your current directory. View the meshes using meshlab.exe or the included plotting tools.
+For a crack in a flat half space (a chosen dip and horizontal/vertical stress ratio instead of a valley), see
+`testProp` in `test/test_PropagationTest.jl`.
 
 
 ## Docker

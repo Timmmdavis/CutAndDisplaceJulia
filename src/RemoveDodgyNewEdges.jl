@@ -4,7 +4,8 @@ function RemoveDodgyNewEdges(P1,P2,P3,Points,Triangles,FaceNormalVector,MidPoint
 #points. This function first removes the large triangles by assuming we only
 #propagate a max of the original tri  edge length. Then it removes these small
 #slithers by assuming tris that are only connected to the new edge points and
-#not the original meshshould be removed
+#not the original meshshould be removed. Finally it removes tris that leave the
+#front pinched (touching itself at a vertex)
 
 
 ( Area,HalfPerimeter ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
@@ -128,7 +129,52 @@ NoRemoved=sum(good.==false)
 if NoRemoved>0
     println("Removed $NoRemoved faces from AdvancingFront as they were only the new tip points")
 end
+#Last, after all the removals above (any of which can leave or expose one): un-pinch the front. The front is
+#pinched where a front vertex has more than two free edges, i.e. the front touches itself there, usually with a
+#spike triangle hanging off it. The edge sorting in CleanEdgeTris / GradedRemesh cannot follow such a front (error
+#"Whats happening here"), and CGAL connected components does not see it as the faces are still joined along edges.
+#At each pinched vertex we remove the triangle with the most free edges (the smaller if tied) and repeat.
 (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+NoPinched=0
+for pinchround=1:20
+    nT=size(Triangles,1)
+    EdgeCount=Dict{Tuple{Int,Int},Int}()
+    for k=1:nT, (a,b) in ((1,2),(2,3),(3,1))
+        e=minmax(Triangles[k,a],Triangles[k,b])
+        EdgeCount[e]=get(EdgeCount,e,0)+1
+    end
+    FreeEdges(k)=[EdgeCount[minmax(Triangles[k,a],Triangles[k,b])]==1 for (a,b) in ((1,2),(2,3),(3,1))]
+    FreeEdgesAtVertex=Dict{Int,Int}()
+    for (e,c) in EdgeCount
+        if c==1
+            FreeEdgesAtVertex[e[1]]=get(FreeEdgesAtVertex,e[1],0)+1
+            FreeEdgesAtVertex[e[2]]=get(FreeEdgesAtVertex,e[2],0)+1
+        end
+    end
+    ( TriArea,~ ) = AreaOfTriangle3D( P1[:,1],P1[:,2],P1[:,3],P2[:,1],P2[:,2],P2[:,3],P3[:,1],P3[:,2],P3[:,3] );
+    pinchbad=fill(false,nT)
+    for (v,c) in FreeEdgesAtVertex
+        if c>2
+            cand=[k for k=1:nT if any(Triangles[k,:].==v) && any(FreeEdges(k))]
+            if !isempty(cand)
+                nfree=[sum(FreeEdges(k)) for k in cand]
+                best=findall(nfree.==maximum(nfree))
+                pinchbad[cand[best[argmin(vec(TriArea[cand[best]]))]]]=true
+            end
+        end
+    end
+    if !any(pinchbad)
+        break
+    end
+    NoPinched+=sum(pinchbad)
+    P1=copy(P1[.!pinchbad,:])
+    P2=copy(P2[.!pinchbad,:])
+    P3=copy(P3[.!pinchbad,:])
+    (Triangles,Points)=CreateTrianglesPointsFromP1P2P3(P1,P2,P3)
+end
+if NoPinched>0
+    println("Removed $NoPinched faces from AdvancingFront to un-pinch the front")
+end
 
 return P1,P2,P3,Points,Triangles
 end
