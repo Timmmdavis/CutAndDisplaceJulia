@@ -160,7 +160,7 @@ include(joinpath(ModuleDir, "test", "test_PropagationValleyStress.jl"))
 # Solver settings
 # ---------------------------------------------------------------------------------------------
 HSFlag = 0                 # 0 = full space, 1 = half space (free-surface correction in the BEM)
-NoTris = 350               # approximate number of triangles in the crack mesh
+NoTris = 450               # approximate number of triangles in the crack mesh
 Meshing = :graded          # :uniform = one edge length everywhere; :graded = small triangles along the crack front,
                            #   growing inwards, for about the same number of triangles
 
@@ -183,7 +183,7 @@ g = 9.81                   # gravitational acceleration [m/s²]
 # ---------------------------------------------------------------------------------------------
 # The valley (Savage et al. 1984): surface z = a²b/(u²+a²) in the conformal coordinate u
 # ---------------------------------------------------------------------------------------------
-ValleyWidth = 2000.0       # a [m]: width of the valley (larger = wider, gentler valley)
+ValleyWidth = 5000.0       # a [m]: width of the valley (larger = wider, gentler valley)
 ValleyDepth = -1000.0      # b [m]: depth of the valley floor below the original surface, NEGATIVE. Needs b > -a
 νLoad = 0.5                # Poisson's ratio of the stress solution only (0.5 = isotropic far field, σxx = σzz).
                            #   The out-of-plane stress is σyy = νLoad*(σxx + σzz) (plane strain)
@@ -191,8 +191,8 @@ ValleyDepth = -1000.0      # b [m]: depth of the valley floor below the original
 # ---------------------------------------------------------------------------------------------
 # Where the crack starts (all distances in units of the valley width a)
 # ---------------------------------------------------------------------------------------------
-XFactor = 1.0              # crack centre at x = XFactor*a: horizontal distance from the valley axis (x = 0)
-DepthFactor = 0.5          # crack centre at z = b - DepthFactor*a: distance below the valley floor level
+XFactor = 2.0              # crack centre at x = XFactor*a: horizontal distance from the valley axis (x = 0)
+DepthFactor = 1.5          # crack centre at z = b - DepthFactor*a: distance below the valley floor level
 # The crack starts as a penny whose plane contains the most compressive principal stress at its centre
 # (its normal is the least compressive direction), so it opens against the least compressive stress.
 
@@ -201,7 +201,7 @@ DepthFactor = 0.5          # crack centre at z = b - DepthFactor*a: distance bel
 # a vertical crack under the lithostatic gradient, ρrock*g against ρfluid*g)
 # ---------------------------------------------------------------------------------------------
 RadiusFactor = 0.5         # start radius = RadiusFactor * critical radius (below 1: smaller than critical)
-VolumeFactor = 1.2         # fluid volume = VolumeFactor * critical volume (below 1 the crack is likely trapped)
+VolumeFactor = 2.5         # fluid volume = VolumeFactor * critical volume (below 1 the crack is likely trapped)
 
 # ---------------------------------------------------------------------------------------------
 # Run: stops when the crack reaches the valley surface (PropFlag = 1) or is trapped (PropFlag = 0)
